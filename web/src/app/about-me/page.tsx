@@ -7,6 +7,7 @@ import React from 'react';
 import Link from 'next/link';
 import AboutDecorativeGrid from '@/components/about/AboutDecorativeGrid';
 import AboutPanel from '@/components/about/AboutPanel';
+import ProjectMediaCarousel from '@/components/about/ProjectMediaCarousel';
 import { aboutDestinations, aboutProjects } from '@/data/about';
 
 export const metadata = {
@@ -150,10 +151,29 @@ export default function OverviewPage() {
               <h4 style={{ margin: 0, color: 'var(--text)', fontSize: '1.12rem' }}>
                 {project.title}
               </h4>
+              {project.gallery && (
+                <ProjectMediaCarousel
+                  gallery={project.gallery}
+                  projectTitle={project.title}
+                />
+              )}
               <p style={{ margin: 0, color: 'var(--text-dim)', lineHeight: 1.65, wordBreak: 'keep-all', flex: 1 }}>
                 {project.desc}
               </p>
-              <span style={{ color: 'var(--text-mute)', fontSize: '0.82rem' }}>
+              <span style={{
+                alignSelf: 'flex-start',
+                padding: project.statusTone === 'warning' ? '5px 9px' : 0,
+                border: project.statusTone === 'warning'
+                  ? '1px solid color-mix(in srgb, #f97316 42%, transparent)'
+                  : 'none',
+                borderRadius: project.statusTone === 'warning' ? '999px' : 0,
+                background: project.statusTone === 'warning'
+                  ? 'color-mix(in srgb, #f97316 13%, transparent)'
+                  : 'transparent',
+                color: project.statusTone === 'warning' ? '#f97316' : 'var(--text-mute)',
+                fontSize: '0.82rem',
+                fontWeight: project.statusTone === 'warning' ? 700 : 400,
+              }}>
                 {project.status}
               </span>
               {project.links && project.links.length > 0 && (
