@@ -103,6 +103,13 @@ export const aboutProjects: AboutProject[] = [
     category: 'Game Platform',
     desc: '오목·스네이크와 Three.js·WebGL 기반 비행 시뮬레이터를 한곳에 모으고, 게임 기록 저장과 랭킹 기능을 구성한 플랫폼입니다.',
     status: '공개용 사이트 준비 중',
+    links: [
+      {
+        label: '샘플 게임',
+        href: 'https://skyward-flight-simulator.swsongab11572.chatgpt.site/',
+        kind: 'demo',
+      },
+    ],
   },
   {
     id: 'project-code-archive',
@@ -112,9 +119,9 @@ export const aboutProjects: AboutProject[] = [
     status: '공개 문서 저장소 운영 중',
     links: [
       {
-        label: 'GitHub 공개 문서',
-        href: 'https://github.com/s-work-agency/ssw-algorithm-archive-public',
-        kind: 'repository',
+        label: '코드 아카이브 보기',
+        href: 'https://s-work-agency.github.io/ssw-algorithm-archive-public/',
+        kind: 'demo',
       },
     ],
   },
