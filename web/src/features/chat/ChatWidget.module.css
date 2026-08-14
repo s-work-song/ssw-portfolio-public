@@ -1,0 +1,1431 @@
+.root {
+  --chat-accent: var(--accent, #6366f1);
+  --chat-bg: var(--bg-elev, #ffffff);
+  --chat-bg-soft: var(--bg-elev-2, #f3f4fa);
+  --chat-text: var(--text, #14161f);
+  --chat-dim: var(--text-dim, #525872);
+  --chat-border: var(--border-strong, rgba(18, 20, 45, 0.15));
+  position: fixed;
+  inset: auto 0 0 auto;
+  z-index: 200;
+}
+
+.trigger {
+  position: fixed;
+  right: 24px;
+  bottom: calc(24px + env(safe-area-inset-bottom));
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 52px;
+  padding: 8px 18px 8px 9px;
+  border: 1px solid color-mix(in srgb, var(--chat-accent) 45%, transparent);
+  border-radius: 999px;
+  background: var(--chat-bg);
+  color: var(--chat-text);
+  box-shadow: 0 18px 45px -18px rgba(15, 18, 45, 0.5);
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 700;
+  pointer-events: auto;
+}
+
+.trigger > span:first-child {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--chat-accent);
+  color: #fff;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+}
+
+.triggerMenuOpen {
+  border-color: var(--chat-accent);
+  box-shadow: 0 18px 45px -18px rgba(15, 18, 45, 0.5),
+    0 0 0 4px color-mix(in srgb, var(--chat-accent) 12%, transparent);
+}
+
+.quickMenu {
+  position: fixed;
+  right: 24px;
+  bottom: calc(88px + env(safe-area-inset-bottom));
+  display: flex;
+  width: min(238px, calc(100vw - 48px));
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+  pointer-events: auto;
+}
+
+.quickMenuAction {
+  display: flex;
+  width: 100%;
+  min-height: 54px;
+  align-items: center;
+  gap: 11px;
+  padding: 8px 13px 8px 9px;
+  border: 1px solid var(--chat-border);
+  border-radius: 15px;
+  background: var(--chat-bg);
+  color: var(--chat-text);
+  box-shadow: 0 14px 34px -18px rgba(7, 10, 30, 0.72);
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+  text-decoration: none;
+  transition: border-color 160ms ease, transform 160ms ease;
+}
+
+.quickMenuAction:hover,
+.quickMenuAction:focus-visible {
+  border-color: color-mix(in srgb, var(--chat-accent) 60%, transparent);
+  transform: translateX(-3px);
+}
+
+.quickMenuIcon {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  flex: 0 0 36px;
+  place-items: center;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--chat-accent) 14%, var(--chat-bg));
+  color: var(--chat-accent);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+.quickMenuCopy {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.quickMenuCopy strong {
+  font-size: 13.5px;
+  line-height: 1.25;
+}
+
+.quickMenuCopy small {
+  overflow: hidden;
+  color: var(--chat-dim);
+  font-size: 11.5px;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.panel {
+  position: fixed;
+  right: 24px;
+  bottom: calc(88px + env(safe-area-inset-bottom));
+  display: flex;
+  width: min(410px, calc(100vw - 48px));
+  height: min(650px, calc(100dvh - 120px));
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+  border: 1px solid var(--chat-border);
+  border-radius: 20px;
+  background: var(--chat-bg);
+  color: var(--chat-text);
+  box-shadow: 0 28px 80px -28px rgba(7, 10, 30, 0.6);
+}
+
+.dockResizeHandle {
+  display: none;
+}
+
+@media (min-width: 1100px) {
+  .panelDocked {
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: var(--chat-dock-width, 440px);
+    height: 100dvh;
+    border-width: 0 0 0 1px;
+    border-radius: 0;
+    animation: desktopDockIn 220ms cubic-bezier(0.22, 1, 0.36, 1) both;
+    box-shadow: -22px 0 52px -34px rgba(7, 10, 30, 0.48);
+    will-change: transform;
+  }
+
+  .panelDocked .dockResizeHandle {
+    position: absolute;
+    z-index: 5;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    display: grid;
+    width: 14px;
+    padding: 0;
+    place-items: center;
+    border: 0;
+    outline: none;
+    background: transparent;
+    cursor: ew-resize;
+    touch-action: none;
+  }
+
+  .panelDocked .dockResizeHandle::before {
+    width: 4px;
+    height: 58px;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--chat-dim) 36%, transparent);
+    content: "";
+    opacity: 0.56;
+    transition: height 160ms ease, background 160ms ease, opacity 160ms ease;
+  }
+
+  .panelDocked .dockResizeHandle:hover::before,
+  .panelDocked .dockResizeHandle:focus-visible::before,
+  .panelDocked .dockResizeHandle:active::before {
+    height: 82px;
+    background: var(--chat-accent);
+    opacity: 1;
+  }
+
+  /*
+   * 고정 패널의 하단 안내문과 우하단 채팅 트리거를 한 줄에 배치한다.
+   * 안내문은 왼쪽에 두고 오른쪽에는 트리거가 차지할 폭을 예약한다.
+   */
+  .panelDocked .disclaimer {
+    display: flex;
+    min-height: calc(100px + env(safe-area-inset-bottom));
+    box-sizing: border-box;
+    align-items: center;
+    padding: 8px 158px calc(8px + env(safe-area-inset-bottom)) 16px;
+    border-top: 1px solid var(--chat-border);
+    text-align: left;
+  }
+
+  .panelDocked.panelClosing {
+    animation: desktopDockOut 200ms cubic-bezier(0.4, 0, 1, 1) both;
+    pointer-events: none;
+  }
+}
+
+.backdrop {
+  display: none;
+}
+
+/*
+ * 헤더·본문·입력을 감싸는 콘텐츠 마스크다. 젤리 모드에서 패널이
+ * overflow: visible로 바뀌어도 내용이 캔버스 경계 밖으로 새지 않게 잘라낸다.
+ * 전역 .chat-content-wrapper 규칙보다 우선하도록 .panel 하위로 한정한다.
+ */
+.panel .contentWrapper {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+  padding: 0;
+  overflow: hidden;
+  border-radius: inherit;
+  opacity: 1;
+}
+
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 18px;
+  border-bottom: 1px solid var(--chat-border);
+  background: var(--chat-bg-soft);
+}
+
+.header h2 {
+  margin: 2px 0 0;
+  color: var(--chat-text);
+  font-size: 18px;
+  line-height: 1.25;
+}
+
+.eyebrow {
+  color: var(--chat-accent);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.13em;
+}
+
+.headerControls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.headerControls select {
+  max-width: 154px;
+  padding: 7px 28px 7px 9px;
+  border: 1px solid var(--chat-border);
+  border-radius: 9px;
+  background: var(--chat-bg);
+  color: var(--chat-text);
+  font-size: 12px;
+}
+
+.resetConversation {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  place-items: center;
+  border: 1px solid var(--chat-border);
+  border-radius: 9px;
+  background: transparent;
+  color: var(--chat-dim);
+  cursor: pointer;
+  font-size: 19px;
+  line-height: 1;
+}
+
+.resetConversation:hover:not(:disabled),
+.resetConversation:focus-visible {
+  border-color: color-mix(in srgb, var(--chat-accent) 55%, transparent);
+  background: var(--chat-bg);
+  color: var(--chat-accent);
+}
+
+.resetConversation:disabled {
+  cursor: default;
+  opacity: 0.38;
+}
+
+.close {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  place-items: center;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--chat-dim);
+  cursor: pointer;
+  font-size: 26px;
+  line-height: 1;
+}
+
+.close:hover {
+  background: var(--chat-bg);
+  color: var(--chat-text);
+}
+
+.body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 14px;
+}
+
+.availabilityState {
+  display: flex;
+  min-height: 100%;
+  padding: clamp(28px, 8vh, 64px) 22px;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  color: var(--chat-text);
+  text-align: center;
+}
+
+.availabilitySpinner {
+  width: 38px;
+  height: 38px;
+  margin-bottom: 18px;
+  border: 3px solid
+    color-mix(in srgb, var(--chat-accent) 18%, var(--chat-border));
+  border-top-color: var(--chat-accent);
+  border-radius: 50%;
+  animation: availabilitySpin 800ms linear infinite;
+}
+
+.availabilityEyebrow,
+.availabilityBadge {
+  margin-bottom: 10px;
+  color: var(--chat-accent);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+}
+
+.availabilityState h3 {
+  margin: 0 0 10px;
+  font-size: 18px;
+  line-height: 1.35;
+}
+
+.availabilityState p {
+  max-width: 300px;
+  margin: 0;
+  color: var(--chat-dim);
+  font-size: 13px;
+  line-height: 1.65;
+  word-break: keep-all;
+}
+
+.availabilityCopy {
+  display: grid;
+  gap: 8px;
+}
+
+.availabilityCopy span {
+  display: block;
+}
+
+.availabilityOfflineIcon {
+  display: grid;
+  width: 44px;
+  height: 44px;
+  margin-bottom: 14px;
+  place-items: center;
+  border: 1px solid rgba(201, 131, 0, 0.42);
+  border-radius: 50%;
+  background: rgba(201, 131, 0, 0.1);
+  color: #9a6200;
+  font-size: 22px;
+  font-weight: 800;
+}
+
+.availabilityBadge {
+  color: #9a6200;
+}
+
+.availabilityRetry {
+  margin-top: 20px;
+  padding: 9px 16px;
+  border: 1px solid var(--chat-border);
+  border-radius: 999px;
+  background: var(--chat-bg);
+  color: var(--chat-text);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.availabilityRetry:hover {
+  border-color: var(--chat-accent);
+  color: var(--chat-accent);
+}
+
+.availabilityRetry:focus-visible {
+  outline: 2px solid var(--chat-accent);
+  outline-offset: 2px;
+}
+
+.onboarding {
+  margin: 0 0 16px;
+  padding: 12px;
+  border: 1px solid var(--chat-border);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--chat-accent) 5%, var(--chat-bg));
+}
+
+.onboarding legend {
+  padding: 0 5px;
+  color: var(--chat-dim);
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.quickStartGroup {
+  display: grid;
+  gap: 6px;
+  margin-bottom: 10px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--chat-border);
+}
+
+.onboardingGroupLabel {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--chat-dim);
+  font-size: 10px;
+  font-weight: 750;
+  letter-spacing: 0.04em;
+}
+
+.quickStartGroup .onboardingGroupLabel {
+  margin-bottom: 0;
+}
+
+.quickStartOptions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.quickStartOptions button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+  padding: 9px 10px;
+  border: 1px solid color-mix(in srgb, var(--chat-accent) 38%, var(--chat-border));
+  border-radius: 11px;
+  background: color-mix(in srgb, var(--chat-accent) 9%, var(--chat-bg));
+  color: var(--chat-text);
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 700;
+  text-align: left;
+}
+
+.quickStartOptions button:hover {
+  border-color: var(--chat-accent);
+  color: var(--chat-accent);
+  transform: translateY(-1px);
+}
+
+.quickStartOptions button:focus-visible {
+  outline: 2px solid var(--chat-accent);
+  outline-offset: 2px;
+}
+
+.audienceOptions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.audienceOptions button,
+.actions button,
+.error button {
+  padding: 7px 10px;
+  border: 1px solid var(--chat-border);
+  border-radius: 999px;
+  background: var(--chat-bg);
+  color: var(--chat-text);
+  cursor: pointer;
+  font-size: 11px;
+}
+
+.audienceOptions button:hover,
+.actions button:hover,
+.error button:hover,
+.audienceOptions .selectedOption {
+  border-color: var(--chat-accent);
+  color: var(--chat-accent);
+}
+
+.audienceOptions .selectedOption {
+  background: color-mix(in srgb, var(--chat-accent) 10%, var(--chat-bg));
+  font-weight: 700;
+}
+
+.messages {
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+}
+
+.message {
+  width: fit-content;
+  max-width: 91%;
+  padding: 11px 13px;
+  border-radius: 14px;
+  overflow-wrap: anywhere;
+}
+
+.assistantMessage {
+  align-self: flex-start;
+  border: 1px solid var(--chat-border);
+  border-bottom-left-radius: 4px;
+  background: var(--chat-bg-soft);
+}
+
+.userMessage {
+  align-self: flex-end;
+  border-bottom-right-radius: 4px;
+  background: var(--chat-accent);
+  color: #fff;
+}
+
+.messageText {
+  margin: 0;
+  white-space: pre-wrap;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.markdownMessage {
+  overflow-wrap: anywhere;
+  font-size: 13px;
+  line-height: 1.65;
+}
+
+.markdownMessage > :first-child {
+  margin-top: 0;
+}
+
+.markdownMessage > :last-child {
+  margin-bottom: 0;
+}
+
+.markdownMessage p {
+  margin: 0 0 0.9em;
+}
+
+.markdownMessage ul,
+.markdownMessage ol {
+  margin: 0 0 0.9em;
+  padding-left: 1.35rem;
+}
+
+.markdownMessage li + li {
+  margin-top: 0.4em;
+}
+
+.markdownMessage strong {
+  font-weight: 800;
+}
+
+.markdownMessage code {
+  padding: 0.12em 0.3em;
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--chat-accent) 10%, transparent);
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 0.92em;
+}
+
+.markdownMessage pre {
+  overflow-x: auto;
+  margin: 0 0 0.9em;
+  padding: 9px 10px;
+  border-radius: 7px;
+  background: var(--chat-bg);
+}
+
+.markdownMessage pre code {
+  padding: 0;
+  background: transparent;
+}
+
+.answerSegments {
+  display: grid;
+  gap: 0.95em;
+}
+
+.answerSegment {
+  min-width: 0;
+}
+
+.offlineBadge {
+  display: inline-block;
+  margin-bottom: 8px;
+  padding: 4px 7px;
+  border: 1px solid #c98300;
+  border-radius: 999px;
+  background: rgba(201, 131, 0, 0.1);
+  color: #9a6200;
+  font-size: 10px;
+}
+
+.generationBadge,
+.stoppedBadge,
+.failedBadge {
+  display: inline-block;
+  margin-bottom: 8px;
+  padding: 4px 7px;
+  border: 1px solid var(--chat-border);
+  border-radius: 999px;
+  color: var(--chat-dim);
+  font-size: 10px;
+}
+
+.generationBadge {
+  border-color: color-mix(in srgb, var(--chat-accent) 55%, var(--chat-border));
+  color: var(--chat-accent);
+}
+
+.stoppedBadge,
+.failedBadge {
+  border-color: rgba(190, 55, 55, 0.45);
+  background: rgba(190, 55, 55, 0.08);
+  color: var(--chat-text);
+}
+
+.partialText {
+  min-height: 1.6em;
+}
+
+/*
+ * 응답 텍스트 스트리밍 연출.
+ * 방금 도착한 꼬리 구간의 span만 마운트 시점에 한 번 재생되고,
+ * 창 밖으로 밀려난 앞부분은 평범한 문자열로 굳는다.
+ */
+.streamWordFade {
+  animation: streamWordFade 320ms ease-out both;
+}
+
+.streamBlurFocus {
+  display: inline-block;
+  animation: streamBlurFocus 420ms ease-out both;
+}
+
+.streamSlideUp {
+  display: inline-block;
+  animation: streamSlideUp 380ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.streamTokenChunk {
+  animation: streamTokenChunk 520ms ease-out both;
+}
+
+.streamMaskWipe {
+  animation: streamMaskWipe 260ms ease-out both;
+}
+
+.streamLetterDrop {
+  display: inline-block;
+  animation: streamLetterDrop 300ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.streamHighlightTrail {
+  border-radius: 2px;
+  animation: streamHighlightTrail 700ms ease-out both;
+}
+
+.streamScramble {
+  color: var(--chat-dim);
+}
+
+.streamCursor {
+  display: inline-block;
+  width: 1.5px;
+  height: 1.05em;
+  margin-left: 1px;
+  background: currentColor;
+  vertical-align: -2px;
+  animation: streamBlink 1s steps(2) infinite;
+}
+
+.streamBlockCursor {
+  display: inline-block;
+  width: 0.55em;
+  height: 1.05em;
+  margin-left: 1px;
+  background: currentColor;
+  vertical-align: -2px;
+  animation: streamBlink 0.9s steps(2) infinite;
+}
+
+/* 남은 분량을 알 수 없으므로 끝에 붙는 자리 표시줄 하나로 대신한다. */
+.streamSkeleton {
+  display: inline-block;
+  width: 4.5em;
+  height: 0.78em;
+  margin-left: 0.35em;
+  border-radius: 3px;
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--chat-text) 12%, transparent) 0%,
+    color-mix(in srgb, var(--chat-text) 28%, transparent) 50%,
+    color-mix(in srgb, var(--chat-text) 12%, transparent) 100%
+  );
+  background-size: 220% 100%;
+  vertical-align: -1px;
+  animation: streamShimmer 1.4s linear infinite;
+}
+
+.streamWipeEdge {
+  display: inline-block;
+  width: 0.6em;
+  height: 1em;
+  margin-left: -0.3em;
+  background: linear-gradient(90deg, currentColor 0%, transparent 100%);
+  opacity: 0.35;
+  vertical-align: -2px;
+}
+
+.streamTrailEdge {
+  display: inline-block;
+  width: 0.4em;
+  height: 1em;
+  margin-left: 1px;
+  background: var(--chat-accent);
+  opacity: 0.85;
+  vertical-align: -2px;
+}
+
+@keyframes streamWordFade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes streamBlurFocus {
+  from {
+    opacity: 0.15;
+    filter: blur(4px);
+  }
+  to {
+    opacity: 1;
+    filter: blur(0);
+  }
+}
+
+@keyframes streamSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes streamLetterDrop {
+  from {
+    opacity: 0;
+    transform: translateY(-14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes streamMaskWipe {
+  from {
+    opacity: 0;
+    filter: blur(1.5px);
+  }
+  to {
+    opacity: 1;
+    filter: blur(0);
+  }
+}
+
+@keyframes streamTokenChunk {
+  from {
+    color: color-mix(in srgb, var(--chat-accent) 60%, var(--chat-dim));
+    opacity: 0.45;
+  }
+  to {
+    color: var(--chat-text);
+    opacity: 1;
+  }
+}
+
+@keyframes streamHighlightTrail {
+  from {
+    background-color: color-mix(in srgb, var(--chat-accent) 42%, transparent);
+    box-shadow: 0 0 0.6em color-mix(in srgb, var(--chat-accent) 22%, transparent);
+  }
+  to {
+    background-color: transparent;
+    box-shadow: 0 0 0 transparent;
+  }
+}
+
+@keyframes streamBlink {
+  0%,
+  50% {
+    opacity: 1;
+  }
+  50.01%,
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes streamShimmer {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.inlineActions {
+  margin-top: 8px;
+}
+
+.summaryActions {
+  --completion-delay: 220ms;
+  padding-top: 10px;
+  border-top: 1px solid var(--chat-border);
+}
+
+.actions .responseQuickAction {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 9px;
+  border-color: color-mix(in srgb, var(--chat-accent) 42%, var(--chat-border));
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--chat-accent) 9%, var(--chat-bg));
+  font-weight: 750;
+  text-align: left;
+}
+
+.actions .responseQuickAction:hover {
+  background: color-mix(in srgb, var(--chat-accent) 14%, var(--chat-bg));
+}
+
+.responseQuickActionArrow {
+  color: var(--chat-accent);
+  transition: transform 160ms ease;
+}
+
+.responseQuickAction:hover .responseQuickActionArrow {
+  transform: translateX(2px);
+}
+
+.suggestedQuestions {
+  display: grid;
+  gap: 6px;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--chat-border);
+}
+
+.suggestedQuestionsLabel {
+  color: var(--chat-dim);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.suggestedQuestionButton {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid color-mix(in srgb, var(--chat-accent) 32%, var(--chat-border));
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--chat-accent) 5%, var(--chat-bg));
+  color: var(--chat-text);
+  cursor: pointer;
+  font-size: 11px;
+  line-height: 1.4;
+  text-align: left;
+}
+
+.suggestedQuestionButton:hover {
+  border-color: var(--chat-accent);
+  color: var(--chat-accent);
+}
+
+/*
+ * 스트리밍 답변이 끝난 뒤 선택 가능한 후속 UI를 답변 흐름에 맞춰 공개한다.
+ * 요소는 처음부터 레이아웃 공간을 차지하므로 스크롤 높이가 연속해서 튀지 않고,
+ * 링크 → 라벨 → 추천 질문 순서로 시선만 부드럽게 이동한다.
+ */
+.completionActions button,
+.completionSuggestions > * {
+  opacity: 0;
+  animation: chatCompletionFadeUp 320ms cubic-bezier(0.22, 1, 0.36, 1)
+    both;
+}
+
+.completionActions button {
+  animation-delay: var(--completion-delay, 80ms);
+}
+
+.completionActions button:nth-child(2) {
+  animation-delay: calc(var(--completion-delay, 80ms) + 55ms);
+}
+
+.completionActions button:nth-child(3) {
+  animation-delay: calc(var(--completion-delay, 80ms) + 110ms);
+}
+
+.completionActions button:nth-child(4) {
+  animation-delay: calc(var(--completion-delay, 80ms) + 165ms);
+}
+
+.completionSuggestions .suggestedQuestionsLabel {
+  animation-delay: 310ms;
+}
+
+.completionSuggestions .suggestedQuestionButton:nth-of-type(1) {
+  animation-delay: 370ms;
+}
+
+.completionSuggestions .suggestedQuestionButton:nth-of-type(2) {
+  animation-delay: 430ms;
+}
+
+.completionSuggestions .suggestedQuestionButton:nth-of-type(3) {
+  animation-delay: 490ms;
+}
+
+.completionSuggestions .suggestedQuestionButton:nth-of-type(4) {
+  animation-delay: 550ms;
+}
+
+@keyframes chatCompletionFadeUp {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 7px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+.actions button:focus-visible,
+.suggestedQuestionButton:focus-visible {
+  outline: 2px solid var(--chat-accent);
+  outline-offset: 2px;
+}
+
+.loading,
+.error {
+  align-self: flex-start;
+  margin: 0;
+  color: var(--chat-dim);
+  font-size: 12px;
+}
+
+.loading::before {
+  content: "";
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  margin-right: 7px;
+  border-radius: 50%;
+  background: var(--chat-accent);
+  animation: pulse 1s ease-in-out infinite alternate;
+}
+
+.error {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid rgba(190, 55, 55, 0.45);
+  border-radius: 10px;
+  background: rgba(190, 55, 55, 0.08);
+  color: var(--chat-text);
+}
+
+.error p {
+  margin: 0 0 8px;
+}
+
+.composerOptions {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 12px 0;
+  border-top: 1px solid var(--chat-border);
+  background: var(--chat-bg);
+}
+
+.reasoningToggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 28px;
+  padding: 0 9px;
+  border: 1px solid var(--chat-border);
+  border-radius: 999px;
+  background: var(--chat-bg-soft);
+  color: var(--chat-dim);
+  cursor: pointer;
+  font-size: 10px;
+  font-weight: 700;
+  transition: border-color 160ms ease, background 160ms ease,
+    color 160ms ease;
+}
+
+.reasoningToggle strong {
+  color: inherit;
+  font-size: 9px;
+  letter-spacing: 0.06em;
+}
+
+.reasoningToggle[aria-pressed="true"] {
+  border-color: color-mix(in srgb, var(--chat-accent) 60%, var(--chat-border));
+  background: color-mix(in srgb, var(--chat-accent) 12%, var(--chat-bg));
+  color: var(--chat-accent);
+}
+
+.reasoningToggle:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.reasoningToggle:focus-visible {
+  outline: 2px solid var(--chat-accent);
+  outline-offset: 2px;
+}
+
+.reasoningHint {
+  min-width: 0;
+  margin-left: auto;
+  overflow: hidden;
+  color: var(--chat-dim);
+  font-size: 9px;
+  line-height: 1.35;
+  text-align: right;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.composer {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: flex-end;
+  gap: 8px;
+  padding: 12px;
+  border-top: 1px solid var(--chat-border);
+  background: var(--chat-bg);
+}
+
+.composerOptions + .composer {
+  padding-top: 8px;
+  border-top: 0;
+}
+
+.composer textarea {
+  min-width: 0;
+  flex: 1;
+  resize: none;
+  padding: 10px 11px;
+  border: 1px solid var(--chat-border);
+  border-radius: 11px;
+  background: var(--chat-bg-soft);
+  color: var(--chat-text);
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.composer button {
+  align-self: stretch;
+  min-height: 42px;
+  padding: 0 15px;
+  border: 0;
+  border-radius: 11px;
+  background: var(--chat-accent);
+  color: #fff;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.composer button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.composer .stopButton {
+  border: 1px solid rgba(190, 55, 55, 0.55);
+  background: transparent;
+  color: var(--chat-text);
+}
+
+.composer .stopButton:hover {
+  background: rgba(190, 55, 55, 0.1);
+}
+
+.composer button:focus-visible {
+  outline: 2px solid var(--chat-accent);
+  outline-offset: 2px;
+}
+
+.disclaimer {
+  flex: 0 0 auto;
+  margin: 0;
+  padding: 0 12px 10px;
+  background: var(--chat-bg);
+  color: var(--chat-dim);
+  font-size: 10px;
+  line-height: 1.45;
+  text-align: center;
+}
+
+.visuallyHidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@keyframes pulse {
+  from {
+    opacity: 0.35;
+    transform: scale(0.85);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1.15);
+  }
+}
+
+@keyframes availabilitySpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes mobileBackdropIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes mobileBackdropOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes mobilePanelIn {
+  from {
+    opacity: 0;
+    transform: translate3d(0, var(--chat-exit-distance, 120vh), 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes mobilePanelOut {
+  from {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    opacity: 0;
+    transform: translate3d(0, var(--chat-exit-distance, 120vh), 0);
+  }
+}
+
+@keyframes desktopPanelIn {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 18px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes desktopPanelOut {
+  from {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    opacity: 0;
+    transform: translate3d(0, 18px, 0);
+  }
+}
+
+@keyframes desktopDockIn {
+  from {
+    transform: translate3d(100%, 0, 0);
+  }
+  to {
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes desktopDockOut {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(100%, 0, 0);
+  }
+}
+
+@media (max-width: 720px) {
+  .rootOpen {
+    position: fixed;
+    top: var(--chat-vv-top, 0px);
+    right: auto;
+    bottom: auto;
+    left: var(--chat-vv-left, 0px);
+    width: var(--chat-vv-width, 100vw);
+    height: var(--chat-vv-height, 100dvh);
+    pointer-events: none;
+  }
+
+  .backdrop {
+    position: absolute;
+    inset: 0;
+    display: block;
+    width: 100%;
+    height: 100%;
+    padding: 0;
+    border: 0;
+    background: rgba(5, 7, 18, 0.6);
+    animation: mobileBackdropIn 220ms ease-out both;
+    pointer-events: auto;
+  }
+
+  .panel {
+    position: absolute;
+    top: max(10px, env(safe-area-inset-top));
+    right: auto;
+    bottom: auto;
+    left: 10px;
+    width: calc(100% - 20px);
+    height: calc(
+      100% - max(10px, env(safe-area-inset-top)) -
+        max(10px, env(safe-area-inset-bottom))
+    );
+    border-radius: 18px;
+    animation: mobilePanelIn 280ms cubic-bezier(0.22, 1, 0.36, 1) both;
+    will-change: transform, opacity;
+    pointer-events: auto;
+  }
+
+  .backdropClosing {
+    pointer-events: none;
+    animation: mobileBackdropOut 200ms ease-in both;
+  }
+
+  .panelClosing {
+    pointer-events: none;
+    animation: mobilePanelOut 240ms cubic-bezier(0.4, 0, 1, 1) both;
+  }
+
+  .trigger {
+    right: 14px;
+    bottom: calc(14px + env(safe-area-inset-bottom));
+  }
+
+  .quickMenu {
+    right: 14px;
+    bottom: calc(78px + env(safe-area-inset-bottom));
+    width: min(238px, calc(100vw - 28px));
+  }
+
+  .triggerOpen {
+    visibility: hidden;
+  }
+
+  .body {
+    padding: 12px;
+  }
+
+  .message {
+    max-width: 94%;
+  }
+}
+
+/*
+ * 채팅창 애니메이션 옵션은 PC 패널에만 적용한다.
+ * 모바일 구간(max-width: 720px)의 기존 연출은 이 블록의 영향을 받지 않는다.
+ */
+@media (min-width: 721px) {
+  .panelSlide {
+    animation: desktopPanelIn 220ms cubic-bezier(0.22, 1, 0.36, 1) both;
+    will-change: transform, opacity;
+  }
+
+  .panelSlide.panelClosing {
+    animation: desktopPanelOut 200ms cubic-bezier(0.4, 0, 1, 1) both;
+    pointer-events: none;
+  }
+
+  /* 젤리 캔버스가 패널 밖까지 그려지도록 클리핑을 풀고 표면을 투명하게 둔다. */
+  .panelJelly {
+    overflow: visible;
+    border-color: transparent;
+    background-color: transparent;
+    box-shadow: none;
+    /* 닫을 때는 젤리가 수축하기 전에 표면이 먼저 사라지도록 아주 빠르게 처리한다. */
+    transition: background-color 0.05s ease, border-color 0.05s ease,
+      box-shadow 0.05s ease;
+  }
+
+  /* 젤리 모션이 끝나면 엔진이 이 클래스를 붙여 실제 패널 표면을 드러낸다. */
+  .panelJelly:global(.animation-finished) {
+    border-color: var(--chat-border);
+    background-color: var(--chat-bg);
+    box-shadow: 0 28px 80px -28px rgba(7, 10, 30, 0.6);
+    transition: background-color 0.3s ease, border-color 0.3s ease,
+      box-shadow 0.3s ease;
+  }
+
+  /* 표시 시점은 젤리 엔진의 인라인 스타일이 제어한다. */
+  .panelJelly .contentWrapper {
+    opacity: 0;
+  }
+}
+
+:global(:root[data-motion="off"]) .quickMenuAction {
+  animation: none;
+}
+
+/* 사이트 모션 정책(globals.css)과 같은 관례: 사용자가 "항상 켬"(data-motion="on")을
+   고르면 OS 모션 줄이기보다 사용자 선택을 우선한다. */
+@media (prefers-reduced-motion: reduce) {
+  :global(:root:not([data-motion="on"])) .quickMenuAction {
+    animation: none;
+  }
+
+  :global(:root:not([data-motion="on"])) .loading::before {
+    animation: none;
+  }
+
+  :global(:root:not([data-motion="on"])) .availabilitySpinner {
+    animation: none;
+  }
+
+  :global(:root:not([data-motion="on"])) .backdrop,
+  :global(:root:not([data-motion="on"])) .panel,
+  :global(:root:not([data-motion="on"])) .backdropClosing,
+  :global(:root:not([data-motion="on"])) .panelClosing,
+  :global(:root:not([data-motion="on"])) .panelSlide,
+  :global(:root:not([data-motion="on"])) .panelSlide.panelClosing {
+    animation-duration: 0.01ms;
+  }
+
+  /* 실제 판정은 React가 하지만, 반복 재생만은 CSS에서도 확실히 멈춘다. */
+  :global(:root:not([data-motion="on"])) .streamCursor,
+  :global(:root:not([data-motion="on"])) .streamBlockCursor,
+  :global(:root:not([data-motion="on"])) .streamSkeleton {
+    animation: none;
+  }
+
+  :global(:root:not([data-motion="on"])) .streamWordFade,
+  :global(:root:not([data-motion="on"])) .streamBlurFocus,
+  :global(:root:not([data-motion="on"])) .streamSlideUp,
+  :global(:root:not([data-motion="on"])) .streamTokenChunk,
+  :global(:root:not([data-motion="on"])) .streamMaskWipe,
+  :global(:root:not([data-motion="on"])) .streamLetterDrop,
+  :global(:root:not([data-motion="on"])) .streamHighlightTrail {
+    animation-duration: 0.01ms;
+  }
+}
