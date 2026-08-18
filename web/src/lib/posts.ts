@@ -11,6 +11,7 @@
  */
 import postsData from '../content/posts.json';
 import { compareEnglishFirst } from './textSort';
+import { normalizeSearchText } from './textSearch';
 
 /**
  * @type PostData
@@ -26,8 +27,23 @@ export type PostData = {
   content: string;  // 마크다운 문법으로 쓰여진 포스트 본문 전체
 };
 
+export type PostSummary = Omit<PostData, 'content'>;
+
+export type SearchablePostSummary = PostSummary & {
+  searchText: string; // 제목·요약·태그·본문을 정규화한 목록 검색 전용 문자열
+};
+
 // 빌드 타임에 병합된 JSON 원시 데이터를 PostData 배열 타입으로 안전하게 단언(Assertion)하여 사용합니다.
 const posts: PostData[] = postsData as PostData[];
+
+function comparePostSummaries(a: PostSummary, b: PostSummary): number {
+  const titleDifference = compareEnglishFirst(a.title, b.title);
+  return titleDifference || a.slug.localeCompare(b.slug);
+}
+
+function toPostSummary({ slug, title, date, order, tags, summary }: PostData): PostSummary {
+  return { slug, title, date, order, tags, summary };
+}
 
 /**
  * @function getSortedPostsData
@@ -36,20 +52,28 @@ const posts: PostData[] = postsData as PostData[];
  * 
  * @returns {Omit<PostData, 'content'>[]} 본문이 생략되고 제목 정렬이 완료된 요약 포스트 정보 배열
  */
-export function getSortedPostsData(): Omit<PostData, 'content'>[] {
+export function getSortedPostsData(): PostSummary[] {
   return posts
-    .map(({ slug, title, date, order, tags, summary }) => ({
-      slug,
-      title,
-      date,
-      order,
-      tags,
-      summary,
+    .map(toPostSummary)
+    .sort(comparePostSummaries);
+}
+
+/**
+ * 로그 목록 검색에 필요한 평문 인덱스를 함께 반환한다.
+ * 공개 본문에서 만든 문자열이며, 목록 클라이언트에는 마크다운 원문 대신 검색용 값만 전달한다.
+ */
+export function getSearchablePostsData(): SearchablePostSummary[] {
+  return posts
+    .map((post) => ({
+      ...toPostSummary(post),
+      searchText: normalizeSearchText([
+        post.title,
+        post.summary ?? '',
+        ...(post.tags ?? []),
+        post.content,
+      ].join('\n')),
     }))
-    .sort((a, b) => {
-      const titleDifference = compareEnglishFirst(a.title, b.title);
-      return titleDifference || a.slug.localeCompare(b.slug);
-    });
+    .sort(comparePostSummaries);
 }
 
 /**

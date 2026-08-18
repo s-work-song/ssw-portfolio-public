@@ -7,7 +7,7 @@ import React from 'react';
 import Link from 'next/link';
 import AboutDecorativeGrid from '@/components/about/AboutDecorativeGrid';
 import AboutPanel from '@/components/about/AboutPanel';
-import { getSortedPostsData } from '@/lib/posts';
+import { getSearchablePostsData } from '@/lib/posts';
 import LogEntries from './LogEntries';
 
 export const metadata = {
@@ -16,7 +16,7 @@ export const metadata = {
 };
 
 export default function LogPage() {
-  const allPostsData = getSortedPostsData();
+  const allPostsData = getSearchablePostsData();
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '48px' }}>

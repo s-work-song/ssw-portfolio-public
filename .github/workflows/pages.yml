@@ -40,11 +40,11 @@ jobs:
       # 비어 있으면 챗봇이 "채팅 서버 주소가 설정되지 않았습니다" 안내로 대체한다.
       NEXT_PUBLIC_RAG_API_BASE_URL: ${{ vars.NEXT_PUBLIC_RAG_API_BASE_URL }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
-          node-version: 22
+          node-version: 24
           cache: npm
 
       - name: 의존성 설치
@@ -58,7 +58,7 @@ jobs:
           mkdir -p _site
           cp -r web/out/. _site/
 
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/upload-pages-artifact@v5
         with:
           path: _site
 
@@ -70,4 +70,4 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5

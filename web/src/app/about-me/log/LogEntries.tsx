@@ -2,27 +2,33 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import type { PostData } from "@/lib/posts";
+import type { SearchablePostSummary } from "@/lib/posts";
 import { compareEnglishFirst } from "@/lib/textSort";
+import { getSearchTokens } from "@/lib/textSearch";
 import { AskAiButton } from "@/features/chat";
 import styles from "./LogEntries.module.css";
 
-type LogSummary = Omit<PostData, "content">;
-
 type LogEntriesProps = {
-  posts: LogSummary[];
+  posts: SearchablePostSummary[];
 };
 
 export default function LogEntries({ posts }: LogEntriesProps) {
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
+  const [query, setQuery] = useState("");
   const tags = useMemo(
     () => Array.from(new Set(posts.flatMap((post) => post.tags ?? [])))
       .sort(compareEnglishFirst),
     [posts],
   );
-  const visiblePosts = selectedTag
-    ? posts.filter((post) => post.tags?.includes(selectedTag))
-    : posts;
+  const searchTokens = useMemo(() => getSearchTokens(query), [query]);
+  const visiblePosts = useMemo(
+    () => posts.filter((post) => {
+      const matchesTag = selectedTag === null || post.tags?.includes(selectedTag);
+      const matchesQuery = searchTokens.every((token) => post.searchText.includes(token));
+      return matchesTag && matchesQuery;
+    }),
+    [posts, searchTokens, selectedTag],
+  );
 
   useEffect(() => {
     const revealActionTarget = () => {
@@ -32,6 +38,7 @@ export default function LogEntries({ posts }: LogEntriesProps) {
       const targetSlug = anchor.slice(prefix.length);
       if (posts.some(({ slug }) => slug === targetSlug)) {
         setSelectedTag(null);
+        setQuery("");
       }
     };
     revealActionTarget();
@@ -56,33 +63,95 @@ export default function LogEntries({ posts }: LogEntriesProps) {
           <h2 id="log-entries-title" className={styles.heading}>전체 기록</h2>
         </div>
 
-        {tags.length > 0 && (
-          <div className={styles.filters} aria-label="기록 태그 필터">
-            <button
-              type="button"
-              className={selectedTag === null ? styles.filterActive : styles.filter}
-              aria-pressed={selectedTag === null}
-              onClick={() => setSelectedTag(null)}
-            >
-              전체
-            </button>
-            {tags.map((tag) => (
-              <button
-                key={tag}
-                type="button"
-                className={selectedTag === tag ? styles.filterActive : styles.filter}
-                aria-pressed={selectedTag === tag}
-                onClick={() => setSelectedTag(tag)}
+        <div className={styles.toolbarControls}>
+          <div className={styles.searchRow} role="search">
+            <div className={styles.searchBox}>
+              <label htmlFor="log-search" className={styles.visuallyHidden}>
+                기록 제목과 내용 검색
+              </label>
+              <svg
+                className={styles.searchIcon}
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
               >
-                #{tag}
-              </button>
-            ))}
+                <circle cx="11" cy="11" r="7" />
+                <path d="m20 20-3.5-3.5" />
+              </svg>
+              <input
+                id="log-search"
+                className={styles.searchInput}
+                type="search"
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+                placeholder="제목과 내용 검색"
+                autoComplete="off"
+              />
+              {query.length > 0 && (
+                <button
+                  type="button"
+                  className={styles.clearSearch}
+                  onClick={() => setQuery("")}
+                  aria-label="검색어 지우기"
+                >
+                  ×
+                </button>
+              )}
+            </div>
+            <p className={styles.resultCount} aria-live="polite">
+              {visiblePosts.length}개 기록
+            </p>
           </div>
-        )}
+
+          {tags.length > 0 && (
+            <div className={styles.filters} aria-label="기록 태그 필터">
+              <button
+                type="button"
+                className={selectedTag === null ? styles.filterActive : styles.filter}
+                aria-pressed={selectedTag === null}
+                onClick={() => setSelectedTag(null)}
+              >
+                전체
+              </button>
+              {tags.map((tag) => (
+                <button
+                  key={tag}
+                  type="button"
+                  className={selectedTag === tag ? styles.filterActive : styles.filter}
+                  aria-pressed={selectedTag === tag}
+                  onClick={() => setSelectedTag(tag)}
+                >
+                  #{tag}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
       {visiblePosts.length === 0 ? (
-        <p className={styles.empty}>선택한 태그의 기록이 없습니다.</p>
+        <div className={styles.empty}>
+          <p>
+            {query.trim()
+              ? `“${query.trim()}”에 해당하는 기록이 없습니다.`
+              : "선택한 태그의 기록이 없습니다."}
+          </p>
+          <button
+            type="button"
+            onClick={() => {
+              setQuery("");
+              setSelectedTag(null);
+            }}
+          >
+            검색과 태그 초기화
+          </button>
+        </div>
       ) : (
         <div className={styles.list}>
           {visiblePosts.map(({ slug, title, date, tags: postTags, summary }) => (
