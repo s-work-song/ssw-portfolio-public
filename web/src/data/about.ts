@@ -83,7 +83,7 @@ export const aboutProjects: AboutProject[] = [
         {
           src: '/images/projects/common-infrastructure/ssw-infra-login.webp',
           alt: '테넌트 ID와 계정 정보를 입력하는 SSW Infra Console 로그인 화면',
-          caption: '테넌트 단위 접근과 2단계 인증을 안내하는 통합 콘솔 로그인',
+          caption: '테넌트 ID와 계정 정보를 입력하는 통합 콘솔 로그인',
         },
         {
           src: '/images/projects/common-infrastructure/ssw-infra-tenant.webp',
