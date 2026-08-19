@@ -146,6 +146,11 @@
   word-break: keep-all;
 }
 
+.markdownBody strong {
+  color: var(--text);
+  font-weight: 700;
+}
+
 .bodyList {
   margin: 0 0 1.5em;
   padding-left: 24px;
