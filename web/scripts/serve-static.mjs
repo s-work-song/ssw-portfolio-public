@@ -1,5 +1,6 @@
 import { createServer } from "node:http";
-import { readFile, stat } from "node:fs/promises";
+import { createReadStream } from "node:fs";
+import { stat } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -34,6 +35,8 @@ const contentTypes = {
   ".woff2": "font/woff2",
   ".ttf": "font/ttf",
   ".map": "application/json; charset=utf-8",
+  ".mp4": "video/mp4",
+  ".webm": "video/webm",
 };
 
 async function statOrNull(filePath) {
@@ -76,15 +79,86 @@ async function resolveFile(pathname) {
   return { status: 404 };
 }
 
-async function sendFile(response, method, status, filePath) {
-  const body = await readFile(filePath);
+function parseByteRange(rangeHeader, fileSize) {
+  if (typeof rangeHeader !== "string" || !rangeHeader.startsWith("bytes=")) return null;
+
+  const value = rangeHeader.slice("bytes=".length);
+  if (value.includes(",")) return { invalid: true };
+
+  const match = /^(\d*)-(\d*)$/.exec(value);
+  if (!match || (!match[1] && !match[2])) return { invalid: true };
+
+  let start;
+  let end;
+  if (!match[1]) {
+    const suffixLength = Number.parseInt(match[2], 10);
+    if (!Number.isInteger(suffixLength) || suffixLength <= 0) return { invalid: true };
+    start = Math.max(0, fileSize - suffixLength);
+    end = fileSize - 1;
+  } else {
+    start = Number.parseInt(match[1], 10);
+    end = match[2] ? Number.parseInt(match[2], 10) : fileSize - 1;
+  }
+
+  if (
+    !Number.isInteger(start)
+    || !Number.isInteger(end)
+    || start < 0
+    || start >= fileSize
+    || end < start
+  ) {
+    return { invalid: true };
+  }
+
+  return { start, end: Math.min(end, fileSize - 1) };
+}
+
+async function sendFile(response, request, status, filePath) {
+  const fileStats = await stat(filePath);
   const extension = path.extname(filePath).toLowerCase();
-  response.writeHead(status, {
-    "cache-control": "no-store",
+  const entityTag = `"${fileStats.size.toString(16)}-${Math.trunc(fileStats.mtimeMs).toString(16)}"`;
+  const headers = {
+    "accept-ranges": "bytes",
+    "cache-control": "public, max-age=0, must-revalidate",
     "content-type": contentTypes[extension] ?? "application/octet-stream",
+    etag: entityTag,
+    "last-modified": fileStats.mtime.toUTCString(),
     "x-content-type-options": "nosniff",
+  };
+  const range = status === 200 ? parseByteRange(request.headers.range, fileStats.size) : null;
+
+  if (range?.invalid) {
+    response.writeHead(416, {
+      ...headers,
+      "content-range": `bytes */${fileStats.size}`,
+    });
+    response.end();
+    return;
+  }
+
+  if (!range && status === 200 && request.headers["if-none-match"] === entityTag) {
+    response.writeHead(304, headers);
+    response.end();
+    return;
+  }
+
+  const start = range?.start ?? 0;
+  const end = range?.end ?? fileStats.size - 1;
+  const responseStatus = range ? 206 : status;
+  response.writeHead(responseStatus, {
+    ...headers,
+    "content-length": end - start + 1,
+    ...(range ? { "content-range": `bytes ${start}-${end}/${fileStats.size}` } : {}),
   });
-  response.end(method === "HEAD" ? undefined : body);
+
+  if (request.method === "HEAD") {
+    response.end();
+    return;
+  }
+
+  createReadStream(filePath, { start, end })
+    .on("error", () => response.destroy())
+    .pipe(response);
 }
 
 const server = createServer(async (request, response) => {
@@ -104,13 +178,13 @@ const server = createServer(async (request, response) => {
       return;
     }
     if (resolved.status === 200) {
-      await sendFile(response, request.method, 200, resolved.filePath);
+      await sendFile(response, request, 200, resolved.filePath);
       return;
     }
 
     const notFoundPath = path.join(rootDirectory, "404.html");
     if (await statOrNull(notFoundPath)) {
-      await sendFile(response, request.method, 404, notFoundPath);
+      await sendFile(response, request, 404, notFoundPath);
       return;
     }
     response.writeHead(404, { "content-type": "text/plain; charset=utf-8" });

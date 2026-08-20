@@ -7,8 +7,9 @@ import React from 'react';
 import Link from 'next/link';
 import AboutDecorativeGrid from '@/components/about/AboutDecorativeGrid';
 import AboutPanel from '@/components/about/AboutPanel';
+import ArchiveProjectShowcase from '@/components/about/ArchiveProjectShowcase';
 import ProjectMediaCarousel from '@/components/about/ProjectMediaCarousel';
-import { aboutDestinations, aboutProjects } from '@/data/about';
+import { aboutArchiveProjects, aboutDestinations, aboutProjects } from '@/data/about';
 
 export const metadata = {
   title: '소개 | Overview',
@@ -104,6 +105,28 @@ export default function OverviewPage() {
           </Link>
         ))}
       </div>
+
+      <AboutPanel id="past-work-archive" tabIndex={-1} style={{
+        padding: 'clamp(20px, 5vw, 36px)',
+        borderRadius: '24px',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '24px',
+        scrollMarginTop: '96px',
+      }}>
+        <div>
+          <p style={{ margin: '0 0 8px', color: 'var(--accent, #6366f1)', fontSize: '0.78rem', fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase' }}>
+            Archive
+          </p>
+          <h3 style={{ margin: 0, color: 'var(--text)', fontSize: 'clamp(1.35rem, 3vw, 1.75rem)' }}>
+            과거 작업 아카이브
+          </h3>
+          <p style={{ margin: '10px 0 0', color: 'var(--text-dim)', lineHeight: 1.7, wordBreak: 'keep-all' }}>
+            에이전틱 코딩을 본격적으로 활용하기 전에 직접 손 코딩으로 만들고 사용했던 작은 작업과 실험을 실행 화면과 함께 정리합니다.
+          </p>
+        </div>
+        <ArchiveProjectShowcase projects={aboutArchiveProjects} />
+      </AboutPanel>
 
       <AboutPanel id="featured-projects" tabIndex={-1} style={{
         padding: 'clamp(20px, 5vw, 36px)',

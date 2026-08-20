@@ -203,7 +203,7 @@
   aspect-ratio: 16 / 9;
   min-height: 0;
   overflow: hidden;
-  background: #070b16;
+  background: #fff;
 }
 
 .lightboxInteractive {

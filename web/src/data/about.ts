@@ -40,6 +40,37 @@ export interface AboutProjectLink {
   kind: 'repository' | 'demo';
 }
 
+export interface AboutArchiveProject {
+  id: string;
+  title: string;
+  category: string;
+  desc: string;
+  status: string;
+  tags: string[];
+  wide?: boolean;
+  preview: {
+    eyebrow: string;
+    title: string;
+    hint: string;
+  };
+  gallery?: AboutProjectGallery;
+  videos?: AboutArchiveProjectVideo[];
+  videoSlotCount?: number;
+  logHref?: string;
+  demo?: {
+    src: string;
+    title: string;
+    controls: string;
+  };
+}
+
+export interface AboutArchiveProjectVideo {
+  src: string;
+  poster: string;
+  title: string;
+  caption: string;
+}
+
 export const aboutDestinations: AboutDestination[] = [
   {
     title: '이력서 (Resume)',
@@ -68,6 +99,106 @@ export const aboutDestinations: AboutDestination[] = [
     desc: '개발 및 일상 속에서 얻은 기술적 깨달음과 고민, 프로젝트를 되돌아보는 사후 회고를 기록하는 로그 블로그입니다.',
     emoji: '📝',
     linkText: '로그 게시글 읽기 →',
+  },
+];
+
+export const aboutArchiveProjects: AboutArchiveProject[] = [
+  {
+    id: 'archive-canvas-dodge-game',
+    title: 'Canvas 피하기 게임',
+    category: 'Canvas Game',
+    desc: 'HTML Canvas와 JavaScript로 캐릭터를 조작해 장애물을 피하고 생존 시간을 기록하는 작은 브라우저 게임입니다. 당시의 단일 HTML 구현을 그대로 실행할 수 있습니다.',
+    status: '단일 HTML 원본 실행',
+    tags: ['HTML', 'Canvas', 'JavaScript'],
+    preview: {
+      eyebrow: 'Playable Archive',
+      title: '방향키로 장애물을 피하세요',
+      hint: '키보드 방향키 · 화면 방향 버튼',
+    },
+    gallery: {
+      images: [
+        {
+          src: '/images/archive/canvas-dodge-game/01-gameplay.webp',
+          alt: '막대 인간 캐릭터가 위에서 떨어지는 장애물을 피하는 Canvas 게임 화면',
+          caption: '방향키로 캐릭터를 움직여 떨어지는 장애물을 피하는 실행 화면',
+        },
+      ],
+      placeholder: 'Canvas 피하기 게임 실행 화면을 추가할 자리입니다.',
+    },
+    logHref: '/about-me/log/canvas-dodge-game-before-game-development',
+    demo: {
+      src: '/showcases/canvas-dodge-game/index.html?v=1',
+      title: 'Canvas 피하기 게임 실행 화면',
+      controls: '시작을 누른 뒤 키보드 방향키 또는 화면 방향 버튼으로 조작할 수 있습니다.',
+    },
+  },
+  {
+    id: 'archive-wpf-excel-row-mapper',
+    title: '엑셀 행 매핑 WPF 앱',
+    category: 'WPF Desktop App',
+    desc: '엑셀 행 데이터를 작업 모델에 자동 매핑하기 위해 가볍게 만든 WinForms 프로토타입을 WPF MVVM 구조로 마이그레이션해 실제 작업에 사용한 데스크톱 앱입니다.',
+    status: '실사용 화면 보관',
+    tags: ['C#', 'WPF', 'MVVM', 'Excel'],
+    preview: {
+      eyebrow: 'Desktop Archive',
+      title: '엑셀 행 데이터 자동 매핑기',
+      hint: 'WPF · MVVM · 업무 도구',
+    },
+    gallery: {
+      images: [
+        {
+          src: '/images/archive/wpf-excel-row-mapper/01-main.webp',
+          alt: '주소 데이터 조회와 파일별 매핑 옵션을 구성하는 엑셀 행 매핑 WPF 앱 화면',
+          caption: '엑셀 작업용 유틸 앱',
+        },
+      ],
+      placeholder: '엑셀 행 매핑 WPF 앱 캡처를 여기에 추가할 예정입니다.',
+    },
+    logHref: '/about-me/log/excel-row-mapping-wpf-app',
+  },
+  {
+    id: 'archive-android-ar-campfire',
+    title: 'Android AR 캠프파이어 앱',
+    category: 'Android AR',
+    desc: 'VR 게임 학원 수강 중 현실 공간 위에 캠프파이어 장면을 증강현실로 표시하도록 제작한 Android 앱입니다. 대표 시연 영상과 설치·점화·전경 장면을 함께 보관했습니다.',
+    status: 'VR 게임 학원 제작 · 시연 영상·화면 보관',
+    tags: ['Android', 'AR', 'Mobile'],
+    wide: true,
+    preview: {
+      eyebrow: 'Mobile Archive',
+      title: 'AR 캠프파이어 시연',
+      hint: 'Android · Augmented Reality',
+    },
+    videos: [
+      {
+        src: '/media/archive/android-ar-campfire/02-campfire-view.mp4',
+        poster: '/images/archive/android-ar-campfire/03-final-background.webp',
+        title: 'AR 캠프파이어 전체 시연',
+        caption: '전체 시연 영상 보기',
+      },
+    ],
+    gallery: {
+      images: [
+        {
+          src: '/images/archive/android-ar-campfire/01-placement-focus.webp',
+          alt: 'AR 캠프파이어를 설치하기 위해 평면과 위치를 인식하는 포커스 화면',
+          caption: 'AR 평면을 인식하고 설치 위치를 조정하는 포커스 화면',
+        },
+        {
+          src: '/images/archive/android-ar-campfire/02-ignition-balanced.webp',
+          alt: '나뭇가지를 추가하고 점화한 AR 캠프파이어의 근접 화면',
+          caption: '나뭇가지를 추가하고 점화한 캠프파이어 근접 화면',
+        },
+        {
+          src: '/images/archive/android-ar-campfire/03-final-background.webp',
+          alt: '캠프파이어와 주변 나무 및 건물이 함께 보이는 AR 전경 화면',
+          caption: '캠프파이어와 주변 공간·건물을 함께 확인하는 전경',
+        },
+      ],
+      placeholder: 'Android AR 캠프파이어 앱 화면을 추가할 자리입니다.',
+    },
+    videoSlotCount: 4,
+    logHref: '/about-me/log/first-ar-project-using-real-space-and-motion',
   },
 ];
 

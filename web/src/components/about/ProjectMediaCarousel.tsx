@@ -34,7 +34,14 @@ export default function ProjectMediaCarousel({
   const lastDragFinishedAt = useRef<number | null>(null);
   const transitionFrame = useRef<number | null>(null);
   const transitionTimer = useRef<number | null>(null);
+  const slideButtonRefs = useRef(new Map<number, HTMLButtonElement>());
+  const lightboxCloseRef = useRef<HTMLButtonElement | null>(null);
+  const activeIndexRef = useRef(activeIndex);
   const { images } = gallery;
+
+  useEffect(() => {
+    activeIndexRef.current = activeIndex;
+  }, [activeIndex]);
 
   useEffect(() => {
     if (!isExpanded) {
@@ -42,9 +49,17 @@ export default function ProjectMediaCarousel({
     }
 
     const previousOverflow = document.body.style.overflow;
+    const focusFrame = window.requestAnimationFrame(() => {
+      lightboxCloseRef.current?.focus({ preventScroll: true });
+    });
     const closeOnEscape = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         setIsExpanded(false);
+        window.requestAnimationFrame(() => {
+          slideButtonRefs.current
+            .get(activeIndexRef.current)
+            ?.focus({ preventScroll: true });
+        });
       }
     };
 
@@ -52,6 +67,7 @@ export default function ProjectMediaCarousel({
     window.addEventListener('keydown', closeOnEscape);
 
     return () => {
+      window.cancelAnimationFrame(focusFrame);
       document.body.style.overflow = previousOverflow;
       window.removeEventListener('keydown', closeOnEscape);
     };
@@ -81,6 +97,7 @@ export default function ProjectMediaCarousel({
 
   const currentImage = images[activeIndex];
   const hasMultipleImages = images.length > 1;
+  const renderedTrackPosition = hasMultipleImages ? trackPosition : 0;
   const loopedImages = hasMultipleImages
     ? [images[images.length - 1], ...images, images[0]]
     : images;
@@ -113,15 +130,28 @@ export default function ProjectMediaCarousel({
       }
     }, 420);
   };
+  const transferSlideFocus = (nextIndex: number) => {
+    const currentSlide = slideButtonRefs.current.get(activeIndex);
+    if (document.activeElement !== currentSlide) {
+      return;
+    }
+
+    currentSlide.blur();
+    window.requestAnimationFrame(() => {
+      slideButtonRefs.current.get(nextIndex)?.focus({ preventScroll: true });
+    });
+  };
   const move = (direction: -1 | 1) => {
     if (!hasMultipleImages || isTransitioning) {
       return;
     }
 
     const nextPosition = trackPosition + direction;
+    const nextIndex = (activeIndex + direction + images.length) % images.length;
+    transferSlideFocus(nextIndex);
     setIsTransitioning(true);
     setTrackPosition(nextPosition);
-    setActiveIndex((current) => (current + direction + images.length) % images.length);
+    setActiveIndex(nextIndex);
     scheduleTransitionCompletion(nextPosition);
   };
   const selectSlide = (index: number) => {
@@ -129,6 +159,7 @@ export default function ProjectMediaCarousel({
       return;
     }
 
+    transferSlideFocus(index);
     setIsTransitioning(true);
     setActiveIndex(index);
     setTrackPosition(index + 1);
@@ -200,6 +231,14 @@ export default function ProjectMediaCarousel({
     }
     setIsExpanded(true);
   };
+  const closeExpandedView = () => {
+    setIsExpanded(false);
+    window.requestAnimationFrame(() => {
+      slideButtonRefs.current
+        .get(activeIndexRef.current)
+        ?.focus({ preventScroll: true });
+    });
+  };
 
   return (
     <>
@@ -219,7 +258,7 @@ export default function ProjectMediaCarousel({
           <div
             className={styles.track}
             style={{
-              transform: `translate3d(calc(${-trackPosition * 100}% + ${dragOffset}px), 0, 0)`,
+              transform: `translate3d(calc(${-renderedTrackPosition * 100}% + ${dragOffset}px), 0, 0)`,
               transition: isDragging || !transitionEnabled ? 'none' : undefined,
             }}
           >
@@ -234,11 +273,21 @@ export default function ProjectMediaCarousel({
               return (
                 <button
                   key={`${image.src}-${index}`}
+                  ref={(node) => {
+                    if (isLeadingClone || isTrailingClone) {
+                      return;
+                    }
+                    if (node) {
+                      slideButtonRefs.current.set(sourceIndex, node);
+                    } else {
+                      slideButtonRefs.current.delete(sourceIndex);
+                    }
+                  }}
                   type="button"
                   className={styles.slide}
                   onClick={openExpandedView}
                   aria-label={isActive ? `${image.alt} 크게 보기` : undefined}
-                  aria-hidden={!isActive}
+                  inert={!isActive}
                   tabIndex={isActive ? 0 : -1}
                 >
                   <Image
@@ -310,13 +359,14 @@ export default function ProjectMediaCarousel({
           role="dialog"
           aria-modal="true"
           aria-label={`${projectTitle} 크게 보기`}
-          onClick={() => setIsExpanded(false)}
+          onClick={closeExpandedView}
         >
           <div className={styles.lightboxDialog} onClick={(event) => event.stopPropagation()}>
             <button
+              ref={lightboxCloseRef}
               type="button"
               className={styles.lightboxClose}
-              onClick={() => setIsExpanded(false)}
+              onClick={closeExpandedView}
               aria-label="크게 보기 닫기"
             />
             <div
@@ -329,7 +379,7 @@ export default function ProjectMediaCarousel({
               <div
                 className={styles.lightboxTrack}
                 style={{
-                  transform: `translate3d(calc(${-trackPosition * 100}% + ${dragOffset}px), 0, 0)`,
+                  transform: `translate3d(calc(${-renderedTrackPosition * 100}% + ${dragOffset}px), 0, 0)`,
                   transition: isDragging || !transitionEnabled ? 'none' : undefined,
                 }}
               >
