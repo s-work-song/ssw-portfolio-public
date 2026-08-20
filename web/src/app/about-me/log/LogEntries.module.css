@@ -208,6 +208,10 @@
 
 .resultItemInner {
   min-height: 0;
+  overflow: visible;
+}
+
+.resultItemAnimating .resultItemInner {
   overflow: hidden;
 }
 
