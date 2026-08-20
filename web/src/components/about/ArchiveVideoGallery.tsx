@@ -2,6 +2,7 @@
 
 import Image from 'next/image';
 import {
+  useCallback,
   useEffect,
   useId,
   useMemo,
@@ -43,6 +44,7 @@ export default function ArchiveVideoGallery({
   const dragStartX = useRef<number | null>(null);
   const dragMoved = useRef(false);
   const dragViewportWidth = useRef(0);
+  const pinchActive = useRef(false);
   const suppressOverlayClose = useRef(false);
   const videoElements = useRef(new Map<string, HTMLVideoElement>());
   const lastTriggerRef = useRef<HTMLButtonElement | null>(null);
@@ -58,15 +60,28 @@ export default function ArchiveVideoGallery({
     (_, index) => mediaItems[index] ?? null,
   );
 
-  const closeViewer = () => {
-    setIsOpen(false);
-    setDragOffset(0);
-    setIsDragging(false);
+  const resetDrag = useCallback(() => {
     dragStartX.current = null;
     dragViewportWidth.current = 0;
+    dragMoved.current = false;
+    setDragOffset(0);
+    setIsDragging(false);
+  }, []);
+
+  const suppressOverlayCloseBriefly = () => {
+    suppressOverlayClose.current = true;
+    window.setTimeout(() => {
+      suppressOverlayClose.current = false;
+    }, 500);
+  };
+
+  const closeViewer = useCallback(() => {
+    setIsOpen(false);
+    resetDrag();
+    pinchActive.current = false;
     suppressOverlayClose.current = false;
     window.requestAnimationFrame(() => lastTriggerRef.current?.focus());
-  };
+  }, [resetDrag]);
 
   const openViewer = (
     index: number,
@@ -146,16 +161,9 @@ export default function ArchiveVideoGallery({
       moveViewer(-1);
     }
 
-    dragStartX.current = null;
-    dragViewportWidth.current = 0;
-    dragMoved.current = false;
-    setDragOffset(0);
-    setIsDragging(false);
+    resetDrag();
     if (didDrag) {
-      suppressOverlayClose.current = true;
-      window.setTimeout(() => {
-        suppressOverlayClose.current = false;
-      }, 500);
+      suppressOverlayCloseBriefly();
     }
   };
 
@@ -174,6 +182,14 @@ export default function ArchiveVideoGallery({
   };
 
   const handleTouchStart = (event: ReactTouchEvent<HTMLDivElement>) => {
+    if (event.touches.length > 1) {
+      pinchActive.current = true;
+      resetDrag();
+      suppressOverlayClose.current = true;
+      return;
+    }
+    if (pinchActive.current) return;
+
     const touch = event.touches[0];
     if (!touch) return;
     startDrag(
@@ -185,6 +201,12 @@ export default function ArchiveVideoGallery({
   };
 
   const handleTouchMove = (event: ReactTouchEvent<HTMLDivElement>) => {
+    if (event.touches.length > 1 || pinchActive.current) {
+      pinchActive.current = true;
+      resetDrag();
+      return;
+    }
+
     const touch = event.touches[0];
     if (touch && updateDrag(touch.clientX)) event.preventDefault();
   };
@@ -193,6 +215,15 @@ export default function ArchiveVideoGallery({
     event: ReactTouchEvent<HTMLDivElement>,
     shouldMove: boolean,
   ) => {
+    if (pinchActive.current) {
+      resetDrag();
+      if (event.touches.length === 0) {
+        pinchActive.current = false;
+        suppressOverlayCloseBriefly();
+      }
+      return;
+    }
+
     const touch = event.changedTouches[0];
     finishDrag(
       touch?.clientX ?? dragStartX.current ?? 0,
@@ -237,7 +268,7 @@ export default function ArchiveVideoGallery({
       document.body.classList.remove(styles.bodyLocked);
       window.removeEventListener('keydown', closeOnEscape);
     };
-  }, [isOpen]);
+  }, [closeViewer, isOpen]);
 
   return (
     <>

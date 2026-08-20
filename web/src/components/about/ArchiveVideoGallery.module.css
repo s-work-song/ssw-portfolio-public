@@ -212,7 +212,7 @@
   overflow: hidden;
   background: var(--bg-elev-2);
   cursor: grab;
-  touch-action: pan-y;
+  touch-action: pan-y pinch-zoom;
 }
 
 .dragging {
@@ -221,7 +221,7 @@
 
 .videoViewport {
   cursor: default;
-  touch-action: auto;
+  touch-action: pan-y pinch-zoom;
 }
 
 .mediaTrack {

@@ -13,6 +13,7 @@ export default function CareerTimeline({ items }: { items: CareerItem[] }) {
   const [isMobile, setIsMobile] = React.useState(false);
   const [pinnedCards, setPinnedCards] = React.useState<Record<number, boolean>>({});
   const [hoveredCardIndex, setHoveredCardIndex] = React.useState<number | null>(null);
+  const [focusedCardIndex, setFocusedCardIndex] = React.useState<number | null>(null);
 
   React.useEffect(() => {
     const handleResize = () => {
@@ -47,6 +48,10 @@ export default function CareerTimeline({ items }: { items: CareerItem[] }) {
     expandableCardIndices.every((index) => pinnedCards[index]);
 
   const toggleCardPin = (cardIndex: number) => {
+    setFocusedCardIndex((current) => current === cardIndex ? null : current);
+    if (isMobile) {
+      setHoveredCardIndex(null);
+    }
     setPinnedCards((current) => ({
       ...current,
       [cardIndex]: !current[cardIndex],
@@ -108,6 +113,7 @@ export default function CareerTimeline({ items }: { items: CareerItem[] }) {
     const isAnyOpen = isPeriodAnyExpanded(period);
     return (
       <button
+        className="timeline-control-button"
         type="button"
         onClick={() => isAnyOpen ? collapsePeriod(period) : expandPeriod(period)}
         aria-label={`${period} 카드 상세 ${isAnyOpen ? '모두 접기' : '모두 펼치기'}`}
@@ -176,56 +182,72 @@ export default function CareerTimeline({ items }: { items: CareerItem[] }) {
       {/* ── 전체 상세 및 레이아웃 모드 토글 ── */}
       <div style={{
         display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        flexWrap: 'wrap',
+        justifyContent: 'flex-end',
+        alignItems: 'flex-end',
         gap: '10px',
         marginBottom: '28px',
         zIndex: 15,
         position: 'relative',
       }}>
-        <button
-          type="button"
-          onClick={() => setAllExpanded(!isAllExpanded)}
-          aria-expanded={isAllExpanded}
-          style={{
-            padding: '8px 13px',
-            border: '1px solid var(--border)',
-            borderRadius: '9px',
-            background: isAllExpanded
-              ? 'var(--accent-soft, rgba(99,102,241,.14))'
-              : 'var(--bg-elev)',
-            color: isAllExpanded
-              ? 'var(--accent, #6366f1)'
-              : 'var(--text-dim)',
-            boxShadow: 'var(--shadow)',
-            cursor: 'pointer',
-            fontSize: '0.78rem',
-            fontWeight: 700,
-          }}
-        >
-          {isAllExpanded ? '전체 상세 접기 ▲' : '전체 상세 펼치기 ▼'}
-        </button>
-        {!isMobile && (
-          <div role="radiogroup" aria-label="타임라인 배치" style={{
-            background: 'var(--bg-elev-2, rgba(255,255,255,0.05))', padding: '3px',
-            borderRadius: '10px', border: '1px solid var(--border)',
-            display: 'inline-flex', gap: '2px', boxShadow: 'var(--shadow)'
-          }}>
-            {(['right', 'alternate', 'center_period', 'center_item'] as const).map(mode => (
-              <button key={mode} onClick={() => setLayoutMode(mode)} role="radio" aria-checked={layoutMode === mode} style={{
-                padding: '6px 14px', border: 'none', borderRadius: '8px',
-                fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer',
-                transition: 'all 0.2s ease',
-                background: layoutMode === mode ? 'var(--bg-elev)' : 'transparent',
-                color: layoutMode === mode ? 'var(--text)' : 'var(--text-mute)',
-                boxShadow: layoutMode === mode ? 'var(--shadow)' : 'none'
-              }}>
-                {mode === 'right' ? '한 방향' : mode === 'alternate' ? '지그재그 (연도별)' : mode === 'center_period' ? '중심선 (연도별)' : '중심선 (개별)'}
-              </button>
-            ))}
-          </div>
-        )}
+        <div style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'flex-end',
+          gap: '10px',
+          maxWidth: '100%',
+          marginLeft: 'auto',
+        }}>
+          {!isMobile && (
+            <div role="radiogroup" aria-label="타임라인 배치" style={{
+              background: 'var(--bg-elev-2, rgba(255,255,255,0.05))', padding: '3px',
+              borderRadius: '10px', border: '1px solid var(--border)',
+              display: 'inline-flex', gap: '2px', boxShadow: 'var(--shadow)'
+            }}>
+              {(['right', 'alternate', 'center_period', 'center_item'] as const).map(mode => (
+                <button
+                  className="timeline-control-button"
+                  key={mode}
+                  onClick={() => setLayoutMode(mode)}
+                  role="radio"
+                  aria-checked={layoutMode === mode}
+                  style={{
+                    padding: '6px 14px', border: 'none', borderRadius: '8px',
+                    fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer',
+                    transition: 'all 0.2s ease',
+                    background: layoutMode === mode ? 'var(--bg-elev)' : 'transparent',
+                    color: layoutMode === mode ? 'var(--text)' : 'var(--text-mute)',
+                    boxShadow: layoutMode === mode ? 'var(--shadow)' : 'none'
+                  }}
+                >
+                  {mode === 'right' ? '한 방향' : mode === 'alternate' ? '지그재그 (연도별)' : mode === 'center_period' ? '중심선 (연도별)' : '중심선 (개별)'}
+                </button>
+              ))}
+            </div>
+          )}
+          <button
+            className="timeline-control-button"
+            type="button"
+            onClick={() => setAllExpanded(!isAllExpanded)}
+            aria-expanded={isAllExpanded}
+            style={{
+              padding: '8px 13px',
+              border: '1px solid var(--border)',
+              borderRadius: '9px',
+              background: isAllExpanded
+                ? 'var(--accent-soft, rgba(99,102,241,.14))'
+                : 'var(--bg-elev)',
+              color: isAllExpanded
+                ? 'var(--accent, #6366f1)'
+                : 'var(--text-dim)',
+              boxShadow: 'var(--shadow)',
+              cursor: 'pointer',
+              fontSize: '0.78rem',
+              fontWeight: 700,
+            }}
+          >
+            {isAllExpanded ? '전체 상세 접기 ▲' : '전체 상세 펼치기 ▼'}
+          </button>
+        </div>
       </div>
 
       {/* ── 한 방향 보기: 고정 세로선 ── */}
@@ -250,7 +272,10 @@ export default function CareerTimeline({ items }: { items: CareerItem[] }) {
         }
         const hasDetails = hasCardDetails(item);
         const isCardPinned = Boolean(pinnedCards[i]);
-        const isCardExpanded = isCardPinned || hoveredCardIndex === i;
+        const isCardExpanded =
+          isCardPinned ||
+          focusedCardIndex === i ||
+          (!isMobile && hoveredCardIndex === i);
         const detailId = `timeline-card-detail-${i}`;
 
         const gIdx = itemGroupIndices[i];
@@ -522,11 +547,35 @@ export default function CareerTimeline({ items }: { items: CareerItem[] }) {
                 borderRadius: '14px', boxShadow: 'var(--shadow)',
                 padding: '20px', position: 'relative', textAlign: 'left', zIndex: 2
               }}
-                onMouseEnter={() => {
-                  if (hasDetails) setHoveredCardIndex(i);
+                tabIndex={hasDetails ? 0 : undefined}
+                onFocus={(event) => {
+                  if (hasDetails && event.target === event.currentTarget) {
+                    setFocusedCardIndex(i);
+                  }
                 }}
-                onMouseLeave={() => {
-                  setHoveredCardIndex((current) => current === i ? null : current);
+                onBlur={(event) => {
+                  if (!event.currentTarget.contains(event.relatedTarget)) {
+                    setFocusedCardIndex((current) => current === i ? null : current);
+                  }
+                }}
+                onClick={(event) => {
+                  if (
+                    hasDetails &&
+                    event.target instanceof Element &&
+                    !event.target.closest('button, a, input, select, textarea')
+                  ) {
+                    event.currentTarget.focus({ preventScroll: true });
+                  }
+                }}
+                onPointerEnter={(event) => {
+                  if (event.pointerType === 'mouse' && hasDetails) {
+                    setHoveredCardIndex(i);
+                  }
+                }}
+                onPointerLeave={(event) => {
+                  if (event.pointerType === 'mouse') {
+                    setHoveredCardIndex((current) => current === i ? null : current);
+                  }
                 }}
               >
                 {/* 제목 행 */}
@@ -596,7 +645,7 @@ export default function CareerTimeline({ items }: { items: CareerItem[] }) {
                   )}
                 </div>
 
-                {/* 포인터를 올리면 미리 열리고, 버튼으로 고정하면 포인터가 벗어나도 유지한다. */}
+                {/* 포인터를 올리거나 카드에 포커스하면 미리 열리고, 버튼으로 고정하면 포커스가 벗어나도 유지한다. */}
                 {hasDetails && (
                   <div
                     id={detailId}

@@ -204,11 +204,12 @@
   min-height: 0;
   overflow: hidden;
   background: #fff;
+  touch-action: pan-y pinch-zoom;
 }
 
 .lightboxInteractive {
   cursor: grab;
-  touch-action: pan-y;
+  touch-action: pan-y pinch-zoom;
   user-select: none;
 }
 

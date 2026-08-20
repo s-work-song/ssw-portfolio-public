@@ -76,8 +76,9 @@ export default function ResumePage() {
             maxWidth: '850px',
             wordBreak: 'keep-all'
           }}>
-            Spring 기반 웹 서비스와 Android 앱, WPF 데스크톱 도구를 개발하고 배포해 왔습니다.
-            이후 BenchmarkDotNet과 프로파일링을 바탕으로 CPU·메모리·직렬화 병목을 측정하고 개선하며,
+            Spring 기반 웹 서비스와 Android 앱, 기타 프론트 웹앱 개발 등 Java·JavaScript 환경에서 실무를 경험한 이후,
+            Unity와 WPF를 통해 C#을 주력 언어로 사용해 왔습니다.
+            BenchmarkDotNet과 프로파일링을 바탕으로 CPU·메모리·직렬화 병목을 측정하고 개선하며,
             AI 에이전트를 탐색과 검증을 돕는 개발 파트너로 활용하고 있습니다.
           </p>
         </div>

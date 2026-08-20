@@ -120,7 +120,11 @@ export default function ArchiveProjectShowcase({
                   </button>
                 )}
                 {project.logHref && (
-                  <Link href={project.logHref} className={styles.logButton}>
+                  <Link
+                    href={project.logHref}
+                    className={styles.logButton}
+                    prefetch={false}
+                  >
                     작업 기록 보기
                   </Link>
                 )}

@@ -30,7 +30,9 @@ export default function ProjectMediaCarousel({
   const [transitionEnabled, setTransitionEnabled] = useState(true);
   const [isExpanded, setIsExpanded] = useState(false);
   const dragStartX = useRef<number | null>(null);
+  const dragPointerId = useRef<number | null>(null);
   const dragMoved = useRef(false);
+  const activeTouchPointers = useRef(new Set<number>());
   const lastDragFinishedAt = useRef<number | null>(null);
   const transitionFrame = useRef<number | null>(null);
   const transitionTimer = useRef<number | null>(null);
@@ -165,7 +167,31 @@ export default function ProjectMediaCarousel({
     setTrackPosition(index + 1);
     scheduleTransitionCompletion(index + 1);
   };
+  const resetDrag = (target?: HTMLDivElement) => {
+    const pointerId = dragPointerId.current;
+    if (
+      target
+      && pointerId !== null
+      && target.hasPointerCapture(pointerId)
+    ) {
+      target.releasePointerCapture(pointerId);
+    }
+
+    dragStartX.current = null;
+    dragPointerId.current = null;
+    dragMoved.current = false;
+    setDragOffset(0);
+    setIsDragging(false);
+  };
   const handlePointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (event.pointerType === 'touch') {
+      activeTouchPointers.current.add(event.pointerId);
+      if (activeTouchPointers.current.size > 1) {
+        resetDrag(event.currentTarget);
+        return;
+      }
+    }
+
     if (
       !hasMultipleImages
       || isTransitioning
@@ -175,10 +201,18 @@ export default function ProjectMediaCarousel({
     }
 
     dragStartX.current = event.clientX;
+    dragPointerId.current = event.pointerId;
     dragMoved.current = false;
   };
   const handlePointerMove = (event: ReactPointerEvent<HTMLDivElement>) => {
-    if (dragStartX.current === null) {
+    if (
+      dragStartX.current === null
+      || dragPointerId.current !== event.pointerId
+      || (
+        event.pointerType === 'touch'
+        && activeTouchPointers.current.size > 1
+      )
+    ) {
       return;
     }
 
@@ -197,7 +231,12 @@ export default function ProjectMediaCarousel({
     event: ReactPointerEvent<HTMLDivElement>,
     shouldMove: boolean,
   ) => {
-    if (dragStartX.current === null) {
+    const isActiveDragPointer = dragPointerId.current === event.pointerId;
+    if (event.pointerType === 'touch') {
+      activeTouchPointers.current.delete(event.pointerId);
+    }
+
+    if (!isActiveDragPointer || dragStartX.current === null) {
       return;
     }
 
@@ -214,13 +253,7 @@ export default function ProjectMediaCarousel({
       lastDragFinishedAt.current = window.performance.now();
     }
 
-    dragStartX.current = null;
-    setDragOffset(0);
-    setIsDragging(false);
-
-    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
-      event.currentTarget.releasePointerCapture(event.pointerId);
-    }
+    resetDrag(event.currentTarget);
   };
   const openExpandedView = () => {
     if (
@@ -232,6 +265,8 @@ export default function ProjectMediaCarousel({
     setIsExpanded(true);
   };
   const closeExpandedView = () => {
+    activeTouchPointers.current.clear();
+    resetDrag();
     setIsExpanded(false);
     window.requestAnimationFrame(() => {
       slideButtonRefs.current

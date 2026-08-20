@@ -827,6 +827,10 @@ input, select, textarea, button {
 .hover-timeline-card {
   transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
 }
+.hover-timeline-card:focus-visible,
+.timeline-control-button:focus-visible {
+  outline-offset: -3px;
+}
 .hover-timeline-card:hover {
   transform: translateY(-4px);
   box-shadow: var(--shadow);
