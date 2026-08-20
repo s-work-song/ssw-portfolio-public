@@ -4,8 +4,7 @@
  * 특정 문서로 바로 보내는 것보다 방문자가 길을 잃지 않는다.
  *
  * 정적 export에는 서버가 없어 next.config의 redirects()나 redirect()를 쓸 수 없다.
- * 그래서 meta refresh로 리디렉션하며, 이 방식은 자바스크립트가 꺼져 있어도 동작한다.
- * 링크를 함께 두어 자동 이동이 막힌 환경에서도 갈 곳이 남게 한다.
+ * meta refresh로 즉시 이동하며, 전환 안내 화면은 렌더링하지 않는다.
  */
 import type { Metadata } from "next";
 
@@ -21,10 +20,7 @@ export default function RootRedirect() {
   return (
     <>
       <meta httpEquiv="refresh" content={`0; url=${target}`} />
-      <main style={{ fontFamily: "system-ui, sans-serif", padding: "40px", lineHeight: 1.7 }}>
-        <p>소개 페이지로 이동합니다.</p>
-        <a href={target}>자동으로 이동하지 않으면 여기를 눌러주세요</a>
-      </main>
+      <style>{"html { visibility: hidden; }"}</style>
     </>
   );
 }
