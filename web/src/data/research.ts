@@ -125,7 +125,7 @@ export const researchTimelineItems: CareerItem[] = [
     color: '#a855f7',
     role: '부업용 WPF MVVM 데스크톱 앱 구축',
     org: '',
-    desc: 'WinForms 프로토타입 엑셀 행 데이터 자동 완성기를 WPF MVVM 패턴으로 마이그레이션(CommunityToolkit.Mvvm)하고 NPOI, HtmlAgilityPack, MimeKit 등의 서드파티 라이브러리를 적용해 배포했습니다.',
+    desc: 'WinForms 기반의 엑셀 행 데이터 자동 매핑기 프로토타입을 가볍게 만들어 사용하다가, WPF MVVM 패턴으로 마이그레이션(CommunityToolkit.Mvvm)하고 NPOI, HtmlAgilityPack, MimeKit 등의 서드파티 라이브러리를 적용해 사용했습니다.',
     tags: ['WPF', 'MVVM', 'XAML', 'NPOI']
   },
   {
@@ -133,7 +133,7 @@ export const researchTimelineItems: CareerItem[] = [
     color: '#a855f7',
     role: '고성능 .NET BCL 및 스택 메모리 탐구',
     org: '',
-    desc: '.NET 8 환경에서 힙 할당이 없는 Span<T>, ref struct 스택 메모리 최적화를 학습하고 System.Text.Json 고속 직렬화로 코드를 마이그레이션했습니다.',
+    desc: '.NET 8 환경에서 기존 Newtonsoft.Json 기반 코드를 System.Text.Json 고속 직렬화로 마이그레이션하고, 힙 할당이 없는 Span<T>, ref struct 스택 메모리 최적화를 학습했습니다.',
     tags: ['Span<T>', 'System.Text.Json', 'Pipelines']
   },
   {
@@ -165,7 +165,7 @@ export const researchTimelineItems: CareerItem[] = [
     color: '#10b981',
     role: 'PDF 파싱 및 이미지 자동 매칭 앱 제작',
     org: '',
-    desc: 'PDF 파일에서 이미지 데이터를 고속으로 파싱·추출하고 디렉토리 내 에셋들과 고속 대조하여 매칭되는 파일명을 일괄 자동 변경하는 업무 보조용 유틸리티를 개발했습니다.',
+    desc: 'PDF 파일에서 이미지 데이터를 고속으로 파싱·추출하고 디렉토리 내 에셋들과 고속 대조하여 매칭되는 파일명을 일괄 자동 변경하는 업무 보조용 유틸리티를 만들어 사용했습니다.',
     tags: ['WPF', 'PDF Parsing']
   },
   {
@@ -181,7 +181,7 @@ export const researchTimelineItems: CareerItem[] = [
     color: '#6366f1',
     role: 'AI 에이전트 오케스트레이션',
     org: '',
-    desc: '복수의 AI 개발 에이전트를 구현·검증·문서화 역할로 나누어 운영하며, 로우레벨 성능 최적화 실험 결과를 체계적으로 검증하고 포트폴리오를 자동화 빌드 구조로 문서화했습니다.',
+    desc: '복수의 AI 개발 에이전트를 구현·검증·문서화 역할로 나누어 운영하며, 로우레벨 성능 최적화 실험 결과를 체계적으로 검증하고 포트폴리오를 문서화했습니다.',
     tags: ['AI Agent', 'Orchestration']
   }
 ];

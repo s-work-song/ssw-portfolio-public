@@ -11,7 +11,8 @@ import type { CareerItem, TimelineDescription } from '@/types/career';
 export default function CareerTimeline({ items }: { items: CareerItem[] }) {
   const [layoutMode, setLayoutMode] = React.useState<'right' | 'alternate' | 'center_period' | 'center_item'>('center_period');
   const [isMobile, setIsMobile] = React.useState(false);
-  const [expandedCards, setExpandedCards] = React.useState<Record<number, boolean>>({});
+  const [pinnedCards, setPinnedCards] = React.useState<Record<number, boolean>>({});
+  const [hoveredCardIndex, setHoveredCardIndex] = React.useState<number | null>(null);
 
   React.useEffect(() => {
     const handleResize = () => {
@@ -43,17 +44,17 @@ export default function CareerTimeline({ items }: { items: CareerItem[] }) {
 
   const isAllExpanded =
     expandableCardIndices.length > 0 &&
-    expandableCardIndices.every((index) => expandedCards[index]);
+    expandableCardIndices.every((index) => pinnedCards[index]);
 
-  const toggleCard = (cardIndex: number) => {
-    setExpandedCards((current) => ({
+  const toggleCardPin = (cardIndex: number) => {
+    setPinnedCards((current) => ({
       ...current,
       [cardIndex]: !current[cardIndex],
     }));
   };
 
   const setAllExpanded = (expanded: boolean) => {
-    setExpandedCards(
+    setPinnedCards(
       expanded
         ? Object.fromEntries(
             expandableCardIndices.map((index) => [index, true]),
@@ -63,7 +64,7 @@ export default function CareerTimeline({ items }: { items: CareerItem[] }) {
   };
 
   const expandPeriod = (period: string) => {
-    setExpandedCards((current) => {
+    setPinnedCards((current) => {
       const next = { ...current };
       items.forEach((item, index) => {
         if (item.period === period && hasCardDetails(item)) {
@@ -75,7 +76,7 @@ export default function CareerTimeline({ items }: { items: CareerItem[] }) {
   };
 
   const collapsePeriod = (period: string) => {
-    setExpandedCards((current) => {
+    setPinnedCards((current) => {
       const next = { ...current };
       items.forEach((item, index) => {
         if (item.period === period) {
@@ -91,7 +92,7 @@ export default function CareerTimeline({ items }: { items: CareerItem[] }) {
       (item, index) =>
         item.period === period &&
         hasCardDetails(item) &&
-        Boolean(expandedCards[index]),
+        Boolean(pinnedCards[index]),
     );
 
   const itemGroupIndices = React.useMemo(() => {
@@ -248,7 +249,8 @@ export default function CareerTimeline({ items }: { items: CareerItem[] }) {
           descItems = item.desc as TimelineDescription[];
         }
         const hasDetails = hasCardDetails(item);
-        const isCardExpanded = Boolean(expandedCards[i]);
+        const isCardPinned = Boolean(pinnedCards[i]);
+        const isCardExpanded = isCardPinned || hoveredCardIndex === i;
         const detailId = `timeline-card-detail-${i}`;
 
         const gIdx = itemGroupIndices[i];
@@ -519,7 +521,14 @@ export default function CareerTimeline({ items }: { items: CareerItem[] }) {
                 background: 'var(--bg-elev)', border: '1px solid var(--border)',
                 borderRadius: '14px', boxShadow: 'var(--shadow)',
                 padding: '20px', position: 'relative', textAlign: 'left', zIndex: 2
-              }}>
+              }}
+                onMouseEnter={() => {
+                  if (hasDetails) setHoveredCardIndex(i);
+                }}
+                onMouseLeave={() => {
+                  setHoveredCardIndex((current) => current === i ? null : current);
+                }}
+              >
                 {/* 제목 행 */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
                   <h4 style={{ fontSize: '1.2rem', fontWeight: 700, margin: 0, color: 'var(--text)', wordBreak: 'keep-all' }}>
@@ -560,37 +569,45 @@ export default function CareerTimeline({ items }: { items: CareerItem[] }) {
                   {hasDetails && (
                     <button
                       type="button"
-                      onClick={() => toggleCard(i)}
+                      onClick={() => toggleCardPin(i)}
                       aria-expanded={isCardExpanded}
+                      aria-pressed={isCardPinned}
                       aria-controls={detailId}
+                      aria-label={isCardPinned ? '상세 고정 해제' : '상세 고정'}
                       style={{
                         minHeight: '34px',
                         padding: '7px 11px',
                         border: '1px solid var(--border)',
                         borderRadius: '9px',
-                        background: 'var(--bg-elev-2)',
-                        color: 'var(--text-dim)',
+                        background: isCardPinned
+                          ? 'var(--accent-soft, rgba(99,102,241,.14))'
+                          : 'var(--bg-elev-2)',
+                        color: isCardPinned
+                          ? 'var(--accent, #6366f1)'
+                          : 'var(--text-dim)',
                         cursor: 'pointer',
                         fontSize: '12.5px',
                         fontWeight: 700,
+                        transition: 'color 180ms ease, background 180ms ease, border-color 180ms ease',
                       }}
                     >
-                      {isCardExpanded ? '상세 접기 ▲' : '상세 보기 ▼'}
+                      {isCardPinned ? '고정 해제' : '상세 고정'}
                     </button>
                   )}
                 </div>
 
-                {/* 기본은 제목만 보여주고, 설명은 명시적인 버튼으로 펼친다. */}
-                {isCardExpanded && hasDetails && (
+                {/* 포인터를 올리면 미리 열리고, 버튼으로 고정하면 포인터가 벗어나도 유지한다. */}
+                {hasDetails && (
                   <div
                     id={detailId}
-                    style={{
-                      marginTop: '14px',
-                      paddingTop: '14px',
-                      borderTop: '1px solid var(--border)',
-                    }}
+                    className={`timeline-card-detail${isCardExpanded ? ' is-open' : ''}`}
+                    aria-hidden={!isCardExpanded}
                   >
-                    {renderDescItems(descItems)}
+                    <div className="timeline-card-detail-inner">
+                      <div className="timeline-card-detail-content">
+                        {renderDescItems(descItems)}
+                      </div>
+                    </div>
                   </div>
                 )}
               </div>
