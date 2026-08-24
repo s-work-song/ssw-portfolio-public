@@ -150,8 +150,8 @@ export const CHAT_QUICK_START_OPTIONS: ReadonlyArray<{
   {
     actionId: "project_overview",
     audience: "casual",
-    label: "대표 프로젝트 보기",
-    prompt: "대표 프로젝트 4개의 목적과 차이를 간단히 소개해 주세요.",
+    label: "공개용 프로젝트 보기",
+    prompt: "공개용 프로젝트의 목적과 차이를 간단히 소개해 주세요.",
   },
   {
     actionId: "research_optimization",
@@ -219,7 +219,7 @@ export const ACTION_LABELS: Readonly<Record<ActionId, string>> = {
   cover_letter: "자기소개서 보기",
   research: "연구·기술 탐구 보기",
   log: "작업 기록 보기",
-  project_overview: "대표 프로젝트 보기",
+  project_overview: "공개용 프로젝트 보기",
   project_common_infrastructure: "공용 인프라 보기",
   project_ecommerce_demo: "이커머스 데모 보기",
   project_game_collection: "게임 모음 플랫폼 보기",
