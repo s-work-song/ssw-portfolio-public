@@ -136,7 +136,7 @@ export const aboutArchiveProjects: AboutArchiveProject[] = [
     id: 'archive-wpf-excel-row-mapper',
     title: '엑셀 행 매핑 WPF 앱',
     category: 'WPF Desktop App',
-    desc: '엑셀 행 데이터를 작업 모델에 자동 매핑하기 위해 가볍게 만든 WinForms 프로토타입을 WPF MVVM 구조로 마이그레이션해 실제 작업에 사용한 데스크톱 앱입니다.',
+    desc: '반복적인 엑셀 작업의 생산성을 높이기 위해 행 데이터를 작업 모델에 자동 매핑하는 WinForms 프로토타입을 만든 뒤, WPF MVVM 구조로 마이그레이션해 실제 작업에 사용한 데스크톱 앱입니다.',
     status: '실사용 화면 보관',
     tags: ['C#', 'WPF', 'MVVM', 'Excel'],
     preview: {
