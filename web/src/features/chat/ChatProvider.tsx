@@ -25,7 +25,6 @@ import {
   DEFAULT_CHAT_STREAM_ANIMATION,
   DEFAULT_REASONING_ENABLED,
   GREETING,
-  REASONING_CONTROLS_ENABLED,
   REASONING_STORAGE_KEY,
   STREAMING_STORAGE_KEY,
   STREAM_ANIMATION_STORAGE_KEY,
@@ -239,13 +238,6 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
   useEffect(() => {
     let updateTimer: number | undefined;
     try {
-      if (!REASONING_CONTROLS_ENABLED) {
-        window.localStorage.setItem(
-          REASONING_STORAGE_KEY,
-          String(DEFAULT_REASONING_ENABLED),
-        );
-        return;
-      }
       const stored = window.localStorage.getItem(REASONING_STORAGE_KEY);
       if (stored === "true" || stored === "false") {
         updateTimer = window.setTimeout(
@@ -1129,14 +1121,11 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
   }, []);
 
   const setReasoningEnabled = useCallback((enabled: boolean) => {
-    const nextEnabled = REASONING_CONTROLS_ENABLED
-      ? enabled
-      : DEFAULT_REASONING_ENABLED;
-    setReasoningEnabledState(nextEnabled);
+    setReasoningEnabledState(enabled);
     try {
       window.localStorage.setItem(
         REASONING_STORAGE_KEY,
-        String(nextEnabled),
+        String(enabled),
       );
     } catch {
       // 저장 실패가 현재 브라우저 세션의 설정 변경을 막지는 않는다.

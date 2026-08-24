@@ -26,7 +26,7 @@ import ElasticJellyPanel from "../../lib/ElasticJellyPanel";
 import {
   AUDIENCE_OPTIONS,
   CHAT_QUICK_START_OPTIONS,
-  REASONING_CONTROLS_ENABLED,
+  REASONING_QUICK_TOGGLE_ENABLED,
   TONE_OPTIONS,
 } from "./constants";
 import { useChat } from "./ChatContext";
@@ -1296,7 +1296,7 @@ export function ChatWidget() {
 
               {availability === "online" && (
                 <>
-                  {REASONING_CONTROLS_ENABLED && (
+                  {REASONING_QUICK_TOGGLE_ENABLED && (
                     <div
                       className={styles.composerOptions}
                       aria-label="챗봇 응답 옵션"
