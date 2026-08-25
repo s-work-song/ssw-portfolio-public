@@ -100,7 +100,7 @@ export default function CoverLetterPage() {
             <div>
               <h3 style={{ fontSize: '1.35rem', fontWeight: 700, margin: '0 0 12px', color: 'var(--text)', lineHeight: 1.2 }}>로우레벨에서 하이레벨까지</h3>
               <p style={{ margin: 0, fontSize: '1.03125rem', color: 'var(--text-dim)', lineHeight: 1.7, wordBreak: 'keep-all' }}>
-                C#과 유니티를 시작으로 프로그래밍에 입문한 이후, 프레임워크를 수동적으로 가져다 쓰는 것을 넘어 동작 원리를 파고들었습니다. Winform에서 WPF로 마이그레이션하며 MVVM 패턴을 체득했고, 더 나아가 CPU의 비순차 실행이나 분기 예측, SIMD(AVX2)와 CUDA 등 하드웨어의 물리적 특성을 고려한 소프트웨어 성능 최적화 실험에 몰두해 왔습니다.
+                Java로 프로그래밍에 입문하며 객체지향과 고수준 추상화의 기초를 다졌고, 이후 C#과 Unity를 통해 게임 개발을 시작하면서 프레임워크를 수동적으로 가져다 쓰는 것을 넘어 동작 원리와 저수준 구현까지 파고들었습니다. WinForms에서 WPF로 마이그레이션하며 MVVM 패턴을 체득했고, 더 나아가 CPU의 비순차 실행이나 분기 예측, SIMD(AVX2)와 CUDA 등 하드웨어의 물리적 특성을 고려한 소프트웨어 성능 최적화 실험에 몰두해 왔습니다.
               </p>
               <div style={{ marginTop: '14px' }}>
                 <AskAiButton align="end" question="자기소개서의 「로우레벨에서 하이레벨까지」 경험을 기술 선택과 성능 최적화 사례 중심으로 자세히 설명해 주세요." />
