@@ -330,9 +330,9 @@ export const aboutProjects: AboutProject[] = [
     gallery: {
       images: [
         {
-          src: '/images/projects/code-archive/ssw-algorithm-archive-list.webp',
-          alt: '검색과 분류 필터 및 알고리즘 카드 목록을 보여주는 SSW Algorithm Archive 화면',
-          caption: '주제·언어·분류 기준으로 탐색하는 알고리즘 카탈로그',
+          src: '/images/projects/code-archive/ssw-algorithm-archive-thoughts.webp',
+          alt: '알고리즘 활용 관점과 자원 효율에 대한 생각을 정리한 SSW Algorithm Archive 문서',
+          caption: '구현보다 활용 조건과 자원을 먼저 보는 알고리즘 관점',
         },
         {
           src: '/images/projects/code-archive/ssw-algorithm-archive-detail.webp',
@@ -340,9 +340,9 @@ export const aboutProjects: AboutProject[] = [
           caption: '설명·스펙·구현·테스트를 함께 조회하는 알고리즘 상세',
         },
         {
-          src: '/images/projects/code-archive/ssw-algorithm-archive-thoughts.webp',
-          alt: '알고리즘 활용 관점과 자원 효율에 대한 생각을 정리한 SSW Algorithm Archive 문서',
-          caption: '구현보다 활용 조건과 자원을 먼저 보는 알고리즘 관점',
+          src: '/images/projects/code-archive/ssw-algorithm-archive-list.webp',
+          alt: '검색과 분류 필터 및 알고리즘 카드 목록을 보여주는 SSW Algorithm Archive 화면',
+          caption: '주제·언어·분류 기준으로 탐색하는 알고리즘 카탈로그',
         },
       ],
       placeholder: '코드 아카이브 탐색·검증 화면을 추가할 자리입니다.',
