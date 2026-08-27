@@ -332,38 +332,6 @@ export default function SettingsPage() {
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-          {/* Protected operations */}
-          <section style={{ background: "var(--bg-elev)", border: "1px solid var(--border)", borderRadius: "18px", padding: "clamp(20px, 3vw, 28px)" }}>
-            <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "18px" }}>
-              <div>
-                <div style={{ fontSize: "16px", fontWeight: 700, marginBottom: "4px" }}>운영 통계</div>
-                <div style={{ fontSize: "13.5px", color: "var(--text-mute)", lineHeight: 1.6 }}>
-                  관리자 인증 후 챗봇 요청량과 IP 기준의 대략적인 접속 원천을 확인합니다.
-                </div>
-              </div>
-              <Link
-                href="/settings/usage"
-                className="hover-btn-primary"
-                style={{
-                  flexShrink: 0,
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "7px",
-                  padding: "10px 14px",
-                  borderRadius: "10px",
-                  background: "var(--accent, #6366f1)",
-                  color: "var(--accent-contrast, #fff)",
-                  fontSize: "13px",
-                  fontWeight: 700,
-                  textDecoration: "none",
-                }}
-              >
-                통계 보기
-                <span aria-hidden="true">→</span>
-              </Link>
-            </div>
-          </section>
-
           {/* Theme Mode */}
           <section style={{ background: "var(--bg-elev)", border: "1px solid var(--border)", borderRadius: "18px", padding: "clamp(20px, 3vw, 28px)" }}>
             <div style={{ fontSize: "16px", fontWeight: 700, marginBottom: "4px" }}>화면 모드</div>
