@@ -15,6 +15,9 @@ npm run dev -w web
 챗봇을 붙이려면 `.env.example`을 복사해 `.env.local`을 만들고
 `NEXT_PUBLIC_RAG_API_BASE_URL`에 비공개 저장소에서 배포한 RAG 백엔드 주소를 넣습니다.
 주소가 비어 있으면 사이트는 그대로 뜨고 챗봇만 안내 문구로 대체됩니다.
+별도 추론 게이트웨이를 배포한 경우에만 공개 HTTPS 주소를
+`NEXT_PUBLIC_INFERENCE_GATEWAY_URL`에 넣습니다. 비어 있으면 기존 Sites SSE 경로를
+계속 사용합니다. 티켓 암호화 키와 모델 API 키는 공개 프런트에 넣지 않습니다.
 
 같은 Wi-Fi의 모바일에서 확인할 때는 `.env.local`에 노트북 IPv4를 `LOCAL_DEV_IP`로
 넣고 `npm run dev:lan`으로 띄운 뒤 `http://<노트북-IP>:3000/about-me/`로 접속합니다.

@@ -165,6 +165,25 @@ function apiUrl(path = "/api/chat"): string {
   return `${baseUrl.replace(/\/+$/u, "")}${path}`;
 }
 
+function inferenceGatewayUrl(): string | null {
+  const configured =
+    process.env.NEXT_PUBLIC_INFERENCE_GATEWAY_URL?.trim();
+  if (!configured) return null;
+  const normalized = configured.replace(/\/+$/u, "");
+  const endpoint = normalized.endsWith("/api/inference/stream")
+    ? normalized
+    : `${normalized}/api/inference/stream`;
+  try {
+    const parsed = new URL(endpoint);
+    if (parsed.protocol !== "https:" && parsed.protocol !== "http:") {
+      return null;
+    }
+    return parsed.toString();
+  } catch {
+    return null;
+  }
+}
+
 export class ChatApiError extends Error {
   constructor(message: string) {
     super(message);
@@ -312,7 +331,55 @@ async function errorMessageFromResponse(response: Response): Promise<string> {
   return "요청을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요.";
 }
 
-export async function requestChatStream(
+async function consumeSseResponse(
+  response: Response,
+  signal: AbortSignal,
+  dispatch: (event: string, payload: unknown) => void,
+): Promise<void> {
+  const contentType = response.headers.get("content-type")?.toLowerCase() ?? "";
+  if (!contentType.startsWith("text/event-stream")) {
+    throw new ChatApiError("채팅 서버가 스트리밍 응답을 반환하지 않았습니다.");
+  }
+  if (!response.body) {
+    throw new ChatApiError("채팅 서버의 스트리밍 응답을 읽지 못했습니다.");
+  }
+
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+
+  const dispatchBlock = (block: string) => {
+    const parsed = parseSseBlock(block);
+    if (!parsed) return;
+    dispatch(parsed.event, parseEventData(parsed.data));
+    if (signal.aborted) {
+      throw new DOMException("The operation was aborted.", "AbortError");
+    }
+  };
+
+  try {
+    while (true) {
+      const chunk = await reader.read();
+      if (chunk.done) break;
+      buffer += decoder.decode(chunk.value, { stream: true });
+      let next = nextSseBlock(buffer);
+      while (next) {
+        dispatchBlock(next.block);
+        buffer = next.rest;
+        next = nextSseBlock(buffer);
+      }
+    }
+    buffer += decoder.decode();
+    if (buffer.trim()) dispatchBlock(buffer);
+  } catch (error) {
+    await reader.cancel().catch(() => undefined);
+    throw error;
+  } finally {
+    reader.releaseLock();
+  }
+}
+
+async function requestSitesChatStream(
   request: ChatRequest,
   signal: AbortSignal,
   handlers: ChatStreamHandlers,
@@ -340,49 +407,31 @@ export async function requestChatStream(
   if (!response.ok) {
     throw new ChatApiError(await errorMessageFromResponse(response));
   }
-  const contentType = response.headers.get("content-type")?.toLowerCase() ?? "";
-  if (!contentType.startsWith("text/event-stream")) {
-    throw new ChatApiError("채팅 서버가 스트리밍 응답을 반환하지 않았습니다.");
-  }
-  if (!response.body) {
-    throw new ChatApiError("채팅 서버의 스트리밍 응답을 읽지 못했습니다.");
-  }
-
-  const reader = response.body.getReader();
-  const decoder = new TextDecoder();
-  let buffer = "";
   let doneResponse: ChatResponse | null = null;
 
-  const dispatch = (block: string) => {
-    const parsed = parseSseBlock(block);
-    if (!parsed) return;
-    if (!["meta", "delta", "done", "error"].includes(parsed.event)) {
+  await consumeSseResponse(response, signal, (event, payload) => {
+    if (!["meta", "delta", "done", "error"].includes(event)) {
       throw new ChatApiError("지원하지 않는 스트리밍 이벤트를 받았습니다.");
     }
     if (doneResponse) {
       throw new ChatApiError("완료 이후 잘못된 스트리밍 이벤트를 받았습니다.");
     }
-
-    const payload = parseEventData(parsed.data);
-    if (parsed.event === "meta") {
+    if (event === "meta") {
       if (!isRecord(payload)) {
         throw new ChatApiError("스트리밍 메타데이터 형식을 확인할 수 없습니다.");
       }
       handlers.onMeta?.(payload);
       return;
     }
-    if (parsed.event === "delta") {
+    if (event === "delta") {
       if (!isRecord(payload) || !isString(payload.text)) {
         throw new ChatApiError("스트리밍 본문 형식을 확인할 수 없습니다.");
       }
       // 화면 재생 속도와 무관하게 다음 SSE 이벤트를 즉시 읽는다.
       handlers.onDelta(payload.text);
-      if (signal.aborted) {
-        throw new DOMException("The operation was aborted.", "AbortError");
-      }
       return;
     }
-    if (parsed.event === "error") {
+    if (event === "error") {
       if (!isRecord(payload)) {
         throw new ChatApiError("스트리밍 오류 형식을 확인할 수 없습니다.");
       }
@@ -393,24 +442,149 @@ export async function requestChatStream(
       );
     }
     doneResponse = parseChatResponse(payload);
-  };
-
-  while (true) {
-    const chunk = await reader.read();
-    if (chunk.done) break;
-    buffer += decoder.decode(chunk.value, { stream: true });
-    let next = nextSseBlock(buffer);
-    while (next) {
-      dispatch(next.block);
-      buffer = next.rest;
-      next = nextSseBlock(buffer);
-    }
-  }
-
-  buffer += decoder.decode();
-  if (buffer.trim()) dispatch(buffer);
+  });
   if (!doneResponse) {
     throw new ChatApiError("완료되지 않은 스트리밍 응답을 받았습니다.");
   }
   return doneResponse;
+}
+
+async function finalizeDirectStream(
+  body: Readonly<Record<string, string>>,
+  signal: AbortSignal,
+): Promise<ChatResponse> {
+  let response: Response;
+  try {
+    response = await fetch(apiUrl("/api/chat/finalize"), {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(body),
+      signal,
+    });
+  } catch (error) {
+    if (error instanceof DOMException && error.name === "AbortError") {
+      throw error;
+    }
+    throw new ChatApiError("채팅 응답을 최종 확인하지 못했습니다.");
+  }
+  if (!response.ok) {
+    throw new ChatApiError(await errorMessageFromResponse(response));
+  }
+  let payload: unknown;
+  try {
+    payload = await response.json();
+  } catch {
+    throw new ChatApiError("채팅 서버의 최종 응답을 읽지 못했습니다.");
+  }
+  return parseChatResponse(payload);
+}
+
+async function requestGatewayChatStream(
+  gatewayEndpoint: string,
+  request: ChatRequest,
+  signal: AbortSignal,
+  handlers: ChatStreamHandlers,
+): Promise<ChatResponse> {
+  let prepareResponse: Response;
+  try {
+    prepareResponse = await fetch(apiUrl("/api/chat/prepare"), {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(request),
+      signal,
+    });
+  } catch (error) {
+    if (error instanceof DOMException && error.name === "AbortError") {
+      throw error;
+    }
+    throw new ChatApiError("채팅 준비 요청을 전송하지 못했습니다.");
+  }
+  if (prepareResponse.status === 404 || prepareResponse.status === 503) {
+    return requestSitesChatStream(request, signal, handlers);
+  }
+  if (!prepareResponse.ok) {
+    throw new ChatApiError(await errorMessageFromResponse(prepareResponse));
+  }
+
+  let prepared: unknown;
+  try {
+    prepared = await prepareResponse.json();
+  } catch {
+    throw new ChatApiError("채팅 준비 응답을 읽지 못했습니다.");
+  }
+  if (
+    !isRecord(prepared) ||
+    !isString(prepared.ticket) ||
+    !isString(prepared.requestId)
+  ) {
+    throw new ChatApiError("채팅 준비 응답 형식을 확인할 수 없습니다.");
+  }
+
+  handlers.onMeta?.({
+    requestId: prepared.requestId,
+    transport: "direct-inference-gateway",
+  });
+  let resultTicket = "";
+  let gatewayError: "upstream_unavailable" | "upstream_timeout" =
+    "upstream_unavailable";
+
+  try {
+    const gatewayResponse = await fetch(gatewayEndpoint, {
+      method: "POST",
+      headers: {
+        accept: "text/event-stream",
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({ ticket: prepared.ticket }),
+      signal,
+    });
+    if (!gatewayResponse.ok) {
+      throw new ChatApiError(await errorMessageFromResponse(gatewayResponse));
+    }
+    await consumeSseResponse(gatewayResponse, signal, (event, payload) => {
+      if (event === "delta") {
+        if (!isRecord(payload) || !isString(payload.text)) {
+          throw new ChatApiError("추론 스트림 형식을 확인할 수 없습니다.");
+        }
+        handlers.onDelta(payload.text);
+        return;
+      }
+      if (event === "done") {
+        if (!isRecord(payload) || !isString(payload.resultTicket)) {
+          throw new ChatApiError("추론 완료 응답 형식을 확인할 수 없습니다.");
+        }
+        resultTicket = payload.resultTicket;
+        return;
+      }
+      if (event === "error") {
+        if (isRecord(payload) && payload.error === "upstream_timeout") {
+          gatewayError = "upstream_timeout";
+        }
+        throw new ChatApiError("추론 서버가 응답을 완료하지 못했습니다.");
+      }
+      throw new ChatApiError("지원하지 않는 추론 스트림 이벤트를 받았습니다.");
+    });
+  } catch (error) {
+    if (error instanceof DOMException && error.name === "AbortError") {
+      throw error;
+    }
+  }
+
+  return resultTicket
+    ? finalizeDirectStream({ resultTicket }, signal)
+    : finalizeDirectStream(
+        { prepareTicket: prepared.ticket, error: gatewayError },
+        signal,
+      );
+}
+
+export async function requestChatStream(
+  request: ChatRequest,
+  signal: AbortSignal,
+  handlers: ChatStreamHandlers,
+): Promise<ChatResponse> {
+  const gatewayEndpoint = inferenceGatewayUrl();
+  return gatewayEndpoint
+    ? requestGatewayChatStream(gatewayEndpoint, request, signal, handlers)
+    : requestSitesChatStream(request, signal, handlers);
 }

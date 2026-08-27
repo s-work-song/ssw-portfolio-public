@@ -1,0 +1,567 @@
+.page {
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at 75% 0%, var(--accent-soft, rgba(99, 102, 241, 0.12)), transparent 30rem),
+    var(--bg);
+  color: var(--text);
+}
+
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  border-bottom: 1px solid var(--border);
+  background: var(--nav-bg);
+  backdrop-filter: blur(16px);
+}
+
+.headerInner,
+.main {
+  width: min(100%, 1040px);
+  margin: 0 auto;
+  padding-inline: clamp(18px, 5vw, 36px);
+}
+
+.headerInner {
+  height: 62px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.backLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.backIcon {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--border-strong);
+  border-radius: 9px;
+  background: var(--bg-elev);
+  transition: border-color 160ms ease, transform 160ms ease;
+}
+
+.backLink:hover .backIcon {
+  border-color: var(--accent, #6366f1);
+  transform: translateX(-2px);
+}
+
+.eyebrow,
+.kicker,
+.panelHeading > span {
+  font-family: "JetBrains Mono", monospace;
+  letter-spacing: 0.17em;
+}
+
+.eyebrow {
+  color: var(--text-mute);
+  font-size: 11px;
+}
+
+.main {
+  padding-top: clamp(34px, 6vw, 60px);
+  padding-bottom: 96px;
+}
+
+.titleRow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: clamp(26px, 5vw, 42px);
+}
+
+.kicker {
+  margin: 0 0 12px;
+  color: var(--accent, #6366f1);
+  font-size: 12px;
+}
+
+.titleRow h1 {
+  margin: 0 0 12px;
+  font-size: clamp(30px, 5vw, 44px);
+  line-height: 1.12;
+  letter-spacing: -0.035em;
+}
+
+.intro {
+  max-width: 650px;
+  margin: 0;
+  color: var(--text-dim);
+  font-size: 15px;
+  line-height: 1.75;
+}
+
+.lockButton,
+.errorCard button {
+  flex: none;
+  border: 1px solid var(--border-strong);
+  border-radius: 10px;
+  background: var(--bg-elev);
+  color: var(--text-dim);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.lockButton {
+  padding: 10px 15px;
+}
+
+.unlockCard,
+.rangeBar,
+.panel,
+.summaryCard,
+.emptyCard,
+.stateCard {
+  border: 1px solid var(--border);
+  background: var(--bg-elev);
+  box-shadow: var(--shadow);
+}
+
+.unlockCard {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 18px 16px;
+  padding: clamp(22px, 4vw, 32px);
+  border-radius: 20px;
+}
+
+.lockMark {
+  width: 46px;
+  height: 46px;
+  display: grid;
+  place-items: center;
+  border-radius: 14px;
+  background: var(--accent-soft, rgba(99, 102, 241, 0.14));
+  color: var(--accent, #6366f1);
+  font-size: 24px;
+  font-weight: 800;
+}
+
+.unlockCopy h2,
+.rangeBar h2,
+.panelHeading h2,
+.emptyCard h2 {
+  margin: 0;
+  font-size: 17px;
+}
+
+.unlockCopy p,
+.rangeBar p,
+.panelHeading p,
+.emptyCard p {
+  margin: 5px 0 0;
+  color: var(--text-mute);
+  font-size: 13.5px;
+  line-height: 1.6;
+}
+
+.tokenForm {
+  grid-column: 2;
+}
+
+.tokenForm label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.tokenRow {
+  display: flex;
+  gap: 9px;
+}
+
+.tokenRow input {
+  min-width: 0;
+  flex: 1;
+  padding: 12px 14px;
+  border: 1px solid var(--border-strong);
+  border-radius: 11px;
+  background: var(--bg-elev-2);
+  color: var(--text);
+  font: 14px "JetBrains Mono", monospace;
+}
+
+.tokenRow button {
+  padding: 12px 18px;
+  border: 0;
+  border-radius: 11px;
+  background: var(--accent, #6366f1);
+  color: var(--accent-contrast, #fff);
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.formHelp {
+  margin: 8px 0 0;
+  color: var(--text-mute);
+  font-size: 12px;
+}
+
+.statusRegion:empty {
+  display: none;
+}
+
+.stateCard {
+  min-height: 76px;
+  margin-top: 16px;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  border-radius: 16px;
+  color: var(--text-dim);
+  font-size: 14px;
+  text-align: center;
+}
+
+.errorCard {
+  justify-content: space-between;
+  border-color: rgba(225, 70, 70, 0.28);
+  color: #d64a4a;
+}
+
+.errorCard button {
+  padding: 9px 13px;
+}
+
+.spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--border-strong);
+  border-top-color: var(--accent, #6366f1);
+  border-radius: 50%;
+  animation: spin 700ms linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.rangeBar {
+  margin-top: 16px;
+  padding: 18px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  border-radius: 16px;
+}
+
+.rangeButtons {
+  display: flex;
+  gap: 6px;
+  padding: 4px;
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  background: var(--bg-elev-2);
+}
+
+.rangeButtons button {
+  min-width: 68px;
+  padding: 9px 14px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-dim);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 750;
+}
+
+.rangeButtons button:disabled {
+  cursor: wait;
+  opacity: 0.62;
+}
+
+.rangeButtons .activeRange {
+  background: var(--accent, #6366f1);
+  color: var(--accent-contrast, #fff);
+  box-shadow: 0 8px 18px -10px var(--accent, #6366f1);
+}
+
+.dashboard {
+  display: grid;
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.summaryGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.summaryCard {
+  min-width: 0;
+  padding: 20px;
+  border-radius: 16px;
+}
+
+.summaryCard span,
+.summaryCard small {
+  display: block;
+  color: var(--text-mute);
+  font-size: 12px;
+}
+
+.summaryCard strong {
+  display: block;
+  margin: 7px 0 6px;
+  overflow-wrap: anywhere;
+  font: 700 clamp(26px, 4vw, 36px) "JetBrains Mono", monospace;
+  letter-spacing: -0.04em;
+}
+
+.panel {
+  min-width: 0;
+  padding: clamp(20px, 3.5vw, 28px);
+  border-radius: 18px;
+}
+
+.panelHeading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 24px;
+}
+
+.panelHeading > span {
+  flex: none;
+  color: var(--accent, #6366f1);
+  font-size: 11px;
+}
+
+.chart {
+  margin: 0;
+  overflow-x: auto;
+  padding: 22px 4px 2px;
+}
+
+.bars {
+  min-width: min-content;
+  height: 230px;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  align-items: stretch;
+  gap: clamp(4px, 1vw, 12px);
+  list-style: none;
+  border-bottom: 1px solid var(--border-strong);
+  background: repeating-linear-gradient(
+    to bottom,
+    transparent 0,
+    transparent calc(25% - 1px),
+    var(--border) 25%
+  );
+}
+
+.barItem {
+  width: clamp(20px, 4vw, 52px);
+  min-width: 20px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.barValue {
+  position: relative;
+  width: min(100%, 34px);
+  min-height: 4px;
+  display: block;
+  border-radius: 7px 7px 2px 2px;
+  background: linear-gradient(to top, var(--accent, #6366f1), #8b8ef5);
+  transition: filter 160ms ease, transform 160ms ease;
+}
+
+.barValue:hover,
+.barValue:focus-visible {
+  filter: brightness(1.08);
+  transform: translateY(-2px);
+}
+
+.barValue > span {
+  position: absolute;
+  top: -20px;
+  left: 50%;
+  color: var(--text-dim);
+  font: 10px "JetBrains Mono", monospace;
+  transform: translateX(-50%);
+}
+
+.barItem time {
+  height: 20px;
+  color: var(--text-mute);
+  font: 10px "JetBrains Mono", monospace;
+  white-space: nowrap;
+}
+
+.tableScroll {
+  max-width: 100%;
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: 13px;
+}
+
+.tableScroll table {
+  width: 100%;
+  min-width: 720px;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.tableScroll th,
+.tableScroll td {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  white-space: nowrap;
+}
+
+.tableScroll thead th {
+  background: var(--bg-elev-2);
+  color: var(--text-mute);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+}
+
+.tableScroll tbody tr:last-child > * {
+  border-bottom: 0;
+}
+
+.tableScroll tbody th {
+  max-width: 280px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tableScroll code {
+  color: var(--text);
+  font-size: 12px;
+}
+
+.tableEmpty {
+  margin: 0;
+  padding: 24px;
+  border: 1px dashed var(--border-strong);
+  border-radius: 13px;
+  color: var(--text-mute);
+  text-align: center;
+}
+
+.emptyCard {
+  padding: 46px 24px;
+  border-radius: 18px;
+  text-align: center;
+}
+
+.emptyCard > span {
+  width: 50px;
+  height: 50px;
+  margin: 0 auto 16px;
+  display: grid;
+  place-items: center;
+  border-radius: 15px;
+  background: var(--bg-elev-2);
+  color: var(--text-mute);
+  font-size: 22px;
+}
+
+.hiddenDate {
+  visibility: hidden;
+}
+
+@media (max-width: 680px) {
+  .titleRow,
+  .rangeBar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .lockButton {
+    align-self: flex-start;
+  }
+
+  .unlockCard {
+    grid-template-columns: 1fr;
+  }
+
+  .lockMark {
+    width: 42px;
+    height: 42px;
+  }
+
+  .tokenForm {
+    grid-column: 1;
+  }
+
+  .summaryGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .summaryCard {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    gap: 4px 14px;
+  }
+
+  .summaryCard strong {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    margin: 0;
+  }
+
+  .rangeButtons {
+    align-self: stretch;
+  }
+
+  .rangeButtons button {
+    flex: 1;
+  }
+
+  .panelHeading {
+    margin-bottom: 18px;
+  }
+
+  .bars {
+    height: 200px;
+  }
+}
+
+@media (max-width: 430px) {
+  .tokenRow {
+    flex-direction: column;
+  }
+
+  .tokenRow button {
+    width: 100%;
+  }
+
+  .errorCard {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .panelHeading > span {
+    display: none;
+  }
+}
