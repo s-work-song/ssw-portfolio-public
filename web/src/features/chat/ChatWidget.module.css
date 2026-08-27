@@ -551,6 +551,20 @@
   border-bottom-right-radius: 4px;
   background: var(--chat-accent);
   color: #fff;
+  cursor: text;
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+.userMessage * {
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+.userMessage::selection,
+.userMessage *::selection {
+  background: rgba(255, 255, 255, 0.94);
+  color: #272a4b;
 }
 
 .messageText {

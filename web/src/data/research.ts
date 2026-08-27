@@ -171,10 +171,10 @@ export const researchTimelineItems: CareerItem[] = [
   {
     period: '2026–현재',
     color: '#6366f1',
-    role: 'Gemma4 온디바이스 AI 실험',
+    role: '오픈 웨이트 모델 온디바이스 AI 실험',
     org: '',
-    desc: 'Semantic Kernel을 사용하여 온디바이스 및 클라우드 LLM 인터페이스를 활용하는 예제를 설계하고, 오픈소스 가벼운 모델인 Gemma4를 로컬에 띄워 테스트했습니다.',
-    tags: ['Gemma4', 'Semantic Kernel']
+    desc: 'Semantic Kernel을 활용해 오픈 웨이트 모델을 로컬 GPU에서 직접 구동하는 환경과 Google Colab GPU에서 추론 서버로 제공하는 환경을 각각 구성하고 테스트했습니다.',
+    tags: ['Open Weight', 'Semantic Kernel']
   },
   {
     period: '2026–현재',
