@@ -35,6 +35,7 @@ import {
 } from "./constants";
 import { ChatContext, type ChatContextValue } from "./ChatContext";
 import { ChatWidget } from "./ChatWidget";
+import { StreamRenderQueue } from "./streamRenderQueue";
 import {
   CHAT_ACTION_NAVIGATE_EVENT,
   CHAT_ACTION_PAGE_ENTERED_EVENT,
@@ -63,8 +64,6 @@ const REDUCED_MOTION_QUERY = "(prefers-reduced-motion: reduce)";
 const MOBILE_HISTORY_MARKER = "__portfolioChatOpen";
 const MOBILE_EXIT_DURATION_MS = 260;
 const CHAT_STATUS_TIMEOUT_MS = 5_000;
-const STREAM_RENDER_CHUNK_CHARACTERS = 8;
-const STREAM_RENDER_INTERVAL_MS = 48;
 const ACTION_SCROLL_MIN_DURATION_MS = 420;
 const ACTION_SCROLL_MAX_DURATION_MS = 900;
 const ACTION_SCROLL_MS_PER_PIXEL = 0.45;
@@ -82,29 +81,6 @@ const DESKTOP_EXIT_DURATION_MS: Readonly<
   slide: 240,
   jelly: 620,
 };
-
-function splitStreamDelta(text: string): string[] {
-  const characters = Array.from(text);
-  const chunks: string[] = [];
-  for (
-    let index = 0;
-    index < characters.length;
-    index += STREAM_RENDER_CHUNK_CHARACTERS
-  ) {
-    chunks.push(
-      characters
-        .slice(index, index + STREAM_RENDER_CHUNK_CHARACTERS)
-        .join(""),
-    );
-  }
-  return chunks;
-}
-
-function waitForStreamRenderInterval(): Promise<void> {
-  return new Promise((resolve) => {
-    window.setTimeout(resolve, STREAM_RENDER_INTERVAL_MS);
-  });
-}
 
 function easeInOutCubic(progress: number): number {
   return progress < 0.5
@@ -207,6 +183,8 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
   const [systemReducedMotion, setSystemReducedMotion] = useState(false);
   const idRef = useRef(0);
   const abortRef = useRef<AbortController | null>(null);
+  const renderQueueRef = useRef<StreamRenderQueue | null>(null);
+  const mountedRef = useRef(true);
   const statusAbortRef = useRef<AbortController | null>(null);
   const inFlightRef = useRef(false);
   const stopRequestedRef = useRef(false);
@@ -349,8 +327,12 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
     return () => media.removeEventListener("change", update);
   }, []);
 
-  useEffect(
-    () => () => {
+  useEffect(() => {
+    mountedRef.current = true;
+
+    return () => {
+      mountedRef.current = false;
+      renderQueueRef.current?.cancel();
       abortRef.current?.abort();
       statusAbortRef.current?.abort();
       if (closeTimerRef.current !== null) {
@@ -374,9 +356,8 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
       highlightedActionTargetRef.current?.removeAttribute(
         "data-chat-action-target",
       );
-    },
-    [],
-  );
+    };
+  }, []);
 
   const pageContext = pageContextFromPathname(pathname);
 
@@ -921,7 +902,14 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
       let streamingMessageId: string | undefined;
 
       const appendStreamDelta = (text: string) => {
-        if (!text || !streamingMessageId) return;
+        if (
+          !mountedRef.current ||
+          controller.signal.aborted ||
+          !text ||
+          !streamingMessageId
+        ) {
+          return;
+        }
         setMessages((current) =>
           current.map((chatMessage) =>
             chatMessage.id === streamingMessageId
@@ -949,23 +937,25 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
         ]);
       }
 
+      const renderQueue = shouldStream
+        ? new StreamRenderQueue(appendStreamDelta)
+        : null;
+      renderQueueRef.current?.cancel();
+      renderQueueRef.current = renderQueue;
+
       try {
         const response = shouldStream
           ? await requestChatStream(request, controller.signal, {
-              async onDelta(text) {
-                for (const chunk of splitStreamDelta(text)) {
-                  if (controller.signal.aborted) {
-                    throw new DOMException(
-                      "The operation was aborted.",
-                      "AbortError",
-                    );
-                  }
-                  appendStreamDelta(chunk);
-                  await waitForStreamRenderInterval();
-                }
+              onDelta(text) {
+                renderQueue?.enqueue(text);
               },
             })
           : await requestChat(request, controller.signal);
+        await renderQueue?.drain();
+        if (controller.signal.aborted) {
+          throw new DOMException("The operation was aborted.", "AbortError");
+        }
+        if (!mountedRef.current) return;
         if (response.status === "upstream_offline") {
           setAvailability("offline");
         }
@@ -993,6 +983,7 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
         );
         retryRef.current = null;
       } catch (requestError) {
+        if (!mountedRef.current) return;
         const requestWasAborted =
           controller.signal.aborted ||
           (requestError instanceof DOMException &&
@@ -1030,10 +1021,12 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
             : "요청을 처리하지 못했습니다. 다시 시도해 주세요.",
         );
       } finally {
+        renderQueue?.cancel();
+        if (renderQueueRef.current === renderQueue) renderQueueRef.current = null;
         if (abortRef.current === controller) abortRef.current = null;
         stopRequestedRef.current = false;
         inFlightRef.current = false;
-        setIsLoading(false);
+        if (mountedRef.current) setIsLoading(false);
       }
     },
     [
@@ -1095,6 +1088,7 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
   const stopGenerating = useCallback(() => {
     if (!inFlightRef.current || !abortRef.current) return;
     stopRequestedRef.current = true;
+    renderQueueRef.current?.cancel();
     abortRef.current.abort();
   }, []);
 
@@ -1107,6 +1101,7 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
     if (inFlightRef.current && abortRef.current) {
       // 사용자 중단 안내를 남기지 않고 진행 중인 요청만 조용히 정리한다.
       stopRequestedRef.current = false;
+      renderQueueRef.current?.cancel();
       abortRef.current.abort();
     }
   }, []);

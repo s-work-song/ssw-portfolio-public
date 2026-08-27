@@ -7,6 +7,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { ThemeProvider } from "../context/ThemeContext";
 import { ChatProvider } from "../features/chat";
+import { ChatApiPreconnect } from "./ChatApiPreconnect";
 
 export const metadata: Metadata = {
   title: {
@@ -25,6 +26,7 @@ export default function RootLayout({
   return (
     <html lang="ko" suppressHydrationWarning>
       <body>
+        <ChatApiPreconnect />
         <ThemeProvider>
           <ChatProvider>{children}</ChatProvider>
         </ThemeProvider>

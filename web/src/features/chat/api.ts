@@ -253,7 +253,7 @@ export async function requestChat(
 }
 
 export interface ChatStreamHandlers {
-  onDelta: (text: string) => void | Promise<void>;
+  onDelta: (text: string) => void;
   onMeta?: (meta: Readonly<Record<string, unknown>>) => void;
 }
 
@@ -353,7 +353,7 @@ export async function requestChatStream(
   let buffer = "";
   let doneResponse: ChatResponse | null = null;
 
-  const dispatch = async (block: string) => {
+  const dispatch = (block: string) => {
     const parsed = parseSseBlock(block);
     if (!parsed) return;
     if (!["meta", "delta", "done", "error"].includes(parsed.event)) {
@@ -375,9 +375,8 @@ export async function requestChatStream(
       if (!isRecord(payload) || !isString(payload.text)) {
         throw new ChatApiError("스트리밍 본문 형식을 확인할 수 없습니다.");
       }
-      // 중간 프록시가 여러 SSE 이벤트를 한 네트워크 청크로 합치더라도
-      // 표현 계층이 각 delta를 순차적으로 그릴 수 있도록 완료를 기다린다.
-      await handlers.onDelta(payload.text);
+      // 화면 재생 속도와 무관하게 다음 SSE 이벤트를 즉시 읽는다.
+      handlers.onDelta(payload.text);
       if (signal.aborted) {
         throw new DOMException("The operation was aborted.", "AbortError");
       }
@@ -402,14 +401,14 @@ export async function requestChatStream(
     buffer += decoder.decode(chunk.value, { stream: true });
     let next = nextSseBlock(buffer);
     while (next) {
-      await dispatch(next.block);
+      dispatch(next.block);
       buffer = next.rest;
       next = nextSseBlock(buffer);
     }
   }
 
   buffer += decoder.decode();
-  if (buffer.trim()) await dispatch(buffer);
+  if (buffer.trim()) dispatch(buffer);
   if (!doneResponse) {
     throw new ChatApiError("완료되지 않은 스트리밍 응답을 받았습니다.");
   }
