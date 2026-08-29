@@ -290,7 +290,7 @@ export default function LogEntries({ posts }: LogEntriesProps) {
               aria-busy={isComposing || query !== appliedQuery}
             >
               {externalSearch
-                ? `${externalSearch.source === "webmcp" ? "WebMCP" : "챗봇"} 검색 · `
+                ? `${externalSearch.source === "webmcp" ? "WebMCP" : "모델 도구"} 검색 · `
                 : ""}
               {visiblePosts.length}개 기록
             </p>

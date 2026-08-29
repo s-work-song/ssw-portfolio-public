@@ -36,6 +36,7 @@ import {
 import { ChatContext, type ChatContextValue } from "./ChatContext";
 import { ChatWidget } from "./ChatWidget";
 import { StreamRenderQueue } from "./streamRenderQueue";
+import { dispatchPortfolioModelToolExecution } from "../webmcp/logSearchView";
 import {
   CHAT_ACTION_NAVIGATE_EVENT,
   CHAT_ACTION_PAGE_ENTERED_EVENT,
@@ -54,6 +55,7 @@ import type {
   ChatMessage,
   ChatRequest,
   ChatStreamAnimation,
+  ChatToolExecution,
   Tone,
 } from "./types";
 
@@ -900,6 +902,12 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
       };
       const shouldStream = streamingEnabled;
       let streamingMessageId: string | undefined;
+      const handledToolCallIds = new Set<string>();
+      const handleToolExecution = (execution: ChatToolExecution) => {
+        if (handledToolCallIds.has(execution.toolCallId)) return;
+        handledToolCallIds.add(execution.toolCallId);
+        dispatchPortfolioModelToolExecution(execution);
+      };
 
       const appendStreamDelta = (text: string) => {
         if (
@@ -949,8 +957,10 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
               onDelta(text) {
                 renderQueue?.enqueue(text);
               },
+              onTool: handleToolExecution,
             })
           : await requestChat(request, controller.signal);
+        response.toolExecutions.forEach(handleToolExecution);
         await renderQueue?.drain();
         if (controller.signal.aborted) {
           throw new DOMException("The operation was aborted.", "AbortError");

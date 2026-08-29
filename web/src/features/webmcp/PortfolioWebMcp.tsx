@@ -9,8 +9,11 @@ import {
 } from './logTools.mjs';
 import {
   loadPortfolioLogIndex,
+  PORTFOLIO_MODEL_TOOL_EXECUTION_EVENT,
+  preparePortfolioModelToolView,
   preparePortfolioLogSearchView,
 } from './logSearchView';
+import type { ChatToolExecution } from '@/features/chat/types';
 
 function toolResult(payload: unknown): WebMcpToolResult {
   return {
@@ -35,6 +38,34 @@ function textInput(input: Record<string, unknown>, key: string): string {
 
 export function PortfolioWebMcp() {
   const { navigateRoute } = useChat();
+
+  useEffect(() => {
+    const controller = new AbortController();
+    const handleModelToolExecution = (rawEvent: Event) => {
+      const event = rawEvent as CustomEvent<ChatToolExecution>;
+      if (!event.detail || controller.signal.aborted) return;
+      void preparePortfolioModelToolView(event.detail)
+        .then((result) => {
+          if (!controller.signal.aborted) navigateRoute(result.view.route);
+        })
+        .catch((error) => {
+          if (!controller.signal.aborted && process.env.NODE_ENV !== 'production') {
+            console.warn('모델 도구 검색 결과를 화면에 표시하지 못했습니다.', error);
+          }
+        });
+    };
+    window.addEventListener(
+      PORTFOLIO_MODEL_TOOL_EXECUTION_EVENT,
+      handleModelToolExecution,
+    );
+    return () => {
+      controller.abort();
+      window.removeEventListener(
+        PORTFOLIO_MODEL_TOOL_EXECUTION_EVENT,
+        handleModelToolExecution,
+      );
+    };
+  }, [navigateRoute]);
 
   useEffect(() => {
     const modelContext = document.modelContext;

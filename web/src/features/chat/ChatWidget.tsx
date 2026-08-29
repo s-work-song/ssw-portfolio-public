@@ -25,10 +25,6 @@ import {
 } from "../../context/ThemeContext";
 import ElasticJellyPanel from "../../lib/ElasticJellyPanel";
 import {
-  isPortfolioLogListRequest,
-  preparePortfolioLogSearchView,
-} from "../webmcp/logSearchView";
-import {
   AUDIENCE_OPTIONS,
   CHAT_QUICK_START_OPTIONS,
   REASONING_QUICK_TOGGLE_ENABLED,
@@ -360,7 +356,6 @@ export function ChatWidget() {
     sendMessage,
     stopGenerating,
     retry,
-    navigateRoute,
     navigateAction,
   } = useChat();
   const [draft, setDraft] = useState("");
@@ -826,18 +821,7 @@ export function ChatWidget() {
     const message = draft.trim();
     if (!message || isLoading || availability !== "online") return;
     setDraft("");
-    const requestPromise = sendMessage(message);
-    if (isPortfolioLogListRequest(message)) {
-      void preparePortfolioLogSearchView(
-        { query: message.slice(0, 200), limit: 10 },
-        "chat",
-      )
-        .then((result) => navigateRoute(result.view.route))
-        .catch((searchError) => {
-          console.warn("챗봇 기록 목록 검색을 표시하지 못했습니다.", searchError);
-        });
-    }
-    await requestPromise;
+    await sendMessage(message);
   };
 
   const handleInputKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {

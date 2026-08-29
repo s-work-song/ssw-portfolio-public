@@ -5,12 +5,14 @@ import {
   type LogListViewResult,
   type LogSearchIndex,
 } from './logTools.mjs';
+import type { ChatToolExecution } from '@/features/chat/types';
 
 export const PORTFOLIO_LOG_SEARCH_VIEW_EVENT = 'portfolio:webmcp-log-search-view';
+export const PORTFOLIO_MODEL_TOOL_EXECUTION_EVENT = 'portfolio:model-tool-execution';
 const STORAGE_KEY = 'portfolio-pending-log-search-view';
 const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? '';
 
-export type PortfolioLogSearchViewSource = 'webmcp' | 'chat';
+export type PortfolioLogSearchViewSource = 'webmcp' | 'model-tool';
 
 export type PortfolioLogSearchViewDetail = LogListViewResult['view'] & {
   source: PortfolioLogSearchViewSource;
@@ -65,9 +67,28 @@ export async function preparePortfolioLogSearchView(
   return result;
 }
 
-export function isPortfolioLogListRequest(message: string): boolean {
-  const normalized = message.normalize('NFKC').toLocaleLowerCase('ko-KR');
-  const mentionsLogs = /(?:기록|로그|글)/u.test(normalized);
-  const asksForResults = /(?:찾|검색|목록|보여)/u.test(normalized);
-  return mentionsLogs && asksForResults;
+export function dispatchPortfolioModelToolExecution(execution: ChatToolExecution): void {
+  window.dispatchEvent(new CustomEvent<ChatToolExecution>(
+    PORTFOLIO_MODEL_TOOL_EXECUTION_EVENT,
+    { detail: execution },
+  ));
+}
+
+export async function preparePortfolioModelToolView(
+  execution: ChatToolExecution,
+): Promise<LogListViewResult> {
+  const index = await loadPortfolioLogIndex();
+  const result = createPortfolioLogListView(index, {
+    query: execution.query,
+    limit: 10,
+  });
+  const availableSlugs = new Set(index.posts.map(({ slug }) => slug));
+  const matchedSlugs = [...new Set(execution.matchedSlugs)]
+    .filter((slug) => availableSlugs.has(slug))
+    .slice(0, 5);
+  result.view.matchedSlugs = matchedSlugs.length > 0
+    ? matchedSlugs
+    : result.view.matchedSlugs;
+  publishPortfolioLogSearchView({ ...result.view, source: 'model-tool' });
+  return result;
 }

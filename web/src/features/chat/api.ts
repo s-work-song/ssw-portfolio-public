@@ -7,6 +7,7 @@ import type {
   ChatResponse,
   ChatSegment,
   ChatStatusResponse,
+  ChatToolExecution,
   PageContext,
 } from "./types";
 
@@ -89,6 +90,43 @@ function parseSuggestedQuestions(value: unknown): string[] {
   return questions;
 }
 
+function parseToolExecution(value: unknown): ChatToolExecution | null {
+  if (
+    !isRecord(value) ||
+    value.type !== "show_portfolio_log_results" ||
+    value.toolName !== "search-portfolio-logs" ||
+    !isString(value.toolCallId) ||
+    value.toolCallId.length < 1 ||
+    value.toolCallId.length > 128 ||
+    !isString(value.query) ||
+    value.query.length < 1 ||
+    value.query.length > 200 ||
+    !Array.isArray(value.matchedSlugs)
+  ) {
+    return null;
+  }
+  const matchedSlugs = [...new Set(value.matchedSlugs)]
+    .filter((slug): slug is string =>
+      isString(slug) && /^[a-z0-9-]{1,120}$/u.test(slug),
+    )
+    .slice(0, 5);
+  return {
+    type: "show_portfolio_log_results",
+    toolCallId: value.toolCallId,
+    toolName: "search-portfolio-logs",
+    query: value.query,
+    matchedSlugs,
+  };
+}
+
+function parseToolExecutions(value: unknown): ChatToolExecution[] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map(parseToolExecution)
+    .filter((execution): execution is ChatToolExecution => execution !== null)
+    .slice(0, 1);
+}
+
 function parseChatResponse(value: unknown): ChatResponse {
   if (!isRecord(value)) {
     throw new ChatApiError("서버 응답 형식을 확인할 수 없습니다.");
@@ -106,6 +144,7 @@ function parseChatResponse(value: unknown): ChatResponse {
     sources,
     actions,
     suggestedQuestions,
+    toolExecutions,
     cached,
   } = value;
 
@@ -151,6 +190,7 @@ function parseChatResponse(value: unknown): ChatResponse {
       .slice(0, 2),
     // 백엔드와 프론트의 순차 배포 중에도 기존 응답을 계속 읽는다.
     suggestedQuestions: parseSuggestedQuestions(suggestedQuestions),
+    toolExecutions: parseToolExecutions(toolExecutions),
     cached,
   };
 }
@@ -274,6 +314,7 @@ export async function requestChat(
 export interface ChatStreamHandlers {
   onDelta: (text: string) => void;
   onMeta?: (meta: Readonly<Record<string, unknown>>) => void;
+  onTool?: (execution: ChatToolExecution) => void;
 }
 
 interface SseEvent {
@@ -410,7 +451,7 @@ async function requestSitesChatStream(
   let doneResponse: ChatResponse | null = null;
 
   await consumeSseResponse(response, signal, (event, payload) => {
-    if (!["meta", "delta", "done", "error"].includes(event)) {
+    if (!["meta", "tool", "delta", "done", "error"].includes(event)) {
       throw new ChatApiError("지원하지 않는 스트리밍 이벤트를 받았습니다.");
     }
     if (doneResponse) {
@@ -429,6 +470,14 @@ async function requestSitesChatStream(
       }
       // 화면 재생 속도와 무관하게 다음 SSE 이벤트를 즉시 읽는다.
       handlers.onDelta(payload.text);
+      return;
+    }
+    if (event === "tool") {
+      const execution = parseToolExecution(payload);
+      if (!execution) {
+        throw new ChatApiError("모델 도구 실행 형식을 확인할 수 없습니다.");
+      }
+      handlers.onTool?.(execution);
       return;
     }
     if (event === "error") {
@@ -479,6 +528,55 @@ async function finalizeDirectStream(
   return parseChatResponse(payload);
 }
 
+async function continueDirectToolCall(
+  toolTicket: string,
+  signal: AbortSignal,
+): Promise<{
+  ticket: string;
+  requestId: string;
+  toolExecution: ChatToolExecution;
+}> {
+  let response: Response;
+  try {
+    response = await fetch(apiUrl("/api/chat/tool"), {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ toolTicket }),
+      signal,
+    });
+  } catch (error) {
+    if (error instanceof DOMException && error.name === "AbortError") {
+      throw error;
+    }
+    throw new ChatApiError("모델 도구 실행 결과를 확인하지 못했습니다.");
+  }
+  if (!response.ok) {
+    throw new ChatApiError(await errorMessageFromResponse(response));
+  }
+  let payload: unknown;
+  try {
+    payload = await response.json();
+  } catch {
+    throw new ChatApiError("모델 도구 실행 응답을 읽지 못했습니다.");
+  }
+  if (
+    !isRecord(payload) ||
+    !isString(payload.ticket) ||
+    !isString(payload.requestId)
+  ) {
+    throw new ChatApiError("모델 도구 실행 응답 형식을 확인할 수 없습니다.");
+  }
+  const toolExecution = parseToolExecution(payload.toolExecution);
+  if (!toolExecution) {
+    throw new ChatApiError("모델 도구 실행 결과 형식을 확인할 수 없습니다.");
+  }
+  return {
+    ticket: payload.ticket,
+    requestId: payload.requestId,
+    toolExecution,
+  };
+}
+
 async function requestGatewayChatStream(
   gatewayEndpoint: string,
   request: ChatRequest,
@@ -524,46 +622,64 @@ async function requestGatewayChatStream(
     requestId: prepared.requestId,
     transport: "direct-inference-gateway",
   });
+  let currentPrepareTicket = prepared.ticket;
   let resultTicket = "";
   let gatewayError: "upstream_unavailable" | "upstream_timeout" =
     "upstream_unavailable";
 
   try {
-    const gatewayResponse = await fetch(gatewayEndpoint, {
-      method: "POST",
-      headers: {
-        accept: "text/event-stream",
-        "content-type": "application/json",
-      },
-      body: JSON.stringify({ ticket: prepared.ticket }),
-      signal,
-    });
-    if (!gatewayResponse.ok) {
-      throw new ChatApiError(await errorMessageFromResponse(gatewayResponse));
+    for (let round = 0; round < 2; round += 1) {
+      let toolTicket = "";
+      const gatewayResponse = await fetch(gatewayEndpoint, {
+        method: "POST",
+        headers: {
+          accept: "text/event-stream",
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({ ticket: currentPrepareTicket }),
+        signal,
+      });
+      if (!gatewayResponse.ok) {
+        throw new ChatApiError(await errorMessageFromResponse(gatewayResponse));
+      }
+      await consumeSseResponse(gatewayResponse, signal, (event, payload) => {
+        if (event === "delta") {
+          if (!isRecord(payload) || !isString(payload.text)) {
+            throw new ChatApiError("추론 스트림 형식을 확인할 수 없습니다.");
+          }
+          handlers.onDelta(payload.text);
+          return;
+        }
+        if (event === "tool_call") {
+          if (round > 0 || !isRecord(payload) || !isString(payload.toolTicket)) {
+            throw new ChatApiError("추론 도구 호출 형식을 확인할 수 없습니다.");
+          }
+          toolTicket = payload.toolTicket;
+          return;
+        }
+        if (event === "done") {
+          if (!isRecord(payload) || !isString(payload.resultTicket)) {
+            throw new ChatApiError("추론 완료 응답 형식을 확인할 수 없습니다.");
+          }
+          resultTicket = payload.resultTicket;
+          return;
+        }
+        if (event === "error") {
+          if (isRecord(payload) && payload.error === "upstream_timeout") {
+            gatewayError = "upstream_timeout";
+          }
+          throw new ChatApiError("추론 서버가 응답을 완료하지 못했습니다.");
+        }
+        throw new ChatApiError("지원하지 않는 추론 스트림 이벤트를 받았습니다.");
+      });
+      if (resultTicket) break;
+      if (!toolTicket) {
+        throw new ChatApiError("완료되지 않은 추론 응답을 받았습니다.");
+      }
+      const continuation = await continueDirectToolCall(toolTicket, signal);
+      currentPrepareTicket = continuation.ticket;
+      handlers.onTool?.(continuation.toolExecution);
     }
-    await consumeSseResponse(gatewayResponse, signal, (event, payload) => {
-      if (event === "delta") {
-        if (!isRecord(payload) || !isString(payload.text)) {
-          throw new ChatApiError("추론 스트림 형식을 확인할 수 없습니다.");
-        }
-        handlers.onDelta(payload.text);
-        return;
-      }
-      if (event === "done") {
-        if (!isRecord(payload) || !isString(payload.resultTicket)) {
-          throw new ChatApiError("추론 완료 응답 형식을 확인할 수 없습니다.");
-        }
-        resultTicket = payload.resultTicket;
-        return;
-      }
-      if (event === "error") {
-        if (isRecord(payload) && payload.error === "upstream_timeout") {
-          gatewayError = "upstream_timeout";
-        }
-        throw new ChatApiError("추론 서버가 응답을 완료하지 못했습니다.");
-      }
-      throw new ChatApiError("지원하지 않는 추론 스트림 이벤트를 받았습니다.");
-    });
   } catch (error) {
     if (error instanceof DOMException && error.name === "AbortError") {
       throw error;
@@ -573,7 +689,7 @@ async function requestGatewayChatStream(
   return resultTicket
     ? finalizeDirectStream({ resultTicket }, signal)
     : finalizeDirectStream(
-        { prepareTicket: prepared.ticket, error: gatewayError },
+        { prepareTicket: currentPrepareTicket, error: gatewayError },
         signal,
       );
 }

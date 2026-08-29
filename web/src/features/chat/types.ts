@@ -113,6 +113,14 @@ export interface ChatSegment {
   actions: ChatAction[];
 }
 
+export interface ChatToolExecution {
+  type: "show_portfolio_log_results";
+  toolCallId: string;
+  toolName: "search-portfolio-logs";
+  query: string;
+  matchedSlugs: string[];
+}
+
 export interface ChatResponse {
   mode: "model" | "retrieval_fallback";
   status: "online" | "upstream_offline";
@@ -125,6 +133,7 @@ export interface ChatResponse {
   sources: ChatSource[];
   actions: ChatAction[];
   suggestedQuestions: string[];
+  toolExecutions: ChatToolExecution[];
   cached: boolean;
 }
 
