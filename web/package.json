@@ -9,7 +9,8 @@
     "dev:lan": "node scripts/generate-posts.mjs && next dev --hostname 0.0.0.0 --port 3000",
     "start": "next start",
     "serve:static": "node scripts/serve-static.mjs",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test:webmcp": "node scripts/generate-posts.mjs && node --test src/features/webmcp/logTools.test.mjs"
   },
   "dependencies": {
     "gray-matter": "^4.0.3",

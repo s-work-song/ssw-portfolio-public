@@ -63,12 +63,18 @@ export type ActionId =
   | "research_memory"
   | "research_serialization"
   | "research_tools"
+  | "log_ambiguous_support"
   | "log_ai_implementation_options"
+  | "log_canvas_dodge"
   | "log_human_hallucination"
   | "log_gray_area_responsibility"
+  | "log_repeated_grievance"
   | "log_ai_bubble_reality"
   | "log_restful_rpc"
+  | "log_ai_model_evaluation"
   | "log_employment_contract"
+  | "log_excel_mapper"
+  | "log_ar_campfire"
   | "log_health_long_term_asset"
   | "log_hobby_interview"
   | "log_license"
@@ -78,6 +84,7 @@ export type ActionId =
   | "log_sleep_recovery"
   | "log_rules_collaboration"
   | "log_business_integrity"
+  | "log_ai_writing"
   | "log_hardware_to_software";
 
 export interface ChatHistoryItem {

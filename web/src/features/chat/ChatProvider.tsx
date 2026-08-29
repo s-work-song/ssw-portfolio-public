@@ -57,8 +57,8 @@ import type {
   Tone,
 } from "./types";
 
-const MAX_HISTORY_ITEMS = 6;
-const MAX_HISTORY_CHARACTERS = 6_000;
+const MAX_HISTORY_ITEMS = 10;
+const MAX_HISTORY_CHARACTERS = 12_000;
 const MOBILE_QUERY = "(max-width: 720px)";
 const REDUCED_MOTION_QUERY = "(prefers-reduced-motion: reduce)";
 const MOBILE_HISTORY_MARKER = "__portfolioChatOpen";
@@ -479,7 +479,7 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
           highlightedActionTargetRef.current = null;
         }
         actionTargetHighlightTimerRef.current = null;
-      }, 1_200);
+      }, 1_650);
     };
 
     const scroll = () => {

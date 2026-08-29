@@ -6,6 +6,11 @@ import type { SearchablePostSummary } from "@/lib/posts";
 import { compareEnglishFirst } from "@/lib/textSort";
 import { getSearchTokens } from "@/lib/textSearch";
 import { AskAiButton } from "@/features/chat";
+import {
+  consumePortfolioLogSearchView,
+  PORTFOLIO_LOG_SEARCH_VIEW_EVENT,
+  type PortfolioLogSearchViewDetail,
+} from "@/features/webmcp/logSearchView";
 import styles from "./LogEntries.module.css";
 
 type LogEntriesProps = {
@@ -24,6 +29,10 @@ export default function LogEntries({ posts }: LogEntriesProps) {
   const [query, setQuery] = useState("");
   const [appliedQuery, setAppliedQuery] = useState("");
   const [isComposing, setIsComposing] = useState(false);
+  const [externalSearch, setExternalSearch] = useState<{
+    slugs: ReadonlySet<string>;
+    source: PortfolioLogSearchViewDetail["source"];
+  } | null>(null);
   const tags = useMemo(
     () => Array.from(new Set(posts.flatMap((post) => post.tags ?? [])))
       .sort(compareEnglishFirst),
@@ -33,10 +42,12 @@ export default function LogEntries({ posts }: LogEntriesProps) {
   const visiblePosts = useMemo(
     () => posts.filter((post) => {
       const matchesTag = selectedTag === null || post.tags?.includes(selectedTag);
-      const matchesQuery = searchTokens.every((token) => post.searchText.includes(token));
+      const matchesQuery = externalSearch
+        ? externalSearch.slugs.has(post.slug)
+        : searchTokens.every((token) => post.searchText.includes(token));
       return matchesTag && matchesQuery;
     }),
-    [posts, searchTokens, selectedTag],
+    [externalSearch, posts, searchTokens, selectedTag],
   );
   const [renderedPosts, setRenderedPosts] = useState(visiblePosts);
   const renderedPostsRef = useRef(visiblePosts);
@@ -44,6 +55,32 @@ export default function LogEntries({ posts }: LogEntriesProps) {
   const [hiddenSlugs, setHiddenSlugs] = useState<Set<string>>(() => new Set());
   const [collapsedSlugs, setCollapsedSlugs] = useState<Set<string>>(() => new Set());
   const [longPhaseSlugs, setLongPhaseSlugs] = useState<Set<string>>(() => new Set());
+
+  useEffect(() => {
+    const applySearchView = (detail: PortfolioLogSearchViewDetail) => {
+      const availableSlugs = new Set(posts.map(({ slug }) => slug));
+      const matchedSlugs = new Set(
+        detail.matchedSlugs.filter((slug) => availableSlugs.has(slug)),
+      );
+      const tag = detail.tag && tags.includes(detail.tag) ? detail.tag : null;
+      setExternalSearch({ slugs: matchedSlugs, source: detail.source });
+      setSelectedTag(tag);
+      setQuery(detail.query);
+      setAppliedQuery(detail.query);
+      setIsComposing(false);
+    };
+
+    const pending = consumePortfolioLogSearchView();
+    if (pending) applySearchView(pending);
+
+    const handleSearchView = (rawEvent: Event) => {
+      const event = rawEvent as CustomEvent<PortfolioLogSearchViewDetail>;
+      consumePortfolioLogSearchView();
+      if (event.detail) applySearchView(event.detail);
+    };
+    window.addEventListener(PORTFOLIO_LOG_SEARCH_VIEW_EVENT, handleSearchView);
+    return () => window.removeEventListener(PORTFOLIO_LOG_SEARCH_VIEW_EVENT, handleSearchView);
+  }, [posts, tags]);
 
   useEffect(() => {
     if (isComposing || query === appliedQuery) return;
@@ -164,6 +201,7 @@ export default function LogEntries({ posts }: LogEntriesProps) {
       const targetSlug = anchor.slice(prefix.length);
       if (posts.some(({ slug }) => slug === targetSlug)) {
         setSelectedTag(null);
+        setExternalSearch(null);
         setQuery("");
         setAppliedQuery("");
         setIsComposing(false);
@@ -217,10 +255,14 @@ export default function LogEntries({ posts }: LogEntriesProps) {
                 className={styles.searchInput}
                 type="search"
                 value={query}
-                onChange={(event) => setQuery(event.target.value)}
+                onChange={(event) => {
+                  setExternalSearch(null);
+                  setQuery(event.target.value);
+                }}
                 onCompositionStart={() => setIsComposing(true)}
                 onCompositionEnd={(event) => {
                   setQuery(event.currentTarget.value);
+                  setExternalSearch(null);
                   setIsComposing(false);
                 }}
                 placeholder="제목과 내용 검색"
@@ -233,6 +275,7 @@ export default function LogEntries({ posts }: LogEntriesProps) {
                   onClick={() => {
                     setQuery("");
                     setAppliedQuery("");
+                    setExternalSearch(null);
                     setIsComposing(false);
                   }}
                   aria-label="검색어 지우기"
@@ -246,6 +289,9 @@ export default function LogEntries({ posts }: LogEntriesProps) {
               aria-live="polite"
               aria-busy={isComposing || query !== appliedQuery}
             >
+              {externalSearch
+                ? `${externalSearch.source === "webmcp" ? "WebMCP" : "챗봇"} 검색 · `
+                : ""}
               {visiblePosts.length}개 기록
             </p>
           </div>
@@ -256,7 +302,10 @@ export default function LogEntries({ posts }: LogEntriesProps) {
                 type="button"
                 className={selectedTag === null ? styles.filterActive : styles.filter}
                 aria-pressed={selectedTag === null}
-                onClick={() => setSelectedTag(null)}
+                onClick={() => {
+                  setExternalSearch(null);
+                  setSelectedTag(null);
+                }}
               >
                 전체
               </button>
@@ -266,7 +315,10 @@ export default function LogEntries({ posts }: LogEntriesProps) {
                   type="button"
                   className={selectedTag === tag ? styles.filterActive : styles.filter}
                   aria-pressed={selectedTag === tag}
-                  onClick={() => setSelectedTag(tag)}
+                  onClick={() => {
+                    setExternalSearch(null);
+                    setSelectedTag(tag);
+                  }}
                 >
                   #{tag}
                 </button>
@@ -290,6 +342,7 @@ export default function LogEntries({ posts }: LogEntriesProps) {
               setAppliedQuery("");
               setIsComposing(false);
               setSelectedTag(null);
+              setExternalSearch(null);
             }}
           >
             검색과 태그 초기화

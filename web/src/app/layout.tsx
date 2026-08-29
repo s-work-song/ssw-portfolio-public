@@ -8,6 +8,7 @@ import "./globals.css";
 import { ThemeProvider } from "../context/ThemeContext";
 import { ChatProvider } from "../features/chat";
 import { ChatApiPreconnect } from "./ChatApiPreconnect";
+import { PortfolioWebMcp } from "../features/webmcp/PortfolioWebMcp";
 
 export const metadata: Metadata = {
   title: {
@@ -28,7 +29,10 @@ export default function RootLayout({
       <body>
         <ChatApiPreconnect />
         <ThemeProvider>
-          <ChatProvider>{children}</ChatProvider>
+          <ChatProvider>
+            <PortfolioWebMcp />
+            {children}
+          </ChatProvider>
         </ThemeProvider>
       </body>
     </html>

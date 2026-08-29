@@ -117,6 +117,7 @@
 .bodyH3 {
   color: var(--text);
   word-break: keep-all;
+  scroll-margin-top: 96px;
 }
 
 .bodyH1 {

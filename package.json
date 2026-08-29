@@ -12,6 +12,7 @@
   "scripts": {
     "dev": "npm run dev -w web --",
     "build": "npm run build -w web",
-    "lint": "npm run lint -w web"
+    "lint": "npm run lint -w web",
+    "test:webmcp": "npm run test:webmcp -w web"
   }
 }

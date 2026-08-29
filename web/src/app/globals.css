@@ -108,6 +108,12 @@ input, select, textarea, button {
   outline-offset: 3px;
 }
 
+/* 스크롤 도착 지점처럼 스크립트로만 포커스하는 컨테이너는 브라우저의
+   기본 검은 포커스 테두리를 남기지 않고 아래의 일시적인 강조를 사용합니다. */
+[tabindex="-1"]:focus {
+  outline: none;
+}
+
 ::selection {
   background: var(--accent, #6366f1);
   color: #fff;
@@ -946,6 +952,9 @@ code {
   min-width: 0;
   overflow-x: hidden;
   overflow-x: clip;
+  /* 페이지 슬라이드는 계속 잘라내되, 도착 지점의 외곽 글로우는 좌우에서
+     잘리지 않도록 작은 시각 효과 여백만 허용합니다. */
+  overflow-clip-margin: 12px;
 }
 
 .about-page-content {
@@ -1083,19 +1092,34 @@ code {
 }
 
 [data-chat-action-target="true"] {
-  outline: 3px solid transparent;
-  outline-offset: -3px;
   border-radius: inherit;
-  animation: chat-action-target-highlight 1.2s ease-out;
+  animation: chat-action-target-highlight 1.65s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 @keyframes chat-action-target-highlight {
-  0%,
-  24% {
-    outline-color: color-mix(in srgb, var(--accent) 72%, transparent);
+  0% {
+    box-shadow:
+      0 0 0 0 color-mix(in srgb, var(--accent) 0%, transparent),
+      0 0 0 0 color-mix(in srgb, var(--accent) 0%, transparent),
+      0 8px 24px -20px color-mix(in srgb, var(--accent) 0%, transparent);
+  }
+  22% {
+    box-shadow:
+      0 0 0 2px color-mix(in srgb, var(--accent) 58%, transparent),
+      0 0 0 7px color-mix(in srgb, var(--accent) 12%, transparent),
+      0 12px 30px -18px color-mix(in srgb, var(--accent) 34%, transparent);
+  }
+  52% {
+    box-shadow:
+      0 0 0 1px color-mix(in srgb, var(--accent) 36%, transparent),
+      0 0 0 5px color-mix(in srgb, var(--accent) 7%, transparent),
+      0 10px 26px -20px color-mix(in srgb, var(--accent) 20%, transparent);
   }
   100% {
-    outline-color: transparent;
+    box-shadow:
+      0 0 0 0 color-mix(in srgb, var(--accent) 0%, transparent),
+      0 0 0 0 color-mix(in srgb, var(--accent) 0%, transparent),
+      0 8px 24px -20px color-mix(in srgb, var(--accent) 0%, transparent);
   }
 }
 

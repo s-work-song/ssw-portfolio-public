@@ -32,6 +32,11 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 export default async function PostPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const postData = getPostData(slug);
+  let headingIndex = 0;
+  const sectionAnchor = () => ({
+    id: `log-section-${++headingIndex}`,
+    tabIndex: -1,
+  });
   const relatedPosts = getSortedPostsData()
     .filter((post) => post.slug !== slug)
     .slice(0, 3);
@@ -70,11 +75,11 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
             components={{
               h1: ({node, ...props}) => {
                 void node;
-                return <h2 className={styles.bodyH1} {...props} />;
+                return <h2 className={styles.bodyH1} {...sectionAnchor()} {...props} />;
               },
               h2: ({node, ...props}) => {
                 void node;
-                return <h2 className={styles.bodyH2} {...props} />;
+                return <h2 className={styles.bodyH2} {...sectionAnchor()} {...props} />;
               },
               h3: ({node, ...props}) => {
                 void node;

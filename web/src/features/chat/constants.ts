@@ -179,18 +179,30 @@ export const ACTION_ROUTES: Readonly<Record<ActionId, string>> = {
   research_memory: "/about-me/research#research-memory-layout",
   research_serialization: "/about-me/research#research-serialization-packing",
   research_tools: "/about-me/research#research-tools-ai",
+  log_ambiguous_support:
+    "/about-me/log#log-card-ambiguous-support-leaves-negative-experiences",
   log_ai_implementation_options:
     "/about-me/log#log-card-ask-ai-for-options-before-implementation",
+  log_canvas_dodge:
+    "/about-me/log#log-card-canvas-dodge-game-before-game-development",
   log_human_hallucination:
     "/about-me/log#log-card-consider-human-hallucination-before-ai-hallucination",
   log_gray_area_responsibility:
     "/about-me/log#log-card-developer-responsibility-does-not-disappear-in-gray-areas",
+  log_repeated_grievance:
+    "/about-me/log#log-card-distance-myself-from-people-who-are-always-wronged",
   log_ai_bubble_reality:
     "/about-me/log#log-card-distinguishing-ai-bubble-from-reality-is-your-responsibility",
   log_restful_rpc:
     "/about-me/log#log-card-do-not-call-restful-and-rpc-the-same",
+  log_ai_model_evaluation:
+    "/about-me/log#log-card-do-not-trust-ai-evaluations-that-ignore-model-tiers",
   log_employment_contract:
     "/about-me/log#log-card-employment-contract-that-damaged-trust-from-the-start",
+  log_excel_mapper:
+    "/about-me/log#log-card-excel-row-mapping-wpf-app",
+  log_ar_campfire:
+    "/about-me/log#log-card-first-ar-project-using-real-space-and-motion",
   log_health_long_term_asset:
     "/about-me/log#log-card-health-as-the-most-important-long-term-asset",
   log_hobby_interview:
@@ -209,6 +221,8 @@ export const ACTION_ROUTES: Readonly<Record<ActionId, string>> = {
     "/about-me/log#log-card-rules-need-both-compliance-and-enforceable-structure",
   log_business_integrity:
     "/about-me/log#log-card-scale-and-appearance-do-not-guarantee-business-integrity",
+  log_ai_writing:
+    "/about-me/log#log-card-thoughts-on-writing-with-ai",
   log_hardware_to_software:
     "/about-me/log#log-card-why-i-started-software-development",
 };
@@ -230,12 +244,18 @@ export const ACTION_LABELS: Readonly<Record<ActionId, string>> = {
   research_memory: "메모리·파일 I/O 연구 보기",
   research_serialization: "직렬화·전송 연구 보기",
   research_tools: "도구·AI 연구 보기",
+  log_ambiguous_support: "AI 지원 조건 기록 보기",
   log_ai_implementation_options: "AI 구현 선택지 기록 보기",
+  log_canvas_dodge: "Canvas 피하기 게임 기록 보기",
   log_human_hallucination: "사람의 환각 기록 보기",
   log_gray_area_responsibility: "회색지대 책임 기록 보기",
+  log_repeated_grievance: "억울함과 관계 기록 보기",
   log_ai_bubble_reality: "AI 거품과 실체 기록 보기",
   log_restful_rpc: "RESTful·RPC 기록 보기",
+  log_ai_model_evaluation: "AI 모델 평가 기록 보기",
   log_employment_contract: "근로계약 신뢰 기록 보기",
+  log_excel_mapper: "엑셀 행 매핑 기록 보기",
+  log_ar_campfire: "AR 캠프파이어 기록 보기",
   log_health_long_term_asset: "건강 장기 자산 기록 보기",
   log_hobby_interview: "취미 면접 기록 보기",
   log_license: "라이선스 기록 보기",
@@ -245,6 +265,7 @@ export const ACTION_LABELS: Readonly<Record<ActionId, string>> = {
   log_sleep_recovery: "격일 밤샘 회복 기록 보기",
   log_rules_collaboration: "규칙과 협업 기록 보기",
   log_business_integrity: "사업 건전성 기록 보기",
+  log_ai_writing: "AI 글쓰기 기록 보기",
   log_hardware_to_software: "하드웨어 관심에서 소프트웨어 개발로 보기",
 };
 
@@ -265,12 +286,18 @@ export const ACTION_IDS: readonly ActionId[] = [
   "research_memory",
   "research_serialization",
   "research_tools",
+  "log_ambiguous_support",
   "log_ai_implementation_options",
+  "log_canvas_dodge",
   "log_human_hallucination",
   "log_gray_area_responsibility",
+  "log_repeated_grievance",
   "log_ai_bubble_reality",
   "log_restful_rpc",
+  "log_ai_model_evaluation",
   "log_employment_contract",
+  "log_excel_mapper",
+  "log_ar_campfire",
   "log_health_long_term_asset",
   "log_hobby_interview",
   "log_license",
@@ -280,6 +307,7 @@ export const ACTION_IDS: readonly ActionId[] = [
   "log_sleep_recovery",
   "log_rules_collaboration",
   "log_business_integrity",
+  "log_ai_writing",
   "log_hardware_to_software",
 ];
 

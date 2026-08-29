@@ -9,6 +9,7 @@ import {
   useRef,
   useState,
   type CSSProperties,
+  type FocusEvent,
   type FormEvent,
   type KeyboardEvent,
   type PointerEvent as ReactPointerEvent,
@@ -23,6 +24,10 @@ import {
   useTheme,
 } from "../../context/ThemeContext";
 import ElasticJellyPanel from "../../lib/ElasticJellyPanel";
+import {
+  isPortfolioLogListRequest,
+  preparePortfolioLogSearchView,
+} from "../webmcp/logSearchView";
 import {
   AUDIENCE_OPTIONS,
   CHAT_QUICK_START_OPTIONS,
@@ -355,6 +360,7 @@ export function ChatWidget() {
     sendMessage,
     stopGenerating,
     retry,
+    navigateRoute,
     navigateAction,
   } = useChat();
   const [draft, setDraft] = useState("");
@@ -383,6 +389,8 @@ export function ChatWidget() {
   const triggerRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const wasLoadingRef = useRef(isLoading);
+  const focusWasInsidePanelDuringLoadingRef = useRef(false);
   const messageListRef = useRef<HTMLDivElement>(null);
   const jellyRef = useRef<ElasticJellyPanel | null>(null);
   const wasOpenRef = useRef(false);
@@ -655,6 +663,69 @@ export function ChatWidget() {
     schedulePinnedScroll();
   }, [schedulePinnedScroll]);
 
+  const handlePanelFocusCapture = useCallback(() => {
+    if (isLoading) focusWasInsidePanelDuringLoadingRef.current = true;
+  }, [isLoading]);
+
+  const handlePanelBlurCapture = useCallback(
+    (event: FocusEvent<HTMLElement>) => {
+      if (!isLoading) return;
+      const nextTarget = event.relatedTarget;
+      if (!(nextTarget instanceof Node) || !event.currentTarget.contains(nextTarget)) {
+        focusWasInsidePanelDuringLoadingRef.current = false;
+      }
+    },
+    [isLoading],
+  );
+
+  useEffect(() => {
+    const wasLoading = wasLoadingRef.current;
+    const panel = panelRef.current;
+    const activeElement = document.activeElement;
+
+    if (!wasLoading && isLoading) {
+      focusWasInsidePanelDuringLoadingRef.current = Boolean(
+        panel && activeElement instanceof Node && panel.contains(activeElement),
+      );
+    }
+
+    if (wasLoading && !isLoading) {
+      const shouldRestoreInputFocus = Boolean(
+        panel &&
+          (focusWasInsidePanelDuringLoadingRef.current ||
+            (activeElement instanceof Node && panel.contains(activeElement))),
+      );
+      focusWasInsidePanelDuringLoadingRef.current = false;
+
+      if (
+        shouldRestoreInputFocus &&
+        isOpen &&
+        !isClosing &&
+        availability === "online"
+      ) {
+        window.requestAnimationFrame(() => {
+          const currentPanel = panelRef.current;
+          const currentInput = inputRef.current;
+          const currentActiveElement = document.activeElement;
+          const focusStayedInPanel = Boolean(
+            currentPanel &&
+              currentActiveElement instanceof Node &&
+              currentPanel.contains(currentActiveElement),
+          );
+          const focusWasReleasedWithControl =
+            currentActiveElement === document.body ||
+            currentActiveElement === document.documentElement;
+
+          if (currentInput && (focusStayedInPanel || focusWasReleasedWithControl)) {
+            currentInput.focus({ preventScroll: true });
+          }
+        });
+      }
+    }
+
+    wasLoadingRef.current = isLoading;
+  }, [availability, isClosing, isLoading, isOpen]);
+
   useLayoutEffect(() => {
     const justOpened = isOpen && !wasOpenForScrollRef.current;
     if (justOpened) isBottomPinnedRef.current = true;
@@ -755,7 +826,18 @@ export function ChatWidget() {
     const message = draft.trim();
     if (!message || isLoading || availability !== "online") return;
     setDraft("");
-    await sendMessage(message);
+    const requestPromise = sendMessage(message);
+    if (isPortfolioLogListRequest(message)) {
+      void preparePortfolioLogSearchView(
+        { query: message.slice(0, 200), limit: 10 },
+        "chat",
+      )
+        .then((result) => navigateRoute(result.view.route))
+        .catch((searchError) => {
+          console.warn("챗봇 기록 목록 검색을 표시하지 못했습니다.", searchError);
+        });
+    }
+    await requestPromise;
   };
 
   const handleInputKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
@@ -902,6 +984,8 @@ export function ChatWidget() {
             aria-modal={isMobile}
             aria-labelledby="portfolio-chat-title"
             onKeyDown={handleDialogKeyDown}
+            onFocusCapture={handlePanelFocusCapture}
+            onBlurCapture={handlePanelBlurCapture}
             onAnimationEnd={(event) => {
               if (isClosing && event.target === event.currentTarget) {
                 completeCloseAnimation();
@@ -1337,7 +1421,6 @@ export function ChatWidget() {
                       onBlur={handleInputBlur}
                       onKeyDown={handleInputKeyDown}
                       placeholder="경력, 기술, 프로젝트를 질문해 보세요"
-                      disabled={isLoading}
                     />
                     {isLoading ? (
                       <button

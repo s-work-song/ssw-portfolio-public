@@ -23,6 +23,58 @@ const postsDirectory = path.join(__dirname, '../src/content/logs');
 // 결과물 JSON 파일이 저장될 출력 대상 폴더 및 파일 경로 정의
 const outputDir = path.join(__dirname, '../src/content');
 const outputFile = path.join(outputDir, 'posts.json');
+const webMcpOutputDir = path.join(__dirname, '../public/data');
+const webMcpOutputFile = path.join(webMcpOutputDir, 'log-search-index.json');
+
+/** 검색과 결과 미리보기에 불필요한 Markdown 표기만 걷어낸다. */
+function markdownToPlainText(value) {
+  return value
+    .replace(/!\[([^\]]*)\]\([^)]*\)/gu, '$1')
+    .replace(/\[([^\]]+)\]\([^)]*\)/gu, '$1')
+    .replace(/<[^>]+>/gu, ' ')
+    .replace(/^\s*```.*$/gmu, ' ')
+    .replace(/[`*_~>#|]/gu, ' ')
+    .replace(/^\s*(?:[-+] |\d+\. )/gmu, '')
+    .replace(/\s+/gu, ' ')
+    .trim();
+}
+
+/**
+ * 상세 페이지의 Markdown 제목 순서와 같은 안정적인 anchor를 만든다.
+ * 제목 문구가 바뀌어도 빌드 결과 안에서는 검색 인덱스와 화면이 함께 갱신된다.
+ */
+function extractSections(content) {
+  const sections = [];
+  let activeSection = null;
+
+  const finishSection = () => {
+    if (!activeSection) return;
+    const text = markdownToPlainText(activeSection.lines.join('\n'));
+    sections.push({
+      id: `log-section-${sections.length + 1}`,
+      title: activeSection.title,
+      level: activeSection.level,
+      text,
+    });
+  };
+
+  for (const line of content.split(/\r?\n/u)) {
+    const heading = /^(#{1,6})\s+(.+?)\s*#*\s*$/u.exec(line);
+    if (heading) {
+      finishSection();
+      activeSection = {
+        level: heading[1].length,
+        title: markdownToPlainText(heading[2]),
+        lines: [],
+      };
+      continue;
+    }
+    activeSection?.lines.push(line);
+  }
+  finishSection();
+
+  return sections;
+}
 
 /**
  * @function generatePostsJson
@@ -81,6 +133,26 @@ function generatePostsJson() {
   // JSON 포맷을 이쁘게 정렬하여 파일로 동기 쓰기 처리 (UTF-8 지정)
   fs.writeFileSync(outputFile, JSON.stringify(posts, null, 2), 'utf8');
   console.log(`성공: ${outputFile} 생성 완료 (총 ${posts.length}개의 포스트 패킹됨).`);
+
+  if (!fs.existsSync(webMcpOutputDir)) {
+    fs.mkdirSync(webMcpOutputDir, { recursive: true });
+  }
+
+  const webMcpIndex = {
+    version: 1,
+    posts: posts.map((post) => {
+      return {
+        slug: post.slug,
+        title: post.title,
+        tags: post.tags,
+        summary: post.summary,
+        sections: extractSections(post.content),
+      };
+    }),
+  };
+
+  fs.writeFileSync(webMcpOutputFile, JSON.stringify(webMcpIndex, null, 2), 'utf8');
+  console.log(`성공: ${webMcpOutputFile} 생성 완료 (WebMCP 로그 검색 인덱스).`);
 }
 
 // 스크립트 실행 트리거
