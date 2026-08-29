@@ -163,7 +163,16 @@ interface PendingRetry {
 export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
   const pathname = usePathname();
   const router = useRouter();
-  const { motion, pageTransition } = useTheme();
+  const {
+    mode,
+    accent,
+    motion,
+    pageTransition,
+    chatLayout,
+    setMode,
+    setAccent,
+    setChatLayout,
+  } = useTheme();
   const [isOpen, setIsOpen] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -899,6 +908,11 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
         tone,
         pageContext,
         reasoningEnabled,
+        uiSettings: {
+          theme: mode,
+          accent,
+          chatLayout,
+        },
       };
       const shouldStream = streamingEnabled;
       let streamingMessageId: string | undefined;
@@ -906,6 +920,18 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
       const handleToolExecution = (execution: ChatToolExecution) => {
         if (handledToolCallIds.has(execution.toolCallId)) return;
         handledToolCallIds.add(execution.toolCallId);
+        if (execution.type === "set_portfolio_theme") {
+          setMode(execution.theme);
+          return;
+        }
+        if (execution.type === "set_portfolio_accent") {
+          setAccent(execution.accent);
+          return;
+        }
+        if (execution.type === "set_portfolio_chat_layout") {
+          setChatLayout(execution.layout);
+          return;
+        }
         dispatchPortfolioModelToolExecution(execution);
       };
 
@@ -1041,10 +1067,16 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
     },
     [
       audience,
+      accent,
+      chatLayout,
+      mode,
       nextId,
       pageContext,
       reasoningEnabled,
       streamingEnabled,
+      setMode,
+      setAccent,
+      setChatLayout,
       tone,
     ],
   );

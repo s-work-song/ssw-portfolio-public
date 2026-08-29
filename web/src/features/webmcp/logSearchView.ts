@@ -5,7 +5,7 @@ import {
   type LogListViewResult,
   type LogSearchIndex,
 } from './logTools.mjs';
-import type { ChatToolExecution } from '@/features/chat/types';
+import type { ChatLogSearchToolExecution } from '@/features/chat/types';
 
 export const PORTFOLIO_LOG_SEARCH_VIEW_EVENT = 'portfolio:webmcp-log-search-view';
 export const PORTFOLIO_MODEL_TOOL_EXECUTION_EVENT = 'portfolio:model-tool-execution';
@@ -67,15 +67,15 @@ export async function preparePortfolioLogSearchView(
   return result;
 }
 
-export function dispatchPortfolioModelToolExecution(execution: ChatToolExecution): void {
-  window.dispatchEvent(new CustomEvent<ChatToolExecution>(
+export function dispatchPortfolioModelToolExecution(execution: ChatLogSearchToolExecution): void {
+  window.dispatchEvent(new CustomEvent<ChatLogSearchToolExecution>(
     PORTFOLIO_MODEL_TOOL_EXECUTION_EVENT,
     { detail: execution },
   ));
 }
 
 export async function preparePortfolioModelToolView(
-  execution: ChatToolExecution,
+  execution: ChatLogSearchToolExecution,
 ): Promise<LogListViewResult> {
   const index = await loadPortfolioLogIndex();
   const result = createPortfolioLogListView(index, {

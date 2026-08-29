@@ -92,6 +92,61 @@ function parseSuggestedQuestions(value: unknown): string[] {
 
 function parseToolExecution(value: unknown): ChatToolExecution | null {
   if (
+    isRecord(value) &&
+    value.type === "set_portfolio_theme" &&
+    value.toolName === "set-portfolio-theme" &&
+    isString(value.toolCallId) &&
+    value.toolCallId.length >= 1 &&
+    value.toolCallId.length <= 128 &&
+    (value.theme === "light" || value.theme === "dark")
+  ) {
+    return {
+      type: "set_portfolio_theme",
+      toolCallId: value.toolCallId,
+      toolName: "set-portfolio-theme",
+      theme: value.theme,
+    };
+  }
+  if (
+    isRecord(value) &&
+    value.type === "set_portfolio_accent" &&
+    value.toolName === "set-portfolio-accent" &&
+    isString(value.toolCallId) &&
+    value.toolCallId.length >= 1 &&
+    value.toolCallId.length <= 128 &&
+    ["indigo", "emerald", "amber", "rose", "violet"].includes(
+      String(value.accent),
+    )
+  ) {
+    return {
+      type: "set_portfolio_accent",
+      toolCallId: value.toolCallId,
+      toolName: "set-portfolio-accent",
+      accent: value.accent as
+        | "indigo"
+        | "emerald"
+        | "amber"
+        | "rose"
+        | "violet",
+    };
+  }
+  if (
+    isRecord(value) &&
+    value.type === "set_portfolio_chat_layout" &&
+    value.toolName === "set-portfolio-chat-layout" &&
+    isString(value.toolCallId) &&
+    value.toolCallId.length >= 1 &&
+    value.toolCallId.length <= 128 &&
+    (value.layout === "floating" || value.layout === "dock")
+  ) {
+    return {
+      type: "set_portfolio_chat_layout",
+      toolCallId: value.toolCallId,
+      toolName: "set-portfolio-chat-layout",
+      layout: value.layout,
+    };
+  }
+  if (
     !isRecord(value) ||
     value.type !== "show_portfolio_log_results" ||
     value.toolName !== "search-portfolio-logs" ||

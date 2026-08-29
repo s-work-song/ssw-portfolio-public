@@ -13,7 +13,7 @@ import {
   preparePortfolioModelToolView,
   preparePortfolioLogSearchView,
 } from './logSearchView';
-import type { ChatToolExecution } from '@/features/chat/types';
+import type { ChatLogSearchToolExecution } from '@/features/chat/types';
 
 function toolResult(payload: unknown): WebMcpToolResult {
   return {
@@ -42,7 +42,7 @@ export function PortfolioWebMcp() {
   useEffect(() => {
     const controller = new AbortController();
     const handleModelToolExecution = (rawEvent: Event) => {
-      const event = rawEvent as CustomEvent<ChatToolExecution>;
+      const event = rawEvent as CustomEvent<ChatLogSearchToolExecution>;
       if (!event.detail || controller.signal.aborted) return;
       void preparePortfolioModelToolView(event.detail)
         .then((result) => {

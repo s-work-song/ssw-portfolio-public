@@ -46,6 +46,12 @@ export type PageContext =
   | "research"
   | "log";
 
+export interface ChatUiSettings {
+  theme: "light" | "dark" | "system";
+  accent: "indigo" | "emerald" | "amber" | "rose" | "violet";
+  chatLayout: "floating" | "dock";
+}
+
 export type ActionId =
   | "overview"
   | "resume"
@@ -113,13 +119,40 @@ export interface ChatSegment {
   actions: ChatAction[];
 }
 
-export interface ChatToolExecution {
+export interface ChatLogSearchToolExecution {
   type: "show_portfolio_log_results";
   toolCallId: string;
   toolName: "search-portfolio-logs";
   query: string;
   matchedSlugs: string[];
 }
+
+export interface ChatThemeToolExecution {
+  type: "set_portfolio_theme";
+  toolCallId: string;
+  toolName: "set-portfolio-theme";
+  theme: "light" | "dark";
+}
+
+export interface ChatAccentToolExecution {
+  type: "set_portfolio_accent";
+  toolCallId: string;
+  toolName: "set-portfolio-accent";
+  accent: "indigo" | "emerald" | "amber" | "rose" | "violet";
+}
+
+export interface ChatLayoutToolExecution {
+  type: "set_portfolio_chat_layout";
+  toolCallId: string;
+  toolName: "set-portfolio-chat-layout";
+  layout: "floating" | "dock";
+}
+
+export type ChatToolExecution =
+  | ChatLogSearchToolExecution
+  | ChatThemeToolExecution
+  | ChatAccentToolExecution
+  | ChatLayoutToolExecution;
 
 export interface ChatResponse {
   mode: "model" | "retrieval_fallback";
@@ -156,6 +189,7 @@ export interface ChatRequest {
   tone: Tone;
   pageContext: PageContext;
   reasoningEnabled: boolean;
+  uiSettings: ChatUiSettings;
 }
 
 export interface ChatStatusResponse {
