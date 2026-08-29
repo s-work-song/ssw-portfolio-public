@@ -932,6 +932,7 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
           setChatLayout(execution.layout);
           return;
         }
+        if (execution.type === "report_portfolio_ui_settings") return;
         dispatchPortfolioModelToolExecution(execution);
       };
 

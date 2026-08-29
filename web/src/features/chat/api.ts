@@ -93,6 +93,42 @@ function parseSuggestedQuestions(value: unknown): string[] {
 function parseToolExecution(value: unknown): ChatToolExecution | null {
   if (
     isRecord(value) &&
+    value.type === "report_portfolio_ui_settings" &&
+    value.toolName === "get-portfolio-ui-settings" &&
+    isString(value.toolCallId) &&
+    value.toolCallId.length >= 1 &&
+    value.toolCallId.length <= 128 &&
+    typeof value.available === "boolean" &&
+    (value.uiSettings === null ||
+      (isRecord(value.uiSettings) &&
+        ["light", "dark", "system"].includes(String(value.uiSettings.theme)) &&
+        ["indigo", "emerald", "amber", "rose", "violet"].includes(
+          String(value.uiSettings.accent),
+        ) &&
+        ["floating", "dock"].includes(String(value.uiSettings.chatLayout))))
+  ) {
+    const uiSettings = value.uiSettings as Record<string, unknown> | null;
+    return {
+      type: "report_portfolio_ui_settings",
+      toolCallId: value.toolCallId,
+      toolName: "get-portfolio-ui-settings",
+      available: value.available,
+      uiSettings: uiSettings
+        ? {
+            theme: uiSettings.theme as "light" | "dark" | "system",
+            accent: uiSettings.accent as
+              | "indigo"
+              | "emerald"
+              | "amber"
+              | "rose"
+              | "violet",
+            chatLayout: uiSettings.chatLayout as "floating" | "dock",
+          }
+        : null,
+    };
+  }
+  if (
+    isRecord(value) &&
     value.type === "set_portfolio_theme" &&
     value.toolName === "set-portfolio-theme" &&
     isString(value.toolCallId) &&

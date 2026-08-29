@@ -148,11 +148,24 @@ export interface ChatLayoutToolExecution {
   layout: "floating" | "dock";
 }
 
+export interface ChatUiSettingsReportToolExecution {
+  type: "report_portfolio_ui_settings";
+  toolCallId: string;
+  toolName: "get-portfolio-ui-settings";
+  available: boolean;
+  uiSettings: {
+    theme: "light" | "dark" | "system";
+    accent: "indigo" | "emerald" | "amber" | "rose" | "violet";
+    chatLayout: "floating" | "dock";
+  } | null;
+}
+
 export type ChatToolExecution =
   | ChatLogSearchToolExecution
   | ChatThemeToolExecution
   | ChatAccentToolExecution
-  | ChatLayoutToolExecution;
+  | ChatLayoutToolExecution
+  | ChatUiSettingsReportToolExecution;
 
 export interface ChatResponse {
   mode: "model" | "retrieval_fallback";
