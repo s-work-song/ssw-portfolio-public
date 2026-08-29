@@ -16,10 +16,29 @@ export type FabAnim = "none" | "rise" | "slide" | "pop" | "blur";
 export type MotionPreference = "system" | "on" | "off";
 export type PageTransition = "none" | "slide" | "fade" | "lift";
 export type ChatLayout = "floating" | "dock";
+export type ChatFont = "pretendard" | "noto-sans-kr" | "system";
+export type ChatFontSize = "small" | "medium" | "large" | "xlarge";
 
 export const CHAT_DOCK_MIN_WIDTH = 340;
 export const CHAT_DOCK_MAX_WIDTH = 640;
 export const CHAT_DOCK_DEFAULT_WIDTH = 440;
+
+const CHAT_FONT_FAMILIES: Record<ChatFont, string> = {
+  pretendard: "'Pretendard', system-ui, -apple-system, sans-serif",
+  "noto-sans-kr":
+    "var(--font-noto-sans-kr), 'Noto Sans KR', system-ui, -apple-system, sans-serif",
+  system: "system-ui, -apple-system, 'Segoe UI', sans-serif",
+};
+
+const CHAT_FONT_SIZES: Record<
+  ChatFontSize,
+  { body: string; control: string }
+> = {
+  small: { body: "13px", control: "11px" },
+  medium: { body: "14px", control: "12px" },
+  large: { body: "16px", control: "14px" },
+  xlarge: { body: "18px", control: "16px" },
+};
 
 function normalizeChatDockWidth(width: number): number {
   if (!Number.isFinite(width)) return CHAT_DOCK_DEFAULT_WIDTH;
@@ -36,6 +55,8 @@ export interface ThemeContextType {
   fabMode: FabMode;
   fabAnim: FabAnim;
   chatLayout: ChatLayout;
+  chatFont: ChatFont;
+  chatFontSize: ChatFontSize;
   chatDockWidth: number;
   glow: boolean;
   setMode: (m: Mode) => void;
@@ -45,6 +66,8 @@ export interface ThemeContextType {
   setFabMode: (mode: FabMode) => void;
   setFabAnim: (animation: FabAnim) => void;
   setChatLayout: (layout: ChatLayout) => void;
+  setChatFont: (font: ChatFont) => void;
+  setChatFontSize: (size: ChatFontSize) => void;
   setChatDockWidth: (width: number) => void;
   setGlow: (g: boolean) => void;
   resetTheme: () => void;
@@ -73,6 +96,9 @@ function CustomThemeProvider({ children }: { children: React.ReactNode }) {
   const [fabAnim, setFabAnimState] = useState<FabAnim>("slide");
   const [chatLayout, setChatLayoutState] =
     useState<ChatLayout>("floating");
+  const [chatFont, setChatFontState] = useState<ChatFont>("pretendard");
+  const [chatFontSize, setChatFontSizeState] =
+    useState<ChatFontSize>("medium");
   const [chatDockWidth, setChatDockWidthState] = useState(
     CHAT_DOCK_DEFAULT_WIDTH,
   );
@@ -103,7 +129,8 @@ function CustomThemeProvider({ children }: { children: React.ReactNode }) {
             parsed.v === 4 ||
             parsed.v === 5 ||
             parsed.v === 6 ||
-            parsed.v === 7) &&
+            parsed.v === 7 ||
+            parsed.v === 8) &&
           (parsed.motion === "system" || parsed.motion === "on" || parsed.motion === "off")
         ) {
           setMotionState(parsed.motion);
@@ -113,7 +140,8 @@ function CustomThemeProvider({ children }: { children: React.ReactNode }) {
             parsed.v === 4 ||
             parsed.v === 5 ||
             parsed.v === 6 ||
-            parsed.v === 7) &&
+            parsed.v === 7 ||
+            parsed.v === 8) &&
           (parsed.fabMode === "chat" || parsed.fabMode === "quick-menu")
         ) {
           setFabModeState(parsed.fabMode);
@@ -124,7 +152,8 @@ function CustomThemeProvider({ children }: { children: React.ReactNode }) {
             parsed.v === 4 ||
             parsed.v === 5 ||
             parsed.v === 6 ||
-            parsed.v === 7) &&
+            parsed.v === 7 ||
+            parsed.v === 8) &&
           (parsed.fabAnim === "none" ||
             parsed.fabAnim === "rise" ||
             parsed.fabAnim === "slide" ||
@@ -135,7 +164,10 @@ function CustomThemeProvider({ children }: { children: React.ReactNode }) {
           setFabAnimState(parsed.fabAnim === "fade" ? "blur" : parsed.fabAnim);
         }
         if (
-          (parsed.v === 5 || parsed.v === 6 || parsed.v === 7) &&
+          (parsed.v === 5 ||
+            parsed.v === 6 ||
+            parsed.v === 7 ||
+            parsed.v === 8) &&
           (parsed.pageTransition === "none" ||
             parsed.pageTransition === "slide" ||
             parsed.pageTransition === "fade" ||
@@ -144,15 +176,35 @@ function CustomThemeProvider({ children }: { children: React.ReactNode }) {
           setPageTransitionState(parsed.pageTransition);
         }
         if (
-          (parsed.v === 6 || parsed.v === 7) &&
+          (parsed.v === 6 || parsed.v === 7 || parsed.v === 8) &&
           (parsed.chatLayout === "floating" || parsed.chatLayout === "dock")
         ) {
           setChatLayoutState(parsed.chatLayout);
         }
-        if (parsed.v === 7 && typeof parsed.chatDockWidth === "number") {
+        if (
+          (parsed.v === 7 || parsed.v === 8) &&
+          typeof parsed.chatDockWidth === "number"
+        ) {
           setChatDockWidthState(
             normalizeChatDockWidth(parsed.chatDockWidth),
           );
+        }
+        if (
+          parsed.v === 8 &&
+          (parsed.chatFont === "pretendard" ||
+            parsed.chatFont === "noto-sans-kr" ||
+            parsed.chatFont === "system")
+        ) {
+          setChatFontState(parsed.chatFont);
+        }
+        if (
+          parsed.v === 8 &&
+          (parsed.chatFontSize === "small" ||
+            parsed.chatFontSize === "medium" ||
+            parsed.chatFontSize === "large" ||
+            parsed.chatFontSize === "xlarge")
+        ) {
+          setChatFontSizeState(parsed.chatFontSize);
         }
         if (typeof parsed.glow === "boolean") setGlowState(parsed.glow);
       }
@@ -183,18 +235,34 @@ function CustomThemeProvider({ children }: { children: React.ReactNode }) {
       "--chat-dock-width",
       `${chatDockWidth}px`,
     );
+    document.documentElement.style.setProperty(
+      "--chat-font-family",
+      CHAT_FONT_FAMILIES[chatFont],
+    );
+    document.documentElement.style.setProperty(
+      "--chat-body-font-size",
+      CHAT_FONT_SIZES[chatFontSize].body,
+    );
+    document.documentElement.style.setProperty(
+      "--chat-control-font-size",
+      CHAT_FONT_SIZES[chatFontSize].control,
+    );
+    document.documentElement.dataset.chatFont = chatFont;
+    document.documentElement.dataset.chatFontSize = chatFontSize;
     
     try {
       localStorage.setItem(
         "swork-theme-custom",
         JSON.stringify({
-          v: 7,
+          v: 8,
           accent,
           motion,
           pageTransition,
           fabMode,
           fabAnim,
           chatLayout,
+          chatFont,
+          chatFontSize,
           chatDockWidth,
           glow,
         })
@@ -209,6 +277,8 @@ function CustomThemeProvider({ children }: { children: React.ReactNode }) {
     fabMode,
     fabAnim,
     chatLayout,
+    chatFont,
+    chatFontSize,
     chatDockWidth,
     glow,
     mounted,
@@ -226,6 +296,9 @@ function CustomThemeProvider({ children }: { children: React.ReactNode }) {
   const setFabAnim = (animation: FabAnim) => setFabAnimState(animation);
   const setChatLayout = (layout: ChatLayout) =>
     setChatLayoutState(layout);
+  const setChatFont = (font: ChatFont) => setChatFontState(font);
+  const setChatFontSize = (size: ChatFontSize) =>
+    setChatFontSizeState(size);
   const setChatDockWidth = (width: number) =>
     setChatDockWidthState(normalizeChatDockWidth(width));
   const setGlow = (g: boolean) => setGlowState(g);
@@ -239,6 +312,8 @@ function CustomThemeProvider({ children }: { children: React.ReactNode }) {
     setFabModeState("chat");
     setFabAnimState("slide");
     setChatLayoutState("floating");
+    setChatFontState("pretendard");
+    setChatFontSizeState("medium");
     setChatDockWidthState(CHAT_DOCK_DEFAULT_WIDTH);
     setGlowState(true);
   };
@@ -253,6 +328,8 @@ function CustomThemeProvider({ children }: { children: React.ReactNode }) {
         fabMode,
         fabAnim,
         chatLayout,
+        chatFont,
+        chatFontSize,
         chatDockWidth,
         glow,
         setMode,
@@ -262,6 +339,8 @@ function CustomThemeProvider({ children }: { children: React.ReactNode }) {
         setFabMode,
         setFabAnim,
         setChatLayout,
+        setChatFont,
+        setChatFontSize,
         setChatDockWidth,
         setGlow,
         resetTheme,

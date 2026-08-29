@@ -4,11 +4,20 @@
  * 전역 포트폴리오 채팅을 모든 라우트에 한 번만 연결한다(Provider 패턴).
  */
 import type { Metadata } from "next";
+import { Noto_Sans_KR } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "../context/ThemeContext";
 import { ChatProvider } from "../features/chat";
 import { ChatApiPreconnect } from "./ChatApiPreconnect";
 import { PortfolioWebMcp } from "../features/webmcp/PortfolioWebMcp";
+
+const notoSansKr = Noto_Sans_KR({
+  weight: "variable",
+  display: "swap",
+  variable: "--font-noto-sans-kr",
+  preload: false,
+  fallback: ["system-ui", "sans-serif"],
+});
 
 export const metadata: Metadata = {
   title: {
@@ -25,7 +34,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ko" suppressHydrationWarning>
+    <html
+      lang="ko"
+      className={notoSansKr.variable}
+      suppressHydrationWarning
+    >
       <body>
         <ChatApiPreconnect />
         <ThemeProvider>

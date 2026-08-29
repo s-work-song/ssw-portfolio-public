@@ -169,9 +169,13 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
     motion,
     pageTransition,
     chatLayout,
+    chatFont,
+    chatFontSize,
     setMode,
     setAccent,
     setChatLayout,
+    setChatFont,
+    setChatFontSize,
   } = useTheme();
   const [isOpen, setIsOpen] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
@@ -912,6 +916,8 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
           theme: mode,
           accent,
           chatLayout,
+          chatFont,
+          chatFontSize,
         },
       };
       const shouldStream = streamingEnabled;
@@ -930,6 +936,14 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
         }
         if (execution.type === "set_portfolio_chat_layout") {
           setChatLayout(execution.layout);
+          return;
+        }
+        if (execution.type === "set_portfolio_chat_font") {
+          setChatFont(execution.font);
+          return;
+        }
+        if (execution.type === "set_portfolio_chat_font_size") {
+          setChatFontSize(execution.size);
           return;
         }
         if (execution.type === "report_portfolio_ui_settings") return;
@@ -1069,6 +1083,8 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
     [
       audience,
       accent,
+      chatFont,
+      chatFontSize,
       chatLayout,
       mode,
       nextId,
@@ -1077,6 +1093,8 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
       streamingEnabled,
       setMode,
       setAccent,
+      setChatFont,
+      setChatFontSize,
       setChatLayout,
       tone,
     ],

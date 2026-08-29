@@ -50,6 +50,8 @@ export interface ChatUiSettings {
   theme: "light" | "dark" | "system";
   accent: "indigo" | "emerald" | "amber" | "rose" | "violet";
   chatLayout: "floating" | "dock";
+  chatFont: "pretendard" | "noto-sans-kr" | "system";
+  chatFontSize: "small" | "medium" | "large" | "xlarge";
 }
 
 export type ActionId =
@@ -148,6 +150,20 @@ export interface ChatLayoutToolExecution {
   layout: "floating" | "dock";
 }
 
+export interface ChatFontToolExecution {
+  type: "set_portfolio_chat_font";
+  toolCallId: string;
+  toolName: "set-portfolio-chat-font";
+  font: "pretendard" | "noto-sans-kr" | "system";
+}
+
+export interface ChatFontSizeToolExecution {
+  type: "set_portfolio_chat_font_size";
+  toolCallId: string;
+  toolName: "set-portfolio-chat-font-size";
+  size: "small" | "medium" | "large" | "xlarge";
+}
+
 export interface ChatUiSettingsReportToolExecution {
   type: "report_portfolio_ui_settings";
   toolCallId: string;
@@ -157,6 +173,8 @@ export interface ChatUiSettingsReportToolExecution {
     theme: "light" | "dark" | "system";
     accent: "indigo" | "emerald" | "amber" | "rose" | "violet";
     chatLayout: "floating" | "dock";
+    chatFont: "pretendard" | "noto-sans-kr" | "system";
+    chatFontSize: "small" | "medium" | "large" | "xlarge";
   } | null;
 }
 
@@ -165,6 +183,8 @@ export type ChatToolExecution =
   | ChatThemeToolExecution
   | ChatAccentToolExecution
   | ChatLayoutToolExecution
+  | ChatFontToolExecution
+  | ChatFontSizeToolExecution
   | ChatUiSettingsReportToolExecution;
 
 export interface ChatResponse {

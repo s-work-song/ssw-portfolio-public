@@ -14,6 +14,8 @@ import {
   CHAT_DOCK_DEFAULT_WIDTH,
   CHAT_DOCK_MAX_WIDTH,
   CHAT_DOCK_MIN_WIDTH,
+  ChatFont,
+  ChatFontSize,
   ChatLayout,
   FabAnim,
   FabMode,
@@ -38,6 +40,44 @@ const STREAM_PREVIEW_SPEED_OPTIONS = [
   { value: 1.5, label: "1.5×", description: "빠르게" },
   { value: 2, label: "2×", description: "매우 빠르게" },
 ] as const;
+
+const CHAT_FONT_OPTIONS: ReadonlyArray<{
+  value: ChatFont;
+  label: string;
+  description: string;
+  previewFamily: string;
+}> = [
+  {
+    value: "pretendard",
+    label: "Pretendard",
+    description: "현재 사이트와 같은 기본 글꼴",
+    previewFamily: "'Pretendard', system-ui, sans-serif",
+  },
+  {
+    value: "noto-sans-kr",
+    label: "Noto Sans KR",
+    description: "Google 글꼴을 빌드에 포함해 사용",
+    previewFamily:
+      "var(--font-noto-sans-kr), 'Noto Sans KR', system-ui, sans-serif",
+  },
+  {
+    value: "system",
+    label: "시스템 글꼴",
+    description: "운영체제 기본 UI 글꼴 사용",
+    previewFamily: "system-ui, -apple-system, 'Segoe UI', sans-serif",
+  },
+];
+
+const CHAT_FONT_SIZE_OPTIONS: ReadonlyArray<{
+  value: ChatFontSize;
+  label: string;
+  pixels: number;
+}> = [
+  { value: "small", label: "작게", pixels: 13 },
+  { value: "medium", label: "기본", pixels: 14 },
+  { value: "large", label: "크게", pixels: 16 },
+  { value: "xlarge", label: "매우 크게", pixels: 18 },
+];
 
 const FAB_ANIMATION_OPTIONS: ReadonlyArray<{
   value: FabAnim;
@@ -110,6 +150,8 @@ export default function SettingsPage() {
     fabMode,
     fabAnim,
     chatLayout,
+    chatFont,
+    chatFontSize,
     chatDockWidth,
     glow,
     setMode,
@@ -119,6 +161,8 @@ export default function SettingsPage() {
     setFabMode,
     setFabAnim,
     setChatLayout,
+    setChatFont,
+    setChatFontSize,
     setChatDockWidth,
     setGlow,
     resetTheme,
@@ -967,6 +1011,127 @@ export default function SettingsPage() {
             )}
             <div style={{ marginTop: "11px", color: "var(--text-mute)", fontSize: "12.5px", lineHeight: 1.55 }}>
               고정 패널은 화면 너비 1100px 이상에서 적용되며, 더 좁은 화면과 모바일에서는 자동으로 플로팅 창을 사용합니다.
+            </div>
+          </section>
+
+          {/* Chat typography */}
+          <section style={{ background: "var(--bg-elev)", border: "1px solid var(--border)", borderRadius: "18px", padding: "clamp(20px, 3vw, 28px)" }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px", marginBottom: "4px" }}>
+              <span id="chat-font-title" style={{ fontSize: "16px", fontWeight: 700 }}>
+                채팅 글꼴과 크기
+              </span>
+              <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "12.5px", color: "var(--accent, #6366f1)", whiteSpace: "nowrap" }}>
+                {CHAT_FONT_OPTIONS.find((option) => option.value === chatFont)?.label}
+              </span>
+            </div>
+            <div id="chat-font-description" style={{ fontSize: "13.5px", color: "var(--text-mute)", marginBottom: "18px", lineHeight: 1.6 }}>
+              채팅 메시지와 입력창, 추천 질문의 글꼴과 크기를 조절합니다. 코드 블록은 고정폭 글꼴을 유지합니다.
+            </div>
+
+            <div
+              role="radiogroup"
+              aria-label="채팅 글꼴"
+              aria-describedby="chat-font-description"
+              style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "10px" }}
+            >
+              {CHAT_FONT_OPTIONS.map((option) => {
+                const active = chatFont === option.value;
+                return (
+                  <button
+                    key={option.value}
+                    type="button"
+                    role="radio"
+                    aria-checked={active}
+                    onClick={() => setChatFont(option.value)}
+                    style={{
+                      display: "flex",
+                      minHeight: "84px",
+                      flexDirection: "column",
+                      gap: "7px",
+                      padding: "14px 15px",
+                      borderRadius: "13px",
+                      border: active
+                        ? "1.5px solid var(--accent, #6366f1)"
+                        : "1.5px solid var(--border)",
+                      background: active
+                        ? "var(--accent-soft, rgba(99,102,241,.14))"
+                        : "var(--bg-elev-2)",
+                      color: "var(--text)",
+                      cursor: "pointer",
+                      fontFamily: option.previewFamily,
+                      textAlign: "left",
+                    }}
+                  >
+                    <span style={{ fontSize: "15px", fontWeight: 700 }}>
+                      {option.label}
+                    </span>
+                    <span style={{ color: "var(--text-mute)", fontSize: "12px", lineHeight: 1.45 }}>
+                      {option.description}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+
+            <div
+              role="radiogroup"
+              aria-label="채팅 글자 크기"
+              style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(110px, 1fr))", gap: "8px", marginTop: "12px" }}
+            >
+              {CHAT_FONT_SIZE_OPTIONS.map((option) => {
+                const active = chatFontSize === option.value;
+                return (
+                  <button
+                    key={option.value}
+                    type="button"
+                    role="radio"
+                    aria-checked={active}
+                    aria-label={`${option.label} ${option.pixels}px`}
+                    onClick={() => setChatFontSize(option.value)}
+                    style={{
+                      display: "grid",
+                      minHeight: "58px",
+                      padding: "8px",
+                      placeItems: "center",
+                      border: active
+                        ? "1.5px solid var(--accent, #6366f1)"
+                        : "1.5px solid var(--border)",
+                      borderRadius: "11px",
+                      background: active
+                        ? "var(--accent-soft, rgba(99,102,241,.14))"
+                        : "var(--bg-elev-2)",
+                      color: active
+                        ? "var(--accent, #6366f1)"
+                        : "var(--text-dim)",
+                      cursor: "pointer",
+                      fontFamily: "var(--chat-font-family)",
+                      fontSize: `${option.pixels}px`,
+                      fontWeight: 700,
+                    }}
+                  >
+                    <span>{option.label}</span>
+                    <span style={{ fontSize: "10px", opacity: 0.72 }}>
+                      {option.pixels}px
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+
+            <div
+              style={{
+                marginTop: "14px",
+                padding: "14px 15px",
+                border: "1px solid var(--border)",
+                borderRadius: "13px",
+                background: "var(--bg-elev-2)",
+                color: "var(--text)",
+                fontFamily: "var(--chat-font-family)",
+                fontSize: "var(--chat-body-font-size)",
+                lineHeight: 1.65,
+              }}
+            >
+              선택한 글꼴과 크기로 포트폴리오 챗봇의 답변을 표시합니다.
             </div>
           </section>
 

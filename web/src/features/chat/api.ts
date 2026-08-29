@@ -105,7 +105,13 @@ function parseToolExecution(value: unknown): ChatToolExecution | null {
         ["indigo", "emerald", "amber", "rose", "violet"].includes(
           String(value.uiSettings.accent),
         ) &&
-        ["floating", "dock"].includes(String(value.uiSettings.chatLayout))))
+        ["floating", "dock"].includes(String(value.uiSettings.chatLayout)) &&
+        ["pretendard", "noto-sans-kr", "system"].includes(
+          String(value.uiSettings.chatFont),
+        ) &&
+        ["small", "medium", "large", "xlarge"].includes(
+          String(value.uiSettings.chatFontSize),
+        )))
   ) {
     const uiSettings = value.uiSettings as Record<string, unknown> | null;
     return {
@@ -123,6 +129,15 @@ function parseToolExecution(value: unknown): ChatToolExecution | null {
               | "rose"
               | "violet",
             chatLayout: uiSettings.chatLayout as "floating" | "dock",
+            chatFont: uiSettings.chatFont as
+              | "pretendard"
+              | "noto-sans-kr"
+              | "system",
+            chatFontSize: uiSettings.chatFontSize as
+              | "small"
+              | "medium"
+              | "large"
+              | "xlarge",
           }
         : null,
     };
@@ -180,6 +195,38 @@ function parseToolExecution(value: unknown): ChatToolExecution | null {
       toolCallId: value.toolCallId,
       toolName: "set-portfolio-chat-layout",
       layout: value.layout,
+    };
+  }
+  if (
+    isRecord(value) &&
+    value.type === "set_portfolio_chat_font" &&
+    value.toolName === "set-portfolio-chat-font" &&
+    isString(value.toolCallId) &&
+    value.toolCallId.length >= 1 &&
+    value.toolCallId.length <= 128 &&
+    ["pretendard", "noto-sans-kr", "system"].includes(String(value.font))
+  ) {
+    return {
+      type: "set_portfolio_chat_font",
+      toolCallId: value.toolCallId,
+      toolName: "set-portfolio-chat-font",
+      font: value.font as "pretendard" | "noto-sans-kr" | "system",
+    };
+  }
+  if (
+    isRecord(value) &&
+    value.type === "set_portfolio_chat_font_size" &&
+    value.toolName === "set-portfolio-chat-font-size" &&
+    isString(value.toolCallId) &&
+    value.toolCallId.length >= 1 &&
+    value.toolCallId.length <= 128 &&
+    ["small", "medium", "large", "xlarge"].includes(String(value.size))
+  ) {
+    return {
+      type: "set_portfolio_chat_font_size",
+      toolCallId: value.toolCallId,
+      toolName: "set-portfolio-chat-font-size",
+      size: value.size as "small" | "medium" | "large" | "xlarge",
     };
   }
   if (

@@ -5,6 +5,13 @@
   --chat-text: var(--text, #14161f);
   --chat-dim: var(--text-dim, #525872);
   --chat-border: var(--border-strong, rgba(18, 20, 45, 0.15));
+  font-family: var(
+    --chat-font-family,
+    'Pretendard',
+    system-ui,
+    -apple-system,
+    sans-serif
+  );
   position: fixed;
   inset: auto 0 0 auto;
   z-index: 200;
@@ -509,7 +516,7 @@
   background: var(--chat-bg);
   color: var(--chat-text);
   cursor: pointer;
-  font-size: 11px;
+  font-size: var(--chat-control-font-size, 12px);
 }
 
 .audienceOptions button:hover,
@@ -570,13 +577,13 @@
 .messageText {
   margin: 0;
   white-space: pre-wrap;
-  font-size: 13px;
+  font-size: var(--chat-body-font-size, 14px);
   line-height: 1.6;
 }
 
 .markdownMessage {
   overflow-wrap: anywhere;
-  font-size: 13px;
+  font-size: var(--chat-body-font-size, 14px);
   line-height: 1.65;
 }
 
@@ -921,7 +928,7 @@
 
 .suggestedQuestionsLabel {
   color: var(--chat-dim);
-  font-size: 11px;
+  font-size: var(--chat-control-font-size, 12px);
   font-weight: 700;
 }
 
@@ -933,7 +940,7 @@
   background: color-mix(in srgb, var(--chat-accent) 5%, var(--chat-bg));
   color: var(--chat-text);
   cursor: pointer;
-  font-size: 11px;
+  font-size: var(--chat-control-font-size, 12px);
   line-height: 1.4;
   text-align: left;
 }
@@ -1013,7 +1020,7 @@
   align-self: flex-start;
   margin: 0;
   color: var(--chat-dim);
-  font-size: 12px;
+  font-size: var(--chat-control-font-size, 12px);
 }
 
 .loading::before {
@@ -1125,7 +1132,14 @@
   border-radius: 11px;
   background: var(--chat-bg-soft);
   color: var(--chat-text);
-  font-size: 13px;
+  font-family: var(
+    --chat-font-family,
+    'Pretendard',
+    system-ui,
+    -apple-system,
+    sans-serif
+  );
+  font-size: var(--chat-body-font-size, 14px);
   line-height: 1.4;
 }
 
