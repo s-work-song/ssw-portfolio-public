@@ -17,7 +17,7 @@ export default function CoverLetterPage() {
     <div style={{ display: 'flex', flexDirection: 'column', gap: '60px' }}>
       
       {/* Hero Section */}
-      <section style={{
+      <section id="cover-letter-overview" tabIndex={-1} style={{
         padding: 'clamp(22px, 5vw, 36px)',
         background: 'var(--bg-elev)',
         borderRadius: '24px',
@@ -27,7 +27,8 @@ export default function CoverLetterPage() {
         flexDirection: 'column',
         gap: '16px',
         position: 'relative',
-        overflow: 'hidden'
+        overflow: 'hidden',
+        scrollMarginTop: '96px'
       }}>
         {/* Subtle grid background watermark */}
         <div style={{
@@ -48,6 +49,11 @@ export default function CoverLetterPage() {
           <p style={{ fontSize: 'clamp(1rem, 2.6vw, 1.125rem)', color: 'var(--text-dim)', maxWidth: '850px', lineHeight: 1.6, margin: 0, wordBreak: 'keep-all' }}>
             단순히 결과물만 내는 것이 아니라, 프로덕트가 만들어지는 이면에 담긴 고민과 과정을 중요하게 생각합니다. 언제나 본질을 꿰뚫고 새로운 기준을 제시하기 위해 노력하는 메이커입니다.
           </p>
+          <AskAiButton
+            align="end"
+            guidedTourTarget="cover-letter-overview-ask-ai"
+            question="자기소개서에 담긴 개발 철학과 경험의 흐름을 주요 사례 중심으로 설명해 주세요."
+          />
         </div>
       </section>
 
@@ -88,7 +94,10 @@ export default function CoverLetterPage() {
                 고등학생 때부터 컴퓨터 하드웨어에 대한 깊은 관심이 있었습니다. 단순히 이론적인 것에 그치지 않고, 직접 CPU 오버클럭을 하거나 RAID 환경을 구성하며 성능 개선을 두 눈으로 확인하고 검증하는 과정 자체에 큰 흥미를 느꼈습니다. 이러한 하드웨어에 대한 본질적인 탐구심은 이후 소프트웨어 엔지니어로 성장하는 데 강력한 밑거름이 되었습니다.
               </p>
               <div style={{ marginTop: '14px' }}>
-                <AskAiButton align="end" question="자기소개서의 「학창 시절부터 이어진 탐구심」이 현재 개발 방식에 어떻게 이어졌는지 사례와 함께 설명해 주세요." />
+                <AskAiButton
+                  align="end"
+                  question="자기소개서의 「학창 시절부터 이어진 탐구심」이 현재 개발 방식에 어떻게 이어졌는지 사례와 함께 설명해 주세요."
+                />
               </div>
             </div>
           </div>

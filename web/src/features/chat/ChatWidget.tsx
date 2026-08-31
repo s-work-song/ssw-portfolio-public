@@ -31,7 +31,10 @@ import {
   TONE_OPTIONS,
 } from "./constants";
 import { useChat } from "./ChatContext";
+import { GuidedTourCard, GuidedTourInvite } from "./GuidedTourCard";
 import { StreamingText } from "./StreamingText";
+import { useChatInputHistory } from "./useChatInputHistory";
+import { CHAT_ACTION_RESTORE_CHAT_INPUT_EVENT } from "./navigation";
 import type {
   ActionId,
   AudienceChoice,
@@ -40,11 +43,13 @@ import type {
 } from "./types";
 import styles from "./ChatWidget.module.css";
 
-const MOBILE_QUERY = "(max-width: 720px)";
+const MOBILE_QUERY = "(max-width: 720px) and (pointer: coarse)";
 const WIDE_DESKTOP_QUERY = "(min-width: 1100px)";
 const BOTTOM_PIN_THRESHOLD_PX = 64;
 const KEYBOARD_SETTLE_DELAY_MS = 220;
 const QUICK_MENU_EXIT_DURATION_MS = 520;
+const MOBILE_TOUR_REVEAL_DELAY_MS = 500;
+const TOUR_LAYOUT_TRANSITION_MS = 420;
 /** 젤리 엔진이 콘텐츠 래퍼를 찾을 때 쓰는 전역 클래스명(엔진 계약)이다. */
 const JELLY_CONTENT_CLASS = "chat-content-wrapper";
 
@@ -345,6 +350,10 @@ export function ChatWidget() {
     reasoningEnabled,
     effectiveChatAnimation,
     effectiveStreamAnimation,
+    guidedTour,
+    guidedTourStep,
+    guidedTourInviteVisible,
+    focusInputOnOpen,
     open,
     close,
     completeCloseAnimation,
@@ -353,10 +362,18 @@ export function ChatWidget() {
     setReasoningEnabled,
     refreshAvailability,
     resetConversation,
+    showSettingsWebMcpGuide,
     sendMessage,
     stopGenerating,
     retry,
     navigateAction,
+    startGuidedTour,
+    advanceGuidedTour,
+    previousGuidedTourStep,
+    skipGuidedTourInteraction,
+    stopGuidedTour,
+    dismissGuidedTourInvite,
+    returnToGuidedTourStep,
   } = useChat();
   const [draft, setDraft] = useState("");
   const [usedSuggestedQuestionKeys, setUsedSuggestedQuestionKeys] = useState<
@@ -366,6 +383,8 @@ export function ChatWidget() {
     useState<ActionId | null>(null);
   const [quickMenuOpen, setQuickMenuOpen] = useState(false);
   const [quickMenuClosing, setQuickMenuClosing] = useState(false);
+  const [tourCardReady, setTourCardReady] = useState(false);
+  const [jellySurfaceReady, setJellySurfaceReady] = useState(false);
   const quickMenuEnabled = fabMode === "quick-menu";
   const isMobile = useMobileViewport();
   const isWideDesktop = useWideDesktopViewport();
@@ -383,7 +402,10 @@ export function ChatWidget() {
   const rootRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLElement>(null);
+  const externalTourRef = useRef<HTMLDivElement>(null);
+  const externalTourChatButtonRef = useRef<HTMLButtonElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const wasDockedRef = useRef(isDocked);
   const wasLoadingRef = useRef(isLoading);
   const focusWasInsidePanelDuringLoadingRef = useRef(false);
   const messageListRef = useRef<HTMLDivElement>(null);
@@ -396,11 +418,157 @@ export function ChatWidget() {
   const secondPinFrameRef = useRef(0);
   const pinSettleTimerRef = useRef(0);
   const quickMenuCloseTimerRef = useRef(0);
+  const inputHistory = useMemo(
+    () =>
+      messages
+        .filter((message) => message.role === "user")
+        .map((message) => message.content),
+    [messages],
+  );
+  const {
+    changeValue: changeDraft,
+    handleHistoryKeyDown,
+    resetNavigation: resetInputHistoryNavigation,
+  } = useChatInputHistory({
+    entries: inputHistory,
+    value: draft,
+    inputRef,
+    onValueChange: setDraft,
+  });
   const showOnboarding =
     availability === "online" &&
     messages.length === 1 &&
     messages[0]?.kind === "greeting" &&
+    guidedTour.status === "idle" &&
     !isLoading;
+  const guidedTourAvailable = availability === "online";
+  const guidedTourVisible =
+    guidedTourAvailable &&
+    (guidedTour.status === "active" || guidedTour.status === "completed");
+  const responseInProgress =
+    isLoading || guidedTour.interaction === "answering";
+  const tourSuppressed =
+    (responseInProgress && (isMobile || isDocked)) ||
+    (isMobile && isOpen);
+  const guidedTourInternal =
+    guidedTourVisible && tourCardReady && !tourSuppressed && isOpen && isDocked;
+  const guidedTourExternal =
+    guidedTourVisible && tourCardReady && !tourSuppressed && !guidedTourInternal;
+  const mobileTourDocked =
+    isMobile &&
+    !isOpen &&
+    !isClosing &&
+    guidedTourExternal;
+
+  useEffect(() => {
+    if (!guidedTourVisible || tourSuppressed) {
+      const hideTimer = window.setTimeout(
+        () => setTourCardReady(false),
+        0,
+      );
+      return () => window.clearTimeout(hideTimer);
+    }
+
+    const revealTimer = window.setTimeout(
+      () => setTourCardReady(true),
+      MOBILE_TOUR_REVEAL_DELAY_MS,
+    );
+    return () => window.clearTimeout(revealTimer);
+  }, [guidedTourVisible, tourSuppressed]);
+
+  useLayoutEffect(() => {
+    const root = rootRef.current;
+    const guide = externalTourRef.current;
+    if (!root || !guide || !guidedTourExternal) {
+      root?.style.removeProperty("--guided-tour-external-height");
+      return;
+    }
+
+    const updateHeight = (height: number) => {
+      root.style.setProperty(
+        "--guided-tour-external-height",
+        `${Math.ceil(height)}px`,
+      );
+    };
+    if (typeof ResizeObserver === "undefined") {
+      const frame = window.requestAnimationFrame(() =>
+        updateHeight(guide.getBoundingClientRect().height),
+      );
+      return () => {
+        window.cancelAnimationFrame(frame);
+        root.style.removeProperty("--guided-tour-external-height");
+      };
+    }
+
+    const observer = new ResizeObserver(([entry]) => {
+      if (!entry) return;
+      const borderSize = entry.borderBoxSize[0]?.blockSize;
+      updateHeight(borderSize ?? entry.contentRect.height);
+    });
+    observer.observe(guide);
+    return () => {
+      observer.disconnect();
+      root.style.removeProperty("--guided-tour-external-height");
+    };
+  }, [guidedTourExternal]);
+
+  const runTourTransition = useCallback(
+    (transition: () => void) => {
+      if (!isOpen) {
+        transition();
+        return;
+      }
+      if (!isMobile) {
+        transition();
+        return;
+      }
+      close();
+      transition();
+    },
+    [close, isMobile, isOpen],
+  );
+
+  const startGuidedTourFromInvite = useCallback(() => {
+    startGuidedTour();
+    if (!isMobile) open();
+  }, [isMobile, open, startGuidedTour]);
+
+  const startGuidedTourFromChat = useCallback(() => {
+    runTourTransition(startGuidedTour);
+  }, [runTourTransition, startGuidedTour]);
+
+  const showSettingsGuideAfterTour = useCallback(() => {
+    setActiveQuickDestination(null);
+    stopGuidedTour();
+    showSettingsWebMcpGuide();
+    open({ focusInput: false });
+  }, [open, showSettingsWebMcpGuide, stopGuidedTour]);
+
+  const showSettingsGuideFromOnboarding = useCallback(() => {
+    setActiveQuickDestination(null);
+    showSettingsWebMcpGuide();
+  }, [showSettingsWebMcpGuide]);
+
+  const toggleChatFromGuidedTour = useCallback(() => {
+    if (isOpen) close();
+    else open();
+  }, [close, isOpen, open]);
+
+  const restartGuidedTour = useCallback(() => {
+    runTourTransition(startGuidedTour);
+  }, [runTourTransition, startGuidedTour]);
+
+  const nextGuidedTourStep = useCallback(() => {
+    runTourTransition(advanceGuidedTour);
+  }, [advanceGuidedTour, runTourTransition]);
+
+  const previousTourStep = useCallback(() => {
+    runTourTransition(previousGuidedTourStep);
+  }, [previousGuidedTourStep, runTourTransition]);
+
+  const skipTourInteraction = useCallback(() => {
+    runTourTransition(skipGuidedTourInteraction);
+  }, [runTourTransition, skipGuidedTourInteraction]);
   const latestSuggestionMessageId = useMemo(() => {
     if (isLoading) return null;
     const latestMessage = messages[messages.length - 1];
@@ -500,23 +668,44 @@ export function ChatWidget() {
   useEffect(() => {
     const root = document.documentElement;
 
-    if (isDocked && isOpen && !isClosing) {
+    if (
+      isDocked &&
+      ((isOpen && !isClosing) || guidedTourExternal)
+    ) {
       root.dataset.chatDockOpen = "true";
     } else {
       delete root.dataset.chatDockOpen;
     }
 
-    if (!isDocked && isWideDesktop && isOpen && !isClosing) {
+    if (
+      !isDocked &&
+      isWideDesktop &&
+      ((isOpen && !isClosing) || guidedTourExternal)
+    ) {
       root.dataset.chatFloatingOpen = "true";
     } else {
       delete root.dataset.chatFloatingOpen;
     }
 
+    if (mobileTourDocked) {
+      root.dataset.guidedTourDockOpen = "true";
+    } else {
+      delete root.dataset.guidedTourDockOpen;
+    }
+
     return () => {
       delete root.dataset.chatDockOpen;
       delete root.dataset.chatFloatingOpen;
+      delete root.dataset.guidedTourDockOpen;
     };
-  }, [isClosing, isDocked, isOpen, isWideDesktop]);
+  }, [
+    guidedTourExternal,
+    isClosing,
+    isDocked,
+    isOpen,
+    isWideDesktop,
+    mobileTourDocked,
+  ]);
 
   const clearQuickMenuCloseTimer = useCallback(() => {
     window.clearTimeout(quickMenuCloseTimerRef.current);
@@ -721,12 +910,106 @@ export function ChatWidget() {
     wasLoadingRef.current = isLoading;
   }, [availability, isClosing, isLoading, isOpen]);
 
+  useEffect(() => {
+    const restoreChatInputFocus = () => {
+      if (!isOpen || isClosing || availability !== "online") return;
+      window.requestAnimationFrame(() => {
+        inputRef.current?.focus({ preventScroll: true });
+      });
+    };
+    window.addEventListener(
+      CHAT_ACTION_RESTORE_CHAT_INPUT_EVENT,
+      restoreChatInputFocus,
+    );
+    return () => {
+      window.removeEventListener(
+        CHAT_ACTION_RESTORE_CHAT_INPUT_EVENT,
+        restoreChatInputFocus,
+      );
+    };
+  }, [availability, isClosing, isOpen]);
+
   useLayoutEffect(() => {
     const justOpened = isOpen && !wasOpenForScrollRef.current;
     if (justOpened) isBottomPinnedRef.current = true;
     if (isOpen && isBottomPinnedRef.current) schedulePinnedScroll();
     wasOpenForScrollRef.current = isOpen;
   }, [error, isLoading, isOpen, messages, schedulePinnedScroll]);
+
+  useEffect(() => {
+    if (!guidedTourInternal || !isOpen || isClosing) return;
+
+    const reduceMotion =
+      motion === "off" ||
+      (motion === "system" &&
+        window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+    isBottomPinnedRef.current = true;
+    preservePinUntilRef.current = Date.now() + 700;
+    const frame = window.requestAnimationFrame(() => {
+      const list = messageListRef.current;
+      list?.scrollTo({
+        top: list.scrollHeight,
+        behavior: reduceMotion ? "auto" : "smooth",
+      });
+    });
+    const settleTimer = window.setTimeout(() => {
+      const list = messageListRef.current;
+      if (list) list.scrollTop = list.scrollHeight;
+    }, 480);
+
+    return () => {
+      window.cancelAnimationFrame(frame);
+      window.clearTimeout(settleTimer);
+    };
+  }, [guidedTourInternal, isClosing, isOpen, motion]);
+
+  useEffect(() => {
+    if (!guidedTourExternal || !isOpen || isClosing) return;
+
+    const list = messageListRef.current;
+    if (!list) return;
+    const reduceMotion =
+      motion === "off" ||
+      (motion === "system" &&
+        window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+    isBottomPinnedRef.current = true;
+    preservePinUntilRef.current =
+      Date.now() + TOUR_LAYOUT_TRANSITION_MS + 200;
+
+    if (reduceMotion) {
+      list.scrollTop = list.scrollHeight;
+      return;
+    }
+
+    const initialScrollTop = list.scrollTop;
+    const startedAt = window.performance.now();
+    let frame = 0;
+    const followShrinkingPanel = (now: number) => {
+      const progress = Math.min(
+        1,
+        (now - startedAt) / TOUR_LAYOUT_TRANSITION_MS,
+      );
+      const eased = 1 - (1 - progress) ** 3;
+      const maxScrollTop = Math.max(
+        0,
+        list.scrollHeight - list.clientHeight,
+      );
+      list.scrollTop =
+        initialScrollTop + (maxScrollTop - initialScrollTop) * eased;
+      if (progress < 1) {
+        frame = window.requestAnimationFrame(followShrinkingPanel);
+      }
+    };
+    frame = window.requestAnimationFrame(followShrinkingPanel);
+    const settleTimer = window.setTimeout(() => {
+      list.scrollTop = list.scrollHeight;
+    }, TOUR_LAYOUT_TRANSITION_MS + 80);
+
+    return () => {
+      window.cancelAnimationFrame(frame);
+      window.clearTimeout(settleTimer);
+    };
+  }, [guidedTourExternal, isClosing, isOpen, motion]);
 
   useEffect(() => {
     if (!isMobile || !isOpen || isClosing) return;
@@ -762,13 +1045,18 @@ export function ChatWidget() {
   }, [isClosing]);
 
   useEffect(() => {
-    if (isOpen && !isClosing && availability === "online") {
+    if (
+      isOpen &&
+      !isClosing &&
+      availability === "online" &&
+      (!isMobile || focusInputOnOpen)
+    ) {
       window.requestAnimationFrame(() => inputRef.current?.focus());
     } else if (!isOpen && wasOpenRef.current) {
       window.requestAnimationFrame(() => triggerRef.current?.focus());
     }
     wasOpenRef.current = isOpen;
-  }, [availability, isClosing, isOpen]);
+  }, [availability, focusInputOnOpen, isClosing, isMobile, isOpen]);
 
   // 연출 옵션은 PC 패널에만 적용하고, 모바일은 기존 미디어쿼리 동작을 그대로 둔다.
   const isJelly =
@@ -780,17 +1068,30 @@ export function ChatWidget() {
   const revealCompletionControls = streamAnimation !== "none";
 
   useLayoutEffect(() => {
+    const transitionedFromDock = wasDockedRef.current && !isDocked && isOpen;
+    wasDockedRef.current = isDocked;
     if (!isOpen || !isJelly) return;
 
     const panel = panelRef.current;
-    const trigger = triggerRef.current;
+    const trigger = triggerRef.current ?? externalTourChatButtonRef.current;
     if (!panel || !trigger) return;
+
+    let layoutTransitionResetFrame = 0;
+    if (transitionedFromDock) {
+      panel.style.transition = "none";
+      void panel.offsetHeight;
+      layoutTransitionResetFrame = window.requestAnimationFrame(() =>
+        panel.style.removeProperty("transition"),
+      );
+    }
 
     let engine: ElasticJellyPanel | null = null;
     try {
-      engine = new ElasticJellyPanel(trigger, panel);
+      engine = new ElasticJellyPanel(trigger, panel, {
+        onSurfaceReadyChange: setJellySurfaceReady,
+      });
       jellyRef.current = engine;
-      engine.open();
+      engine.open({ animate: !transitionedFromDock });
     } catch (initError) {
       console.error("젤리 패널 애니메이션을 시작하지 못했습니다.", initError);
       engine?.destroy();
@@ -799,12 +1100,14 @@ export function ChatWidget() {
     }
 
     return () => {
+      window.cancelAnimationFrame(layoutTransitionResetFrame);
+      panel.style.removeProperty("transition");
       engine?.destroy();
       jellyRef.current = null;
       // 엔진이 수축을 마치기 전에 정리되면 FAB에 남는 인라인 레이어 값을 되돌린다.
       trigger.style.zIndex = "";
     };
-  }, [isJelly, isOpen]);
+  }, [isDocked, isJelly, isOpen]);
 
   useEffect(() => {
     if (!isClosing) return;
@@ -813,18 +1116,23 @@ export function ChatWidget() {
 
     // 수축이 재생되는 동안 패널은 화면에 남지만 조작은 받지 않게 한다.
     engine.panel.style.pointerEvents = "none";
-    engine.close(triggerRef.current ?? undefined);
-  }, [isClosing]);
+    const collapseTarget = guidedTourExternal
+      ? externalTourChatButtonRef.current
+      : triggerRef.current;
+    engine.close(collapseTarget ?? undefined);
+  }, [guidedTourExternal, isClosing]);
 
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const message = draft.trim();
     if (!message || isLoading || availability !== "online") return;
+    resetInputHistoryNavigation("");
     setDraft("");
     await sendMessage(message);
   };
 
   const handleInputKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
+    if (handleHistoryKeyDown(event)) return;
     if (event.key === "Enter" && !event.shiftKey) {
       event.preventDefault();
       event.currentTarget.form?.requestSubmit();
@@ -901,8 +1209,10 @@ export function ChatWidget() {
     styles.panel,
     isClosing ? styles.panelClosing : "",
     isDocked ? styles.panelDocked : "",
+    guidedTourExternal && isOpen ? styles.panelTourExternal : "",
     isSlide ? styles.panelSlide : "",
     isJelly ? styles.panelJelly : "",
+    isJelly && jellySurfaceReady ? styles.panelJellySettled : "",
   ]
     .filter(Boolean)
     .join(" ");
@@ -1041,6 +1351,7 @@ export function ChatWidget() {
                       error === null
                     }
                     onClick={() => {
+                      resetInputHistoryNavigation("");
                       setDraft("");
                       setUsedSuggestedQuestionKeys(new Set());
                       resetConversation();
@@ -1292,6 +1603,30 @@ export function ChatWidget() {
                           <legend>
                             어떤 내용이 궁금한가요? 선택하면 맞춤 소개를 시작해요.
                           </legend>
+                          <div className={styles.onboardingFeatureActions}>
+                            <button
+                              type="button"
+                              className={styles.guidedTourStart}
+                              onClick={startGuidedTourFromChat}
+                            >
+                              <span>
+                                <strong>AI와 처음부터 둘러보기</strong>
+                                <small>주요 페이지와 질문 기능을 약 5분 동안 안내해요.</small>
+                              </span>
+                              <span aria-hidden="true">→</span>
+                            </button>
+                            <button
+                              type="button"
+                              className={`${styles.guidedTourStart} ${styles.webMcpGuideStart}`}
+                              onClick={showSettingsGuideFromOnboarding}
+                            >
+                              <span>
+                                <strong>설정·WebMCP 도구 알아보기</strong>
+                                <small>설정 변경과 기록 검색·이동 도구를 살펴봐요.</small>
+                              </span>
+                              <span aria-hidden="true">→</span>
+                            </button>
+                          </div>
                           <div className={styles.quickStartGroup}>
                             <span className={styles.onboardingGroupLabel}>
                               바로 보기
@@ -1360,6 +1695,22 @@ export function ChatWidget() {
                   )}
                   </div>
                 )}
+                {guidedTourInternal && (
+                  <GuidedTourCard
+                    state={guidedTour}
+                    step={guidedTourStep}
+                    placement="panel"
+                    animateEntrance
+                    aiAvailable={availability === "online"}
+                    onPrevious={previousTourStep}
+                    onNext={nextGuidedTourStep}
+                    onSkip={skipTourInteraction}
+                    onStop={stopGuidedTour}
+                    onReturnToCurrentStep={returnToGuidedTourStep}
+                    onRestart={restartGuidedTour}
+                    onShowSettingsGuide={showSettingsGuideAfterTour}
+                  />
+                )}
               </div>
 
               {availability === "online" && (
@@ -1400,10 +1751,13 @@ export function ChatWidget() {
                       rows={2}
                       maxLength={2_000}
                       value={draft}
-                      onChange={(event) => setDraft(event.currentTarget.value)}
+                      onChange={(event) =>
+                        changeDraft(event.currentTarget.value)
+                      }
                       onFocus={handleInputFocus}
                       onBlur={handleInputBlur}
                       onKeyDown={handleInputKeyDown}
+                      aria-keyshortcuts="ArrowUp ArrowDown"
                       placeholder="경력, 기술, 프로젝트를 질문해 보세요"
                     />
                     {isLoading ? (
@@ -1438,7 +1792,39 @@ export function ChatWidget() {
         </>
       )}
 
-      {quickMenuRendered && (
+      {!isOpen &&
+        !isClosing &&
+        guidedTourAvailable &&
+        guidedTourInviteVisible && (
+        <GuidedTourInvite
+          onStart={startGuidedTourFromInvite}
+          onDismiss={dismissGuidedTourInvite}
+        />
+      )}
+
+      {guidedTourExternal && (
+        <div ref={externalTourRef} className={styles.externalTourHost}>
+          <GuidedTourCard
+            state={guidedTour}
+            step={guidedTourStep}
+            placement="external"
+            animateEntrance
+            externalChatOpen={isOpen}
+            externalChatButtonRef={externalTourChatButtonRef}
+            aiAvailable={availability === "online"}
+            onPrevious={previousTourStep}
+            onNext={nextGuidedTourStep}
+            onSkip={skipTourInteraction}
+            onStop={stopGuidedTour}
+            onReturnToCurrentStep={returnToGuidedTourStep}
+            onRestart={restartGuidedTour}
+            onShowSettingsGuide={showSettingsGuideAfterTour}
+            onToggleExternalChat={toggleChatFromGuidedTour}
+          />
+        </div>
+      )}
+
+      {quickMenuRendered && !guidedTourExternal && (
         <nav
           id="portfolio-quick-menu"
           className={styles.quickMenu}
@@ -1508,42 +1894,44 @@ export function ChatWidget() {
         </nav>
       )}
 
-      <button
-        ref={triggerRef}
-        className={`${styles.trigger} ${isOpen ? styles.triggerOpen : ""} ${
-          quickMenuExpanded ? styles.triggerMenuOpen : ""
-        }`}
-        type="button"
-        onClick={handleTriggerClick}
-        aria-expanded={
-          triggerControlsQuickMenu ? quickMenuExpanded : isOpen
-        }
-        aria-controls={
-          triggerControlsQuickMenu
-            ? "portfolio-quick-menu"
-            : "portfolio-chat-dialog"
-        }
-        aria-label={
-          triggerControlsQuickMenu
-            ? quickMenuExpanded
-              ? "빠른 메뉴 닫기"
-              : "빠른 메뉴 열기"
-            : isOpen
-              ? "채팅 닫기"
-              : "포트폴리오 챗봇 열기"
-        }
-      >
-        <span aria-hidden="true">
-          {quickMenuEnabled ? (quickMenuExpanded ? "×" : "•••") : "AI"}
-        </span>
-        <span>
-          {quickMenuEnabled
-            ? quickMenuExpanded
-              ? "메뉴 닫기"
-              : "빠른 메뉴"
-            : "질문하기"}
-        </span>
-      </button>
+      {!guidedTourExternal && (
+        <button
+          ref={triggerRef}
+          className={`${styles.trigger} ${isOpen ? styles.triggerOpen : ""} ${
+            quickMenuExpanded ? styles.triggerMenuOpen : ""
+          }`}
+          type="button"
+          onClick={handleTriggerClick}
+          aria-expanded={
+            triggerControlsQuickMenu ? quickMenuExpanded : isOpen
+          }
+          aria-controls={
+            triggerControlsQuickMenu
+              ? "portfolio-quick-menu"
+              : "portfolio-chat-dialog"
+          }
+          aria-label={
+            triggerControlsQuickMenu
+              ? quickMenuExpanded
+                ? "빠른 메뉴 닫기"
+                : "빠른 메뉴 열기"
+              : isOpen
+                ? "채팅 닫기"
+                : "포트폴리오 챗봇 열기"
+          }
+        >
+          <span aria-hidden="true">
+            {quickMenuEnabled ? (quickMenuExpanded ? "×" : "•••") : "AI"}
+          </span>
+          <span>
+            {quickMenuEnabled
+              ? quickMenuExpanded
+                ? "메뉴 닫기"
+                : "빠른 메뉴"
+              : "질문하기"}
+          </span>
+        </button>
+      )}
     </div>
   );
 }

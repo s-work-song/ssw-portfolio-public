@@ -224,6 +224,7 @@ export default function LogEntries({ posts }: LogEntriesProps) {
           id="log-entries-heading"
           className={styles.toolbarTitle}
           tabIndex={-1}
+          data-guided-tour-target="log-entries-heading"
         >
           <p className={styles.eyebrow}>ARCHIVE</p>
           <h2 id="log-entries-title" className={styles.heading}>전체 기록</h2>
@@ -388,6 +389,11 @@ export default function LogEntries({ posts }: LogEntriesProps) {
                       </Link>
                       <AskAiButton
                         align="end"
+                        guidedTourTarget={
+                          slug === "ask-ai-for-options-before-implementation"
+                            ? "log-ai-options-ask-ai"
+                            : undefined
+                        }
                         question={`기록 「${title}」의 핵심 내용과 이 경험에서 얻은 관점을 자세히 설명해 주세요.`}
                       />
                     </div>

@@ -7,6 +7,10 @@ export const CHAT_ACTION_NAVIGATE_EVENT =
   "portfolio:chat-action-navigate";
 export const CHAT_ACTION_PAGE_ENTERED_EVENT =
   "portfolio:chat-action-page-entered";
+export const CHAT_ACTION_TARGET_ARRIVED_EVENT =
+  "portfolio:chat-action-target-arrived";
+export const CHAT_ACTION_RESTORE_CHAT_INPUT_EVENT =
+  "portfolio:chat-action-restore-input";
 
 export interface ChatActionNavigateDetail {
   route: string;
@@ -15,6 +19,10 @@ export interface ChatActionNavigateDetail {
 
 export interface ChatActionPageEnteredDetail {
   path: string;
+}
+
+export interface ChatActionTargetArrivedDetail {
+  anchor: string;
 }
 
 export function normalizeNavigationPath(path: string): string {

@@ -22,14 +22,15 @@ export default function LogPage() {
     <div style={{ display: 'flex', flexDirection: 'column', gap: '48px' }}>
       
       {/* Log Header Section */}
-      <AboutPanel style={{
+      <AboutPanel id="log-overview" tabIndex={-1} guidedTourTarget="log-overview" style={{
         padding: '36px',
         borderRadius: '24px',
         display: 'flex',
         flexDirection: 'column',
         gap: '16px',
         position: 'relative',
-        overflow: 'hidden'
+        overflow: 'hidden',
+        scrollMarginTop: '96px'
       }}>
         {/* Subtle grid background watermark */}
         <AboutDecorativeGrid />

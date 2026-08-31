@@ -170,7 +170,6 @@ export default function SettingsPage() {
   const {
     streamingEnabled,
     setStreamingEnabled,
-    reasoningEnabled,
     setReasoningEnabled,
     chatAnimation,
     setChatAnimation,
@@ -1182,51 +1181,6 @@ export default function SettingsPage() {
                     boxShadow: "0 1px 3px rgba(0,0,0,.3)",
                     transition: "transform .2s",
                     transform: streamingEnabled ? "translateX(21px)" : "none",
-                  }}
-                />
-              </button>
-            </div>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "14px", padding: "14px 16px", marginTop: "10px", borderRadius: "13px", background: "var(--bg-elev-2)", border: "1px solid var(--border)" }}>
-              <div>
-                <div id="chat-reasoning-title" style={{ fontSize: "14.5px", fontWeight: 600 }}>AI 사고 모드</div>
-                <div id="chat-reasoning-description" style={{ fontSize: "12.5px", color: "var(--text-mute)", marginTop: "2px", lineHeight: 1.5 }}>
-                  {reasoningEnabled
-                    ? "질문마다 사고 기능 사용 · 응답 시간이 길어질 수 있음"
-                    : "질문마다 사고 기능 사용 안 함 · 기본값"}
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setReasoningEnabled(!reasoningEnabled)}
-                role="switch"
-                aria-checked={reasoningEnabled}
-                aria-labelledby="chat-reasoning-title"
-                aria-describedby="chat-reasoning-description"
-                style={{
-                  width: "48px",
-                  height: "27px",
-                  borderRadius: "999px",
-                  position: "relative",
-                  cursor: "pointer",
-                  transition: "background .2s",
-                  border: "1px solid var(--border-strong)",
-                  flexShrink: 0,
-                  background: reasoningEnabled ? "var(--accent, #6366f1)" : "var(--bg-elev)",
-                }}
-              >
-                <span
-                  aria-hidden="true"
-                  style={{
-                    position: "absolute",
-                    top: "2px",
-                    left: "2px",
-                    width: "21px",
-                    height: "21px",
-                    borderRadius: "50%",
-                    background: "#fff",
-                    boxShadow: "0 1px 3px rgba(0,0,0,.3)",
-                    transition: "transform .2s",
-                    transform: reasoningEnabled ? "translateX(21px)" : "none",
                   }}
                 />
               </button>

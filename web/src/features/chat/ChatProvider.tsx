@@ -17,6 +17,7 @@ import {
   ChatApiError,
 } from "./api";
 import {
+  ACTION_LABELS,
   ACTION_ROUTES,
   CHAT_ANIMATIONS,
   CHAT_ANIMATION_STORAGE_KEY,
@@ -26,6 +27,7 @@ import {
   DEFAULT_REASONING_ENABLED,
   GREETING,
   REASONING_STORAGE_KEY,
+  SETTINGS_WEBMCP_GUIDE,
   STREAMING_STORAGE_KEY,
   STREAM_ANIMATION_STORAGE_KEY,
   TONES,
@@ -36,15 +38,23 @@ import {
 import { ChatContext, type ChatContextValue } from "./ChatContext";
 import { ChatWidget } from "./ChatWidget";
 import { StreamRenderQueue } from "./streamRenderQueue";
+import { useGuidedTour } from "./useGuidedTour";
 import { dispatchPortfolioModelToolExecution } from "../webmcp/logSearchView";
+import {
+  readPortfolioViewState,
+  runPortfolioViewAction,
+} from "../webmcp/portfolioView";
 import {
   CHAT_ACTION_NAVIGATE_EVENT,
   CHAT_ACTION_PAGE_ENTERED_EVENT,
+  CHAT_ACTION_RESTORE_CHAT_INPUT_EVENT,
+  CHAT_ACTION_TARGET_ARRIVED_EVENT,
   aboutTabPathFromPath,
   normalizeNavigationPath,
   pathWithoutHash,
   type ChatActionNavigateDetail,
   type ChatActionPageEnteredDetail,
+  type ChatActionTargetArrivedDetail,
 } from "./navigation";
 import type {
   ActionId,
@@ -61,7 +71,7 @@ import type {
 
 const MAX_HISTORY_ITEMS = 10;
 const MAX_HISTORY_CHARACTERS = 12_000;
-const MOBILE_QUERY = "(max-width: 720px)";
+const MOBILE_QUERY = "(max-width: 720px) and (pointer: coarse)";
 const REDUCED_MOTION_QUERY = "(prefers-reduced-motion: reduce)";
 const MOBILE_HISTORY_MARKER = "__portfolioChatOpen";
 const MOBILE_EXIT_DURATION_MS = 260;
@@ -88,6 +98,10 @@ function easeInOutCubic(progress: number): number {
   return progress < 0.5
     ? 4 * progress * progress * progress
     : 1 - Math.pow(-2 * progress + 2, 3) / 2;
+}
+
+function easeOutCubic(progress: number): number {
+  return 1 - Math.pow(1 - progress, 3);
 }
 
 function scrollDurationForDistance(distance: number): number {
@@ -179,6 +193,7 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
   } = useTheme();
   const [isOpen, setIsOpen] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
+  const [focusInputOnOpen, setFocusInputOnOpen] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [availability, setAvailability] =
     useState<ChatAvailability>("idle");
@@ -213,11 +228,14 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
   const actionTopScrollFrameRef = useRef<number | null>(null);
   const actionPageEntryTimerRef = useRef<number | null>(null);
   const actionTargetHighlightTimerRef = useRef<number | null>(null);
+  const chatInputRestoreTimerRef = useRef<number | null>(null);
   const highlightedActionTargetRef = useRef<HTMLElement | null>(null);
   const pendingActionPathRef = useRef<string | null>(null);
   const pendingActionAwaitingPageEntryRef = useRef(false);
   const activeActionNavigationRouteRef = useRef<string | null>(null);
   const actionNavigationTokenRef = useRef(0);
+  const pendingChatNavigationFocusRef = useRef(false);
+  const navigateRouteRef = useRef<(route: string) => void>(() => undefined);
   const isOpenRef = useRef(false);
   const isClosingRef = useRef(false);
   const cleanupHistoryPopRef = useRef(false);
@@ -368,6 +386,9 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
       if (actionTargetHighlightTimerRef.current !== null) {
         window.clearTimeout(actionTargetHighlightTimerRef.current);
       }
+      if (chatInputRestoreTimerRef.current !== null) {
+        window.clearTimeout(chatInputRestoreTimerRef.current);
+      }
       highlightedActionTargetRef.current?.removeAttribute(
         "data-chat-action-target",
       );
@@ -393,6 +414,7 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
       requestedTop: number,
       setFrame: (frame: number | null) => void,
       onComplete: () => void,
+      easing: "ease-in-out" | "ease-out" = "ease-in-out",
     ) => {
       const scroller = document.scrollingElement;
       if (!scroller) {
@@ -417,7 +439,11 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
       const startedAt = window.performance.now();
       const step = (timestamp: number) => {
         const progress = Math.min(1, (timestamp - startedAt) / duration);
-        scroller.scrollTop = startTop + distance * easeInOutCubic(progress);
+        const easedProgress =
+          easing === "ease-out"
+            ? easeOutCubic(progress)
+            : easeInOutCubic(progress);
+        scroller.scrollTop = startTop + distance * easedProgress;
 
         if (progress >= 1) {
           scroller.scrollTop = targetTop;
@@ -444,6 +470,28 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
     () => (motionSuppressed ? "none" : streamAnimation),
     [motionSuppressed, streamAnimation],
   );
+
+  const setStreamAnimation = useCallback((animation: ChatStreamAnimation) => {
+    if (!CHAT_STREAM_ANIMATIONS.includes(animation)) return;
+    setStreamAnimationState(animation);
+    try {
+      window.localStorage.setItem(STREAM_ANIMATION_STORAGE_KEY, animation);
+    } catch {
+      // 저장 실패가 현재 브라우저 세션의 설정 변경을 막지는 않는다.
+    }
+  }, []);
+
+  const restoreChatInputAfterNavigation = useCallback(() => {
+    if (!pendingChatNavigationFocusRef.current) return;
+    pendingChatNavigationFocusRef.current = false;
+    if (chatInputRestoreTimerRef.current !== null) {
+      window.clearTimeout(chatInputRestoreTimerRef.current);
+    }
+    chatInputRestoreTimerRef.current = window.setTimeout(() => {
+      chatInputRestoreTimerRef.current = null;
+      window.dispatchEvent(new Event(CHAT_ACTION_RESTORE_CHAT_INPUT_EVENT));
+    }, 220);
+  }, []);
 
   const scrollToPendingActionAnchor = useCallback(() => {
     const anchor = pendingActionAnchorRef.current;
@@ -478,6 +526,13 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
       actionScrollFrameRef.current = null;
       actionScrollTimerRef.current = null;
       target.focus({ preventScroll: true });
+      window.dispatchEvent(
+        new CustomEvent<ChatActionTargetArrivedDetail>(
+          CHAT_ACTION_TARGET_ARRIVED_EVENT,
+          { detail: { anchor: target.id } },
+        ),
+      );
+      restoreChatInputAfterNavigation();
 
       if (motionSuppressed) return;
       if (actionTargetHighlightTimerRef.current !== null) {
@@ -511,6 +566,7 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
           pendingActionPathRef.current = null;
           activeActionNavigationRouteRef.current = null;
           actionScrollTimerRef.current = null;
+          restoreChatInputAfterNavigation();
         }
         return;
       }
@@ -570,7 +626,7 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
     actionScrollFrameRef.current = window.requestAnimationFrame(() => {
       actionScrollFrameRef.current = window.requestAnimationFrame(scroll);
     });
-  }, [animateDocumentScroll, motionSuppressed]);
+  }, [animateDocumentScroll, motionSuppressed, restoreChatInputAfterNavigation]);
 
   const navigateToActionTarget = useCallback(
     (route: string) => {
@@ -595,6 +651,19 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
       pendingActionAnchorRef.current = actionAnchor;
       const routePath = pathWithoutHash(route);
       pendingActionPathRef.current = routePath;
+      if (!actionAnchor) {
+        pendingActionAnchorRef.current = null;
+        pendingActionPathRef.current = null;
+        pendingActionAwaitingPageEntryRef.current = false;
+        activeActionNavigationRouteRef.current = null;
+        router.prefetch(routePath);
+        if (routePath === normalizeNavigationPath(pathname)) {
+          window.scrollTo({ top: 0, behavior: "auto" });
+        } else {
+          router.push(routePath, { scroll: true });
+        }
+        return;
+      }
       if (
         actionAnchor &&
         routePath === normalizeNavigationPath(pathname)
@@ -611,7 +680,9 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
         targetTabPath !== null &&
         currentTabPath !== targetTabPath;
       const shouldStageTab =
-        attractTab && !motionSuppressed && pageTransition !== "none";
+        attractTab &&
+        !motionSuppressed &&
+        pageTransition !== "none";
 
       router.prefetch(routePath);
 
@@ -625,7 +696,8 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
           },
         );
         pendingActionAwaitingPageEntryRef.current =
-          !motionSuppressed && pageTransition !== "none";
+          !motionSuppressed &&
+          pageTransition !== "none";
         const handledByAboutLayout = !window.dispatchEvent(event);
         if (!handledByAboutLayout) {
           pendingActionAwaitingPageEntryRef.current = false;
@@ -634,6 +706,13 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
       };
 
       if (!shouldStageTab) {
+        dispatchNavigation();
+        return;
+      }
+
+      const currentScrollTop =
+        document.scrollingElement?.scrollTop ?? window.scrollY;
+      if (Math.abs(currentScrollTop) < 1) {
         dispatchNavigation();
         return;
       }
@@ -648,6 +727,7 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
             dispatchNavigation();
           }
         },
+        "ease-out",
       );
     },
     [
@@ -753,7 +833,7 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
     return () => window.cancelAnimationFrame(frame);
   }, [refreshAvailability]);
 
-  const open = useCallback(() => {
+  const open = useCallback((options?: { focusInput?: boolean }) => {
     if (
       isOpenRef.current ||
       isClosingRef.current ||
@@ -761,6 +841,7 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
     ) {
       return;
     }
+    setFocusInputOnOpen(options?.focusInput !== false);
     if (
       window.matchMedia(MOBILE_QUERY).matches &&
       !mobileHistoryEntryRef.current
@@ -919,6 +1000,7 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
           chatFont,
           chatFontSize,
         },
+        viewState: readPortfolioViewState(pathname),
       };
       const shouldStream = streamingEnabled;
       let streamingMessageId: string | undefined;
@@ -946,7 +1028,29 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
           setChatFontSize(execution.size);
           return;
         }
-        if (execution.type === "report_portfolio_ui_settings") return;
+        if (execution.type === "set_portfolio_stream_animation") {
+          setStreamAnimation(execution.animation);
+          return;
+        }
+        if (
+          execution.type === "report_portfolio_ui_settings" ||
+          execution.type === "report_portfolio_view_state"
+        ) {
+          return;
+        }
+        if (execution.type === "control_portfolio_view") {
+          pendingChatNavigationFocusRef.current = true;
+          runPortfolioViewAction(
+            execution.action,
+            navigateRouteRef.current,
+            execution.year,
+          );
+          return;
+        }
+        if (execution.type === "open_portfolio_settings") {
+          navigateRouteRef.current("/settings");
+          return;
+        }
         dispatchPortfolioModelToolExecution(execution);
       };
 
@@ -1089,6 +1193,7 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
       mode,
       nextId,
       pageContext,
+      pathname,
       reasoningEnabled,
       streamingEnabled,
       setMode,
@@ -1096,6 +1201,7 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
       setChatFont,
       setChatFontSize,
       setChatLayout,
+      setStreamAnimation,
       tone,
     ],
   );
@@ -1198,16 +1304,6 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
     }
   }, []);
 
-  const setStreamAnimation = useCallback((animation: ChatStreamAnimation) => {
-    if (!CHAT_STREAM_ANIMATIONS.includes(animation)) return;
-    setStreamAnimationState(animation);
-    try {
-      window.localStorage.setItem(STREAM_ANIMATION_STORAGE_KEY, animation);
-    } catch {
-      // 저장 실패가 현재 브라우저 세션의 설정 변경을 막지는 않는다.
-    }
-  }, []);
-
   const selectTone = useCallback((nextTone: Tone) => {
     if (!TONES.includes(nextTone)) return;
     setTone(nextTone);
@@ -1235,6 +1331,33 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
     },
     [beginMobileClose, navigateToActionTarget],
   );
+  useEffect(() => {
+    navigateRouteRef.current = navigateRoute;
+  }, [navigateRoute]);
+
+  const showSettingsWebMcpGuide = useCallback(() => {
+    const action = {
+      id: "settings" as const,
+      label: ACTION_LABELS.settings,
+    };
+    setError(null);
+    setMessages((current) => [
+      ...current,
+      {
+        id: nextId("assistant"),
+        role: "assistant",
+        content: SETTINGS_WEBMCP_GUIDE,
+        kind: "message",
+        generationState: "complete",
+        segments: [
+          {
+            markdown: SETTINGS_WEBMCP_GUIDE,
+            actions: [action],
+          },
+        ],
+      },
+    ]);
+  }, [nextId]);
 
   const navigateAction = useCallback(
     (id: ActionId) => {
@@ -1243,6 +1366,59 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
     },
     [navigateRoute],
   );
+
+  const navigateGuidedTourAction = useCallback(
+    (id: ActionId) => {
+      const route = ACTION_ROUTES[id];
+      if (route) navigateToActionTarget(route);
+    },
+    [navigateToActionTarget],
+  );
+
+  const {
+    state: guidedTour,
+    step: guidedTourStep,
+    inviteVisible: guidedTourInviteVisible,
+    start: startGuidedTour,
+    advance: advanceGuidedTour,
+    previous: previousGuidedTourStep,
+    skip: skipGuidedTourInteraction,
+    stop: stopGuidedTour,
+    dismissInvite: dismissGuidedTourInvite,
+    returnToCurrentStep: returnToGuidedTourStep,
+    beginQuestion: beginGuidedTourQuestion,
+    completeQuestion: completeGuidedTourQuestion,
+  } = useGuidedTour({
+    pathname,
+    availability,
+    navigateAction: navigateGuidedTourAction,
+  });
+
+  useEffect(() => {
+    if (guidedTour.status === "active") return;
+
+    if (actionTargetHighlightTimerRef.current !== null) {
+      window.clearTimeout(actionTargetHighlightTimerRef.current);
+      actionTargetHighlightTimerRef.current = null;
+    }
+    const highlightedTarget = highlightedActionTargetRef.current;
+    highlightedTarget?.removeAttribute("data-chat-action-target");
+    highlightedActionTargetRef.current = null;
+    document
+      .querySelectorAll<HTMLElement>('[data-guided-tour-active="true"]')
+      .forEach((target) =>
+        target.removeAttribute("data-guided-tour-active"),
+      );
+
+    const activeElement = document.activeElement;
+    if (
+      activeElement instanceof HTMLElement &&
+      (activeElement === highlightedTarget ||
+        activeElement.hasAttribute("data-guided-tour-target"))
+    ) {
+      activeElement.blur();
+    }
+  }, [guidedTour.status]);
 
   const value = useMemo<ChatContextValue>(
     () => ({
@@ -1260,6 +1436,10 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
       effectiveChatAnimation,
       streamAnimation,
       effectiveStreamAnimation,
+      guidedTour,
+      guidedTourStep,
+      guidedTourInviteVisible,
+      focusInputOnOpen,
       open,
       close,
       completeCloseAnimation,
@@ -1272,11 +1452,21 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
       setStreamAnimation,
       refreshAvailability,
       resetConversation,
+      showSettingsWebMcpGuide,
       sendMessage,
       stopGenerating,
       retry,
       navigateRoute,
       navigateAction,
+      startGuidedTour,
+      advanceGuidedTour,
+      previousGuidedTourStep,
+      skipGuidedTourInteraction,
+      stopGuidedTour,
+      dismissGuidedTourInvite,
+      returnToGuidedTourStep,
+      beginGuidedTourQuestion,
+      completeGuidedTourQuestion,
     }),
     [
       audience,
@@ -1285,12 +1475,25 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
       effectiveChatAnimation,
       effectiveStreamAnimation,
       error,
+      guidedTour,
+      guidedTourStep,
+      guidedTourInviteVisible,
+      focusInputOnOpen,
       isLoading,
       isOpen,
       isClosing,
       messages,
       navigateAction,
       navigateRoute,
+      startGuidedTour,
+      advanceGuidedTour,
+      previousGuidedTourStep,
+      skipGuidedTourInteraction,
+      stopGuidedTour,
+      dismissGuidedTourInvite,
+      returnToGuidedTourStep,
+      beginGuidedTourQuestion,
+      completeGuidedTourQuestion,
       open,
       close,
       completeCloseAnimation,
@@ -1303,6 +1506,7 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
       setStreamAnimation,
       setStreamingEnabled,
       selectTone,
+      showSettingsWebMcpGuide,
       sendMessage,
       stopGenerating,
       streamAnimation,

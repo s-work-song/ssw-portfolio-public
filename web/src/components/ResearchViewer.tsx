@@ -27,7 +27,13 @@ const RESEARCH_TAB_ATTRACTION_MS = 520;
 const RESEARCH_ACTION_TARGET_TABS: Readonly<
   Record<string, ResearchTabId>
 > = {
+  'research-timeline-overview': 'overview',
   'research-timeline': 'overview',
+  'research-year-2022': 'overview',
+  'research-year-2023': 'overview',
+  'research-year-2024': 'overview',
+  'research-year-2025': 'overview',
+  'research-year-2026': 'overview',
   'research-optimization-overview': 'optimization',
   'research-benchmark-code': 'optimization',
   'research-cpu-simd': 'cpu',

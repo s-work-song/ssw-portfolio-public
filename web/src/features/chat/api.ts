@@ -1,8 +1,16 @@
-import { ACTION_IDS, ACTION_LABELS, TONES } from "./constants";
+import {
+  ACTION_IDS,
+  ACTION_LABELS,
+  CHAT_STREAM_ANIMATIONS,
+  TONES,
+} from "./constants";
 import type {
   ActionId,
   ApiAudience,
   ChatAction,
+  ChatPortfolioViewState,
+  ChatPortfolioViewAction,
+  ChatPortfolioResearchYear,
   ChatRequest,
   ChatResponse,
   ChatSegment,
@@ -26,6 +34,49 @@ const PAGE_CONTEXTS: readonly PageContext[] = [
   "cover_letter",
   "research",
   "log",
+];
+
+const PORTFOLIO_VIEW_ACTIONS: readonly ChatPortfolioViewAction[] = [
+  "main",
+  "overview",
+  "resume",
+  "cover-letter",
+  "research",
+  "research-2022",
+  "research-2023",
+  "research-2024",
+  "research-2025",
+  "research-2026",
+  "log",
+  "expand-research-details",
+  "collapse-research-details",
+  "expand-research-year-details",
+  "collapse-research-year-details",
+];
+
+const PORTFOLIO_RESEARCH_YEARS: readonly ChatPortfolioResearchYear[] = [
+  "2022",
+  "2023",
+  "2024",
+  "2025",
+  "2026",
+];
+
+const PORTFOLIO_YEAR_DETAIL_ACTIONS: readonly ChatPortfolioViewAction[] = [
+  "expand-research-year-details",
+  "collapse-research-year-details",
+];
+
+const PORTFOLIO_PAGE_IDS: readonly ChatPortfolioViewState["page"][] = [
+  "landing",
+  "main",
+  "overview",
+  "resume",
+  "cover-letter",
+  "research",
+  "log",
+  "settings",
+  "unknown",
 ];
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -90,7 +141,110 @@ function parseSuggestedQuestions(value: unknown): string[] {
   return questions;
 }
 
+function parsePortfolioViewState(value: unknown): ChatPortfolioViewState | null {
+  if (
+    !isRecord(value) ||
+    !isAllowed(value.page, PORTFOLIO_PAGE_IDS) ||
+    !(value.anchor === null || isString(value.anchor)) ||
+    !(value.researchYear === null || isAllowed(value.researchYear, PORTFOLIO_RESEARCH_YEARS))
+  ) {
+    return null;
+  }
+  let researchDetails: ChatPortfolioViewState["researchDetails"] = null;
+  if (value.researchDetails !== null) {
+    const details = value.researchDetails;
+    if (
+      !isRecord(details) ||
+      typeof details.expanded !== "number" ||
+      typeof details.total !== "number" ||
+      !Number.isInteger(details.expanded) ||
+      !Number.isInteger(details.total) ||
+      details.expanded < 0 ||
+      details.total < details.expanded ||
+      !Array.isArray(details.expandedYears)
+    ) {
+      return null;
+    }
+    const expandedYears = details.expandedYears.filter((year) =>
+      isAllowed(year, PORTFOLIO_RESEARCH_YEARS),
+    );
+    if (expandedYears.length !== details.expandedYears.length) return null;
+    researchDetails = {
+      expanded: details.expanded,
+      total: details.total,
+      expandedYears,
+    };
+  }
+  return {
+    page: value.page,
+    anchor: value.anchor,
+    researchYear: value.researchYear,
+    researchDetails,
+  };
+}
+
 function parseToolExecution(value: unknown): ChatToolExecution | null {
+  if (
+    isRecord(value) &&
+    value.type === "report_portfolio_view_state" &&
+    value.toolName === "get-portfolio-view-state" &&
+    isString(value.toolCallId) &&
+    value.toolCallId.length >= 1 &&
+    value.toolCallId.length <= 128 &&
+    typeof value.available === "boolean"
+  ) {
+    const viewState = value.viewState === null
+      ? null
+      : parsePortfolioViewState(value.viewState);
+    if (value.available !== Boolean(viewState)) return null;
+    return {
+      type: "report_portfolio_view_state",
+      toolCallId: value.toolCallId,
+      toolName: "get-portfolio-view-state",
+      available: value.available,
+      viewState,
+    };
+  }
+  if (
+    isRecord(value) &&
+    value.type === "control_portfolio_view" &&
+    value.toolName === "control-portfolio-view" &&
+    isString(value.toolCallId) &&
+    value.toolCallId.length >= 1 &&
+    value.toolCallId.length <= 128 &&
+    isString(value.action) &&
+    (PORTFOLIO_VIEW_ACTIONS as readonly string[]).includes(value.action)
+  ) {
+    const action = value.action as ChatPortfolioViewAction;
+    const requiresYear = PORTFOLIO_YEAR_DETAIL_ACTIONS.includes(action);
+    const year = isAllowed(value.year, PORTFOLIO_RESEARCH_YEARS)
+      ? value.year
+      : undefined;
+    if ((requiresYear && !year) || (!requiresYear && value.year !== undefined)) {
+      return null;
+    }
+    return {
+      type: "control_portfolio_view",
+      toolCallId: value.toolCallId,
+      toolName: "control-portfolio-view",
+      action,
+      ...(year ? { year } : {}),
+    };
+  }
+  if (
+    isRecord(value) &&
+    value.type === "open_portfolio_settings" &&
+    value.toolName === "open-portfolio-settings" &&
+    isString(value.toolCallId) &&
+    value.toolCallId.length >= 1 &&
+    value.toolCallId.length <= 128
+  ) {
+    return {
+      type: "open_portfolio_settings",
+      toolCallId: value.toolCallId,
+      toolName: "open-portfolio-settings",
+    };
+  }
   if (
     isRecord(value) &&
     value.type === "report_portfolio_ui_settings" &&
@@ -227,6 +381,22 @@ function parseToolExecution(value: unknown): ChatToolExecution | null {
       toolCallId: value.toolCallId,
       toolName: "set-portfolio-chat-font-size",
       size: value.size as "small" | "medium" | "large" | "xlarge",
+    };
+  }
+  if (
+    isRecord(value) &&
+    value.type === "set_portfolio_stream_animation" &&
+    value.toolName === "set-portfolio-stream-animation" &&
+    isString(value.toolCallId) &&
+    value.toolCallId.length >= 1 &&
+    value.toolCallId.length <= 128 &&
+    isAllowed(value.animation, CHAT_STREAM_ANIMATIONS)
+  ) {
+    return {
+      type: "set_portfolio_stream_animation",
+      toolCallId: value.toolCallId,
+      toolName: "set-portfolio-stream-animation",
+      animation: value.animation,
     };
   }
   if (

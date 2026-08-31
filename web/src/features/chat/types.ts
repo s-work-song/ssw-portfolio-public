@@ -54,13 +54,37 @@ export interface ChatUiSettings {
   chatFontSize: "small" | "medium" | "large" | "xlarge";
 }
 
+export type ChatPortfolioPageId =
+  | "landing"
+  | "main"
+  | "overview"
+  | "resume"
+  | "cover-letter"
+  | "research"
+  | "log"
+  | "settings"
+  | "unknown";
+
+export interface ChatPortfolioViewState {
+  page: ChatPortfolioPageId;
+  anchor: string | null;
+  researchYear: ChatPortfolioResearchYear | null;
+  researchDetails: {
+    expanded: number;
+    total: number;
+    expandedYears: ChatPortfolioResearchYear[];
+  } | null;
+}
+
 export type ActionId =
   | "overview"
+  | "settings"
   | "resume"
   | "cover_letter"
   | "research"
   | "log"
   | "project_overview"
+  | "past_work_archive"
   | "project_common_infrastructure"
   | "project_ecommerce_demo"
   | "project_game_collection"
@@ -164,6 +188,13 @@ export interface ChatFontSizeToolExecution {
   size: "small" | "medium" | "large" | "xlarge";
 }
 
+export interface ChatStreamAnimationToolExecution {
+  type: "set_portfolio_stream_animation";
+  toolCallId: string;
+  toolName: "set-portfolio-stream-animation";
+  animation: ChatStreamAnimation;
+}
+
 export interface ChatUiSettingsReportToolExecution {
   type: "report_portfolio_ui_settings";
   toolCallId: string;
@@ -178,6 +209,52 @@ export interface ChatUiSettingsReportToolExecution {
   } | null;
 }
 
+export interface ChatSettingsNavigationToolExecution {
+  type: "open_portfolio_settings";
+  toolCallId: string;
+  toolName: "open-portfolio-settings";
+}
+
+export type ChatPortfolioViewAction =
+  | "main"
+  | "overview"
+  | "resume"
+  | "cover-letter"
+  | "research"
+  | "research-2022"
+  | "research-2023"
+  | "research-2024"
+  | "research-2025"
+  | "research-2026"
+  | "log"
+  | "expand-research-details"
+  | "collapse-research-details"
+  | "expand-research-year-details"
+  | "collapse-research-year-details";
+
+export type ChatPortfolioResearchYear =
+  | "2022"
+  | "2023"
+  | "2024"
+  | "2025"
+  | "2026";
+
+export interface ChatPortfolioViewToolExecution {
+  type: "control_portfolio_view";
+  toolCallId: string;
+  toolName: "control-portfolio-view";
+  action: ChatPortfolioViewAction;
+  year?: ChatPortfolioResearchYear;
+}
+
+export interface ChatPortfolioViewStateReportToolExecution {
+  type: "report_portfolio_view_state";
+  toolCallId: string;
+  toolName: "get-portfolio-view-state";
+  available: boolean;
+  viewState: ChatPortfolioViewState | null;
+}
+
 export type ChatToolExecution =
   | ChatLogSearchToolExecution
   | ChatThemeToolExecution
@@ -185,7 +262,11 @@ export type ChatToolExecution =
   | ChatLayoutToolExecution
   | ChatFontToolExecution
   | ChatFontSizeToolExecution
-  | ChatUiSettingsReportToolExecution;
+  | ChatStreamAnimationToolExecution
+  | ChatUiSettingsReportToolExecution
+  | ChatSettingsNavigationToolExecution
+  | ChatPortfolioViewToolExecution
+  | ChatPortfolioViewStateReportToolExecution;
 
 export interface ChatResponse {
   mode: "model" | "retrieval_fallback";
@@ -223,6 +304,7 @@ export interface ChatRequest {
   pageContext: PageContext;
   reasoningEnabled: boolean;
   uiSettings: ChatUiSettings;
+  viewState: ChatPortfolioViewState;
 }
 
 export interface ChatStatusResponse {

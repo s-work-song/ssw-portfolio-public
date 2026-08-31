@@ -10,16 +10,19 @@ export default function AboutPanel({
   id,
   style,
   tabIndex,
+  guidedTourTarget,
 }: {
   children: ReactNode;
   id?: string;
   style?: CSSProperties;
   tabIndex?: number;
+  guidedTourTarget?: string;
 }) {
   return (
     <section
       id={id}
       tabIndex={tabIndex}
+      data-guided-tour-target={guidedTourTarget}
       style={{
         background: 'var(--bg-elev)',
         border: '1px solid var(--border)',

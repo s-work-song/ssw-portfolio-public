@@ -11,6 +11,23 @@ import type {
 export const GREETING =
   "안녕하세요. 포트폴리오를 안내하는 AI 챗봇입니다. 관심 있는 주제를 선택하거나 바로 질문해 주세요.";
 
+export const SETTINGS_WEBMCP_GUIDE = `### 설정과 WebMCP 기능
+
+별도의 설정 페이지에서 테마, 포인트 색상, 채팅 글꼴과 글자 크기, 패널 배치, 답변 스트리밍 연출을 직접 조정할 수 있어요.
+
+채팅에 다음처럼 말하면 설정 도구가 요청을 반영합니다.
+
+- “설정 페이지 열어줘”
+- “지금 내가 어떤 페이지를 보고 있어?”
+- “자기소개서 페이지로 이동해줘”
+- “다크 모드로 바꿔줘”
+- “채팅 글꼴을 노토 산스로 바꿔줘”
+- “채팅 글꼴을 프리텐다드로 바꿔줘”
+- “채팅 글자 크기를 크게 해줘”
+- “채팅을 오른쪽 패널로 도킹해줘”
+
+WebMCP를 지원하는 브라우저에서는 현재 화면 상태 확인, 설정 페이지 열기, 공개 기록 검색·이동, 포트폴리오 페이지·연구 연도 이동, 특정 연도 상세 펼치기·접기와 스트리밍 연출 변경 같은 화면 기능도 도구로 사용할 수 있습니다.`;
+
 export const TONE_STORAGE_KEY = "portfolio-chat-tone";
 export const STREAMING_STORAGE_KEY = "portfolio-chat-streaming";
 export const REASONING_STORAGE_KEY = "portfolio-chat-reasoning";
@@ -164,16 +181,18 @@ export const CHAT_QUICK_START_OPTIONS: ReadonlyArray<{
 
 export const ACTION_ROUTES: Readonly<Record<ActionId, string>> = {
   overview: "/about-me#portfolio-overview",
-  resume: "/about-me/resume#resume-experience-skills",
-  cover_letter: "/about-me/cover-letter#cover-letter-story",
+  settings: "/settings",
+  resume: "/about-me/resume#resume-overview",
+  cover_letter: "/about-me/cover-letter#cover-letter-overview",
   research: "/about-me/research#research-experiments",
-  log: "/about-me/log#log-entries-heading",
+  log: "/about-me/log#log-overview",
   project_overview: "/about-me#featured-projects",
+  past_work_archive: "/about-me#past-work-archive",
   project_common_infrastructure: "/about-me#project-common-infrastructure",
   project_ecommerce_demo: "/about-me#project-ecommerce-demo",
   project_game_collection: "/about-me#project-game-collection-platform",
   project_code_archive: "/about-me#project-code-archive",
-  research_timeline: "/about-me/research#research-timeline",
+  research_timeline: "/about-me/research#research-timeline-overview",
   research_optimization: "/about-me/research#research-optimization-overview",
   research_cpu: "/about-me/research#research-cpu-simd",
   research_memory: "/about-me/research#research-memory-layout",
@@ -229,11 +248,13 @@ export const ACTION_ROUTES: Readonly<Record<ActionId, string>> = {
 
 export const ACTION_LABELS: Readonly<Record<ActionId, string>> = {
   overview: "포트폴리오 개요 보기",
+  settings: "설정 페이지 보기",
   resume: "경력·기술 보기",
   cover_letter: "자기소개서 보기",
   research: "연구·기술 탐구 보기",
   log: "작업 기록 보기",
   project_overview: "공개용 프로젝트 보기",
+  past_work_archive: "과거 작업 아카이브 보기",
   project_common_infrastructure: "공용 인프라 보기",
   project_ecommerce_demo: "이커머스 데모 보기",
   project_game_collection: "게임 모음 플랫폼 보기",
@@ -271,11 +292,13 @@ export const ACTION_LABELS: Readonly<Record<ActionId, string>> = {
 
 export const ACTION_IDS: readonly ActionId[] = [
   "overview",
+  "settings",
   "resume",
   "cover_letter",
   "research",
   "log",
   "project_overview",
+  "past_work_archive",
   "project_common_infrastructure",
   "project_ecommerce_demo",
   "project_game_collection",

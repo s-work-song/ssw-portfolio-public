@@ -106,15 +106,22 @@ export default function OverviewPage() {
         ))}
       </div>
 
-      <AboutPanel id="past-work-archive" tabIndex={-1} style={{
+      <AboutPanel style={{
         padding: 'clamp(20px, 5vw, 36px)',
         borderRadius: '24px',
         display: 'flex',
         flexDirection: 'column',
         gap: '24px',
-        scrollMarginTop: '96px',
       }}>
-        <div>
+        <div
+          id="past-work-archive"
+          tabIndex={-1}
+          style={{
+            borderRadius: '14px',
+            padding: '10px',
+            scrollMarginTop: '108px',
+          }}
+        >
           <p style={{ margin: '0 0 8px', color: 'var(--accent, #6366f1)', fontSize: '0.78rem', fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase' }}>
             Archive
           </p>
@@ -128,15 +135,22 @@ export default function OverviewPage() {
         <ArchiveProjectShowcase projects={aboutArchiveProjects} />
       </AboutPanel>
 
-      <AboutPanel id="featured-projects" tabIndex={-1} style={{
+      <AboutPanel style={{
         padding: 'clamp(20px, 5vw, 36px)',
         borderRadius: '24px',
         display: 'flex',
         flexDirection: 'column',
         gap: '24px',
-        scrollMarginTop: '96px',
       }}>
-        <div>
+        <div
+          id="featured-projects"
+          tabIndex={-1}
+          style={{
+            borderRadius: '14px',
+            padding: '10px',
+            scrollMarginTop: '108px',
+          }}
+        >
           <p style={{ margin: '0 0 8px', color: 'var(--accent, #6366f1)', fontSize: '0.78rem', fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase' }}>
             Projects
           </p>

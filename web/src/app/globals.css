@@ -95,6 +95,13 @@ body {
   }
 }
 
+/* 모바일 둘러보기는 하단 도킹 영역 높이만큼 문서 끝 여백을 확보합니다. */
+@media (max-width: 720px) {
+  :root[data-guided-tour-dock-open="true"] body {
+    padding-bottom: calc(300px + env(safe-area-inset-bottom));
+  }
+}
+
 a {
   color: inherit;
 }
@@ -1092,34 +1099,81 @@ code {
 }
 
 [data-chat-action-target="true"] {
+  position: relative;
   border-radius: inherit;
+}
+
+[data-chat-action-target="true"]::after {
+  content: "";
+  position: absolute;
+  z-index: 4;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
   animation: chat-action-target-highlight 1.65s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+[data-guided-tour-active="true"] {
+  position: relative;
+  z-index: 3;
+  border-color: var(--accent) !important;
+  background: color-mix(in srgb, var(--accent) 15%, var(--bg-elev)) !important;
+}
+
+[data-guided-tour-active="true"]::after {
+  content: "";
+  position: absolute;
+  z-index: 4;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  animation: guided-tour-target-pulse 1.35s ease-in-out infinite;
+}
+
+@keyframes guided-tour-target-pulse {
+  0%,
+  100% {
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 62%, transparent);
+  }
+  50% {
+    box-shadow:
+      inset 0 0 0 2px color-mix(in srgb, var(--accent) 88%, transparent),
+      inset 0 0 16px color-mix(in srgb, var(--accent) 13%, transparent);
+  }
+}
+
+:root[data-motion="off"] [data-guided-tour-active="true"]::after {
+  animation: none;
+  box-shadow: inset 0 0 0 2px var(--accent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root:not([data-motion="on"]) [data-guided-tour-active="true"]::after {
+    animation: none;
+    box-shadow: inset 0 0 0 2px var(--accent);
+  }
 }
 
 @keyframes chat-action-target-highlight {
   0% {
     box-shadow:
-      0 0 0 0 color-mix(in srgb, var(--accent) 0%, transparent),
-      0 0 0 0 color-mix(in srgb, var(--accent) 0%, transparent),
-      0 8px 24px -20px color-mix(in srgb, var(--accent) 0%, transparent);
+      inset 0 0 0 0 color-mix(in srgb, var(--accent) 0%, transparent),
+      inset 0 0 0 0 color-mix(in srgb, var(--accent) 0%, transparent);
   }
   22% {
     box-shadow:
-      0 0 0 2px color-mix(in srgb, var(--accent) 58%, transparent),
-      0 0 0 7px color-mix(in srgb, var(--accent) 12%, transparent),
-      0 12px 30px -18px color-mix(in srgb, var(--accent) 34%, transparent);
+      inset 0 0 0 2px color-mix(in srgb, var(--accent) 72%, transparent),
+      inset 0 0 28px color-mix(in srgb, var(--accent) 14%, transparent);
   }
   52% {
     box-shadow:
-      0 0 0 1px color-mix(in srgb, var(--accent) 36%, transparent),
-      0 0 0 5px color-mix(in srgb, var(--accent) 7%, transparent),
-      0 10px 26px -20px color-mix(in srgb, var(--accent) 20%, transparent);
+      inset 0 0 0 1px color-mix(in srgb, var(--accent) 46%, transparent),
+      inset 0 0 20px color-mix(in srgb, var(--accent) 8%, transparent);
   }
   100% {
     box-shadow:
-      0 0 0 0 color-mix(in srgb, var(--accent) 0%, transparent),
-      0 0 0 0 color-mix(in srgb, var(--accent) 0%, transparent),
-      0 8px 24px -20px color-mix(in srgb, var(--accent) 0%, transparent);
+      inset 0 0 0 0 color-mix(in srgb, var(--accent) 0%, transparent),
+      inset 0 0 0 0 color-mix(in srgb, var(--accent) 0%, transparent);
   }
 }
 

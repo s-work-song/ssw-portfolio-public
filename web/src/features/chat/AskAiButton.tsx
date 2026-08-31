@@ -6,6 +6,7 @@
  * 직렬화 가능한 질문 문자열만 전달한다.
  */
 import { useChat } from "./ChatContext";
+import type { GuidedTourTargetId } from "./guidedTour";
 import styles from "./AskAiButton.module.css";
 
 interface AskAiButtonProps {
@@ -13,6 +14,7 @@ interface AskAiButtonProps {
   label?: string;
   className?: string;
   align?: "start" | "end";
+  guidedTourTarget?: GuidedTourTargetId;
 }
 
 export function AskAiButton({
@@ -20,8 +22,16 @@ export function AskAiButton({
   label = "AI에게 물어보기",
   className = "",
   align = "start",
+  guidedTourTarget,
 }: AskAiButtonProps) {
-  const { availability, isLoading, open, sendMessage } = useChat();
+  const {
+    availability,
+    isLoading,
+    open,
+    sendMessage,
+    beginGuidedTourQuestion,
+    completeGuidedTourQuestion,
+  } = useChat();
 
   if (availability !== "online") return null;
 
@@ -32,9 +42,16 @@ export function AskAiButton({
         align === "end" ? styles.alignEnd : ""
       } ${className}`.trim()}
       disabled={isLoading}
-      onClick={() => {
-        open();
-        void sendMessage(question);
+      data-guided-tour-target={guidedTourTarget}
+      onClick={async () => {
+        const advancesTour = guidedTourTarget
+          ? beginGuidedTourQuestion(guidedTourTarget)
+          : false;
+        open({ focusInput: false });
+        await sendMessage(question);
+        if (advancesTour && guidedTourTarget) {
+          completeGuidedTourQuestion(guidedTourTarget);
+        }
       }}
       aria-label={`${label}: ${question}`}
     >

@@ -6,6 +6,12 @@
  */
 import React from 'react';
 import { AskAiButton } from '@/features/chat';
+import {
+  consumePortfolioResearchDetailsRequest,
+  PORTFOLIO_RESEARCH_DETAILS_EVENT,
+  type PortfolioResearchDetailsRequest,
+  type PortfolioResearchYear,
+} from '@/features/webmcp/portfolioView';
 import type { CareerItem, TimelineDescription } from '@/types/career';
 
 export default function CareerTimeline({ items }: { items: CareerItem[] }) {
@@ -58,7 +64,9 @@ export default function CareerTimeline({ items }: { items: CareerItem[] }) {
     }));
   };
 
-  const setAllExpanded = (expanded: boolean) => {
+  const setAllExpanded = React.useCallback((expanded: boolean) => {
+    setHoveredCardIndex(null);
+    setFocusedCardIndex(null);
     setPinnedCards(
       expanded
         ? Object.fromEntries(
@@ -66,7 +74,58 @@ export default function CareerTimeline({ items }: { items: CareerItem[] }) {
           )
         : {},
     );
-  };
+  }, [expandableCardIndices]);
+
+  const setResearchYearExpanded = React.useCallback((
+    year: PortfolioResearchYear,
+    expanded: boolean,
+  ) => {
+    setHoveredCardIndex(null);
+    setFocusedCardIndex(null);
+    setPinnedCards((current) => {
+      const next = { ...current };
+      items.forEach((item, index) => {
+        if (item.period.match(/\d{4}/u)?.[0] !== year) return;
+        if (expanded && hasCardDetails(item)) {
+          next[index] = true;
+        } else {
+          delete next[index];
+        }
+      });
+      return next;
+    });
+  }, [hasCardDetails, items]);
+
+  React.useEffect(() => {
+    const applyRequest = (request: PortfolioResearchDetailsRequest) => {
+      if (request.year) {
+        setResearchYearExpanded(request.year, request.mode === 'expand');
+        return;
+      }
+      setAllExpanded(request.mode === 'expand');
+    };
+    const handleDetailsControl = (rawEvent: Event) => {
+      const event = rawEvent as CustomEvent<Partial<PortfolioResearchDetailsRequest>>;
+      if (event.detail?.mode !== 'expand' && event.detail?.mode !== 'collapse') {
+        return;
+      }
+      const request = consumePortfolioResearchDetailsRequest();
+      if (request) applyRequest(request);
+    };
+
+    window.addEventListener(
+      PORTFOLIO_RESEARCH_DETAILS_EVENT,
+      handleDetailsControl,
+    );
+    const pendingRequest = consumePortfolioResearchDetailsRequest();
+    if (pendingRequest) applyRequest(pendingRequest);
+    return () => {
+      window.removeEventListener(
+        PORTFOLIO_RESEARCH_DETAILS_EVENT,
+        handleDetailsControl,
+      );
+    };
+  }, [setAllExpanded, setResearchYearExpanded]);
 
   const expandPeriod = (period: string) => {
     setPinnedCards((current) => {
@@ -133,12 +192,17 @@ export default function CareerTimeline({ items }: { items: CareerItem[] }) {
   };
 
   // ──────────── 공통 헬퍼: 기간 배지 렌더링 ────────────
-  const renderPeriodBadge = (period: string, accentColor: string) => (
-    <div style={{
+  const renderPeriodBadge = (
+    period: string,
+    accentColor: string,
+    anchorId?: string,
+  ) => (
+    <div id={anchorId} tabIndex={anchorId ? -1 : undefined} style={{
       fontSize: '1.25rem', fontWeight: 800, color: accentColor,
       display: 'inline-flex', alignItems: 'center', padding: '5px 14px',
       background: `${accentColor}10`, borderRadius: '12px',
-      border: `1px solid ${accentColor}25`, lineHeight: 1
+      border: `1px solid ${accentColor}25`, lineHeight: 1,
+      scrollMarginTop: anchorId ? '96px' : undefined,
     }}>
       {period}
     </div>
@@ -263,6 +327,10 @@ export default function CareerTimeline({ items }: { items: CareerItem[] }) {
       {items.map((item, i) => {
         const showPeriodHeader = i === 0 || items[i - 1].period !== item.period;
         const accentColor = item.color || 'var(--accent, #6366f1)';
+        const periodYear = item.period.match(/\d{4}/u)?.[0];
+        const periodAnchorId = showPeriodHeader && periodYear
+          ? `research-year-${periodYear}`
+          : undefined;
 
         let descItems: TimelineDescription[] = [];
         if (typeof item.desc === 'string') {
@@ -298,7 +366,9 @@ export default function CareerTimeline({ items }: { items: CareerItem[] }) {
                 [첫 번째 연도 · 교차 모드 전용 헤더]
                ════════════════════════════════════════════════════════ */}
             {showPeriodHeader && activeLayout === 'alternate' && i === 0 && (
-              <div style={{ position: 'relative' }}>
+              <div
+                style={{ position: 'relative' }}
+              >
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
 
                   <div style={{
@@ -310,7 +380,7 @@ export default function CareerTimeline({ items }: { items: CareerItem[] }) {
                     position: 'relative', zIndex: 1, textAlign: 'center',
                     background: 'var(--bg)', padding: '0 24px'
                   }}>
-                    {renderPeriodBadge(item.period, accentColor)}
+                    {renderPeriodBadge(item.period, accentColor, periodAnchorId)}
                     {item.periodDesc && (
                       <div style={{
                         fontSize: '0.95rem', fontWeight: 500, color: 'var(--text-mute)',
@@ -383,13 +453,8 @@ export default function CareerTimeline({ items }: { items: CareerItem[] }) {
                   position: 'relative', zIndex: 1, textAlign: 'center',
                   background: 'var(--bg)', padding: '13px 24px', borderRadius: '24px'
                 }}>
-                  <div style={{
-                    display: 'inline-block', padding: '6px 16px',
-                    borderRadius: '20px', background: 'var(--bg-elev)', border: '1px solid var(--border)',
-                    color: accentColor, fontWeight: 700, fontSize: '1.25rem',
-                    marginBottom: item.periodDesc ? '12px' : '0'
-                  }}>
-                    {item.period}
+                  <div style={{ marginBottom: item.periodDesc ? '12px' : '0' }}>
+                    {renderPeriodBadge(item.period, accentColor, periodAnchorId)}
                   </div>
                   {item.periodDesc && (
                     <div style={{ color: 'var(--text-mute)', fontSize: '0.9rem', maxWidth: '600px', lineHeight: 1.6, margin: '0 auto' }}>
@@ -442,7 +507,7 @@ export default function CareerTimeline({ items }: { items: CareerItem[] }) {
                   flex: '1 1 0%',
                   minWidth: '0'
                 }}>
-                  {renderPeriodBadge(item.period, accentColor)}
+                  {renderPeriodBadge(item.period, accentColor, periodAnchorId)}
                   {item.periodDesc && (
                     <span style={{
                       fontSize: '0.95rem', fontWeight: 500, color: 'var(--text-mute)',
@@ -473,7 +538,7 @@ export default function CareerTimeline({ items }: { items: CareerItem[] }) {
                 textAlign: 'center',
               }}>
                 <div style={{ zIndex: 1, background: 'var(--bg)', padding: '8px 16px', borderRadius: '24px' }}>
-                  {renderPeriodBadge(item.period, accentColor)}
+                  {renderPeriodBadge(item.period, accentColor, periodAnchorId)}
                 </div>
                 {item.periodDesc && (
                   <div style={{ zIndex: 1, background: 'var(--bg)', padding: '4px 16px', marginTop: '12px', color: 'var(--text-mute)', fontSize: '0.9rem', maxWidth: '600px', lineHeight: 1.6 }}>

@@ -25,14 +25,15 @@ export default function ResumePage() {
     <div style={{ display: 'flex', flexDirection: 'column', gap: '48px' }}>
       
       {/* Profile / Hero Section */}
-      <AboutPanel style={{
+      <AboutPanel id="resume-overview" tabIndex={-1} style={{
         padding: 'clamp(20px, 5vw, 36px)',
         borderRadius: '24px',
         display: 'flex',
         flexDirection: 'column',
         gap: '20px',
         position: 'relative',
-        overflow: 'hidden'
+        overflow: 'hidden',
+        scrollMarginTop: '96px'
       }}>
         {/* Subtle grid background watermark */}
         <AboutDecorativeGrid />

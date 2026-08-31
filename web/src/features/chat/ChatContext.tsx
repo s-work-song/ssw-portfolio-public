@@ -10,6 +10,11 @@ import type {
   ChatStreamAnimation,
   Tone,
 } from "./types";
+import type {
+  GuidedTourState,
+  GuidedTourStep,
+  GuidedTourTargetId,
+} from "./guidedTour";
 
 export interface ChatContextValue {
   isOpen: boolean;
@@ -30,7 +35,11 @@ export interface ChatContextValue {
   streamAnimation: ChatStreamAnimation;
   /** 모션 정책까지 반영한 실제 재생 값이다. */
   effectiveStreamAnimation: ChatStreamAnimation;
-  open: () => void;
+  guidedTour: GuidedTourState;
+  guidedTourStep: GuidedTourStep | null;
+  guidedTourInviteVisible: boolean;
+  focusInputOnOpen: boolean;
+  open: (options?: { focusInput?: boolean }) => void;
   close: () => void;
   completeCloseAnimation: () => void;
   toggle: () => void;
@@ -42,6 +51,7 @@ export interface ChatContextValue {
   setStreamAnimation: (animation: ChatStreamAnimation) => void;
   refreshAvailability: () => Promise<void>;
   resetConversation: () => void;
+  showSettingsWebMcpGuide: () => void;
   sendMessage: (
     message: string,
     audienceOverride?: AudienceChoice,
@@ -51,6 +61,15 @@ export interface ChatContextValue {
   /** 포트폴리오 내부의 탭·세부 앵커 이동 연출을 공통으로 실행한다. */
   navigateRoute: (route: string) => void;
   navigateAction: (id: ActionId) => void;
+  startGuidedTour: () => void;
+  advanceGuidedTour: () => void;
+  previousGuidedTourStep: () => void;
+  skipGuidedTourInteraction: () => void;
+  stopGuidedTour: () => void;
+  dismissGuidedTourInvite: () => void;
+  returnToGuidedTourStep: () => void;
+  beginGuidedTourQuestion: (targetId: GuidedTourTargetId) => boolean;
+  completeGuidedTourQuestion: (targetId: GuidedTourTargetId) => void;
 }
 
 export const ChatContext = createContext<ChatContextValue | null>(null);

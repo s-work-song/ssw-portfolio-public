@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react';
 import { useChat } from '@/features/chat';
+import { CHAT_STREAM_ANIMATIONS } from '@/features/chat/constants';
 import {
   findRelatedPortfolioLogs,
   getPortfolioLogOutline,
@@ -12,8 +13,20 @@ import {
   PORTFOLIO_MODEL_TOOL_EXECUTION_EVENT,
   preparePortfolioModelToolView,
   preparePortfolioLogSearchView,
+  type PortfolioModelToolExecution,
 } from './logSearchView';
-import type { ChatLogSearchToolExecution } from '@/features/chat/types';
+import {
+  isPortfolioResearchYear,
+  isPortfolioViewAction,
+  PORTFOLIO_VIEW_ACTIONS,
+  PORTFOLIO_RESEARCH_YEARS,
+  portfolioViewActionRequiresYear,
+  readPortfolioViewState,
+  runPortfolioViewAction,
+} from './portfolioView';
+import type {
+  ChatStreamAnimation,
+} from '@/features/chat/types';
 
 function toolResult(payload: unknown): WebMcpToolResult {
   return {
@@ -37,13 +50,25 @@ function textInput(input: Record<string, unknown>, key: string): string {
 }
 
 export function PortfolioWebMcp() {
-  const { navigateRoute } = useChat();
+  const { navigateRoute, setStreamAnimation } = useChat();
 
   useEffect(() => {
     const controller = new AbortController();
     const handleModelToolExecution = (rawEvent: Event) => {
-      const event = rawEvent as CustomEvent<ChatLogSearchToolExecution>;
+      const event = rawEvent as CustomEvent<PortfolioModelToolExecution>;
       if (!event.detail || controller.signal.aborted) return;
+      if (event.detail.type === 'open_portfolio_settings') {
+        navigateRoute('/settings');
+        return;
+      }
+      if (event.detail.type === 'control_portfolio_view') {
+        runPortfolioViewAction(
+          event.detail.action,
+          navigateRoute,
+          event.detail.year,
+        );
+        return;
+      }
       void preparePortfolioModelToolView(event.detail)
         .then((result) => {
           if (!controller.signal.aborted) navigateRoute(result.view.route);
@@ -207,6 +232,150 @@ export function PortfolioWebMcp() {
           }
         },
       },
+      {
+        name: 'get-portfolio-view-state',
+        title: '현재 포트폴리오 화면 상태 확인',
+        description:
+          '현재 보고 있는 포트폴리오 페이지와 앵커 위치, 연구 연도 및 연구 상세 펼침 상태를 읽습니다. 화면을 변경하지 않습니다.',
+        inputSchema: {
+          type: 'object',
+          properties: {},
+          additionalProperties: false,
+        },
+        annotations: readOnlyAnnotations,
+        execute(input) {
+          try {
+            if (Object.keys(input).length > 0) {
+              throw new TypeError('현재 화면 상태 조회 도구에는 인자가 필요하지 않습니다.');
+            }
+            return toolResult({
+              ok: true,
+              viewState: readPortfolioViewState(window.location.pathname),
+            });
+          } catch (error) {
+            return toolError(error);
+          }
+        },
+      },
+      {
+        name: 'control-portfolio-view',
+        title: '포트폴리오 화면 이동 및 연구 상세 제어',
+        description:
+          '메인, 소개, 이력서, 자기소개서, 연구 경험, 연구 연도, 기록 화면으로 이동합니다. 연구 여정의 전체 상세 또는 지정한 연도의 상세만 펼치거나 접을 수도 있습니다. 사용자가 화면 이동이나 연구 상세 제어를 명시적으로 요청했을 때 사용하세요.',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            action: {
+              type: 'string',
+              enum: PORTFOLIO_VIEW_ACTIONS,
+              description:
+                '화면 이동, 전체 연구 상세 제어 또는 연도별 연구 상세 제어 동작',
+            },
+            year: {
+              type: 'string',
+              enum: PORTFOLIO_RESEARCH_YEARS,
+              description:
+                'expand-research-year-details 또는 collapse-research-year-details일 때 반드시 지정할 연구 연도',
+            },
+          },
+          required: ['action'],
+          additionalProperties: false,
+        },
+        execute(input) {
+          try {
+            if (!isPortfolioViewAction(input.action)) {
+              throw new TypeError('지원하지 않는 포트폴리오 화면 제어 동작입니다.');
+            }
+            const requiresYear = portfolioViewActionRequiresYear(input.action);
+            const year = isPortfolioResearchYear(input.year)
+              ? input.year
+              : undefined;
+            if ((requiresYear && !year) || (!requiresYear && input.year !== undefined)) {
+              throw new TypeError('연도별 연구 상세 제어의 연도 인자가 올바르지 않습니다.');
+            }
+            const target = runPortfolioViewAction(
+              input.action,
+              navigateRoute,
+              year,
+            );
+            return toolResult({
+              ok: true,
+              action: target.action,
+              route: target.route,
+              message: target.message,
+              ...(target.researchYear ? { year: target.researchYear } : {}),
+            });
+          } catch (error) {
+            return toolError(error);
+          }
+        },
+      },
+      {
+        name: 'open-portfolio-settings',
+        title: '포트폴리오 설정 페이지 열기',
+        description:
+          '포트폴리오의 테마, 포인트 색상, 채팅 레이아웃, 글꼴·글자 크기와 스트리밍 연출을 조정하는 설정 페이지로 이동합니다. 사용자가 설정 페이지를 열어 달라고 요청할 때 사용하세요.',
+        inputSchema: {
+          type: 'object',
+          properties: {},
+          additionalProperties: false,
+        },
+        execute(input) {
+          try {
+            if (Object.keys(input).length > 0) {
+              throw new TypeError('설정 페이지 열기 도구에는 인자가 필요하지 않습니다.');
+            }
+            navigateRoute('/settings');
+            return toolResult({
+              ok: true,
+              route: '/settings',
+              message: '포트폴리오 설정 페이지로 이동을 시작했습니다.',
+            });
+          } catch (error) {
+            return toolError(error);
+          }
+        },
+      },
+      {
+        name: 'set-portfolio-stream-animation',
+        title: '채팅 스트리밍 연출 변경',
+        description:
+          '사용자가 명시적으로 요청한 채팅 답변 스트리밍 연출을 변경합니다. 스트리밍 사용 여부 자체는 변경하지 않습니다.',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            animation: {
+              type: 'string',
+              enum: CHAT_STREAM_ANIMATIONS,
+              description:
+                'none, typewriter, word-fade, token-chunks, blur-focus, slide-up, skeleton, mask-wipe, scramble, letter-drop, highlight-trail 중 하나',
+            },
+          },
+          required: ['animation'],
+          additionalProperties: false,
+        },
+        execute(input) {
+          try {
+            const animation = input.animation;
+            if (
+              typeof animation !== 'string' ||
+              !CHAT_STREAM_ANIMATIONS.includes(
+                animation as ChatStreamAnimation,
+              )
+            ) {
+              throw new TypeError('지원하지 않는 스트리밍 연출입니다.');
+            }
+            setStreamAnimation(animation as ChatStreamAnimation);
+            return toolResult({
+              ok: true,
+              animation,
+              message: `채팅 스트리밍 연출을 ${animation}(으)로 변경했습니다.`,
+            });
+          } catch (error) {
+            return toolError(error);
+          }
+        },
+      },
     ];
 
     const registerTools = async () => {
@@ -224,7 +393,7 @@ export function PortfolioWebMcp() {
 
     void registerTools();
     return () => controller.abort();
-  }, [navigateRoute]);
+  }, [navigateRoute, setStreamAnimation]);
 
   return null;
 }

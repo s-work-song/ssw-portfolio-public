@@ -12,9 +12,10 @@ class ElasticJellyPanel {
    * @param {HTMLElement} fabElement - 플로팅 액션 버튼 엘리먼트
    * @param {HTMLElement} panelElement - 채팅 패널 컨테이너 엘리먼트
    */
-  constructor(fabElement, panelElement) {
+  constructor(fabElement, panelElement, { onSurfaceReadyChange } = {}) {
     this.fab = fabElement;
     this.panel = panelElement;
+    this.onSurfaceReadyChange = onSurfaceReadyChange;
 
     // 캔버스 엘리먼트를 동적으로 생성하고 필수 스타일을 지정하여 패널 내부의 배경 레이어로 주입합니다.
     this.canvas = document.createElement('canvas');
@@ -214,8 +215,9 @@ class ElasticJellyPanel {
   /**
    * 채팅 패널을 활성화하고 확장 젤리 애니메이션을 가동합니다.
    */
-  open() {
+  open({ animate = true } = {}) {
     this.isOpen = true;
+    this.onSurfaceReadyChange?.(false);
 
     // 진행 중인 닫기 대기 타이머가 있다면 즉시 제거
     if (this.closeTimeout) {
@@ -231,6 +233,24 @@ class ElasticJellyPanel {
     this.canvas.style.transition = 'none';
     this.canvas.style.opacity = '1';
     this.panel.classList.remove('animation-finished');
+
+    if (!animate) {
+      this.wrapper.style.transition = 'none';
+      this.wrapper.style.opacity = '1';
+      this.updateTargets();
+      for (const point of Object.values(this.points)) {
+        point.x = point.tx;
+        point.y = point.ty;
+        point.vx = 0;
+        point.vy = 0;
+      }
+      this.animating = false;
+      this.panel.classList.add('animation-finished');
+      this.onSurfaceReadyChange?.(true);
+      this.canvas.style.opacity = '0';
+      this.render();
+      return;
+    }
 
     // 설정된 시간 오프셋 딜레이를 반영하여 내용물이 정적으로 드러나도록 트랜지션 적용 (떨림 방지)
     this.wrapper.style.transition = `opacity ${this.config.contentFadeInDuration}s ease ${this.config.contentDelay}s`;
@@ -255,10 +275,22 @@ class ElasticJellyPanel {
    * 채팅 패널을 비활성화하고 수축 젤리 애니메이션을 가동합니다.
    */
   close(targetElement) {
+    if (this.isOpen && !this.animating) {
+      // 도킹에서 플로팅으로 전환한 뒤 패널의 CSS 크기 전환이 끝났다면,
+      // 닫기 시작점을 과거 도킹 높이가 아니라 현재 패널 외곽에 다시 맞춥니다.
+      this.updateTargets();
+      for (const point of Object.values(this.points)) {
+        point.x = point.tx;
+        point.y = point.ty;
+        point.vx = 0;
+        point.vy = 0;
+      }
+    }
     if (targetElement) {
       this.fab = targetElement;
     }
     this.isOpen = false;
+    this.onSurfaceReadyChange?.(false);
 
     // 진행 중인 닫기 대기 타이머가 있다면 즉시 제거
     if (this.closeTimeout) {
@@ -343,6 +375,7 @@ class ElasticJellyPanel {
       // 열기 모션이 완전히 종료되었을 때 패널 배경 페이드인 및 캔버스 페이드아웃
       if (this.isOpen) {
         this.panel.classList.add('animation-finished');
+        this.onSurfaceReadyChange?.(true);
         // 패널 컨테이너의 배경이 채워지는 시간(0.3s)을 고려하여
         // 캔버스의 페이드아웃 시작을 0.25초 정도 늦춰 뒷배경이 비치는 현상을 방지합니다.
         this.canvas.style.transition = 'opacity 0.2s ease 0.25s';

@@ -18,7 +18,7 @@ export default function Home() {
         <section className={`${styles.hero} ${styles.shell}`} aria-labelledby="hero-title">
           <div className={styles.heroCopy}>
             <p className={styles.eyebrow}>SOFTWARE ENGINEER · SYSTEMS THINKER</p>
-            <h1 id="hero-title" className={styles.heroTitle}>
+            <h1 id="hero-title" tabIndex={-1} className={styles.heroTitle}>
               성능의 한계를 이해하고,{" "}
               <br />
               복잡한 문제를 끝까지 해결합니다.

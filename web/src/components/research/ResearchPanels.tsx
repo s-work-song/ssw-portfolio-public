@@ -22,12 +22,13 @@ export default function ResearchPanels({ activeTab }: { activeTab: ResearchTabId
         {/* TAB 1: OVERVIEW */}
         {activeTab === 'overview' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '40px' }}>
-            <section style={{
+            <section id="research-timeline-overview" tabIndex={-1} style={{
               padding: '28px',
               background: 'var(--bg-elev)',
               borderRadius: '20px',
               border: '1px solid var(--border)',
               boxShadow: 'var(--shadow)',
+              scrollMarginTop: '96px',
             }}>
               <h3 style={{ fontSize: '1.35rem', fontWeight: 700, margin: '0 0 12px 0', color: 'var(--text)' }}>
                 실험 연구 개요 · 동기
@@ -76,7 +77,11 @@ export default function ResearchPanels({ activeTab }: { activeTab: ResearchTabId
                 코드와 테스트, 벤치마크 러너로 재구성해 아래에 연결했습니다.
               </p>
               <div style={{ marginTop: '16px' }}>
-                <AskAiButton align="end" question="성능 최적화 연구를 CPU, 메모리·파일 I/O, 직렬화·전송 관점으로 나누어 설명해 주세요." />
+                <AskAiButton
+                  align="end"
+                  guidedTourTarget="research-optimization-ask-ai"
+                  question="성능 최적화 연구를 CPU, 메모리·파일 I/O, 직렬화·전송 관점으로 나누어 설명해 주세요."
+                />
               </div>
             </section>
 

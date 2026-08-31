@@ -26,8 +26,14 @@ declare class ElasticJellyPanel {
   };
   wrapper: HTMLElement | null;
 
-  constructor(fabElement: HTMLElement, panelElement: HTMLElement);
-  open(): void;
+  constructor(
+    fabElement: HTMLElement,
+    panelElement: HTMLElement,
+    options?: {
+      onSurfaceReadyChange?: (ready: boolean) => void;
+    },
+  );
+  open(options?: { animate?: boolean }): void;
   close(targetElement?: HTMLElement): void;
   destroy(): void;
 }
