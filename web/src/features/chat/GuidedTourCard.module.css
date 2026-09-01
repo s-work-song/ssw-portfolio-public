@@ -1,0 +1,305 @@
+.invite,
+.card {
+  border: 1px solid color-mix(in srgb, var(--chat-accent) 34%, var(--chat-border));
+  background:
+    linear-gradient(
+      145deg,
+      color-mix(in srgb, var(--chat-accent) 9%, var(--chat-bg)),
+      var(--chat-bg) 58%
+    );
+  color: var(--chat-text);
+  box-shadow: 0 22px 60px -28px rgba(15, 18, 45, 0.62);
+}
+
+.invite {
+  position: fixed;
+  right: 24px;
+  bottom: calc(92px + env(safe-area-inset-bottom));
+  display: grid;
+  width: min(390px, calc(100vw - 32px));
+  grid-template-columns: auto 1fr;
+  gap: 12px;
+  padding: 16px;
+  border-radius: 20px;
+  pointer-events: auto;
+  animation: tour-enter 280ms ease-out both;
+}
+
+.inviteCopy {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.inviteCopy strong {
+  font-size: 15px;
+}
+
+.inviteCopy span,
+.message,
+.instruction {
+  color: var(--chat-dim);
+  line-height: 1.55;
+}
+
+.inviteCopy span {
+  font-size: 13px;
+}
+
+.inviteActions {
+  display: flex;
+  grid-column: 1 / -1;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.aiMark {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--chat-accent);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+}
+
+.card {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  border-radius: 20px;
+}
+
+.external {
+  width: 100%;
+  pointer-events: auto;
+}
+
+.panel {
+  margin: 10px 0 4px;
+  border-radius: 16px;
+  box-shadow: none;
+}
+
+.panelReveal {
+  animation: tour-panel-reveal 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.heading {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+}
+
+.heading > div {
+  min-width: 0;
+}
+
+.externalChatButton {
+  display: inline-flex;
+  min-height: 34px;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+  padding: 5px 10px 5px 6px;
+  border: 1px solid color-mix(in srgb, var(--chat-accent) 38%, var(--chat-border));
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--chat-accent) 7%, var(--chat-bg));
+  color: var(--chat-text);
+  cursor: pointer;
+  font: inherit;
+  font-size: 11.5px;
+  font-weight: 750;
+  white-space: nowrap;
+}
+
+.externalChatButton > span:first-child {
+  display: grid;
+  width: 24px;
+  height: 24px;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--chat-accent);
+  color: #fff;
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+.externalChatButton:hover,
+.externalChatButton:focus-visible {
+  border-color: var(--chat-accent);
+  transform: translateY(-1px);
+}
+
+.eyebrow {
+  display: block;
+  margin-bottom: 2px;
+  color: var(--chat-accent);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+}
+
+.heading h3 {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.25;
+}
+
+.message,
+.instruction {
+  margin: 0;
+  font-size: 13px;
+}
+
+.instruction {
+  padding: 9px 11px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--chat-accent) 9%, transparent);
+}
+
+.instruction strong {
+  color: var(--chat-text);
+}
+
+.progressTrack {
+  height: 4px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--chat-border) 70%, transparent);
+}
+
+.progressTrack span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--chat-accent);
+  transition: width 280ms ease;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.actions button,
+.inviteActions button {
+  min-height: 36px;
+  padding: 7px 12px;
+  border-radius: 11px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.actions button:disabled {
+  cursor: wait;
+  opacity: 0.55;
+}
+
+.primary {
+  border: 1px solid var(--chat-accent);
+  background: var(--chat-accent);
+  color: #fff;
+}
+
+.secondary {
+  border: 1px solid color-mix(in srgb, var(--chat-accent) 42%, var(--chat-border));
+  background: color-mix(in srgb, var(--chat-accent) 8%, var(--chat-bg));
+  color: var(--chat-text);
+}
+
+.ghost {
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--chat-dim);
+}
+
+.primary:hover,
+.secondary:hover,
+.ghost:hover,
+.primary:focus-visible,
+.secondary:focus-visible,
+.ghost:focus-visible {
+  transform: translateY(-1px);
+}
+
+@keyframes tour-enter {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes tour-panel-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 720px) and (pointer: coarse) {
+  .invite {
+    left: 16px;
+    right: 16px;
+    bottom: calc(84px + env(safe-area-inset-bottom));
+    width: auto;
+  }
+
+  .card {
+    gap: 10px;
+    padding: 14px;
+  }
+
+  .card.external {
+    max-height: min(44dvh, 360px);
+    padding: 14px 16px calc(14px + env(safe-area-inset-bottom));
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    border-right: 0;
+    border-bottom: 0;
+    border-left: 0;
+    border-radius: 20px 20px 0 0;
+    box-shadow: 0 -18px 52px -30px rgba(15, 18, 45, 0.72);
+  }
+
+  .actions button,
+  .inviteActions button {
+    min-height: 40px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :global(:root:not([data-motion="on"])) .invite,
+  :global(:root:not([data-motion="on"])) .panelReveal {
+    animation: none;
+  }
+
+  :global(:root:not([data-motion="on"])) .progressTrack span,
+  :global(:root:not([data-motion="on"])) .primary,
+  :global(:root:not([data-motion="on"])) .secondary,
+  :global(:root:not([data-motion="on"])) .ghost {
+    transition: none;
+  }
+}
+
+:global(:root[data-motion="off"]) .panelReveal {
+  animation: none;
+}

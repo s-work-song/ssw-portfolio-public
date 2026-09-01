@@ -1,0 +1,1541 @@
+"use client";
+
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { useTheme } from "../../context/ThemeContext";
+import {
+  requestChat,
+  requestChatStatus,
+  requestChatStream,
+  ChatApiError,
+} from "./api";
+import {
+  ACTION_LABELS,
+  ACTION_ROUTES,
+  CHAT_ANIMATIONS,
+  CHAT_ANIMATION_STORAGE_KEY,
+  CHAT_STREAM_ANIMATIONS,
+  DEFAULT_CHAT_ANIMATION,
+  DEFAULT_CHAT_STREAM_ANIMATION,
+  DEFAULT_REASONING_ENABLED,
+  GREETING,
+  REASONING_STORAGE_KEY,
+  SETTINGS_WEBMCP_GUIDE,
+  STREAMING_STORAGE_KEY,
+  STREAM_ANIMATION_STORAGE_KEY,
+  TONES,
+  TONE_STORAGE_KEY,
+  audienceToApi,
+  pageContextFromPathname,
+} from "./constants";
+import { ChatContext, type ChatContextValue } from "./ChatContext";
+import { ChatWidget } from "./ChatWidget";
+import { StreamRenderQueue } from "./streamRenderQueue";
+import { useGuidedTour } from "./useGuidedTour";
+import { dispatchPortfolioModelToolExecution } from "../webmcp/logSearchView";
+import { readPortfolioViewState } from "../webmcp/portfolioView";
+import {
+  executePortfolioUiTool as runPortfolioUiTool,
+  portfolioUiCommandFromChatExecution,
+  type PortfolioUiToolExecutor,
+  type PortfolioUiToolRuntime,
+} from "../portfolio-tools/portfolioUiToolExecutor";
+import {
+  CHAT_ACTION_NAVIGATE_EVENT,
+  CHAT_ACTION_PAGE_ENTERED_EVENT,
+  CHAT_ACTION_RESTORE_CHAT_INPUT_EVENT,
+  CHAT_ACTION_TARGET_ARRIVED_EVENT,
+  aboutTabPathFromPath,
+  normalizeNavigationPath,
+  pathWithoutHash,
+  type ChatActionNavigateDetail,
+  type ChatActionPageEnteredDetail,
+  type ChatActionTargetArrivedDetail,
+} from "./navigation";
+import type {
+  ActionId,
+  AudienceChoice,
+  ChatAnimation,
+  ChatAvailability,
+  ChatHistoryItem,
+  ChatMessage,
+  ChatRequest,
+  ChatStreamAnimation,
+  ChatToolExecution,
+  Tone,
+} from "./types";
+
+const MAX_HISTORY_ITEMS = 10;
+const MAX_HISTORY_CHARACTERS = 12_000;
+const MOBILE_QUERY = "(max-width: 720px) and (pointer: coarse)";
+const REDUCED_MOTION_QUERY = "(prefers-reduced-motion: reduce)";
+const MOBILE_HISTORY_MARKER = "__portfolioChatOpen";
+const MOBILE_EXIT_DURATION_MS = 260;
+const CHAT_STATUS_TIMEOUT_MS = 5_000;
+const ACTION_SCROLL_MIN_DURATION_MS = 420;
+const ACTION_SCROLL_MAX_DURATION_MS = 900;
+const ACTION_SCROLL_MS_PER_PIXEL = 0.45;
+const ACTION_TARGET_WAIT_TIMEOUT_MS = 3_000;
+const ACTION_PAGE_ENTRY_FALLBACK_MS = 720;
+
+/**
+ * PC 패널이 퇴장 연출을 끝낼 때까지 DOM을 유지할 시간이다.
+ * 슬라이드는 CSS 퇴장 애니메이션 길이에 맞추고, 젤리는 스프링이 수렴하며
+ * 캔버스를 정리하는 시간까지 감안해 넉넉히 잡는다.
+ */
+const DESKTOP_EXIT_DURATION_MS: Readonly<
+  Record<Exclude<ChatAnimation, "none">, number>
+> = {
+  slide: 240,
+  jelly: 620,
+};
+
+function easeInOutCubic(progress: number): number {
+  return progress < 0.5
+    ? 4 * progress * progress * progress
+    : 1 - Math.pow(-2 * progress + 2, 3) / 2;
+}
+
+function easeOutCubic(progress: number): number {
+  return 1 - Math.pow(1 - progress, 3);
+}
+
+function scrollDurationForDistance(distance: number): number {
+  return Math.min(
+    ACTION_SCROLL_MAX_DURATION_MS,
+    Math.max(
+      ACTION_SCROLL_MIN_DURATION_MS,
+      Math.abs(distance) * ACTION_SCROLL_MS_PER_PIXEL,
+    ),
+  );
+}
+
+function initialMessages(): ChatMessage[] {
+  return [
+    {
+      id: "chat-greeting",
+      role: "assistant",
+      content: GREETING,
+      kind: "greeting",
+    },
+  ];
+}
+
+function historyFromMessages(messages: ChatMessage[]): ChatHistoryItem[] {
+  const history: ChatHistoryItem[] = [];
+  let characters = 0;
+
+  for (let index = messages.length - 1; index >= 0; index -= 1) {
+    const message = messages[index];
+    if (message.kind === "greeting") continue;
+    if (
+      message.generationState &&
+      message.generationState !== "complete"
+    ) {
+      continue;
+    }
+    if (history.length >= MAX_HISTORY_ITEMS) break;
+    if (characters + message.content.length > MAX_HISTORY_CHARACTERS) break;
+
+    characters += message.content.length;
+    history.unshift({ role: message.role, content: message.content });
+  }
+
+  return history;
+}
+
+function isTone(value: string | null): value is Tone {
+  return value !== null && TONES.includes(value as Tone);
+}
+
+function isChatAnimation(value: string | null): value is ChatAnimation {
+  return (
+    value !== null && CHAT_ANIMATIONS.includes(value as ChatAnimation)
+  );
+}
+
+function isStreamAnimation(
+  value: string | null,
+): value is ChatStreamAnimation {
+  return (
+    value !== null &&
+    CHAT_STREAM_ANIMATIONS.includes(value as ChatStreamAnimation)
+  );
+}
+
+interface PendingRetry {
+  message: string;
+  history: ChatHistoryItem[];
+  audienceOverride?: AudienceChoice;
+  assistantMessageId?: string;
+}
+
+export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
+  const pathname = usePathname();
+  const router = useRouter();
+  const {
+    mode,
+    accent,
+    motion,
+    pageTransition,
+    chatLayout,
+    chatFont,
+    chatFontSize,
+    setMode,
+    setAccent,
+    setChatLayout,
+    setChatFont,
+    setChatFontSize,
+  } = useTheme();
+  const [isOpen, setIsOpen] = useState(false);
+  const [isClosing, setIsClosing] = useState(false);
+  const [focusInputOnOpen, setFocusInputOnOpen] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
+  const [availability, setAvailability] =
+    useState<ChatAvailability>("idle");
+  const [error, setError] = useState<string | null>(null);
+  const [messages, setMessages] = useState<ChatMessage[]>(initialMessages);
+  const [audience, setAudience] = useState<AudienceChoice | null>(null);
+  const [tone, setTone] = useState<Tone>("official");
+  const [streamingEnabled, setStreamingEnabledState] = useState(true);
+  const [reasoningEnabled, setReasoningEnabledState] = useState(
+    DEFAULT_REASONING_ENABLED,
+  );
+  const [chatAnimation, setChatAnimationState] = useState<ChatAnimation>(
+    DEFAULT_CHAT_ANIMATION,
+  );
+  const [streamAnimation, setStreamAnimationState] =
+    useState<ChatStreamAnimation>(DEFAULT_CHAT_STREAM_ANIMATION);
+  const [systemReducedMotion, setSystemReducedMotion] = useState(false);
+  const idRef = useRef(0);
+  const abortRef = useRef<AbortController | null>(null);
+  const renderQueueRef = useRef<StreamRenderQueue | null>(null);
+  const mountedRef = useRef(true);
+  const statusAbortRef = useRef<AbortController | null>(null);
+  const inFlightRef = useRef(false);
+  const stopRequestedRef = useRef(false);
+  const retryRef = useRef<PendingRetry | null>(null);
+  const mobileHistoryEntryRef = useRef(false);
+  const pendingActionRouteRef = useRef<string | null>(null);
+  const pendingActionAnchorRef = useRef<string | null>(null);
+  const closeTimerRef = useRef<number | null>(null);
+  const actionScrollFrameRef = useRef<number | null>(null);
+  const actionScrollTimerRef = useRef<number | null>(null);
+  const actionTopScrollFrameRef = useRef<number | null>(null);
+  const actionPageEntryTimerRef = useRef<number | null>(null);
+  const actionTargetHighlightTimerRef = useRef<number | null>(null);
+  const chatInputRestoreTimerRef = useRef<number | null>(null);
+  const highlightedActionTargetRef = useRef<HTMLElement | null>(null);
+  const pendingActionPathRef = useRef<string | null>(null);
+  const pendingActionAwaitingPageEntryRef = useRef(false);
+  const activeActionNavigationRouteRef = useRef<string | null>(null);
+  const actionNavigationTokenRef = useRef(0);
+  const pendingChatNavigationFocusRef = useRef(false);
+  const navigateRouteRef = useRef<(route: string) => void>(() => undefined);
+  const isOpenRef = useRef(false);
+  const isClosingRef = useRef(false);
+  const cleanupHistoryPopRef = useRef(false);
+  const consumeHistoryOnCloseRef = useRef(false);
+
+  const nextId = useCallback((prefix: string) => {
+    idRef.current += 1;
+    return `${prefix}-${idRef.current}`;
+  }, []);
+
+  useEffect(() => {
+    let updateTimer: number | undefined;
+    try {
+      const stored = window.localStorage.getItem(REASONING_STORAGE_KEY);
+      if (stored === "true" || stored === "false") {
+        updateTimer = window.setTimeout(
+          () => setReasoningEnabledState(stored === "true"),
+          0,
+        );
+      } else if (stored !== null) {
+        window.localStorage.setItem(
+          REASONING_STORAGE_KEY,
+          String(DEFAULT_REASONING_ENABLED),
+        );
+      }
+    } catch {
+      // 저장소를 사용할 수 없어도 안전한 기본값인 사고모드 OFF로 동작한다.
+    }
+    return () => {
+      if (updateTimer !== undefined) window.clearTimeout(updateTimer);
+    };
+  }, []);
+
+  useEffect(() => {
+    let updateTimer: number | undefined;
+    try {
+      const storedTone = window.localStorage.getItem(TONE_STORAGE_KEY);
+      if (isTone(storedTone)) {
+        updateTimer = window.setTimeout(() => setTone(storedTone), 0);
+      } else if (storedTone !== null) {
+        window.localStorage.setItem(TONE_STORAGE_KEY, "official");
+      }
+    } catch {
+      // 저장소를 사용할 수 없는 브라우저에서도 기본 말투로 계속 동작한다.
+    }
+    return () => {
+      if (updateTimer !== undefined) window.clearTimeout(updateTimer);
+    };
+  }, []);
+
+  useEffect(() => {
+    let updateTimer: number | undefined;
+    try {
+      const stored = window.localStorage.getItem(STREAMING_STORAGE_KEY);
+      if (stored === "true" || stored === "false") {
+        updateTimer = window.setTimeout(
+          () => setStreamingEnabledState(stored === "true"),
+          0,
+        );
+      } else if (stored !== null) {
+        window.localStorage.setItem(STREAMING_STORAGE_KEY, "true");
+      }
+    } catch {
+      // 저장소를 사용할 수 없어도 안전한 기본값인 streaming ON으로 동작한다.
+    }
+    return () => {
+      if (updateTimer !== undefined) window.clearTimeout(updateTimer);
+    };
+  }, []);
+
+  useEffect(() => {
+    let updateTimer: number | undefined;
+    try {
+      const stored = window.localStorage.getItem(CHAT_ANIMATION_STORAGE_KEY);
+      if (isChatAnimation(stored)) {
+        updateTimer = window.setTimeout(
+          () => setChatAnimationState(stored),
+          0,
+        );
+      } else if (stored !== null) {
+        window.localStorage.setItem(
+          CHAT_ANIMATION_STORAGE_KEY,
+          DEFAULT_CHAT_ANIMATION,
+        );
+      }
+    } catch {
+      // 저장소를 사용할 수 없어도 기본 연출인 젤리로 계속 동작한다.
+    }
+    return () => {
+      if (updateTimer !== undefined) window.clearTimeout(updateTimer);
+    };
+  }, []);
+
+  useEffect(() => {
+    let updateTimer: number | undefined;
+    try {
+      const stored = window.localStorage.getItem(STREAM_ANIMATION_STORAGE_KEY);
+      if (isStreamAnimation(stored)) {
+        updateTimer = window.setTimeout(
+          () => setStreamAnimationState(stored),
+          0,
+        );
+      } else if (stored !== null) {
+        window.localStorage.setItem(
+          STREAM_ANIMATION_STORAGE_KEY,
+          DEFAULT_CHAT_STREAM_ANIMATION,
+        );
+      }
+    } catch {
+      // 저장소를 사용할 수 없어도 기본 연출인 단어 페이드로 계속 동작한다.
+    }
+    return () => {
+      if (updateTimer !== undefined) window.clearTimeout(updateTimer);
+    };
+  }, []);
+
+  useEffect(() => {
+    const media = window.matchMedia(REDUCED_MOTION_QUERY);
+    const update = () => setSystemReducedMotion(media.matches);
+    update();
+    media.addEventListener("change", update);
+    return () => media.removeEventListener("change", update);
+  }, []);
+
+  useEffect(() => {
+    mountedRef.current = true;
+
+    return () => {
+      mountedRef.current = false;
+      renderQueueRef.current?.cancel();
+      abortRef.current?.abort();
+      statusAbortRef.current?.abort();
+      if (closeTimerRef.current !== null) {
+        window.clearTimeout(closeTimerRef.current);
+      }
+      if (actionScrollFrameRef.current !== null) {
+        window.cancelAnimationFrame(actionScrollFrameRef.current);
+      }
+      if (actionScrollTimerRef.current !== null) {
+        window.clearTimeout(actionScrollTimerRef.current);
+      }
+      if (actionTopScrollFrameRef.current !== null) {
+        window.cancelAnimationFrame(actionTopScrollFrameRef.current);
+      }
+      if (actionPageEntryTimerRef.current !== null) {
+        window.clearTimeout(actionPageEntryTimerRef.current);
+      }
+      if (actionTargetHighlightTimerRef.current !== null) {
+        window.clearTimeout(actionTargetHighlightTimerRef.current);
+      }
+      if (chatInputRestoreTimerRef.current !== null) {
+        window.clearTimeout(chatInputRestoreTimerRef.current);
+      }
+      highlightedActionTargetRef.current?.removeAttribute(
+        "data-chat-action-target",
+      );
+    };
+  }, []);
+
+  const pageContext = pageContextFromPathname(pathname);
+
+  /**
+   * 모션 정책이 꺼져 있거나 시스템이 모션 줄이기를 요구하면 연출을 생략한다.
+   * 설정 화면의 모션 판정과 같은 규칙을 쓰고, 두 애니메이션 설정이 함께 따른다.
+   */
+  const motionSuppressed =
+    motion === "off" || (motion === "system" && systemReducedMotion);
+
+  /**
+   * 라우트와 해시가 함께 바뀌는 채팅 액션에서는 브라우저의 native smooth
+   * scroll이 중간 프레임을 생략하기도 한다. 문서 스크롤을 직접 보간해
+   * 이동 거리에 관계없이 출발과 도착을 눈으로 따라갈 수 있게 한다.
+   */
+  const animateDocumentScroll = useCallback(
+    (
+      requestedTop: number,
+      setFrame: (frame: number | null) => void,
+      onComplete: () => void,
+      easing: "ease-in-out" | "ease-out" = "ease-in-out",
+    ) => {
+      const scroller = document.scrollingElement;
+      if (!scroller) {
+        setFrame(null);
+        onComplete();
+        return;
+      }
+
+      const startTop = scroller.scrollTop;
+      const maximumTop = Math.max(0, scroller.scrollHeight - window.innerHeight);
+      const targetTop = Math.min(maximumTop, Math.max(0, requestedTop));
+      const distance = targetTop - startTop;
+
+      if (motionSuppressed || Math.abs(distance) <= 1) {
+        scroller.scrollTop = targetTop;
+        setFrame(null);
+        onComplete();
+        return;
+      }
+
+      const duration = scrollDurationForDistance(distance);
+      const startedAt = window.performance.now();
+      const step = (timestamp: number) => {
+        const progress = Math.min(1, (timestamp - startedAt) / duration);
+        const easedProgress =
+          easing === "ease-out"
+            ? easeOutCubic(progress)
+            : easeInOutCubic(progress);
+        scroller.scrollTop = startTop + distance * easedProgress;
+
+        if (progress >= 1) {
+          scroller.scrollTop = targetTop;
+          setFrame(null);
+          onComplete();
+          return;
+        }
+        setFrame(window.requestAnimationFrame(step));
+      };
+
+      setFrame(window.requestAnimationFrame(step));
+    },
+    [motionSuppressed],
+  );
+
+  /** 패널 연출. 모바일 구간은 기존 동작을 유지하므로 이 값을 보지 않는다. */
+  const effectiveChatAnimation = useMemo<ChatAnimation>(
+    () => (motionSuppressed ? "none" : chatAnimation),
+    [chatAnimation, motionSuppressed],
+  );
+
+  /** 응답 텍스트 연출. 텍스트 수준이라 모바일에서도 그대로 적용된다. */
+  const effectiveStreamAnimation = useMemo<ChatStreamAnimation>(
+    () => (motionSuppressed ? "none" : streamAnimation),
+    [motionSuppressed, streamAnimation],
+  );
+
+  const setStreamAnimation = useCallback((animation: ChatStreamAnimation) => {
+    if (!CHAT_STREAM_ANIMATIONS.includes(animation)) return;
+    setStreamAnimationState(animation);
+    try {
+      window.localStorage.setItem(STREAM_ANIMATION_STORAGE_KEY, animation);
+    } catch {
+      // 저장 실패가 현재 브라우저 세션의 설정 변경을 막지는 않는다.
+    }
+  }, []);
+
+  const portfolioUiToolRuntimeRef = useRef<PortfolioUiToolRuntime | null>(null);
+  useEffect(() => {
+    portfolioUiToolRuntimeRef.current = {
+      getSettings: () => ({
+        theme: mode,
+        accent,
+        chatLayout,
+        chatFont,
+        chatFontSize,
+      }),
+      setMode,
+      setAccent,
+      setChatLayout,
+      setChatFont,
+      setChatFontSize,
+      setStreamAnimation,
+      navigateRoute: (route) => navigateRouteRef.current(route),
+    };
+  }, [
+    accent,
+    chatFont,
+    chatFontSize,
+    chatLayout,
+    mode,
+    setAccent,
+    setChatFont,
+    setChatFontSize,
+    setChatLayout,
+    setMode,
+    setStreamAnimation,
+  ]);
+
+  const executePortfolioUiTool = useCallback<PortfolioUiToolExecutor>(
+    (command) => {
+      const runtime = portfolioUiToolRuntimeRef.current;
+      if (!runtime) {
+        throw new Error('포트폴리오 UI 도구 실행기를 사용할 수 없습니다.');
+      }
+      return runPortfolioUiTool(command, runtime);
+    },
+    [],
+  );
+
+  const restoreChatInputAfterNavigation = useCallback(() => {
+    if (!pendingChatNavigationFocusRef.current) return;
+    pendingChatNavigationFocusRef.current = false;
+    if (chatInputRestoreTimerRef.current !== null) {
+      window.clearTimeout(chatInputRestoreTimerRef.current);
+    }
+    chatInputRestoreTimerRef.current = window.setTimeout(() => {
+      chatInputRestoreTimerRef.current = null;
+      window.dispatchEvent(new Event(CHAT_ACTION_RESTORE_CHAT_INPUT_EVENT));
+    }, 220);
+  }, []);
+
+  const scrollToPendingActionAnchor = useCallback(() => {
+    const anchor = pendingActionAnchorRef.current;
+    if (!anchor) return;
+    if (actionScrollFrameRef.current !== null) {
+      window.cancelAnimationFrame(actionScrollFrameRef.current);
+    }
+    if (actionScrollTimerRef.current !== null) {
+      window.clearTimeout(actionScrollTimerRef.current);
+    }
+
+    const targetHash = `#${encodeURIComponent(anchor)}`;
+    if (window.location.hash !== targetHash) {
+      const oldUrl = window.location.href;
+      const targetUrl = new URL(oldUrl);
+      targetUrl.hash = targetHash;
+      const nextUrl = `${targetUrl.pathname}${targetUrl.search}${targetUrl.hash}`;
+      window.history.pushState(window.history.state, "", nextUrl);
+      window.dispatchEvent(
+        new HashChangeEvent("hashchange", {
+          oldURL: oldUrl,
+          newURL: targetUrl.href,
+        }),
+      );
+    }
+
+    const startedAt = window.performance.now();
+    const completeTargetArrival = (target: HTMLElement) => {
+      pendingActionAnchorRef.current = null;
+      pendingActionPathRef.current = null;
+      activeActionNavigationRouteRef.current = null;
+      actionScrollFrameRef.current = null;
+      actionScrollTimerRef.current = null;
+      target.focus({ preventScroll: true });
+      window.dispatchEvent(
+        new CustomEvent<ChatActionTargetArrivedDetail>(
+          CHAT_ACTION_TARGET_ARRIVED_EVENT,
+          { detail: { anchor: target.id } },
+        ),
+      );
+      restoreChatInputAfterNavigation();
+
+      if (motionSuppressed) return;
+      if (actionTargetHighlightTimerRef.current !== null) {
+        window.clearTimeout(actionTargetHighlightTimerRef.current);
+      }
+      highlightedActionTargetRef.current?.removeAttribute(
+        "data-chat-action-target",
+      );
+      highlightedActionTargetRef.current = target;
+      target.setAttribute("data-chat-action-target", "true");
+      actionTargetHighlightTimerRef.current = window.setTimeout(() => {
+        target.removeAttribute("data-chat-action-target");
+        if (highlightedActionTargetRef.current === target) {
+          highlightedActionTargetRef.current = null;
+        }
+        actionTargetHighlightTimerRef.current = null;
+      }, 1_650);
+    };
+
+    const scroll = () => {
+      if (pendingActionAnchorRef.current !== anchor) return;
+      const target = document.getElementById(anchor);
+      if (!target) {
+        if (
+          window.performance.now() - startedAt <
+          ACTION_TARGET_WAIT_TIMEOUT_MS
+        ) {
+          actionScrollTimerRef.current = window.setTimeout(scroll, 50);
+        } else {
+          pendingActionAnchorRef.current = null;
+          pendingActionPathRef.current = null;
+          activeActionNavigationRouteRef.current = null;
+          actionScrollTimerRef.current = null;
+          restoreChatInputAfterNavigation();
+        }
+        return;
+      }
+
+      const transitionElements = [
+        target,
+        target.closest<HTMLElement>(".about-page-content"),
+        target.closest<HTMLElement>(".research-panel-content"),
+      ].filter((element): element is HTMLElement => element !== null);
+      const runningAnimations = motionSuppressed
+        ? []
+        : transitionElements.flatMap((element) =>
+            element.getAnimations().filter((animation) => {
+              const name = (animation as CSSAnimation).animationName ?? "";
+              return (
+                animation.playState === "running" &&
+                (name.startsWith("about-page-") ||
+                  name.startsWith("research-panel-"))
+              );
+            }),
+          );
+      if (runningAnimations.length > 0) {
+        void Promise.allSettled(
+          runningAnimations.map((animation) => animation.finished),
+        ).then(() => {
+          if (pendingActionAnchorRef.current === anchor) scroll();
+        });
+        return;
+      }
+
+      actionScrollTimerRef.current = null;
+      const scroller = document.scrollingElement;
+      const scrollTop = scroller?.scrollTop ?? window.scrollY;
+      const targetStyle = window.getComputedStyle(target);
+      const rootStyle = window.getComputedStyle(document.documentElement);
+      const scrollMarginTop =
+        Number.parseFloat(targetStyle.scrollMarginTop) || 0;
+      const scrollPaddingTop =
+        Number.parseFloat(rootStyle.scrollPaddingTop) || 0;
+      const targetTop =
+        scrollTop +
+        target.getBoundingClientRect().top -
+        scrollMarginTop -
+        scrollPaddingTop;
+      animateDocumentScroll(
+        targetTop,
+        (frame) => {
+          actionScrollFrameRef.current = frame;
+        },
+        () => {
+          if (pendingActionAnchorRef.current === anchor) {
+            completeTargetArrival(target);
+          }
+        },
+      );
+    };
+    actionScrollFrameRef.current = window.requestAnimationFrame(() => {
+      actionScrollFrameRef.current = window.requestAnimationFrame(scroll);
+    });
+  }, [animateDocumentScroll, motionSuppressed, restoreChatInputAfterNavigation]);
+
+  const navigateToActionTarget = useCallback(
+    (route: string) => {
+      if (activeActionNavigationRouteRef.current === route) return;
+      activeActionNavigationRouteRef.current = route;
+      actionNavigationTokenRef.current += 1;
+      const navigationToken = actionNavigationTokenRef.current;
+      if (actionTopScrollFrameRef.current !== null) {
+        window.cancelAnimationFrame(actionTopScrollFrameRef.current);
+        actionTopScrollFrameRef.current = null;
+      }
+      if (actionPageEntryTimerRef.current !== null) {
+        window.clearTimeout(actionPageEntryTimerRef.current);
+        actionPageEntryTimerRef.current = null;
+      }
+
+      const hashIndex = route.indexOf("#");
+      const actionAnchor =
+        hashIndex >= 0
+          ? decodeURIComponent(route.slice(hashIndex + 1))
+          : null;
+      pendingActionAnchorRef.current = actionAnchor;
+      const routePath = pathWithoutHash(route);
+      pendingActionPathRef.current = routePath;
+      if (!actionAnchor) {
+        pendingActionAnchorRef.current = null;
+        pendingActionPathRef.current = null;
+        pendingActionAwaitingPageEntryRef.current = false;
+        activeActionNavigationRouteRef.current = null;
+        router.prefetch(routePath);
+        if (routePath === normalizeNavigationPath(pathname)) {
+          window.scrollTo({ top: 0, behavior: "auto" });
+        } else {
+          router.push(routePath, { scroll: true });
+        }
+        return;
+      }
+      if (
+        actionAnchor &&
+        routePath === normalizeNavigationPath(pathname)
+      ) {
+        pendingActionAwaitingPageEntryRef.current = false;
+        scrollToPendingActionAnchor();
+        return;
+      }
+
+      const currentTabPath = aboutTabPathFromPath(pathname);
+      const targetTabPath = aboutTabPathFromPath(routePath);
+      const attractTab =
+        currentTabPath !== null &&
+        targetTabPath !== null &&
+        currentTabPath !== targetTabPath;
+      const shouldStageTab =
+        attractTab &&
+        !motionSuppressed &&
+        pageTransition !== "none";
+
+      router.prefetch(routePath);
+
+      const dispatchNavigation = () => {
+        if (actionNavigationTokenRef.current !== navigationToken) return;
+        const event = new CustomEvent<ChatActionNavigateDetail>(
+          CHAT_ACTION_NAVIGATE_EVENT,
+          {
+            cancelable: true,
+            detail: { route, attractTab: shouldStageTab },
+          },
+        );
+        pendingActionAwaitingPageEntryRef.current =
+          !motionSuppressed &&
+          pageTransition !== "none";
+        const handledByAboutLayout = !window.dispatchEvent(event);
+        if (!handledByAboutLayout) {
+          pendingActionAwaitingPageEntryRef.current = false;
+          router.push(routePath, { scroll: false });
+        }
+      };
+
+      if (!shouldStageTab) {
+        dispatchNavigation();
+        return;
+      }
+
+      const currentScrollTop =
+        document.scrollingElement?.scrollTop ?? window.scrollY;
+      if (Math.abs(currentScrollTop) < 1) {
+        dispatchNavigation();
+        return;
+      }
+
+      animateDocumentScroll(
+        0,
+        (frame) => {
+          actionTopScrollFrameRef.current = frame;
+        },
+        () => {
+          if (actionNavigationTokenRef.current === navigationToken) {
+            dispatchNavigation();
+          }
+        },
+        "ease-out",
+      );
+    },
+    [
+      animateDocumentScroll,
+      motionSuppressed,
+      pageTransition,
+      pathname,
+      router,
+      scrollToPendingActionAnchor,
+    ],
+  );
+
+  useEffect(() => {
+    const pendingPath = pendingActionPathRef.current;
+    if (
+      !pendingPath ||
+      normalizeNavigationPath(pathname) !== pendingPath
+    ) {
+      return;
+    }
+
+    if (!pendingActionAwaitingPageEntryRef.current) {
+      scrollToPendingActionAnchor();
+      return;
+    }
+
+    if (actionPageEntryTimerRef.current !== null) {
+      window.clearTimeout(actionPageEntryTimerRef.current);
+    }
+    actionPageEntryTimerRef.current = window.setTimeout(() => {
+      actionPageEntryTimerRef.current = null;
+      pendingActionAwaitingPageEntryRef.current = false;
+      scrollToPendingActionAnchor();
+    }, ACTION_PAGE_ENTRY_FALLBACK_MS);
+  }, [pathname, scrollToPendingActionAnchor]);
+
+  useEffect(() => {
+    const handlePageEntered = (rawEvent: Event) => {
+      const event = rawEvent as CustomEvent<ChatActionPageEnteredDetail>;
+      const enteredPath = event.detail?.path;
+      if (
+        !enteredPath ||
+        normalizeNavigationPath(enteredPath) !== pendingActionPathRef.current ||
+        !pendingActionAwaitingPageEntryRef.current
+      ) {
+        return;
+      }
+
+      if (actionPageEntryTimerRef.current !== null) {
+        window.clearTimeout(actionPageEntryTimerRef.current);
+        actionPageEntryTimerRef.current = null;
+      }
+      pendingActionAwaitingPageEntryRef.current = false;
+      scrollToPendingActionAnchor();
+    };
+
+    window.addEventListener(
+      CHAT_ACTION_PAGE_ENTERED_EVENT,
+      handlePageEntered,
+    );
+    return () =>
+      window.removeEventListener(
+        CHAT_ACTION_PAGE_ENTERED_EVENT,
+        handlePageEntered,
+      );
+  }, [scrollToPendingActionAnchor]);
+
+  const refreshAvailability = useCallback(async () => {
+    statusAbortRef.current?.abort();
+    const controller = new AbortController();
+    statusAbortRef.current = controller;
+    setAvailability("checking");
+    const timeout = window.setTimeout(
+      () => controller.abort(),
+      CHAT_STATUS_TIMEOUT_MS,
+    );
+
+    try {
+      const response = await requestChatStatus(controller.signal);
+      if (statusAbortRef.current === controller) {
+        setAvailability(response.status);
+      }
+    } catch {
+      if (statusAbortRef.current === controller) {
+        setAvailability("offline");
+      }
+    } finally {
+      window.clearTimeout(timeout);
+      if (statusAbortRef.current === controller) {
+        statusAbortRef.current = null;
+      }
+    }
+  }, []);
+
+  /*
+   * 콘텐츠 카드의 "AI에게 물어보기" 진입점을 온라인일 때만 노출하려면
+   * 채팅창을 열기 전에도 가벼운 상태 확인이 한 번 필요하다.
+   */
+  useEffect(() => {
+    const frame = window.requestAnimationFrame(() => {
+      void refreshAvailability();
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [refreshAvailability]);
+
+  const open = useCallback((options?: { focusInput?: boolean }) => {
+    if (
+      isOpenRef.current ||
+      isClosingRef.current ||
+      cleanupHistoryPopRef.current
+    ) {
+      return;
+    }
+    setFocusInputOnOpen(options?.focusInput !== false);
+    if (
+      window.matchMedia(MOBILE_QUERY).matches &&
+      !mobileHistoryEntryRef.current
+    ) {
+      window.history.pushState(
+        {
+          ...(window.history.state ?? {}),
+          [MOBILE_HISTORY_MARKER]: true,
+        },
+        "",
+        window.location.href,
+      );
+      mobileHistoryEntryRef.current = true;
+    }
+    isOpenRef.current = true;
+    setIsOpen(true);
+    if (availability !== "online") {
+      void refreshAvailability();
+    }
+  }, [availability, refreshAvailability]);
+
+  const completeCloseAnimation = useCallback(() => {
+    if (!isClosingRef.current) return;
+    if (closeTimerRef.current !== null) {
+      window.clearTimeout(closeTimerRef.current);
+      closeTimerRef.current = null;
+    }
+
+    const consumeHistoryEntry = consumeHistoryOnCloseRef.current;
+    consumeHistoryOnCloseRef.current = false;
+    isOpenRef.current = false;
+    isClosingRef.current = false;
+    setIsOpen(false);
+    setIsClosing(false);
+
+    if (
+      consumeHistoryEntry &&
+      mobileHistoryEntryRef.current &&
+      window.history.state?.[MOBILE_HISTORY_MARKER] === true
+    ) {
+      cleanupHistoryPopRef.current = true;
+      window.history.back();
+      return;
+    }
+
+    const pendingRoute = pendingActionRouteRef.current;
+    pendingActionRouteRef.current = null;
+    if (pendingRoute) navigateToActionTarget(pendingRoute);
+  }, [navigateToActionTarget]);
+
+  const beginMobileClose = useCallback(
+    (consumeHistoryEntry: boolean) => {
+      if (!isOpenRef.current || isClosingRef.current) return;
+
+      consumeHistoryOnCloseRef.current = consumeHistoryEntry;
+      isClosingRef.current = true;
+      setIsClosing(true);
+      const reducedMotion = window.matchMedia(
+        "(prefers-reduced-motion: reduce)",
+      ).matches;
+
+      closeTimerRef.current = window.setTimeout(
+        completeCloseAnimation,
+        reducedMotion ? 0 : MOBILE_EXIT_DURATION_MS + 300,
+      );
+    },
+    [completeCloseAnimation],
+  );
+
+  /**
+   * PC 패널의 퇴장 연출이 재생되는 동안 패널 DOM을 유지한다.
+   * 슬라이드는 CSS animationend가 먼저 도착해 타이머보다 빨리 마무리한다.
+   */
+  const beginDesktopClose = useCallback(
+    (durationMs: number) => {
+      if (!isOpenRef.current || isClosingRef.current) return;
+
+      consumeHistoryOnCloseRef.current = false;
+      isClosingRef.current = true;
+      setIsClosing(true);
+      closeTimerRef.current = window.setTimeout(
+        completeCloseAnimation,
+        durationMs,
+      );
+    },
+    [completeCloseAnimation],
+  );
+
+  const close = useCallback(() => {
+    pendingActionRouteRef.current = null;
+    if (window.matchMedia(MOBILE_QUERY).matches) {
+      beginMobileClose(true);
+      return;
+    }
+    if (effectiveChatAnimation !== "none") {
+      beginDesktopClose(DESKTOP_EXIT_DURATION_MS[effectiveChatAnimation]);
+      return;
+    }
+
+    isOpenRef.current = false;
+    isClosingRef.current = false;
+    setIsOpen(false);
+    setIsClosing(false);
+  }, [beginDesktopClose, beginMobileClose, effectiveChatAnimation]);
+
+  const toggle = useCallback(() => {
+    if (isOpenRef.current) close();
+    else open();
+  }, [close, open]);
+
+  useEffect(() => {
+    const handlePopState = () => {
+      if (cleanupHistoryPopRef.current) {
+        cleanupHistoryPopRef.current = false;
+        mobileHistoryEntryRef.current = false;
+        const pendingRoute = pendingActionRouteRef.current;
+        pendingActionRouteRef.current = null;
+        if (pendingRoute) {
+          window.requestAnimationFrame(() =>
+            navigateToActionTarget(pendingRoute),
+          );
+        }
+        return;
+      }
+
+      if (!mobileHistoryEntryRef.current) return;
+      mobileHistoryEntryRef.current = false;
+      beginMobileClose(false);
+    };
+
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, [beginMobileClose, navigateToActionTarget]);
+
+  const performRequest = useCallback(
+    async (pending: PendingRetry) => {
+      if (inFlightRef.current) return;
+      inFlightRef.current = true;
+      stopRequestedRef.current = false;
+      setIsLoading(true);
+      setError(null);
+
+      const controller = new AbortController();
+      abortRef.current = controller;
+      const request: ChatRequest = {
+        message: pending.message,
+        history: pending.history,
+        audience: audienceToApi(pending.audienceOverride ?? audience),
+        tone,
+        pageContext,
+        reasoningEnabled,
+        uiSettings: {
+          theme: mode,
+          accent,
+          chatLayout,
+          chatFont,
+          chatFontSize,
+        },
+        viewState: readPortfolioViewState(pathname),
+      };
+      const shouldStream = streamingEnabled;
+      let streamingMessageId: string | undefined;
+      const handledToolCallIds = new Set<string>();
+      const handleToolExecution = (execution: ChatToolExecution) => {
+        if (handledToolCallIds.has(execution.toolCallId)) return;
+        handledToolCallIds.add(execution.toolCallId);
+        const uiCommand = portfolioUiCommandFromChatExecution(execution);
+        if (uiCommand) {
+          if (execution.type === "control_portfolio_view") {
+            pendingChatNavigationFocusRef.current = true;
+          }
+          executePortfolioUiTool(uiCommand);
+          return;
+        }
+        if (
+          execution.type === "report_portfolio_ui_settings" ||
+          execution.type === "report_portfolio_view_state"
+        ) {
+          return;
+        }
+        if (execution.type === "show_portfolio_log_results") {
+          dispatchPortfolioModelToolExecution(execution);
+        }
+      };
+
+      const appendStreamDelta = (text: string) => {
+        if (
+          !mountedRef.current ||
+          controller.signal.aborted ||
+          !text ||
+          !streamingMessageId
+        ) {
+          return;
+        }
+        setMessages((current) =>
+          current.map((chatMessage) =>
+            chatMessage.id === streamingMessageId
+              ? {
+                  ...chatMessage,
+                  content: `${chatMessage.content}${text}`,
+                }
+              : chatMessage,
+          ),
+        );
+      };
+
+      if (shouldStream) {
+        streamingMessageId = nextId("assistant");
+        pending.assistantMessageId = streamingMessageId;
+        setMessages((current) => [
+          ...current,
+          {
+            id: streamingMessageId as string,
+            role: "assistant",
+            content: "",
+            kind: "message",
+            generationState: "streaming",
+          },
+        ]);
+      }
+
+      const renderQueue = shouldStream
+        ? new StreamRenderQueue(appendStreamDelta)
+        : null;
+      renderQueueRef.current?.cancel();
+      renderQueueRef.current = renderQueue;
+
+      try {
+        const response = shouldStream
+          ? await requestChatStream(request, controller.signal, {
+              onDelta(text) {
+                renderQueue?.enqueue(text);
+              },
+              onTool: handleToolExecution,
+            })
+          : await requestChat(request, controller.signal);
+        response.toolExecutions.forEach(handleToolExecution);
+        await renderQueue?.drain();
+        if (controller.signal.aborted) {
+          throw new DOMException("The operation was aborted.", "AbortError");
+        }
+        if (!mountedRef.current) return;
+        if (response.status === "upstream_offline") {
+          setAvailability("offline");
+        }
+        const completedMessage: ChatMessage = {
+          id: streamingMessageId ?? nextId("assistant"),
+          role: "assistant",
+          content: response.answer,
+          kind:
+            response.mode === "retrieval_fallback"
+              ? "retrieval_fallback"
+              : "message",
+          generationState: "complete",
+          segments: response.segments,
+          actions: response.actions,
+          suggestedQuestions: response.suggestedQuestions,
+        };
+        setMessages((current) =>
+          streamingMessageId
+            ? current.map((chatMessage) =>
+                chatMessage.id === streamingMessageId
+                  ? completedMessage
+                  : chatMessage,
+              )
+            : [...current, completedMessage],
+        );
+        retryRef.current = null;
+      } catch (requestError) {
+        if (!mountedRef.current) return;
+        const requestWasAborted =
+          controller.signal.aborted ||
+          (requestError instanceof DOMException &&
+            requestError.name === "AbortError");
+        if (requestWasAborted) {
+          if (stopRequestedRef.current) {
+            if (streamingMessageId) {
+              setMessages((current) =>
+                current.map((chatMessage) =>
+                  chatMessage.id === streamingMessageId
+                    ? { ...chatMessage, generationState: "stopped" }
+                    : chatMessage,
+                ),
+              );
+            }
+            setError(
+              "응답 생성이 중단되었습니다. 원하면 다시 시도할 수 있어요.",
+            );
+          }
+          return;
+        }
+        if (streamingMessageId) {
+          setMessages((current) =>
+            current.map((chatMessage) =>
+              chatMessage.id === streamingMessageId
+                ? { ...chatMessage, generationState: "failed" }
+                : chatMessage,
+            ),
+          );
+        }
+        retryRef.current = pending;
+        setError(
+          requestError instanceof ChatApiError
+            ? requestError.message
+            : "요청을 처리하지 못했습니다. 다시 시도해 주세요.",
+        );
+      } finally {
+        renderQueue?.cancel();
+        if (renderQueueRef.current === renderQueue) renderQueueRef.current = null;
+        if (abortRef.current === controller) abortRef.current = null;
+        stopRequestedRef.current = false;
+        inFlightRef.current = false;
+        if (mountedRef.current) setIsLoading(false);
+      }
+    },
+    [
+      audience,
+      accent,
+      chatFont,
+      chatFontSize,
+      chatLayout,
+      executePortfolioUiTool,
+      mode,
+      nextId,
+      pageContext,
+      pathname,
+      reasoningEnabled,
+      streamingEnabled,
+      tone,
+    ],
+  );
+
+  const sendMessage = useCallback(
+    async (content: string, audienceOverride?: AudienceChoice) => {
+      const message = content.trim();
+      if (
+        !message ||
+        availability !== "online" ||
+        inFlightRef.current
+      ) {
+        return;
+      }
+
+      const history = historyFromMessages(messages);
+      setMessages((current) => [
+        ...current,
+        {
+          id: nextId("user"),
+          role: "user",
+          content: message,
+          kind: "message",
+        },
+      ]);
+      const pending = { message, history, audienceOverride };
+      retryRef.current = pending;
+      await performRequest(pending);
+    },
+    [availability, messages, nextId, performRequest],
+  );
+
+  const retry = useCallback(async () => {
+    if (
+      availability !== "online" ||
+      !retryRef.current ||
+      inFlightRef.current
+    ) {
+      return;
+    }
+    const pending = retryRef.current;
+    if (pending.assistantMessageId) {
+      setMessages((current) =>
+        current.filter(({ id }) => id !== pending.assistantMessageId),
+      );
+      pending.assistantMessageId = undefined;
+    }
+    await performRequest(pending);
+  }, [availability, performRequest]);
+
+  const stopGenerating = useCallback(() => {
+    if (!inFlightRef.current || !abortRef.current) return;
+    stopRequestedRef.current = true;
+    renderQueueRef.current?.cancel();
+    abortRef.current.abort();
+  }, []);
+
+  const resetConversation = useCallback(() => {
+    retryRef.current = null;
+    setError(null);
+    setAudience(null);
+    setMessages(initialMessages());
+
+    if (inFlightRef.current && abortRef.current) {
+      // 사용자 중단 안내를 남기지 않고 진행 중인 요청만 조용히 정리한다.
+      stopRequestedRef.current = false;
+      renderQueueRef.current?.cancel();
+      abortRef.current.abort();
+    }
+  }, []);
+
+  const setStreamingEnabled = useCallback((enabled: boolean) => {
+    setStreamingEnabledState(enabled);
+    try {
+      window.localStorage.setItem(STREAMING_STORAGE_KEY, String(enabled));
+    } catch {
+      // 저장 실패가 현재 브라우저 세션의 설정 변경을 막지는 않는다.
+    }
+  }, []);
+
+  const setReasoningEnabled = useCallback((enabled: boolean) => {
+    setReasoningEnabledState(enabled);
+    try {
+      window.localStorage.setItem(
+        REASONING_STORAGE_KEY,
+        String(enabled),
+      );
+    } catch {
+      // 저장 실패가 현재 브라우저 세션의 설정 변경을 막지는 않는다.
+    }
+  }, []);
+
+  const setChatAnimation = useCallback((animation: ChatAnimation) => {
+    if (!CHAT_ANIMATIONS.includes(animation)) return;
+    setChatAnimationState(animation);
+    try {
+      window.localStorage.setItem(CHAT_ANIMATION_STORAGE_KEY, animation);
+    } catch {
+      // 저장 실패가 현재 브라우저 세션의 설정 변경을 막지는 않는다.
+    }
+  }, []);
+
+  const selectTone = useCallback((nextTone: Tone) => {
+    if (!TONES.includes(nextTone)) return;
+    setTone(nextTone);
+    try {
+      window.localStorage.setItem(TONE_STORAGE_KEY, nextTone);
+    } catch {
+      // 저장 실패가 현재 대화의 말투 변경을 막지는 않는다.
+    }
+  }, []);
+
+  const navigateRoute = useCallback(
+    (route: string) => {
+      if (
+        window.matchMedia(MOBILE_QUERY).matches &&
+        isOpenRef.current
+      ) {
+        pendingActionRouteRef.current = route;
+        beginMobileClose(
+          mobileHistoryEntryRef.current &&
+            window.history.state?.[MOBILE_HISTORY_MARKER] === true,
+        );
+        return;
+      }
+      navigateToActionTarget(route);
+    },
+    [beginMobileClose, navigateToActionTarget],
+  );
+  useEffect(() => {
+    navigateRouteRef.current = navigateRoute;
+  }, [navigateRoute]);
+
+  const showSettingsWebMcpGuide = useCallback(() => {
+    const action = {
+      id: "settings" as const,
+      label: ACTION_LABELS.settings,
+    };
+    setError(null);
+    setMessages((current) => [
+      ...current,
+      {
+        id: nextId("assistant"),
+        role: "assistant",
+        content: SETTINGS_WEBMCP_GUIDE,
+        kind: "message",
+        generationState: "complete",
+        segments: [
+          {
+            markdown: SETTINGS_WEBMCP_GUIDE,
+            actions: [action],
+          },
+        ],
+      },
+    ]);
+  }, [nextId]);
+
+  const navigateAction = useCallback(
+    (id: ActionId) => {
+      const route = ACTION_ROUTES[id];
+      if (route) navigateRoute(route);
+    },
+    [navigateRoute],
+  );
+
+  const navigateGuidedTourAction = useCallback(
+    (id: ActionId) => {
+      const route = ACTION_ROUTES[id];
+      if (route) navigateToActionTarget(route);
+    },
+    [navigateToActionTarget],
+  );
+
+  const {
+    state: guidedTour,
+    step: guidedTourStep,
+    inviteVisible: guidedTourInviteVisible,
+    start: startGuidedTour,
+    advance: advanceGuidedTour,
+    previous: previousGuidedTourStep,
+    skip: skipGuidedTourInteraction,
+    stop: stopGuidedTour,
+    dismissInvite: dismissGuidedTourInvite,
+    returnToCurrentStep: returnToGuidedTourStep,
+    beginQuestion: beginGuidedTourQuestion,
+    completeQuestion: completeGuidedTourQuestion,
+  } = useGuidedTour({
+    pathname,
+    availability,
+    navigateAction: navigateGuidedTourAction,
+  });
+
+  useEffect(() => {
+    if (guidedTour.status === "active") return;
+
+    if (actionTargetHighlightTimerRef.current !== null) {
+      window.clearTimeout(actionTargetHighlightTimerRef.current);
+      actionTargetHighlightTimerRef.current = null;
+    }
+    const highlightedTarget = highlightedActionTargetRef.current;
+    highlightedTarget?.removeAttribute("data-chat-action-target");
+    highlightedActionTargetRef.current = null;
+    document
+      .querySelectorAll<HTMLElement>('[data-guided-tour-active="true"]')
+      .forEach((target) =>
+        target.removeAttribute("data-guided-tour-active"),
+      );
+
+    const activeElement = document.activeElement;
+    if (
+      activeElement instanceof HTMLElement &&
+      (activeElement === highlightedTarget ||
+        activeElement.hasAttribute("data-guided-tour-target"))
+    ) {
+      activeElement.blur();
+    }
+  }, [guidedTour.status]);
+
+  const value = useMemo<ChatContextValue>(
+    () => ({
+      isOpen,
+      isClosing,
+      isLoading,
+      availability,
+      error,
+      messages,
+      audience,
+      tone,
+      streamingEnabled,
+      reasoningEnabled,
+      chatAnimation,
+      effectiveChatAnimation,
+      streamAnimation,
+      effectiveStreamAnimation,
+      guidedTour,
+      guidedTourStep,
+      guidedTourInviteVisible,
+      focusInputOnOpen,
+      open,
+      close,
+      completeCloseAnimation,
+      toggle,
+      selectAudience: setAudience,
+      selectTone,
+      setStreamingEnabled,
+      setReasoningEnabled,
+      setChatAnimation,
+      setStreamAnimation,
+      refreshAvailability,
+      resetConversation,
+      showSettingsWebMcpGuide,
+      sendMessage,
+      stopGenerating,
+      retry,
+      navigateRoute,
+      executePortfolioUiTool,
+      navigateAction,
+      startGuidedTour,
+      advanceGuidedTour,
+      previousGuidedTourStep,
+      skipGuidedTourInteraction,
+      stopGuidedTour,
+      dismissGuidedTourInvite,
+      returnToGuidedTourStep,
+      beginGuidedTourQuestion,
+      completeGuidedTourQuestion,
+    }),
+    [
+      audience,
+      availability,
+      chatAnimation,
+      effectiveChatAnimation,
+      effectiveStreamAnimation,
+      error,
+      guidedTour,
+      guidedTourStep,
+      guidedTourInviteVisible,
+      focusInputOnOpen,
+      isLoading,
+      isOpen,
+      isClosing,
+      messages,
+      navigateAction,
+      navigateRoute,
+      executePortfolioUiTool,
+      startGuidedTour,
+      advanceGuidedTour,
+      previousGuidedTourStep,
+      skipGuidedTourInteraction,
+      stopGuidedTour,
+      dismissGuidedTourInvite,
+      returnToGuidedTourStep,
+      beginGuidedTourQuestion,
+      completeGuidedTourQuestion,
+      open,
+      close,
+      completeCloseAnimation,
+      retry,
+      refreshAvailability,
+      resetConversation,
+      reasoningEnabled,
+      setChatAnimation,
+      setReasoningEnabled,
+      setStreamAnimation,
+      setStreamingEnabled,
+      selectTone,
+      showSettingsWebMcpGuide,
+      sendMessage,
+      stopGenerating,
+      streamAnimation,
+      streamingEnabled,
+      toggle,
+      tone,
+    ],
+  );
+
+  return (
+    <ChatContext.Provider value={value}>
+      {children}
+      <ChatWidget />
+    </ChatContext.Provider>
+  );
+}

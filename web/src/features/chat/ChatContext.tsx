@@ -1,0 +1,86 @@
+"use client";
+
+import { createContext, useContext } from "react";
+import type {
+  ActionId,
+  AudienceChoice,
+  ChatAnimation,
+  ChatAvailability,
+  ChatMessage,
+  ChatStreamAnimation,
+  Tone,
+} from "./types";
+import type {
+  GuidedTourState,
+  GuidedTourStep,
+  GuidedTourTargetId,
+} from "./guidedTour";
+import type { PortfolioUiToolExecutor } from "../portfolio-tools/portfolioUiToolExecutor";
+
+export interface ChatContextValue {
+  isOpen: boolean;
+  isClosing: boolean;
+  isLoading: boolean;
+  availability: ChatAvailability;
+  error: string | null;
+  messages: ChatMessage[];
+  audience: AudienceChoice | null;
+  tone: Tone;
+  streamingEnabled: boolean;
+  reasoningEnabled: boolean;
+  /** 사용자가 설정 화면에서 고른 값 그대로다. 설정 UI가 이 값을 표시한다. */
+  chatAnimation: ChatAnimation;
+  /** 모션 정책까지 반영한 실제 재생 값이다. 위젯은 이 값으로 연출을 고른다. */
+  effectiveChatAnimation: ChatAnimation;
+  /** 사용자가 설정 화면에서 고른 응답 텍스트 연출이다. */
+  streamAnimation: ChatStreamAnimation;
+  /** 모션 정책까지 반영한 실제 재생 값이다. */
+  effectiveStreamAnimation: ChatStreamAnimation;
+  guidedTour: GuidedTourState;
+  guidedTourStep: GuidedTourStep | null;
+  guidedTourInviteVisible: boolean;
+  focusInputOnOpen: boolean;
+  open: (options?: { focusInput?: boolean }) => void;
+  close: () => void;
+  completeCloseAnimation: () => void;
+  toggle: () => void;
+  selectAudience: (audience: AudienceChoice) => void;
+  selectTone: (tone: Tone) => void;
+  setStreamingEnabled: (enabled: boolean) => void;
+  setReasoningEnabled: (enabled: boolean) => void;
+  setChatAnimation: (animation: ChatAnimation) => void;
+  setStreamAnimation: (animation: ChatStreamAnimation) => void;
+  refreshAvailability: () => Promise<void>;
+  resetConversation: () => void;
+  showSettingsWebMcpGuide: () => void;
+  sendMessage: (
+    message: string,
+    audienceOverride?: AudienceChoice,
+  ) => Promise<void>;
+  stopGenerating: () => void;
+  retry: () => Promise<void>;
+  /** 포트폴리오 내부의 탭·세부 앵커 이동 연출을 공통으로 실행한다. */
+  navigateRoute: (route: string) => void;
+  /** 챗봇 명령과 WebMCP가 함께 사용하는 포트폴리오 UI 도구 실행기다. */
+  executePortfolioUiTool: PortfolioUiToolExecutor;
+  navigateAction: (id: ActionId) => void;
+  startGuidedTour: () => void;
+  advanceGuidedTour: () => void;
+  previousGuidedTourStep: () => void;
+  skipGuidedTourInteraction: () => void;
+  stopGuidedTour: () => void;
+  dismissGuidedTourInvite: () => void;
+  returnToGuidedTourStep: () => void;
+  beginGuidedTourQuestion: (targetId: GuidedTourTargetId) => boolean;
+  completeGuidedTourQuestion: (targetId: GuidedTourTargetId) => void;
+}
+
+export const ChatContext = createContext<ChatContextValue | null>(null);
+
+export function useChat(): ChatContextValue {
+  const value = useContext(ChatContext);
+  if (!value) {
+    throw new Error("useChat은 ChatProvider 안에서 사용해야 합니다.");
+  }
+  return value;
+}

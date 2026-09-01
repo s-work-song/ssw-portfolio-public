@@ -1,0 +1,75 @@
+# 진입 페이지(web)를 정적 export 해서 GitHub Pages에 배포한다.
+#
+# 배포 구조 (사이트 루트 = /ssw-portfolio-public/)
+#   /            → web 빌드 산출물 (포트폴리오)
+#   /<앱이름>/   → sample-apps 하위 웹 앱을 추가할 자리
+#
+# 웹 샘플 앱을 추가할 때는 build 잡에 빌드 + _site 복사 단계를 한 쌍 더 넣고,
+# 해당 앱의 base 경로를 /ssw-portfolio-public/<앱이름>/ 으로 맞추면 된다.
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [dev, main]
+    # 웹과 무관한 변경으로는 재배포하지 않는다.
+    paths-ignore:
+      - "benchmarks/**"
+      - "services/**"
+      - "sample-apps/dotnet-wpf-app/**"
+      - "sample-apps/kotlin-android-app/**"
+  workflow_dispatch:
+
+# Pages 배포에 필요한 최소 권한만 부여한다.
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# 배포가 겹칠 때 최신 것만 살리되, 진행 중인 배포는 끊지 않는다.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      # 프로젝트 페이지의 하위 경로. next.config.ts가 basePath로 사용한다.
+      NEXT_PUBLIC_BASE_PATH: /ssw-portfolio-public
+      # 챗봇이 호출할 RAG 백엔드 주소. 데모 기간에만 저장소 variable로 넣는다.
+      # 비어 있으면 챗봇이 "채팅 서버 주소가 설정되지 않았습니다" 안내로 대체한다.
+      NEXT_PUBLIC_RAG_API_BASE_URL: ${{ vars.NEXT_PUBLIC_RAG_API_BASE_URL }}
+      # 별도 추론 게이트웨이 배포 전에는 비워 두며, 비어 있으면 기존 Sites SSE를 쓴다.
+      NEXT_PUBLIC_INFERENCE_GATEWAY_URL: ${{ vars.NEXT_PUBLIC_INFERENCE_GATEWAY_URL }}
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: 의존성 설치
+        run: npm ci
+
+      - name: web 정적 export
+        run: npm run build -w web
+
+      - name: 배포 산출물 모으기
+        run: |
+          mkdir -p _site
+          cp -r web/out/. _site/
+
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v5
