@@ -37,6 +37,6 @@ SDK 빌드와 BenchmarkDotNet 산출물은 `benchmarks/artifacts/` 아래에 모
 
 ## 범위와 결과 정책
 
-이 실험은 JSON, protobuf-net, Varint/ZigZag/fixed-size, nibble packing까지만 다룹니다. ZSTD, GZip, 소켓 전송과 사이트에 표시된 압축·전송 수치는 이번 반입 범위 밖이므로 구현하거나 추정하지 않습니다.
+이 실험은 JSON, protobuf-net, Varint/ZigZag/fixed-size와 nibble packing까지만 다룹니다. ZSTD, GZip과 소켓 전송은 비교 대상에 포함하지 않으므로 관련 압축 결과나 전송 수치를 구현하거나 추정하지 않습니다.
 
-BenchmarkDotNet 본실행 수치와 산출물은 저장소에 커밋하지 않습니다. 테스트는 round-trip 정확성을 보장하고, 환경별 시간·할당량은 사용자가 직접 실행해 확인합니다.
+테스트는 round-trip 정확성을 보장하며, 환경별 시간·할당량은 사용자가 직접 실행해 확인합니다. 실행 환경에 따라 달라지는 BenchmarkDotNet 수치는 문서의 고정 결과로 제공하지 않습니다.

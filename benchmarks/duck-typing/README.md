@@ -33,9 +33,9 @@ alpha_bravo__charlie_delta_
 
 여기서 Duck Typing은 런타임 동적 타입을 의미하지 않습니다. 필요한 멤버의 모양이 맞으면 C# 컴파일러가 `foreach` 패턴으로 인정하는 컴파일 시점의 구조적 사용 방식을 가리킵니다.
 
-## 원본과 재구성의 범위
+## 실험 범위
 
-원본 `SSW.Example.DuckTyping`에는 pattern enumerator, ArrayPool 버퍼의 using 강제 Roslyn analyzer, 간단한 source generator가 함께 있었습니다. 이번 재구성은 주제를 좁혀 **열거 방식의 비교**만 core에 넣었고, analyzer/generator는 반입하지 않았습니다. 원본 BenchmarkDotNet 러너는 실제 변형 대신 문자열을 출력하는 활성 항목이 있어 사용하지 않았습니다.
+이 공개 실험은 주제를 좁혀 **열거 방식의 비교**에 집중합니다. ArrayPool 사용 규칙을 검사하는 Roslyn analyzer와 source generator는 비교 대상에 포함하지 않으며, BenchmarkDotNet 러너는 네 가지 실제 열거 구현을 직접 호출합니다.
 
 ## 구조
 
@@ -60,4 +60,4 @@ duck-typing/
 
 SDK 빌드와 BenchmarkDotNet 산출물은 `benchmarks/artifacts/` 아래에 모입니다.
 
-측정 결과는 검증 실행 후 기록합니다. 이 문서에는 수치를 미리 적지 않습니다.
+성능은 실행 환경에 따라 달라지므로 이 문서에는 고정 수치를 제공하지 않습니다.
