@@ -1232,7 +1232,10 @@ code {
   flex-wrap: nowrap;
   max-width: 100%;
   overflow-x: auto;
-  padding: 3px;
+  /* 자동 이동 강조가 위로 3px 떠오르고 외곽 광택까지 만들기 때문에
+     스크롤 포트 안에 효과가 온전히 들어올 시각 여백을 확보합니다. */
+  padding: 9px 7px 7px;
+  scroll-padding-inline: 7px;
   scroll-snap-type: x proximity;
   scrollbar-width: none;
   -webkit-overflow-scrolling: touch;

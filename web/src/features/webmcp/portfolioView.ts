@@ -60,8 +60,8 @@ export interface PortfolioViewTarget {
 const VIEW_TARGETS: Readonly<Record<PortfolioViewAction, PortfolioViewTarget>> = {
   main: {
     action: 'main',
-    route: '/home#hero-title',
-    message: '메인 페이지로 이동을 시작했습니다.',
+    route: ACTION_ROUTES.overview,
+    message: '소개 Overview로 이동을 시작했습니다.',
   },
   overview: {
     action: 'overview',
@@ -234,7 +234,6 @@ function portfolioPageFromPathname(
     ? normalized.slice(basePath.length) || '/'
     : normalized;
   if (path === '/') return 'landing';
-  if (path === '/home') return 'main';
   if (path === '/about-me') return 'overview';
   if (path.startsWith('/about-me/resume')) return 'resume';
   if (path.startsWith('/about-me/cover-letter')) return 'cover-letter';
