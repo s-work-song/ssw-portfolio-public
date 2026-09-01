@@ -100,7 +100,6 @@ export type ActionId =
   | "log_canvas_dodge"
   | "log_human_hallucination"
   | "log_gray_area_responsibility"
-  | "log_repeated_grievance"
   | "log_ai_bubble_reality"
   | "log_restful_rpc"
   | "log_ai_model_evaluation"

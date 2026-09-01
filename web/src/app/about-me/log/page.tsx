@@ -1,13 +1,12 @@
 /**
  * 로그 목록을 영문 우선 제목 이름순으로 조회해 카드 목록으로 표현하는 서버 컴포넌트다.
- * 포스트 저장 형식은 Repository 역할의 lib/posts가 감추며, 이 페이지는
- * 목록 조회 결과의 시맨틱 마크업과 이동 경로만 책임진다(DIP).
+ * 실제 목록·검색·본문은 브라우저가 공개 로그 API로 조회하며, 이 페이지는
+ * 정적 레이아웃과 API 조회 클라이언트의 진입점만 책임진다.
  */
 import React from 'react';
 import Link from 'next/link';
 import AboutDecorativeGrid from '@/components/about/AboutDecorativeGrid';
 import AboutPanel from '@/components/about/AboutPanel';
-import { getSearchablePostsData } from '@/lib/posts';
 import LogEntries from './LogEntries';
 
 export const metadata = {
@@ -16,8 +15,6 @@ export const metadata = {
 };
 
 export default function LogPage() {
-  const allPostsData = getSearchablePostsData();
-
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '48px' }}>
       
@@ -50,11 +47,7 @@ export default function LogPage() {
         </div>
       </AboutPanel>
 
-      {allPostsData.length === 0 ? (
-        <p style={{ color: 'var(--text-mute)' }}>아직 등록된 글이 없습니다.</p>
-      ) : (
-        <LogEntries posts={allPostsData} />
-      )}
+      <LogEntries />
 
       <section style={{ 
         padding: '40px', 

@@ -2,9 +2,11 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import type { SearchablePostSummary } from "@/lib/posts";
-import { compareEnglishFirst } from "@/lib/textSort";
-import { getSearchTokens } from "@/lib/textSearch";
+import {
+  listPortfolioLogs,
+  portfolioLogHref,
+  type LogSummary,
+} from "@/lib/logApi";
 import { AskAiButton } from "@/features/chat";
 import {
   consumePortfolioLogSearchView,
@@ -13,59 +15,100 @@ import {
 } from "@/features/webmcp/logSearchView";
 import styles from "./LogEntries.module.css";
 
-type LogEntriesProps = {
-  posts: SearchablePostSummary[];
-};
+type LogViewMode = "all" | "recommended";
 
 const SEARCH_DEBOUNCE_MS = 250;
 const SEARCH_QUERY_PARAM = "q";
 const SEARCH_TAG_PARAM = "tag";
+const SEARCH_VIEW_PARAM = "view";
+const RECOMMENDED_VIEW_VALUE = "recommended";
+const VIEW_MODE_FADE_OUT_MS = 180;
 const RESULT_TRANSITION_MS = 500;
 const EXIT_ONLY_FADE_MS = 200;
 const ENTER_ONLY_SLIDE_MS = 300;
 const MIXED_FADE_MS = 150;
 const MIXED_SLIDE_MS = 200;
 
-export default function LogEntries({ posts }: LogEntriesProps) {
+export default function LogEntries() {
+  const [posts, setPosts] = useState<LogSummary[]>([]);
+  const [tags, setTags] = useState<string[]>([]);
+  const [viewMode, setViewMode] = useState<LogViewMode>("all");
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [appliedQuery, setAppliedQuery] = useState("");
   const [isComposing, setIsComposing] = useState(false);
   const [isLocationStateReady, setIsLocationStateReady] = useState(false);
+  const [isViewModeFading, setIsViewModeFading] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [retryNonce, setRetryNonce] = useState(0);
+  const requestKey = `${viewMode}\u0000${selectedTag ?? ""}\u0000${appliedQuery.trim()}\u0000${retryNonce}`;
+  const [loadedRequestKey, setLoadedRequestKey] = useState<string | null>(null);
+  const isLoading = isLocationStateReady && loadedRequestKey !== requestKey;
   const [externalSearch, setExternalSearch] = useState<{
     slugs: ReadonlySet<string>;
     source: PortfolioLogSearchViewDetail["source"];
   } | null>(null);
-  const tags = useMemo(
-    () => Array.from(new Set(posts.flatMap((post) => post.tags ?? [])))
-      .sort(compareEnglishFirst),
-    [posts],
-  );
-  const searchTokens = useMemo(() => getSearchTokens(appliedQuery), [appliedQuery]);
-  const visiblePosts = useMemo(
-    () => posts.filter((post) => {
-      const matchesTag = selectedTag === null || post.tags?.includes(selectedTag);
-      const matchesQuery = externalSearch
-        ? externalSearch.slugs.has(post.slug)
-        : searchTokens.every((token) => post.searchText.includes(token));
-      return matchesTag && matchesQuery;
-    }),
-    [externalSearch, posts, searchTokens, selectedTag],
-  );
+  const visiblePosts = useMemo(() => {
+    const filteredPosts = externalSearch
+      ? posts.filter((post) => externalSearch.slugs.has(post.slug))
+      : posts;
+
+    if (viewMode === "recommended") {
+      return [...filteredPosts].sort(
+        (a, b) => (a.recommendedOrder ?? Number.MAX_SAFE_INTEGER)
+          - (b.recommendedOrder ?? Number.MAX_SAFE_INTEGER),
+      );
+    }
+    return filteredPosts;
+  }, [externalSearch, posts, viewMode]);
   const [renderedPosts, setRenderedPosts] = useState(visiblePosts);
   const renderedPostsRef = useRef(visiblePosts);
   const [animatingSlugs, setAnimatingSlugs] = useState<Set<string>>(() => new Set());
   const [hiddenSlugs, setHiddenSlugs] = useState<Set<string>>(() => new Set());
   const [collapsedSlugs, setCollapsedSlugs] = useState<Set<string>>(() => new Set());
   const [longPhaseSlugs, setLongPhaseSlugs] = useState<Set<string>>(() => new Set());
+  const previousViewModeRef = useRef(viewMode);
+  const viewModeFadeTimeoutRef = useRef<number | undefined>(undefined);
+
+  const selectView = (nextViewMode: LogViewMode, nextTag: string | null) => {
+    setExternalSearch(null);
+    if (nextViewMode === viewMode) {
+      setSelectedTag(nextTag);
+      return;
+    }
+
+    const motionSetting = document.documentElement.dataset.motion;
+    const shouldReduceMotion = motionSetting === "off"
+      || (motionSetting !== "on" && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+    if (shouldReduceMotion) {
+      setIsViewModeFading(false);
+      setViewMode(nextViewMode);
+      setSelectedTag(nextTag);
+      return;
+    }
+
+    if (viewModeFadeTimeoutRef.current !== undefined) {
+      window.clearTimeout(viewModeFadeTimeoutRef.current);
+    }
+    setIsViewModeFading(true);
+    viewModeFadeTimeoutRef.current = window.setTimeout(() => {
+      setViewMode(nextViewMode);
+      setSelectedTag(nextTag);
+      viewModeFadeTimeoutRef.current = undefined;
+    }, VIEW_MODE_FADE_OUT_MS);
+  };
+
+  useEffect(() => () => {
+    if (viewModeFadeTimeoutRef.current !== undefined) {
+      window.clearTimeout(viewModeFadeTimeoutRef.current);
+    }
+  }, []);
 
   useEffect(() => {
     const applySearchView = (detail: PortfolioLogSearchViewDetail) => {
-      const availableSlugs = new Set(posts.map(({ slug }) => slug));
-      const matchedSlugs = new Set(
-        detail.matchedSlugs.filter((slug) => availableSlugs.has(slug)),
-      );
-      const tag = detail.tag && tags.includes(detail.tag) ? detail.tag : null;
+      const matchedSlugs = new Set(detail.matchedSlugs);
+      const tag = detail.tag || null;
+      setViewMode("all");
       setExternalSearch({ slugs: matchedSlugs, source: detail.source });
       setSelectedTag(tag);
       setQuery(detail.query);
@@ -95,9 +138,12 @@ export default function LogEntries({ posts }: LogEntriesProps) {
         const searchParams = new URLSearchParams(window.location.search);
         const restoredQuery = searchParams.get(SEARCH_QUERY_PARAM) ?? "";
         const requestedTag = searchParams.get(SEARCH_TAG_PARAM);
-        const restoredTag = requestedTag && tags.includes(requestedTag)
-          ? requestedTag
-          : null;
+        const restoredViewMode: LogViewMode = searchParams.get(SEARCH_VIEW_PARAM)
+          === RECOMMENDED_VIEW_VALUE
+          ? "recommended"
+          : "all";
+        const restoredTag = requestedTag || null;
+        setViewMode(restoredViewMode);
         setSelectedTag(restoredTag);
         setExternalSearch(null);
         setQuery(restoredQuery);
@@ -111,7 +157,32 @@ export default function LogEntries({ posts }: LogEntriesProps) {
       window.cancelAnimationFrame(restoreFrameId);
       window.removeEventListener(PORTFOLIO_LOG_SEARCH_VIEW_EVENT, handleSearchView);
     };
-  }, [posts, tags]);
+  }, []);
+
+  useEffect(() => {
+    if (!isLocationStateReady) return;
+    const controller = new AbortController();
+    void listPortfolioLogs({
+      query: appliedQuery.trim(),
+      tag: selectedTag,
+      view: viewMode,
+    }, controller.signal)
+      .then((result) => {
+        setPosts(result.posts);
+        setTags(result.availableTags);
+        setLoadError(null);
+        setLoadedRequestKey(requestKey);
+      })
+      .catch((error) => {
+        if (error instanceof DOMException && error.name === "AbortError") return;
+        setPosts([]);
+        setLoadError(error instanceof Error
+          ? error.message
+          : "기록을 불러오지 못했습니다.");
+        setLoadedRequestKey(requestKey);
+      });
+    return () => controller.abort();
+  }, [appliedQuery, isLocationStateReady, requestKey, selectedTag, viewMode]);
 
   useEffect(() => {
     if (!isLocationStateReady) return;
@@ -127,13 +198,18 @@ export default function LogEntries({ posts }: LogEntriesProps) {
     } else {
       url.searchParams.delete(SEARCH_TAG_PARAM);
     }
+    if (viewMode === "recommended") {
+      url.searchParams.set(SEARCH_VIEW_PARAM, RECOMMENDED_VIEW_VALUE);
+    } else {
+      url.searchParams.delete(SEARCH_VIEW_PARAM);
+    }
 
     const nextUrl = `${url.pathname}${url.search}${url.hash}`;
     const currentUrl = `${window.location.pathname}${window.location.search}${window.location.hash}`;
     if (nextUrl !== currentUrl) {
       window.history.replaceState(window.history.state, "", nextUrl);
     }
-  }, [isLocationStateReady, query, selectedTag]);
+  }, [isLocationStateReady, query, selectedTag, viewMode]);
 
   useEffect(() => {
     if (isComposing || query === appliedQuery) return;
@@ -151,6 +227,8 @@ export default function LogEntries({ posts }: LogEntriesProps) {
 
     const startFrameId = window.requestAnimationFrame(() => {
       const currentPosts = renderedPostsRef.current;
+      const viewModeChanged = previousViewModeRef.current !== viewMode;
+      previousViewModeRef.current = viewMode;
       const currentSlugs = new Set(currentPosts.map(({ slug }) => slug));
       const targetSlugs = new Set(visiblePosts.map(({ slug }) => slug));
       const removedSlugs = new Set(
@@ -167,13 +245,26 @@ export default function LogEntries({ posts }: LogEntriesProps) {
       const shouldReduceMotion = motionSetting === "off"
         || (motionSetting !== "on" && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
       const shouldSkipForActionTarget = window.location.hash.startsWith("#log-card-")
+        && viewMode === "all"
         && selectedTag === null
         && appliedQuery.length === 0;
 
-      const updateRenderedPosts = (nextPosts: SearchablePostSummary[]) => {
+      const updateRenderedPosts = (nextPosts: LogSummary[]) => {
         renderedPostsRef.current = nextPosts;
         setRenderedPosts(nextPosts);
       };
+
+      if (viewModeChanged) {
+        setAnimatingSlugs(new Set());
+        setHiddenSlugs(new Set());
+        setCollapsedSlugs(new Set());
+        setLongPhaseSlugs(new Set());
+        updateRenderedPosts(visiblePosts);
+        layoutFrameId = window.requestAnimationFrame(() => {
+          setIsViewModeFading(false);
+        });
+        return;
+      }
 
       if (shouldReduceMotion || shouldSkipForActionTarget) {
         setAnimatingSlugs(new Set());
@@ -194,7 +285,11 @@ export default function LogEntries({ posts }: LogEntriesProps) {
       }
 
       const transitionSlugs = new Set([...currentSlugs, ...targetSlugs]);
-      const transitionPosts = posts.filter(({ slug }) => transitionSlugs.has(slug));
+      const transitionPosts = [...currentPosts, ...visiblePosts]
+        .filter(({ slug }, index, values) => (
+          transitionSlugs.has(slug)
+          && values.findIndex((candidate) => candidate.slug === slug) === index
+        ));
       const changedSlugs = new Set([...removedSlugs, ...addedSlugs]);
       setAnimatingSlugs(changedSlugs);
       setHiddenSlugs(changedSlugs);
@@ -244,7 +339,7 @@ export default function LogEntries({ posts }: LogEntriesProps) {
       if (layoutFrameId !== undefined) window.cancelAnimationFrame(layoutFrameId);
       timeoutIds.forEach((timeoutId) => window.clearTimeout(timeoutId));
     };
-  }, [appliedQuery, posts, selectedTag, visiblePosts]);
+  }, [appliedQuery, posts, selectedTag, viewMode, visiblePosts]);
 
   useEffect(() => {
     const revealActionTarget = () => {
@@ -252,18 +347,18 @@ export default function LogEntries({ posts }: LogEntriesProps) {
       const prefix = "log-card-";
       if (!anchor.startsWith(prefix)) return;
       const targetSlug = anchor.slice(prefix.length);
-      if (posts.some(({ slug }) => slug === targetSlug)) {
-        setSelectedTag(null);
-        setExternalSearch(null);
-        setQuery("");
-        setAppliedQuery("");
-        setIsComposing(false);
-      }
+      if (!targetSlug) return;
+      setViewMode("all");
+      setSelectedTag(null);
+      setExternalSearch(null);
+      setQuery("");
+      setAppliedQuery("");
+      setIsComposing(false);
     };
     revealActionTarget();
     window.addEventListener("hashchange", revealActionTarget);
     return () => window.removeEventListener("hashchange", revealActionTarget);
-  }, [posts]);
+  }, []);
 
   return (
     <section
@@ -360,27 +455,44 @@ export default function LogEntries({ posts }: LogEntriesProps) {
             <p
               className={styles.resultCount}
               aria-live="polite"
-              aria-busy={isComposing || query !== appliedQuery}
+              aria-busy={isLoading || isComposing || query !== appliedQuery}
             >
               {externalSearch
                 ? `${externalSearch.source === "webmcp" ? "WebMCP" : "모델 도구"} 검색 · `
-                : ""}
-              {visiblePosts.length}개 기록
+                : viewMode === "recommended"
+                  ? "추천 순서 · "
+                  : ""}
+              {isLoading ? "불러오는 중" : `${visiblePosts.length}개 기록`}
             </p>
           </div>
 
           {tags.length > 0 && (
-            <div className={styles.filters} aria-label="기록 태그 필터">
+            <div className={styles.filters} aria-label="기록 보기 방식 및 태그 필터">
               <button
                 type="button"
-                className={selectedTag === null ? styles.filterActive : styles.filter}
-                aria-pressed={selectedTag === null}
+                className={
+                  viewMode === "all" && selectedTag === null
+                    ? styles.filterActive
+                    : styles.filter
+                }
+                aria-pressed={viewMode === "all" && selectedTag === null}
+                disabled={isViewModeFading}
                 onClick={() => {
-                  setExternalSearch(null);
-                  setSelectedTag(null);
+                  selectView("all", null);
                 }}
               >
                 전체
+              </button>
+              <button
+                type="button"
+                className={viewMode === "recommended" ? styles.filterActive : styles.filter}
+                aria-pressed={viewMode === "recommended"}
+                disabled={isViewModeFading}
+                onClick={() => {
+                  selectView("recommended", null);
+                }}
+              >
+                추천 순서
               </button>
               {tags.map((tag) => (
                 <button
@@ -388,9 +500,9 @@ export default function LogEntries({ posts }: LogEntriesProps) {
                   type="button"
                   className={selectedTag === tag ? styles.filterActive : styles.filter}
                   aria-pressed={selectedTag === tag}
+                  disabled={isViewModeFading}
                   onClick={() => {
-                    setExternalSearch(null);
-                    setSelectedTag(tag);
+                    selectView("all", tag);
                   }}
                 >
                   #{tag}
@@ -401,29 +513,59 @@ export default function LogEntries({ posts }: LogEntriesProps) {
         </div>
       </div>
 
-      {renderedPosts.length === 0 ? (
-        <div className={styles.empty}>
-          <p>
-            {appliedQuery.trim()
-              ? `“${appliedQuery.trim()}”에 해당하는 기록이 없습니다.`
-              : "선택한 태그의 기록이 없습니다."}
-          </p>
-          <button
-            type="button"
-            onClick={() => {
-              setQuery("");
-              setAppliedQuery("");
-              setIsComposing(false);
-              setSelectedTag(null);
-              setExternalSearch(null);
-            }}
-          >
-            검색과 태그 초기화
-          </button>
-        </div>
-      ) : (
-        <div className={styles.list}>
-          {renderedPosts.map(({ slug, title, date, tags: postTags, summary }) => (
+      <div
+        className={`${styles.resultsTransition}${
+          isViewModeFading ? ` ${styles.resultsTransitionHidden}` : ""
+        }`}
+        aria-busy={isViewModeFading}
+      >
+        {viewMode === "recommended" && (
+          <div className={styles.recommendedIntro} role="note">
+            <span>RECOMMENDED READING</span>
+            <p>개발을 시작한 배경과 개발에 대한 관점, 현재 AI 에이전트를 활용하기까지의 과정을 따라가는 추천 순서입니다.</p>
+          </div>
+        )}
+
+        {loadError ? (
+          <div className={styles.empty} role="alert">
+            <p>{loadError}</p>
+            <button
+              type="button"
+              onClick={() => setRetryNonce((current) => current + 1)}
+            >
+              다시 불러오기
+            </button>
+          </div>
+        ) : isLoading && renderedPosts.length === 0 ? (
+          <div className={styles.empty} aria-live="polite">
+            <p>기록을 불러오고 있습니다.</p>
+          </div>
+        ) : renderedPosts.length === 0 ? (
+          <div className={styles.empty}>
+            <p>
+              {appliedQuery.trim()
+                ? `“${appliedQuery.trim()}”에 해당하는 기록이 없습니다.`
+                : viewMode === "recommended"
+                  ? "추천 순서에 등록된 기록이 없습니다."
+                  : "선택한 태그의 기록이 없습니다."}
+            </p>
+            <button
+              type="button"
+              onClick={() => {
+                setQuery("");
+                setAppliedQuery("");
+                setIsComposing(false);
+                setViewMode("all");
+                setSelectedTag(null);
+                setExternalSearch(null);
+              }}
+            >
+              검색과 태그 초기화
+            </button>
+          </div>
+        ) : (
+          <div className={styles.list}>
+            {renderedPosts.map(({ slug, title, date, tags: postTags, summary }, index) => (
             <div
               key={slug}
               className={`${styles.resultItem}${
@@ -446,17 +588,23 @@ export default function LogEntries({ posts }: LogEntriesProps) {
                         {postTags?.map((tag) => <span key={tag}>#{tag}</span>)}
                       </div>
                     )}
-                    {date && <time>{date}</time>}
+                    {viewMode === "recommended" ? (
+                      <span className={styles.recommendedOrder}>
+                        추천 {String(index + 1).padStart(2, "0")}
+                      </span>
+                    ) : (
+                      date && <time>{date}</time>
+                    )}
                   </div>
 
                   <div className={styles.cardContent}>
-                    <Link href={`/about-me/log/${slug}`} className={styles.cardLink}>
+                    <Link href={portfolioLogHref(slug)} className={styles.cardLink}>
                       <h3>{title}</h3>
                       {summary && <p>{summary}</p>}
                     </Link>
 
                     <div className={styles.actions}>
-                      <Link href={`/about-me/log/${slug}`} className={styles.readLink}>
+                      <Link href={portfolioLogHref(slug)} className={styles.readLink}>
                         기록 읽기
                       </Link>
                       <AskAiButton
@@ -473,9 +621,10 @@ export default function LogEntries({ posts }: LogEntriesProps) {
                 </article>
               </div>
             </div>
-          ))}
-        </div>
-      )}
+            ))}
+          </div>
+        )}
+      </div>
     </section>
   );
 }

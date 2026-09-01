@@ -208,8 +208,6 @@ export const ACTION_ROUTES: Readonly<Record<ActionId, string>> = {
     "/about-me/log#log-card-consider-human-hallucination-before-ai-hallucination",
   log_gray_area_responsibility:
     "/about-me/log#log-card-developer-responsibility-does-not-disappear-in-gray-areas",
-  log_repeated_grievance:
-    "/about-me/log#log-card-distance-myself-from-people-who-are-always-wronged",
   log_ai_bubble_reality:
     "/about-me/log#log-card-distinguishing-ai-bubble-from-reality-is-your-responsibility",
   log_restful_rpc:
@@ -270,7 +268,6 @@ export const ACTION_LABELS: Readonly<Record<ActionId, string>> = {
   log_canvas_dodge: "Canvas 피하기 게임 기록 보기",
   log_human_hallucination: "사람의 환각 기록 보기",
   log_gray_area_responsibility: "회색지대 책임 기록 보기",
-  log_repeated_grievance: "억울함과 관계 기록 보기",
   log_ai_bubble_reality: "AI 거품과 실체 기록 보기",
   log_restful_rpc: "RESTful·RPC 기록 보기",
   log_ai_model_evaluation: "AI 모델 평가 기록 보기",
@@ -314,7 +311,6 @@ export const ACTION_IDS: readonly ActionId[] = [
   "log_canvas_dodge",
   "log_human_hallucination",
   "log_gray_area_responsibility",
-  "log_repeated_grievance",
   "log_ai_bubble_reality",
   "log_restful_rpc",
   "log_ai_model_evaluation",

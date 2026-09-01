@@ -7,9 +7,8 @@ import {
   findRelatedPortfolioLogs,
   getPortfolioLogOutline,
   resolvePortfolioLogTarget,
-} from './logTools.mjs';
+} from '@/lib/logApi';
 import {
-  loadPortfolioLogIndex,
   PORTFOLIO_MODEL_TOOL_EXECUTION_EVENT,
   preparePortfolioModelToolView,
   preparePortfolioLogSearchView,
@@ -157,7 +156,10 @@ export function PortfolioWebMcp() {
         annotations: readOnlyAnnotations,
         async execute(input) {
           try {
-            return toolResult(getPortfolioLogOutline(await loadPortfolioLogIndex(), textInput(input, 'slug')));
+            return toolResult(await getPortfolioLogOutline(
+              textInput(input, 'slug'),
+              controller.signal,
+            ));
           } catch (error) {
             return toolError(error);
           }
@@ -182,10 +184,10 @@ export function PortfolioWebMcp() {
         annotations: readOnlyAnnotations,
         async execute(input) {
           try {
-            const target = resolvePortfolioLogTarget(
-              await loadPortfolioLogIndex(),
+            const target = await resolvePortfolioLogTarget(
               textInput(input, 'slug'),
               typeof input.sectionId === 'string' ? input.sectionId : undefined,
+              controller.signal,
             );
             navigateRoute(target.route);
             return toolResult({
@@ -222,10 +224,10 @@ export function PortfolioWebMcp() {
         annotations: readOnlyAnnotations,
         async execute(input) {
           try {
-            return toolResult(findRelatedPortfolioLogs(
-              await loadPortfolioLogIndex(),
+            return toolResult(await findRelatedPortfolioLogs(
               textInput(input, 'slug'),
-              input,
+              input.limit,
+              controller.signal,
             ));
           } catch (error) {
             return toolError(error);
