@@ -107,8 +107,8 @@ test('실제 공개 로그 인덱스가 자연어 단서와 소제목 anchor를 
   );
   const realIndex = JSON.parse(rawIndex);
   assert.equal(realIndex.version, 1);
-  assert.equal(realIndex.posts.length, 23);
-  assert.equal(new Set(realIndex.posts.map(({ slug }) => slug)).size, 23);
+  assert.equal(realIndex.posts.length, 26);
+  assert.equal(new Set(realIndex.posts.map(({ slug }) => slug)).size, 26);
 
   for (const post of realIndex.posts) {
     assert.ok(post.sections.length > 0, `${post.slug}에 소제목이 필요합니다.`);
@@ -124,4 +124,31 @@ test('실제 공개 로그 인덱스가 자연어 단서와 소제목 anchor를 
   });
   assert.equal(result.matches[0].slug, 'ambiguous-support-leaves-negative-experiences');
   assert.match(result.matches[0].matchingSections[0].route, /#log-section-\d+$/u);
+
+  const objectOrientedResult = searchPortfolioLogs(realIndex, {
+    query: '객체지향 서브에이전트 병렬 구현 함수 시그니처',
+    limit: 3,
+  });
+  assert.equal(
+    objectOrientedResult.matches[0].slug,
+    'why-object-oriented-design-matters-more-in-the-ai-era',
+  );
+
+  const designPatternResult = searchPortfolioLogs(realIndex, {
+    query: '객체지향 전략 패턴 팩토리 메서드 조합',
+    limit: 3,
+  });
+  assert.equal(
+    designPatternResult.matches[0].slug,
+    'why-object-oriented-design-and-patterns-should-be-understood-together',
+  );
+
+  const accessModifierResult = searchPortfolioLogs(realIndex, {
+    query: '접근 제한자 협업 문서 리플렉션 SecurityManager',
+    limit: 3,
+  });
+  assert.equal(
+    accessModifierResult.matches[0].slug,
+    'access-modifiers-are-collaboration-documentation',
+  );
 });

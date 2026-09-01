@@ -43,6 +43,9 @@ export default function LogPage() {
             <br />
             AI와의 인터뷰 형식으로 내용을 정리하며, 사실관계와 표현은 직접
             검수한 뒤 최종 확정합니다.
+            <br />
+            RDBMS를 사용하지 않고 AI 에이전트와 협업해 Markdown(MD) 파일로
+            기록을 관리하는 실험도 함께 진행하고 있습니다.
           </p>
         </div>
       </AboutPanel>

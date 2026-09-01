@@ -18,6 +18,8 @@ type LogEntriesProps = {
 };
 
 const SEARCH_DEBOUNCE_MS = 250;
+const SEARCH_QUERY_PARAM = "q";
+const SEARCH_TAG_PARAM = "tag";
 const RESULT_TRANSITION_MS = 500;
 const EXIT_ONLY_FADE_MS = 200;
 const ENTER_ONLY_SLIDE_MS = 300;
@@ -29,6 +31,7 @@ export default function LogEntries({ posts }: LogEntriesProps) {
   const [query, setQuery] = useState("");
   const [appliedQuery, setAppliedQuery] = useState("");
   const [isComposing, setIsComposing] = useState(false);
+  const [isLocationStateReady, setIsLocationStateReady] = useState(false);
   const [externalSearch, setExternalSearch] = useState<{
     slugs: ReadonlySet<string>;
     source: PortfolioLogSearchViewDetail["source"];
@@ -70,17 +73,67 @@ export default function LogEntries({ posts }: LogEntriesProps) {
       setIsComposing(false);
     };
 
-    const pending = consumePortfolioLogSearchView();
-    if (pending) applySearchView(pending);
-
+    let receivedSearchView = false;
     const handleSearchView = (rawEvent: Event) => {
       const event = rawEvent as CustomEvent<PortfolioLogSearchViewDetail>;
       consumePortfolioLogSearchView();
-      if (event.detail) applySearchView(event.detail);
+      if (event.detail) {
+        receivedSearchView = true;
+        applySearchView(event.detail);
+        setIsLocationStateReady(true);
+      }
     };
     window.addEventListener(PORTFOLIO_LOG_SEARCH_VIEW_EVENT, handleSearchView);
-    return () => window.removeEventListener(PORTFOLIO_LOG_SEARCH_VIEW_EVENT, handleSearchView);
+
+    const pending = consumePortfolioLogSearchView();
+    const restoreFrameId = window.requestAnimationFrame(() => {
+      if (receivedSearchView) return;
+
+      if (pending) {
+        applySearchView(pending);
+      } else {
+        const searchParams = new URLSearchParams(window.location.search);
+        const restoredQuery = searchParams.get(SEARCH_QUERY_PARAM) ?? "";
+        const requestedTag = searchParams.get(SEARCH_TAG_PARAM);
+        const restoredTag = requestedTag && tags.includes(requestedTag)
+          ? requestedTag
+          : null;
+        setSelectedTag(restoredTag);
+        setExternalSearch(null);
+        setQuery(restoredQuery);
+        setAppliedQuery(restoredQuery);
+        setIsComposing(false);
+      }
+      setIsLocationStateReady(true);
+    });
+
+    return () => {
+      window.cancelAnimationFrame(restoreFrameId);
+      window.removeEventListener(PORTFOLIO_LOG_SEARCH_VIEW_EVENT, handleSearchView);
+    };
   }, [posts, tags]);
+
+  useEffect(() => {
+    if (!isLocationStateReady) return;
+
+    const url = new URL(window.location.href);
+    if (query.length > 0) {
+      url.searchParams.set(SEARCH_QUERY_PARAM, query);
+    } else {
+      url.searchParams.delete(SEARCH_QUERY_PARAM);
+    }
+    if (selectedTag) {
+      url.searchParams.set(SEARCH_TAG_PARAM, selectedTag);
+    } else {
+      url.searchParams.delete(SEARCH_TAG_PARAM);
+    }
+
+    const nextUrl = `${url.pathname}${url.search}${url.hash}`;
+    const currentUrl = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+    if (nextUrl !== currentUrl) {
+      window.history.replaceState(window.history.state, "", nextUrl);
+    }
+  }, [isLocationStateReady, query, selectedTag]);
 
   useEffect(() => {
     if (isComposing || query === appliedQuery) return;
@@ -231,60 +284,79 @@ export default function LogEntries({ posts }: LogEntriesProps) {
         </div>
 
         <div className={styles.toolbarControls}>
-          <div className={styles.searchRow} role="search">
-            <div className={styles.searchBox}>
-              <label htmlFor="log-search" className={styles.visuallyHidden}>
-                기록 제목과 내용 검색
-              </label>
-              <svg
-                className={styles.searchIcon}
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                aria-hidden="true"
-              >
-                <circle cx="11" cy="11" r="7" />
-                <path d="m20 20-3.5-3.5" />
-              </svg>
-              <input
-                id="log-search"
-                className={styles.searchInput}
-                type="search"
-                value={query}
-                onChange={(event) => {
-                  setExternalSearch(null);
-                  setQuery(event.target.value);
-                }}
-                onCompositionStart={() => setIsComposing(true)}
-                onCompositionEnd={(event) => {
-                  setQuery(event.currentTarget.value);
-                  setExternalSearch(null);
-                  setIsComposing(false);
-                }}
-                placeholder="제목과 내용 검색"
-                autoComplete="off"
-              />
-              {query.length > 0 && (
-                <button
-                  type="button"
-                  className={styles.clearSearch}
-                  onClick={() => {
-                    setQuery("");
-                    setAppliedQuery("");
+          <div className={styles.searchRow}>
+            <form
+              className={styles.searchForm}
+              role="search"
+              onSubmit={(event) => {
+                event.preventDefault();
+                const submittedQuery = String(
+                  new FormData(event.currentTarget).get("query") ?? "",
+                );
+                setQuery(submittedQuery);
+                setAppliedQuery(submittedQuery);
+                setExternalSearch(null);
+                setIsComposing(false);
+              }}
+            >
+              <div className={styles.searchBox}>
+                <label htmlFor="log-search" className={styles.visuallyHidden}>
+                  기록 제목과 내용 검색
+                </label>
+                <svg
+                  className={styles.searchIcon}
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <circle cx="11" cy="11" r="7" />
+                  <path d="m20 20-3.5-3.5" />
+                </svg>
+                <input
+                  id="log-search"
+                  name="query"
+                  className={styles.searchInput}
+                  type="search"
+                  value={query}
+                  onChange={(event) => {
+                    setExternalSearch(null);
+                    setQuery(event.target.value);
+                  }}
+                  onCompositionStart={() => setIsComposing(true)}
+                  onCompositionEnd={(event) => {
+                    setQuery(event.currentTarget.value);
                     setExternalSearch(null);
                     setIsComposing(false);
                   }}
-                  aria-label="검색어 지우기"
-                >
-                  ×
-                </button>
-              )}
-            </div>
+                  placeholder="제목과 내용 검색"
+                  autoComplete="off"
+                />
+                {query.length > 0 && (
+                  <button
+                    type="button"
+                    className={styles.clearSearch}
+                    onClick={() => {
+                      setQuery("");
+                      setAppliedQuery("");
+                      setExternalSearch(null);
+                      setIsComposing(false);
+                    }}
+                    aria-label="검색어 지우기"
+                  >
+                    ×
+                  </button>
+                )}
+              </div>
+              <button type="submit" className={styles.searchSubmit}>
+                검색
+              </button>
+            </form>
             <p
               className={styles.resultCount}
               aria-live="polite"
