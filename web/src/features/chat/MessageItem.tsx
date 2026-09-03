@@ -24,6 +24,7 @@ import type {
   ChatAction,
   ChatMessage,
   ChatStreamAnimation,
+  ToolResult,
 } from "./types";
 import styles from "./ChatWidget.module.css";
 
@@ -115,6 +116,27 @@ const QUICK_ACTION_COMPLEMENTS: Partial<Record<ActionId, ActionId>> = {
 
 /** 추천 질문이 없을 때 넘기는 고정 빈 배열이다(memo가 깨지지 않게 한다). */
 export const EMPTY_SUGGESTED_QUESTIONS: readonly string[] = [];
+
+/**
+ * 도구 결과 하나를 상태 줄 문구로 바꾼다.
+ *
+ * 모델의 말("이동을 시작했어요")과 화면의 사실을 구분해 보여 주는 문구라,
+ * 실패에는 사유까지 붙인다. 사유가 없으면 상태만 적는다.
+ */
+export function toolResultText(result: ToolResult): string {
+  switch (result.status) {
+    case "started":
+      return "이동 중…";
+    case "arrived":
+      return `이동 완료 · ${result.label}`;
+    case "applied":
+      return `변경 완료 · ${result.label}`;
+    case "failed":
+      return result.detail
+        ? `실패 · ${result.label}: ${result.detail}`
+        : `실패 · ${result.label}`;
+  }
+}
 
 /**
  * 답변에 붙일 액션 중 실제로 보여 줄 것만 고른다.
@@ -308,6 +330,23 @@ export const MessageItem = memo(function MessageItem({
         <strong className={styles.failedBadge}>
           응답 생성을 완료하지 못했습니다
         </strong>
+      )}
+      {message.toolResults && message.toolResults.length > 0 && (
+        <div
+          className={styles.toolResults}
+          role="status"
+          aria-label="화면 도구 실행 결과"
+        >
+          {message.toolResults.map((result) => (
+            <span
+              key={result.callId}
+              className={styles.toolResult}
+              data-tool-status={result.status}
+            >
+              {toolResultText(result)}
+            </span>
+          ))}
+        </div>
       )}
       {isIncompleteAnswer ? (
         (message.content || pendingNotice) && (

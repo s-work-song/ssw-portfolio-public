@@ -74,6 +74,15 @@ export const PORTFOLIO_VIEW_ACTIONS = [
   "collapse-research-details",
   "expand-research-year-details",
   "collapse-research-year-details",
+  "past-work-archive",
+  "ai-collaboration-projects",
+  "archive-canvas-dodge-game",
+  "archive-wpf-excel-row-mapper",
+  "archive-android-ar-campfire",
+  "project-common-infrastructure",
+  "project-ecommerce-demo",
+  "project-game-collection-platform",
+  "project-code-archive",
 ] as const;
 
 /** 연구 여정에 존재하는 연도 앵커다. */

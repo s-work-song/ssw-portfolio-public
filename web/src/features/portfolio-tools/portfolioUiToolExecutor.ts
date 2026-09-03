@@ -143,6 +143,7 @@ export function executePortfolioUiTool(
         ok: true,
         action: target.action,
         route: target.route,
+        label: target.label,
         message: target.message,
         ...(target.researchYear ? { year: target.researchYear } : {}),
       };
@@ -153,6 +154,7 @@ export function executePortfolioUiTool(
       return {
         ok: true,
         route: '/settings',
+        label: '포트폴리오 설정 페이지',
         message: '포트폴리오 설정 페이지로 이동을 시작했습니다.',
       };
     }

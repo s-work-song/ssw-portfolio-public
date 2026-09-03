@@ -9,14 +9,17 @@
  * 불러 쓰고, 그 파서를 Node가 직접 실행해 테스트한다. Node의 ESM 해석기는
  * 확장자 없는 상대 경로를 찾지 못한다.
  */
+import { ACCENTS as ACCENT_PALETTE } from "../../context/accentPalette.ts";
 import type {
   ActionId,
   ApiAudience,
   AudienceChoice,
   ChatAnimation,
   ChatStreamAnimation,
+  ChatToolExecution,
   PageContext,
   Tone,
+  ToolResult,
 } from "./types";
 
 export { CHAT_STREAM_ANIMATIONS } from "../portfolio-tools/schema.ts";
@@ -38,6 +41,7 @@ export const SETTINGS_WEBMCP_GUIDE = `### 설정과 WebMCP 기능
 - “설정 페이지 열어줘”
 - “지금 내가 어떤 페이지를 보고 있어?”
 - “자기소개서 페이지로 이동해줘”
+- “소개 페이지의 AI 협업 프로젝트로 이동”
 - “다크 모드로 바꿔줘”
 - “채팅 글꼴을 노토 산스로 바꿔줘”
 - “채팅 글꼴을 프리텐다드로 바꿔줘”
@@ -151,6 +155,101 @@ export const CHAT_STREAM_ANIMATION_OPTIONS: ReadonlyArray<{
     description: "방금 온 글자에 잔광이 남음",
   },
 ];
+
+/** 화면 모드 값에 붙는 표시 이름이다. */
+const THEME_LABELS: Readonly<Record<string, string>> = {
+  light: "라이트",
+  dark: "다크",
+};
+
+/** 채팅 패널 배치 값에 붙는 표시 이름이다(설정 화면과 같은 문구). */
+const CHAT_LAYOUT_LABELS: Readonly<Record<string, string>> = {
+  floating: "플로팅 창",
+  dock: "오른쪽 고정 패널",
+};
+
+/** 채팅 글꼴 값에 붙는 표시 이름이다(설정 화면과 같은 문구). */
+const CHAT_FONT_LABELS: Readonly<Record<string, string>> = {
+  pretendard: "Pretendard",
+  "noto-sans-kr": "Noto Sans KR",
+  system: "시스템 글꼴",
+};
+
+/** 채팅 글자 크기 값에 붙는 표시 이름이다(설정 화면과 같은 문구). */
+const CHAT_FONT_SIZE_LABELS: Readonly<Record<string, string>> = {
+  small: "작게",
+  medium: "기본",
+  large: "크게",
+  xlarge: "매우 크게",
+};
+
+/**
+ * 허용 목록에서 온 값을 표시 이름으로 바꾼다.
+ *
+ * 표에 없는 값이면 원래 값을 그대로 쓴다. 상태 줄은 안내일 뿐이라
+ * 표를 하나 빠뜨렸다고 화면이 비는 것보다 영문 값이라도 보이는 편이 낫다.
+ */
+function displayName(
+  table: Readonly<Record<string, string>>,
+  value: string,
+): string {
+  return Object.hasOwn(table, value) ? table[value] : value;
+}
+
+/**
+ * 설정 변경 도구 하나를 사람이 읽는 명사구로 바꾼다.
+ *
+ * 도구 결과 상태 줄("변경 완료 · {label}")에 쓰는 문구라 설정 화면과 같은
+ * 표시 이름을 재사용한다. 화면 이동 도구는 목적지 표(`portfolioView`)가
+ * 자기 label을 들고 있으므로 여기서 null을 돌려 호출한 쪽이 그것을 쓰게 한다.
+ */
+export function settingToolResultLabel(
+  execution: ChatToolExecution,
+): string | null {
+  switch (execution.type) {
+    case "set_portfolio_theme":
+      return `화면 모드 · ${displayName(THEME_LABELS, execution.theme)}`;
+    case "set_portfolio_accent":
+      return `포인트 색상 · ${ACCENT_PALETTE[execution.accent].label}`;
+    case "cycle_portfolio_accent": {
+      const last = execution.accents.at(-1);
+      const lastLabel = last ? ACCENT_PALETTE[last].label : "";
+      return `포인트 색상 순회 · ${lastLabel}`;
+    }
+    case "set_portfolio_chat_layout":
+      return `채팅 배치 · ${displayName(CHAT_LAYOUT_LABELS, execution.layout)}`;
+    case "set_portfolio_chat_font":
+      return `채팅 글꼴 · ${displayName(CHAT_FONT_LABELS, execution.font)}`;
+    case "set_portfolio_chat_font_size":
+      return `채팅 글자 크기 · ${displayName(
+        CHAT_FONT_SIZE_LABELS,
+        execution.size,
+      )}`;
+    case "set_portfolio_stream_animation": {
+      const option = CHAT_STREAM_ANIMATION_OPTIONS.find(
+        (candidate) => candidate.value === execution.animation,
+      );
+      return `응답 연출 · ${option?.label ?? execution.animation}`;
+    }
+    default:
+      return null;
+  }
+}
+
+/**
+ * 서버가 "도구를 승격했는데 끝내 실행되지 않았다"고 보고했을 때 붙이는 결과다.
+ *
+ * 모델은 이미 "이동했어요"라고 말했을 수 있으므로, 실제로는 아무 일도 없었다는
+ * 사실을 화면이 대신 알린다. callId는 서버 도구 호출이 아니라 이 보고 자체를
+ * 가리키므로 고정값을 쓴다.
+ */
+export const UI_TOOL_NOT_CALLED_RESULT: ToolResult = {
+  callId: "outcome",
+  tool: "none",
+  label: "화면 이동·설정 변경",
+  status: "failed",
+  detail: "모델이 도구를 실행하지 않았어요",
+};
 
 /** 채팅 헤더 셀렉트에 노출하는 말투 선택지다. */
 export const TONE_OPTIONS: ReadonlyArray<{ value: Tone; label: string }> = [

@@ -67,6 +67,9 @@ export default function ArchiveProjectShowcase({
           <article
             key={project.id}
             id={project.id}
+            // 챗봇·WebMCP 이동이 도착 지점에 포커스를 옮긴다. 다른 앵커 섹션과
+            // 같이 프로그램 포커스만 받게 두고 탭 순서에는 넣지 않는다.
+            tabIndex={-1}
             className={`${styles.card} ${project.wide ? styles.wideCard : ''}`}
           >
             <span className={styles.category}>{project.category}</span>

@@ -80,6 +80,14 @@ export interface PortfolioViewTarget {
   action: PortfolioViewAction;
   route: string;
   message: string;
+  /**
+   * 목적지를 가리키는 짧은 명사구다.
+   *
+   * `message`에서 "…로 이동을 시작했습니다"를 뺀 형태로, 화면의 도구 결과
+   * 상태 줄("이동 완료 · {label}")과 서버 도구 결과(publicResult.label)가
+   * 같은 문구를 쓰도록 여기 한 곳에 둔다.
+   */
+  label: string;
   researchDetails?: PortfolioResearchDetailsMode;
   researchYear?: PortfolioResearchYear;
 }
@@ -94,95 +102,168 @@ const VIEW_TARGETS: Readonly<Record<PortfolioViewAction, PortfolioViewTarget>> =
     action: 'main',
     route: ACTION_ROUTES.overview,
     message: '소개 Overview로 이동을 시작했습니다.',
+    label: '소개 Overview',
   },
   overview: {
     action: 'overview',
     route: ACTION_ROUTES.overview,
     message: '소개 페이지로 이동을 시작했습니다.',
+    label: '소개 페이지',
   },
   resume: {
     action: 'resume',
     route: ACTION_ROUTES.resume,
     message: '이력서 페이지로 이동을 시작했습니다.',
+    label: '이력서 페이지',
   },
   'cover-letter': {
     action: 'cover-letter',
     route: ACTION_ROUTES.cover_letter,
     message: '자기소개서 페이지로 이동을 시작했습니다.',
+    label: '자기소개서 페이지',
   },
   research: {
     action: 'research',
     route: ACTION_ROUTES.research_timeline,
     message: '연구 경험 페이지로 이동을 시작했습니다.',
+    label: '연구 경험 페이지',
   },
   'research-timeline': {
     action: 'research-timeline',
     route: ACTION_ROUTES.research_timeline,
     message: '연구 경험의 연구 여정 탭으로 이동을 시작했습니다.',
+    label: '연구 경험의 연구 여정 탭',
   },
   'research-optimization': {
     action: 'research-optimization',
     route: ACTION_ROUTES.research_optimization,
     message: '연구 경험의 성능 최적화 탭으로 이동을 시작했습니다.',
+    label: '연구 경험의 성능 최적화 탭',
   },
   'research-tools': {
     action: 'research-tools',
     route: ACTION_ROUTES.research_tools,
     message: '연구 경험의 도구 & AI 접목 탭으로 이동을 시작했습니다.',
+    label: '연구 경험의 도구 & AI 접목 탭',
   },
   'research-2022': {
     action: 'research-2022',
     route: '/about-me/research#research-year-2022',
     message: '연구 경험의 2022년 위치로 이동을 시작했습니다.',
+    label: '연구 경험의 2022년 위치',
   },
   'research-2023': {
     action: 'research-2023',
     route: '/about-me/research#research-year-2023',
     message: '연구 경험의 2023년 위치로 이동을 시작했습니다.',
+    label: '연구 경험의 2023년 위치',
   },
   'research-2024': {
     action: 'research-2024',
     route: '/about-me/research#research-year-2024',
     message: '연구 경험의 2024년 위치로 이동을 시작했습니다.',
+    label: '연구 경험의 2024년 위치',
   },
   'research-2025': {
     action: 'research-2025',
     route: '/about-me/research#research-year-2025',
     message: '연구 경험의 2025년 위치로 이동을 시작했습니다.',
+    label: '연구 경험의 2025년 위치',
   },
   'research-2026': {
     action: 'research-2026',
     route: '/about-me/research#research-year-2026',
     message: '연구 경험의 2026년·현재 위치로 이동을 시작했습니다.',
+    label: '연구 경험의 2026년·현재 위치',
   },
   log: {
     action: 'log',
     route: ACTION_ROUTES.log,
     message: '기록 페이지로 이동을 시작했습니다.',
+    label: '기록 페이지',
   },
   'expand-research-details': {
     action: 'expand-research-details',
     route: ACTION_ROUTES.research_timeline,
     message: '연구 여정으로 이동해 모든 상세 내용을 펼쳤습니다.',
+    label: '연구 여정 전체 상세 펼치기',
     researchDetails: 'expand',
   },
   'collapse-research-details': {
     action: 'collapse-research-details',
     route: ACTION_ROUTES.research_timeline,
     message: '연구 여정으로 이동해 모든 상세 내용을 접었습니다.',
+    label: '연구 여정 전체 상세 접기',
     researchDetails: 'collapse',
   },
   'expand-research-year-details': {
     action: 'expand-research-year-details',
     route: ACTION_ROUTES.research_timeline,
     message: '선택한 연도의 연구 상세 내용을 펼쳤습니다.',
+    label: '선택한 연도의 연구 상세 펼치기',
     researchDetails: 'expand',
   },
   'collapse-research-year-details': {
     action: 'collapse-research-year-details',
     route: ACTION_ROUTES.research_timeline,
     message: '선택한 연도의 연구 상세 내용을 접었습니다.',
+    label: '선택한 연도의 연구 상세 접기',
     researchDetails: 'collapse',
+  },
+  'past-work-archive': {
+    action: 'past-work-archive',
+    route: ACTION_ROUTES.past_work_archive,
+    message: '소개 페이지의 과거 작업 아카이브 섹션으로 이동을 시작했습니다.',
+    label: '소개 페이지의 과거 작업 아카이브 섹션',
+  },
+  'ai-collaboration-projects': {
+    action: 'ai-collaboration-projects',
+    route: ACTION_ROUTES.project_overview,
+    message:
+      '소개 페이지의 AI 에이전트 협업 프로젝트 섹션으로 이동을 시작했습니다.',
+    label: '소개 페이지의 AI 에이전트 협업 프로젝트 섹션',
+  },
+  'archive-canvas-dodge-game': {
+    action: 'archive-canvas-dodge-game',
+    route: '/about-me#archive-canvas-dodge-game',
+    message: '과거 작업 · Canvas 피하기 게임으로 이동을 시작했습니다.',
+    label: '과거 작업 · Canvas 피하기 게임',
+  },
+  'archive-wpf-excel-row-mapper': {
+    action: 'archive-wpf-excel-row-mapper',
+    route: '/about-me#archive-wpf-excel-row-mapper',
+    message: '과거 작업 · 엑셀 행 매핑 WPF 앱으로 이동을 시작했습니다.',
+    label: '과거 작업 · 엑셀 행 매핑 WPF 앱',
+  },
+  'archive-android-ar-campfire': {
+    action: 'archive-android-ar-campfire',
+    route: '/about-me#archive-android-ar-campfire',
+    message: '과거 작업 · Android AR 캠프파이어 앱으로 이동을 시작했습니다.',
+    label: '과거 작업 · Android AR 캠프파이어 앱',
+  },
+  'project-common-infrastructure': {
+    action: 'project-common-infrastructure',
+    route: ACTION_ROUTES.project_common_infrastructure,
+    message: 'AI 협업 프로젝트 · 공용 인프라 프로젝트군으로 이동을 시작했습니다.',
+    label: 'AI 협업 프로젝트 · 공용 인프라 프로젝트군',
+  },
+  'project-ecommerce-demo': {
+    action: 'project-ecommerce-demo',
+    route: ACTION_ROUTES.project_ecommerce_demo,
+    message: 'AI 협업 프로젝트 · 이커머스 데모로 이동을 시작했습니다.',
+    label: 'AI 협업 프로젝트 · 이커머스 데모',
+  },
+  'project-game-collection-platform': {
+    action: 'project-game-collection-platform',
+    route: ACTION_ROUTES.project_game_collection,
+    message: 'AI 협업 프로젝트 · 게임 모음 플랫폼으로 이동을 시작했습니다.',
+    label: 'AI 협업 프로젝트 · 게임 모음 플랫폼',
+  },
+  'project-code-archive': {
+    action: 'project-code-archive',
+    route: ACTION_ROUTES.project_code_archive,
+    message: 'AI 협업 프로젝트 · 코드 아카이브로 이동을 시작했습니다.',
+    label: 'AI 협업 프로젝트 · 코드 아카이브',
   },
 };
 
@@ -228,10 +309,12 @@ export function resolvePortfolioViewTarget(
   }
   const target = VIEW_TARGETS[action];
   if (!year) return target;
+  const expanding = target.researchDetails === 'expand';
   return {
     ...target,
     route: `/about-me/research#research-year-${year}`,
-    message: `${year}년 연구 상세 내용을 ${target.researchDetails === 'expand' ? '펼쳤습니다' : '접었습니다'}.`,
+    message: `${year}년 연구 상세 내용을 ${expanding ? '펼쳤습니다' : '접었습니다'}.`,
+    label: `${year}년 연구 상세 ${expanding ? '펼치기' : '접기'}`,
     researchYear: year,
   };
 }

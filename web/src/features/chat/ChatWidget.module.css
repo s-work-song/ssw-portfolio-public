@@ -772,10 +772,51 @@
 }
 
 .stoppedBadge,
-.failedBadge {
+.failedBadge,
+.toolResult[data-tool-status="failed"] {
   border-color: rgba(190, 55, 55, 0.45);
   background: rgba(190, 55, 55, 0.08);
   color: var(--chat-text);
+}
+
+/* 도구가 실제로 어떻게 끝났는지 알리는 줄이다. 배지와 같은 크기·모양을 써서
+   "생성 중"·"중단" 배지와 한 줄기로 읽힌다. */
+.toolResults {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.toolResult {
+  display: inline-block;
+  padding: 4px 7px;
+  border: 1px solid var(--chat-border);
+  border-radius: 999px;
+  color: var(--chat-dim);
+  font-size: 10px;
+  animation: chatToolResultIn 180ms ease-out both;
+}
+
+.toolResult[data-tool-status="started"] {
+  border-color: color-mix(in srgb, var(--chat-accent) 32%, var(--chat-border));
+}
+
+.toolResult[data-tool-status="arrived"],
+.toolResult[data-tool-status="applied"] {
+  border-color: color-mix(in srgb, var(--chat-accent) 55%, var(--chat-border));
+  color: var(--chat-accent);
+}
+
+@keyframes chatToolResultIn {
+  from {
+    opacity: 0;
+    transform: translateY(2px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 
 .partialText {
@@ -1627,6 +1668,10 @@
   }
 
   :global(:root:not([data-motion="on"])) .availabilitySpinner {
+    animation: none;
+  }
+
+  :global(:root:not([data-motion="on"])) .toolResult {
     animation: none;
   }
 

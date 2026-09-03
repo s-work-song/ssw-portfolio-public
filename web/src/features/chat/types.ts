@@ -68,6 +68,7 @@ export interface ChatUiSettings {
   chatLayout: (typeof CHAT_LAYOUTS)[number];
   chatFont: (typeof CHAT_FONTS)[number];
   chatFontSize: (typeof CHAT_FONT_SIZES)[number];
+  streamAnimation: (typeof CHAT_STREAM_ANIMATIONS)[number];
 }
 
 /** 화면 상태 보고에 쓰는 페이지 식별자다. */
@@ -273,6 +274,40 @@ export type ChatToolExecution =
   | ChatPortfolioViewToolExecution
   | ChatPortfolioViewStateReportToolExecution;
 
+/**
+ * 이번 턴에 UI 도구가 실제로 실행됐는지에 대한 서버의 보고다.
+ *
+ * `not_required`는 UI 도구 승격(필수 도구 판정) 자체가 없었다는 뜻이고,
+ * `called`는 승격 여부와 무관하게 UI 도구가 한 번이라도 실행됐다는 뜻이며,
+ * `not_called`는 승격됐는데도 교정과 완화 폴백까지 실행되지 않았다는 뜻이다.
+ * 옛 서버는 이 필드를 보내지 않으므로 파서가 없으면 무시한다.
+ */
+export type ChatUiToolOutcome = "called" | "not_called" | "not_required";
+
+/** 도구 결과 상태 줄 하나의 진행 상태다. */
+export type ChatToolResultStatus =
+  | "started"
+  | "arrived"
+  | "applied"
+  | "failed";
+
+/**
+ * 도구 하나가 화면에서 실제로 어떻게 끝났는지 알리는 상태다.
+ *
+ * 모델은 이동·변경을 "시작했다"고만 말하므로, 정말로 도착했는지·반영됐는지는
+ * 이 값이 화면에서 보여 준다. `callId`는 서버가 보낸 도구 호출 식별자라
+ * 같은 도구가 여러 번 실행돼도 항목이 섞이지 않는다.
+ */
+export interface ToolResult {
+  callId: string;
+  tool: string;
+  action?: string;
+  label: string;
+  status: ChatToolResultStatus;
+  /** 실패했을 때의 사유다. 성공 상태에는 붙지 않는다. */
+  detail?: string;
+}
+
 /** 검증을 마친 챗봇 응답 본문이다. */
 export interface ChatResponse {
   mode: "model" | "retrieval_fallback";
@@ -287,6 +322,8 @@ export interface ChatResponse {
   suggestedQuestions: string[];
   toolExecutions: ChatToolExecution[];
   cached: boolean;
+  /** 서버가 보내지 않았거나 모르는 값이면 undefined다. */
+  uiToolOutcome?: ChatUiToolOutcome;
 }
 
 /** 화면에 그려지는 말풍선 하나다. */
@@ -301,6 +338,8 @@ export interface ChatMessage {
   suggestedQuestions?: string[];
   /** 실패한 답변 말풍선 바로 아래에 표시할 사유다. */
   errorMessage?: string;
+  /** 이 답변이 실행한 화면 도구의 실제 결과다. 없으면 표시하지 않는다. */
+  toolResults?: ToolResult[];
 }
 
 /** 서버로 보내는 질문 요청 본문이다. */

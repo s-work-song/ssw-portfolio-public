@@ -93,6 +93,10 @@ flowchart TD
   받은 것을 그리기만 한다. 그래서 말풍선에 `memo`가 걸려도 안전하다.
 - `schema.ts`가 도구 허용값의 단일 소스다. 파서·실행기·타입·WebMCP 입력
   스키마가 모두 여기서 파생돼, 한쪽만 고쳐 어긋나는 일이 생기지 않는다.
+  다만 이 단일 소스는 저장소 안에서만 유효하다. 서버 목록(비공개
+  `backend/src/shared/view-targets.js`)과는 **수동 동기화**이므로, 이동
+  목적지를 더할 때는 양쪽을 함께 고쳐야 한다. 프런트 테스트가 목적지 개수를
+  못 박아 두어, 한쪽만 고치면 최소한 개수에서 걸린다.
 - 점선 세 개가 지연 로딩 경계다. 마크다운 렌더러는 채팅을 열 때, 젤리 엔진은
   패널이 열릴 때, WebMCP 도구 등록은 `document.modelContext`가 있을 때만 받는다.
 - `api.ts`는 네트워크만, `parse.ts`는 검증만 맡는다. 파서에 런타임 의존이 없어
@@ -130,6 +134,7 @@ sequenceDiagram
     Q->>P: 자소 단위로 나눠 화면 갱신
     S-->>A: event tool
     A->>P: onTool 도구 실행 큐에 적재
+    P->>P: 이동은 started 기록 설정은 실제 값 비교 후 applied 또는 failed
     S-->>A: 주석 줄 keep-alive
     A->>A: 유휴 타이머 되감기 디스패치 없음
   end
@@ -139,6 +144,7 @@ sequenceDiagram
     A->>A: parseChatResponse로 검증
     A-->>P: ChatResponse
     P->>P: 말풍선을 complete로 교체
+    P->>P: uiToolOutcome이 not_called면 실패 한 줄 추가
   else 서버가 오류 이벤트
     S-->>A: event error
     A-->>P: ChatApiError
@@ -153,6 +159,8 @@ sequenceDiagram
     P->>A: abort
     P->>P: 말풍선을 stopped로 표시
   end
+
+  Note over P: 이동 결말은 답변 완료보다 늦게 온다<br/>도착 이벤트나 8초 상한이 오면<br/>같은 말풍선의 상태 줄을 arrived 또는 failed로 갱신한다
 ```
 
 - delta는 도착 즉시 렌더 큐에 넣고 네트워크 읽기는 멈추지 않는다. 화면 재생
@@ -164,6 +172,12 @@ sequenceDiagram
   중단과 다른 안내가 나간다.
 - `done` 본문이 검증을 통과하지 못하거나 보여 줄 본문이 하나도 없으면
   `empty_answer`로 실패시킨다. 빈 말풍선이 화면에 굳는 것보다 낫다.
+- 도구 결과 상태 줄은 큐를 붙잡지 않는다. 이동은 몇 초가 걸릴 수 있어 결말을
+  기다리면 답변 완료가 그만큼 늦어지기 때문이다. 대신 완료 시점에 말풍선 id를
+  넘겨받아, 늦게 도착한 결말도 같은 말풍선에 적힌다.
+- `done`의 선택 필드 `uiToolOutcome`은 서버가 "도구를 써야 하는 요청인데 끝내
+  실행하지 않았다"(`not_called`)를 알리는 통로다. 없거나 모르는 값이면 무시해
+  옛 서버 응답과도 계속 맞물린다.
 
 ---
 
@@ -279,6 +293,8 @@ flowchart TD
   서로 모순된 안내가 되기 때문이다.
 - 실패 사유는 하단 오류 상자가 아니라 그 말풍선 바로 아래에 붙는다. 어느
   질문이 실패했는지가 함께 보여야 재시도 판단이 선다.
+- 도구 결과 상태 줄은 배지와 같은 자리에 붙는다. 모델의 말은 "시작했어요"까지고
+  결과는 화면이 말한다는 역할 분담을, 배지와 나란히 두어 눈으로도 드러낸다.
 - 연결 상태 안내는 대화 시작 여부로 무게가 갈린다. 대화 전에는 화면 전체를
   안내로 바꾸고, 대화 중에는 얇은 배너만 띄워 검색 기반 답변을 계속 받게 한다.
 - 검색 기반 답변이 대화 중에 도착하면 배경에서 상태만 다시 확인한다. 이때
@@ -295,8 +311,9 @@ flowchart TD
 | 말풍선 · 온보딩 · 연결 안내 | `src/features/chat/MessageItem.tsx`, `ChatOnboarding.tsx`, `ChatOfflineNotice.tsx` |
 | 네트워크와 SSE | `src/features/chat/api.ts` |
 | 순수 파서와 그 테스트 | `src/features/chat/parse.ts`, `parse.test.mjs` |
-| 도구 허용값 단일 소스 | `src/features/portfolio-tools/schema.ts` |
+| 도구 허용값 단일 소스 (서버 `backend/src/shared/view-targets.js`와 수동 동기화) | `src/features/portfolio-tools/schema.ts` |
+| 도구 결과 상태 줄 문구 | `src/features/chat/constants.ts`, `MessageItem.tsx` |
 | 도구 실행기 | `src/features/portfolio-tools/portfolioUiToolExecutor.ts` |
 | WebMCP 등록과 게이트 | `src/features/webmcp/PortfolioWebMcp.tsx`, `PortfolioWebMcpTools.tsx` |
-| 화면 상태 읽기와 제어 | `src/features/webmcp/portfolioView.ts` |
+| 화면 상태 읽기와 제어 · 이동 목적지 표 | `src/features/webmcp/portfolioView.ts` |
 | 기록 검색 결과 반영 | `src/features/webmcp/PortfolioLogViewBridge.tsx`, `logSearchView.ts` |

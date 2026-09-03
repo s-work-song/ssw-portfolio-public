@@ -17,6 +17,7 @@ import {
   retryAfterMsFromHeader,
 } from './parse.ts';
 import { ACTION_LABELS } from './constants.ts';
+import { PORTFOLIO_VIEW_ACTIONS } from '../portfolio-tools/schema.ts';
 
 /** 형식은 통과하되 본문만 바꿔 쓰는 최소 응답 골격이다. */
 function chatResponse(overrides = {}) {
@@ -296,6 +297,53 @@ test('도구: 화면 제어는 연도 인자 규칙까지 확인한다', () => {
     ),
     null,
   );
+});
+
+test('도구: 소개 페이지 안의 이동 목적지도 허용 목록에 들어 있다', () => {
+  // 서버 목록(비공개 backend/src/shared/view-targets.js)과 수동으로 맞추는
+  // 값이라, 개수가 달라지면 한쪽만 고친 것이다.
+  assert.equal(PORTFOLIO_VIEW_ACTIONS.length, 27);
+  assert.equal(
+    parseToolExecution(
+      execution('control_portfolio_view', 'control-portfolio-view', {
+        action: 'past-work-archive',
+      }),
+    ).action,
+    'past-work-archive',
+  );
+  assert.equal(
+    parseToolExecution(
+      execution('control_portfolio_view', 'control-portfolio-view', {
+        action: 'project-ecommerce-demo',
+      }),
+    ).action,
+    'project-ecommerce-demo',
+  );
+  // 새 목적지도 연도 인자를 받지 않는다.
+  assert.equal(
+    parseToolExecution(
+      execution('control_portfolio_view', 'control-portfolio-view', {
+        action: 'ai-collaboration-projects',
+        year: '2024',
+      }),
+    ),
+    null,
+  );
+});
+
+test('응답: uiToolOutcome은 아는 값만 남기고 나머지는 무시한다', () => {
+  assert.equal(
+    parseChatResponse(chatResponse({ uiToolOutcome: 'not_called' }))
+      .uiToolOutcome,
+    'not_called',
+  );
+  assert.equal(
+    parseChatResponse(chatResponse({ uiToolOutcome: 'sometimes' }))
+      .uiToolOutcome,
+    undefined,
+  );
+  // 필드를 보내지 않는 옛 서버 응답도 그대로 통과한다.
+  assert.equal(parseChatResponse(chatResponse()).uiToolOutcome, undefined);
 });
 
 test('도구: 채팅 글꼴과 글자 크기는 허용 목록 안에서만 통과한다', () => {

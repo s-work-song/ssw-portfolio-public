@@ -9,7 +9,12 @@
  * 실행하는데, Node의 ESM 해석기는 확장자 없는 상대 경로를 찾지 못한다.
  * (tsconfig의 `allowImportingTsExtensions`가 이 표기를 허용한다.)
  */
-import { ACTION_IDS, ACTION_LABELS, TONES } from "./constants.ts";
+import {
+  ACTION_IDS,
+  ACTION_LABELS,
+  DEFAULT_CHAT_STREAM_ANIMATION,
+  TONES,
+} from "./constants.ts";
 import {
   ACCENTS,
   CHAT_FONTS,
@@ -36,6 +41,7 @@ import type {
   ChatResponse,
   ChatSegment,
   ChatToolExecution,
+  ChatUiToolOutcome,
   PageContext,
 } from "./types";
 
@@ -64,6 +70,16 @@ const API_AUDIENCES: readonly ApiAudience[] = [
   "developer",
   "collaboration",
   "casual",
+];
+
+/**
+ * done 페이로드의 uiToolOutcome이 가질 수 있는 값이다.
+ * 목록 밖의 값과 부재는 모두 "보고 없음"으로 본다(옛 서버와의 호환).
+ */
+const UI_TOOL_OUTCOMES: readonly ChatUiToolOutcome[] = [
+  "called",
+  "not_called",
+  "not_required",
 ];
 
 /** 응답의 pageContext 필드가 가질 수 있는 값이다. */
@@ -319,7 +335,11 @@ export function parseToolExecution(value: unknown): ChatToolExecution | null {
         !isAllowed(raw.accent, ACCENTS) ||
         !isAllowed(raw.chatLayout, CHAT_LAYOUTS) ||
         !isAllowed(raw.chatFont, CHAT_FONTS) ||
-        !isAllowed(raw.chatFontSize, CHAT_FONT_SIZES)
+        !isAllowed(raw.chatFontSize, CHAT_FONT_SIZES) ||
+        !(
+          raw.streamAnimation === undefined ||
+          isAllowed(raw.streamAnimation, CHAT_STREAM_ANIMATIONS)
+        )
       ) {
         return null;
       }
@@ -334,6 +354,13 @@ export function parseToolExecution(value: unknown): ChatToolExecution | null {
           chatLayout: raw.chatLayout,
           chatFont: raw.chatFont,
           chatFontSize: raw.chatFontSize,
+          // 연출을 보고하지 않는 옛 서버 응답도 계속 읽는다.
+          streamAnimation: isAllowed(
+            raw.streamAnimation,
+            CHAT_STREAM_ANIMATIONS,
+          )
+            ? raw.streamAnimation
+            : DEFAULT_CHAT_STREAM_ANIMATION,
         },
       };
     }
@@ -495,6 +522,7 @@ export function parseChatResponse(value: unknown): ChatResponse {
     suggestedQuestions,
     toolExecutions,
     cached,
+    uiToolOutcome,
   } = value;
 
   const validMode =
@@ -547,6 +575,10 @@ export function parseChatResponse(value: unknown): ChatResponse {
     suggestedQuestions: parseSuggestedQuestions(suggestedQuestions),
     toolExecutions: parseToolExecutions(toolExecutions),
     cached,
+    // 보고하지 않는 서버와 모르는 값은 모두 없는 것으로 본다.
+    ...(isAllowed(uiToolOutcome, UI_TOOL_OUTCOMES)
+      ? { uiToolOutcome }
+      : {}),
   };
 }
 

@@ -56,6 +56,10 @@
   되감습니다.
 - **사용자 중단**: 그때까지 받은 글을 남긴 채 중단 배지를 붙입니다. 실패한
   답변과 그 질문은 다음 요청의 대화 기록에서 함께 빠집니다.
+- **도구 결과 상태 줄**: 모델은 이동·변경을 "시작했다"고만 말합니다. 실제로
+  도착했는지(`이동 완료`), 설정이 반영됐는지(`변경 완료`), 아니면 실패했는지는
+  답변 말풍선 위의 상태 줄이 보여 줍니다. 서버가 "도구를 써야 하는 요청인데
+  끝내 실행하지 않았다"고 알리면 그 사실도 실패 한 줄로 남습니다.
 
 ### WebMCP 도구
 
@@ -64,7 +68,7 @@
 
 | 도구 | read-only | 하는 일 |
 | --- | --- | --- |
-| `get-portfolio-ui-settings` | ✅ | 현재 테마·포인트 색상·채팅 레이아웃·글꼴·글자 크기를 읽습니다. |
+| `get-portfolio-ui-settings` | ✅ | 현재 테마·포인트 색상·채팅 레이아웃·글꼴·글자 크기·답변 연출을 읽습니다. |
 | `get-portfolio-view-state` | ✅ | 현재 페이지·앵커·연구 탭·연구 연도·상세 펼침 상태를 읽습니다. |
 | `get-portfolio-log-outline` | ✅ | 기록 하나의 제목·요약·태그와 소제목 목록을 읽습니다. |
 | `find-related-portfolio-logs` | ✅ | 기준 기록과 태그·키워드가 겹치는 다른 기록을 찾습니다. |
@@ -74,14 +78,27 @@
 | `set-portfolio-chat-font` | ❌ | 채팅 글꼴을 바꿉니다. |
 | `set-portfolio-chat-font-size` | ❌ | 채팅 글자 크기를 바꿉니다. |
 | `set-portfolio-stream-animation` | ❌ | 답변 스트리밍 연출을 바꿉니다. |
-| `control-portfolio-view` | ❌ | 페이지·연구 탭·연구 연도로 이동하고 연구 상세를 펼치거나 접습니다. |
+| `control-portfolio-view` | ❌ | 페이지·연구 탭·연구 연도·소개 페이지 안의 섹션과 개별 항목으로 이동하고 연구 상세를 펼치거나 접습니다. |
 | `open-portfolio-settings` | ❌ | 설정 페이지로 이동합니다. |
 | `search-portfolio-logs` | ❌ | 공개 기록을 검색하고 결과를 목록 화면에 반영합니다. |
 | `open-portfolio-log` | ❌ | 기록 상세 또는 지정한 소제목 위치로 이동합니다. |
 
 read-only가 아닌 도구는 화면을 실제로 바꾸거나 이동시킵니다. 허용값과 입력
 스키마는 `src/features/portfolio-tools/schema.ts` 한 곳에서 정의하고, 챗봇
-응답 파서와 WebMCP 등록이 같은 정의를 씁니다.
+응답 파서와 WebMCP 등록이 같은 정의를 씁니다. 다만 서버가 쥔 같은 목록(비공개
+`backend/src/shared/view-targets.js`)과는 저장소가 갈라져 있어 **수동으로**
+맞춥니다. 목적지를 더할 때는 양쪽을 함께 고쳐야 합니다.
+
+`control-portfolio-view`의 이동 목적지는 27개입니다.
+
+| 묶음 | action |
+| --- | --- |
+| 페이지 | `main`, `overview`, `resume`, `cover-letter`, `research`, `log` |
+| 연구 탭·연도 | `research-timeline`, `research-optimization`, `research-tools`, `research-2022`~`research-2026` |
+| 연구 상세 제어 | `expand-research-details`, `collapse-research-details`, `expand-research-year-details`, `collapse-research-year-details` |
+| 소개 페이지 섹션 | `past-work-archive`, `ai-collaboration-projects` |
+| 과거 작업 항목 | `archive-canvas-dodge-game`, `archive-wpf-excel-row-mapper`, `archive-android-ar-campfire` |
+| AI 협업 프로젝트 항목 | `project-common-infrastructure`, `project-ecommerce-demo`, `project-game-collection-platform`, `project-code-archive` |
 
 ### 지연 로딩
 

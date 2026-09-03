@@ -37,8 +37,10 @@ import {
   STREAM_ANIMATION_STORAGE_KEY,
   TONES,
   TONE_STORAGE_KEY,
+  UI_TOOL_NOT_CALLED_RESULT,
   audienceToApi,
   pageContextFromPathname,
+  settingToolResultLabel,
 } from "./constants";
 import { ChatContext, type ChatContextValue } from "./ChatContext";
 import { ChatWidget } from "./ChatWidget";
@@ -75,7 +77,10 @@ import type {
   ChatRequest,
   ChatStreamAnimation,
   ChatToolExecution,
+  ChatToolResultStatus,
+  ChatUiSettings,
   Tone,
+  ToolResult,
 } from "./types";
 
 /**
@@ -145,6 +150,105 @@ const ACTION_SCROLL_MS_PER_PIXEL = 0.45;
 const ACTION_TARGET_WAIT_TIMEOUT_MS = 3_000;
 /** 페이지 진입 신호가 오지 않아도 이 시간 뒤에는 스크롤을 시작한다. */
 const ACTION_PAGE_ENTRY_FALLBACK_MS = 720;
+/**
+ * 이동 도구의 도착 신호를 기다리는 상한이다.
+ * 페이지 진입 대기(720ms) + 앵커 대기(3초) + 스크롤 연출(최대 900ms)을
+ * 모두 더한 최악의 정상 경로보다 넉넉해, 넘기면 정말 도착하지 못한 것이다.
+ */
+const TOOL_ARRIVAL_TIMEOUT_MS = 8_000;
+/** 설정 도구가 실제 상태에 반영되기를 기다리는 상한이다. */
+const TOOL_SETTING_SETTLE_TIMEOUT_MS = 1_200;
+/** 설정 반영을 확인하는 주기다. 보통 첫 번째나 두 번째 확인에서 끝난다. */
+const TOOL_SETTING_SETTLE_POLL_MS = 50;
+
+/**
+ * 설정 도구가 요청한 값이 실제 상태에 반영되기를 기다린다.
+ *
+ * setter는 React 상태를 바꾸는 것이라 호출 직후에는 아직 옛 값이 읽힌다.
+ * 그래서 짧은 주기로 다시 읽어 보고, 상한을 넘기면 반영되지 않은 것으로
+ * 판정한다. "요청했다"가 아니라 "반영됐다"를 화면에 적기 위한 확인이다.
+ */
+function waitForSettingApplied(
+  read: () => string | null,
+  expected: string,
+): Promise<boolean> {
+  return new Promise((resolve) => {
+    const startedAt = Date.now();
+    const poll = () => {
+      if (read() === expected) {
+        resolve(true);
+        return;
+      }
+      if (Date.now() - startedAt >= TOOL_SETTING_SETTLE_TIMEOUT_MS) {
+        resolve(false);
+        return;
+      }
+      window.setTimeout(poll, TOOL_SETTING_SETTLE_POLL_MS);
+    };
+    window.setTimeout(poll, TOOL_SETTING_SETTLE_POLL_MS);
+  });
+}
+
+/**
+ * 도구 실행이 실패했을 때 상태 줄에 적을 최소한의 이름이다.
+ *
+ * 정상 경로에서는 목적지 표(이동)나 설정 라벨 표가 문구를 주지만, 실행기가
+ * 예외로 끝나면 그 문구를 얻지 못한다. 그때도 "무엇이 실패했는지"는 남긴다.
+ */
+function fallbackToolResultLabel(execution: ChatToolExecution): string {
+  if (execution.type === "control_portfolio_view") return "화면 이동";
+  if (execution.type === "open_portfolio_settings") return "포트폴리오 설정 페이지";
+  return settingToolResultLabel(execution) ?? execution.toolName;
+}
+
+/**
+ * 설정 도구가 요청한 값을 꺼낸다. 설정 도구가 아니면 null이다.
+ * 색상 순회는 마지막 색이 최종 상태라 그 값을 요청값으로 본다.
+ */
+function requestedSettingValue(execution: ChatToolExecution): string | null {
+  switch (execution.type) {
+    case "set_portfolio_theme":
+      return execution.theme;
+    case "set_portfolio_accent":
+      return execution.accent;
+    case "cycle_portfolio_accent":
+      return execution.accents.at(-1) ?? null;
+    case "set_portfolio_chat_layout":
+      return execution.layout;
+    case "set_portfolio_chat_font":
+      return execution.font;
+    case "set_portfolio_chat_font_size":
+      return execution.size;
+    case "set_portfolio_stream_animation":
+      return execution.animation;
+    default:
+      return null;
+  }
+}
+
+/** 설정 도구가 건드리는 자리의 현재 값을 꺼낸다. 설정 도구가 아니면 null이다. */
+function appliedSettingValue(
+  execution: ChatToolExecution,
+  settings: ChatUiSettings,
+): string | null {
+  switch (execution.type) {
+    case "set_portfolio_theme":
+      return settings.theme;
+    case "set_portfolio_accent":
+    case "cycle_portfolio_accent":
+      return settings.accent;
+    case "set_portfolio_chat_layout":
+      return settings.chatLayout;
+    case "set_portfolio_chat_font":
+      return settings.chatFont;
+    case "set_portfolio_chat_font_size":
+      return settings.chatFontSize;
+    case "set_portfolio_stream_animation":
+      return settings.streamAnimation;
+    default:
+      return null;
+  }
+}
 
 /**
  * PC 패널이 퇴장 연출을 끝낼 때까지 DOM을 유지할 시간이다.
@@ -353,6 +457,10 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
   const actionNavigationTokenRef = useRef(0);
   const pendingChatNavigationFocusRef = useRef(false);
   const navigateRouteRef = useRef<(route: string) => void>(() => undefined);
+  /** 설정 도구가 "요청값 = 실제값"을 확인할 때 읽는 최신 UI 설정이다. */
+  const uiSettingsRef = useRef<ChatUiSettings | null>(null);
+  /** 아직 결말이 나지 않은 도구 결과 감시자들의 정리 함수다. */
+  const toolResultWatchersRef = useRef<Set<() => void>>(new Set());
   const isOpenRef = useRef(false);
   const isClosingRef = useRef(false);
   const cleanupHistoryPopRef = useRef(false);
@@ -660,6 +768,14 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
   // 도구 실행에 필요한 setter 묶음을 ref에 갈아 끼운다. 실행기 자체의
   // 아이덴티티는 고정된 채로 최신 setter만 바뀐다.
   useEffect(() => {
+    uiSettingsRef.current = {
+      theme: mode,
+      accent,
+      chatLayout,
+      chatFont,
+      chatFontSize,
+      streamAnimation,
+    };
     portfolioUiToolRuntimeRef.current = {
       getSettings: () => ({
         theme: mode,
@@ -667,6 +783,7 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
         chatLayout,
         chatFont,
         chatFontSize,
+        streamAnimation,
       }),
       setMode,
       setAccent,
@@ -688,7 +805,19 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
     setChatLayout,
     setMode,
     setStreamAnimation,
+    streamAnimation,
   ]);
+
+  // 결말을 기다리던 도구 결과 감시자는 언마운트와 함께 모두 걷는다.
+  // 남겨 두면 사라진 말풍선을 향해 타이머와 리스너가 계속 살아 있다.
+  useEffect(
+    () => () => {
+      const watchers = toolResultWatchersRef.current;
+      watchers.forEach((dispose) => dispose());
+      watchers.clear();
+    },
+    [],
+  );
 
   /**
    * 챗봇과 WebMCP가 공유하는 UI 도구 실행 진입점이다.
@@ -1333,6 +1462,7 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
           chatLayout,
           chatFont,
           chatFontSize,
+          streamAnimation,
         },
         viewState: readPortfolioViewState(pathname),
       };
@@ -1342,6 +1472,119 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
       let toolExecutionQueue = Promise.resolve();
       let deferStreamDeltas = false;
       const deferredStreamDeltas: string[] = [];
+
+      /*
+       * 도구 결과 상태 표시.
+       *
+       * 모델은 "이동을 시작했어요"까지만 말한다. 정말 도착했는지, 설정이
+       * 반영됐는지는 화면만 알 수 있으므로 그 결말을 여기서 모아 말풍선에
+       * 붙인다. 결말이 답변 완료보다 늦게 나올 수 있어(이동은 몇 초가 걸린다)
+       * 큐를 붙잡지 않고, 결과가 정해지는 대로 해당 말풍선을 갱신한다.
+       */
+      const toolResults = new Map<string, ToolResult>();
+      // 스트리밍이면 곧 만들 답변 말풍선, 아니면 완료 시점에 만드는 말풍선이다.
+      let toolResultMessageId: string | undefined;
+      const publishToolResults = () => {
+        if (!mountedRef.current || !toolResultMessageId) return;
+        const snapshot = [...toolResults.values()];
+        setMessages((current) =>
+          current.map((chatMessage) =>
+            chatMessage.id === toolResultMessageId
+              ? { ...chatMessage, toolResults: snapshot }
+              : chatMessage,
+          ),
+        );
+      };
+      /** 같은 callId면 덮어쓴다. started → arrived 같은 승격이 이 경로다. */
+      const recordToolResult = (result: ToolResult) => {
+        toolResults.set(result.callId, result);
+        publishToolResults();
+      };
+
+      /**
+       * 이동 도구가 정말 목적지에 닿았는지 지켜본다.
+       *
+       * 앵커가 있는 경로는 도착 이벤트를 기다린다. 앵커가 없는 경로(설정
+       * 페이지)는 경로 전환이 이동의 전부라 기다릴 신호가 없어 곧바로 도착으로
+       * 본다. 상한을 넘기면 실패로 적는다 — 앵커를 찾지 못해 조용히 포기한
+       * 경우에도 사용자는 결과를 알아야 한다.
+       */
+      const watchNavigationArrival = (started: ToolResult, route: string) => {
+        const hashIndex = route.indexOf("#");
+        const anchor =
+          hashIndex >= 0
+            ? decodeURIComponent(route.slice(hashIndex + 1))
+            : null;
+        if (!anchor) {
+          recordToolResult({ ...started, status: "arrived" });
+          return;
+        }
+
+        let settled = false;
+        let timer: number | null = null;
+        const dispose = () => {
+          if (timer !== null) window.clearTimeout(timer);
+          timer = null;
+          window.removeEventListener(
+            CHAT_ACTION_TARGET_ARRIVED_EVENT,
+            handleArrived,
+          );
+          toolResultWatchersRef.current.delete(dispose);
+        };
+        const settle = (status: ChatToolResultStatus, detail?: string) => {
+          if (settled) return;
+          settled = true;
+          dispose();
+          recordToolResult({
+            ...started,
+            status,
+            ...(detail ? { detail } : {}),
+          });
+        };
+        function handleArrived(rawEvent: Event) {
+          const arrived = (
+            rawEvent as CustomEvent<ChatActionTargetArrivedDetail>
+          ).detail;
+          if (arrived?.anchor !== anchor) return;
+          settle("arrived");
+        }
+
+        window.addEventListener(
+          CHAT_ACTION_TARGET_ARRIVED_EVENT,
+          handleArrived,
+        );
+        timer = window.setTimeout(() => {
+          settle("failed", "목적지에 도착하지 못했어요");
+        }, TOOL_ARRIVAL_TIMEOUT_MS);
+        toolResultWatchersRef.current.add(dispose);
+      };
+
+      /**
+       * 설정 도구가 실제로 반영됐는지 확인해 결과를 적는다.
+       *
+       * 요청값과 컨텍스트의 실제 값을 비교하므로, 도구가 성공을 보고했더라도
+       * 화면이 바뀌지 않았다면 실패로 남는다.
+       */
+      const recordSettingToolResult = async (execution: ChatToolExecution) => {
+        const label = settingToolResultLabel(execution);
+        const expected = requestedSettingValue(execution);
+        if (!label || !expected) return;
+        const applied = await waitForSettingApplied(
+          () =>
+            uiSettingsRef.current
+              ? appliedSettingValue(execution, uiSettingsRef.current)
+              : null,
+          expected,
+        );
+        recordToolResult({
+          callId: execution.toolCallId,
+          tool: execution.toolName,
+          label,
+          status: applied ? "applied" : "failed",
+          ...(applied ? {} : { detail: "설정이 화면에 반영되지 않았어요" }),
+        });
+      };
+
       const handleToolExecution = (execution: ChatToolExecution) => {
         if (handledToolCallIds.has(execution.toolCallId)) return;
         handledToolCallIds.add(execution.toolCallId);
@@ -1379,14 +1622,54 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
               } finally {
                 if (!cycleCompleted) setAccent(accentBeforeCycle);
               }
+              await recordSettingToolResult(execution);
               return;
             }
             const uiCommand = portfolioUiCommandFromChatExecution(execution);
             if (uiCommand) {
+              const navigating =
+                execution.type === "control_portfolio_view" ||
+                execution.type === "open_portfolio_settings";
+              // 앵커가 있는 이동만 도착 뒤 입력창 포커스를 되돌린다. 설정
+              // 페이지처럼 앵커 없는 이동은 되돌릴 신호가 오지 않아 예약을
+              // 남기면 다음 이동에서 엉뚱하게 소비된다.
               if (execution.type === "control_portfolio_view") {
                 pendingChatNavigationFocusRef.current = true;
               }
-              executePortfolioUiTool(uiCommand);
+              // 실행 전의 진행 중 경로를 기억해 둔다. 실행 뒤 목적지와 같으면
+              // 이동이 조용히 무시된 것이라 "이미 그 위치"라는 뜻이다.
+              const routeInFlight = activeActionNavigationRouteRef.current;
+              const output = executePortfolioUiTool(uiCommand);
+              if (!navigating) {
+                await recordSettingToolResult(execution);
+                return;
+              }
+              const route =
+                typeof output.route === "string" ? output.route : null;
+              const started: ToolResult = {
+                callId: execution.toolCallId,
+                tool: execution.toolName,
+                ...(execution.type === "control_portfolio_view"
+                  ? { action: execution.action }
+                  : {}),
+                label:
+                  typeof output.label === "string"
+                    ? output.label
+                    : fallbackToolResultLabel(execution),
+                status: "started",
+              };
+              recordToolResult(started);
+              if (!route) {
+                recordToolResult({
+                  ...started,
+                  status: "failed",
+                  detail: "이동 목적지를 확인하지 못했어요",
+                });
+              } else if (routeInFlight === route) {
+                recordToolResult({ ...started, status: "arrived" });
+              } else {
+                watchNavigationArrival(started, route);
+              }
               return;
             }
             if (
@@ -1410,6 +1693,16 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
               `포트폴리오 도구 '${execution.toolName}'을(를) 실행하지 못했습니다.`,
               toolError,
             );
+            recordToolResult({
+              callId: execution.toolCallId,
+              tool: execution.toolName,
+              ...(execution.type === "control_portfolio_view"
+                ? { action: execution.action }
+                : {}),
+              label: fallbackToolResultLabel(execution),
+              status: "failed",
+              detail: "도구를 실행하지 못했어요",
+            });
           }
         });
       };
@@ -1437,6 +1730,7 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
 
       if (shouldStream) {
         streamingMessageId = nextId("assistant");
+        toolResultMessageId = streamingMessageId;
         pending.assistantMessageId = streamingMessageId;
         setMessages((current) => [
           ...current,
@@ -1490,6 +1784,14 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
             void refreshAvailability({ silent: true });
           }
         }
+        // 도구를 승격해 놓고 끝내 실행하지 않았다는 보고는 그 자체가 실패다.
+        // 모델은 이미 "이동했어요"라고 말했을 수 있으니 화면이 사실을 알린다.
+        if (response.uiToolOutcome === "not_called") {
+          toolResults.set(
+            UI_TOOL_NOT_CALLED_RESULT.callId,
+            UI_TOOL_NOT_CALLED_RESULT,
+          );
+        }
         const completedMessage: ChatMessage = {
           id: streamingMessageId ?? nextId("assistant"),
           role: "assistant",
@@ -1502,7 +1804,13 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
           segments: response.segments,
           actions: response.actions,
           suggestedQuestions: response.suggestedQuestions,
+          // 완성본이 스트리밍 말풍선을 통째로 갈아 끼우므로 여기서 다시 싣는다.
+          ...(toolResults.size > 0
+            ? { toolResults: [...toolResults.values()] }
+            : {}),
         };
+        // 아직 결말이 나지 않은 이동은 이 id의 말풍선으로 결과를 마저 보낸다.
+        toolResultMessageId = completedMessage.id;
         setMessages((current) =>
           streamingMessageId
             ? current.map((chatMessage) =>
@@ -1594,6 +1902,7 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
       pathname,
       reasoningEnabled,
       refreshAvailability,
+      streamAnimation,
       streamingEnabled,
       setAccent,
       tone,
