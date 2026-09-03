@@ -76,6 +76,7 @@ import type {
   ChatMessage,
   ChatRequest,
   ChatStreamAnimation,
+  ChatToolVerificationResult,
   ChatToolExecution,
   ChatToolResultStatus,
   ChatUiSettings,
@@ -110,6 +111,8 @@ const SAFE_ROUTE_PATTERN =
   /^\/(?!\/)[\w\-/]*(\?[\w\-=&%.+]{0,256})?(#[\w\-]{0,64})?$/u;
 /** 재시도 대기 남은 시간을 화면에 보여줄 때 쓰는 갱신 주기다. */
 const RETRY_WAIT_TICK_MS = 250;
+/** UI 도구 실행 직후의 낡은 React/DOM 상태를 읽지 않도록 보장하는 최소 대기다. */
+const TOOL_VERIFICATION_MIN_DELAY_MS = 500;
 
 /**
  * 포인트 색상 순회의 한 칸을 기다린다. 중단 신호가 오면 즉시 거부한다.
@@ -119,7 +122,7 @@ const RETRY_WAIT_TICK_MS = 250;
  * 이미 중단된 신호로 들어오면 기다리지 않고 바로 거부하며, 어느 경로로 끝나든
  * 타이머와 리스너를 남기지 않는다.
  */
-function waitForAccentCycleStep(ms: number, signal: AbortSignal): Promise<void> {
+function waitForAbortableDelay(ms: number, signal: AbortSignal): Promise<void> {
   return new Promise((resolve, reject) => {
     if (signal.aborted) {
       reject(new DOMException("The operation was aborted.", "AbortError"));
@@ -135,6 +138,41 @@ function waitForAccentCycleStep(ms: number, signal: AbortSignal): Promise<void> 
     };
     signal.addEventListener("abort", abort, { once: true });
   });
+}
+
+/** 실행 시작 시각부터 최소 확인 대기가 지날 때까지 기다린다. */
+async function waitForMinimumToolObservation(
+  startedAt: number,
+  signal: AbortSignal,
+): Promise<void> {
+  const remaining = TOOL_VERIFICATION_MIN_DELAY_MS -
+    (performance.now() - startedAt);
+  if (remaining > 0) await waitForAbortableDelay(remaining, signal);
+}
+
+/** 실제 화면 반영을 확인한 뒤 모델에 결과를 돌려줘야 하는 UI 도구인지 본다. */
+function requiresBrowserToolVerification(
+  execution: ChatToolExecution,
+): boolean {
+  return (
+    execution.type === "set_portfolio_theme" ||
+    execution.type === "set_portfolio_accent" ||
+    execution.type === "cycle_portfolio_accent" ||
+    execution.type === "set_portfolio_chat_layout" ||
+    execution.type === "set_portfolio_chat_font" ||
+    execution.type === "set_portfolio_chat_font_size" ||
+    execution.type === "set_portfolio_stream_animation" ||
+    execution.type === "control_portfolio_view" ||
+    execution.type === "open_portfolio_settings"
+  );
+}
+
+/** basePath 배포를 포함해 현재 브라우저 경로가 도구 목적지와 같은지 본다. */
+function browserPathMatchesRoute(route: string): boolean {
+  const routePath = pathWithoutHash(route);
+  const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
+  const expected = normalizeNavigationPath(`${basePath}${routePath}`);
+  return normalizeNavigationPath(window.location.pathname) === expected;
 }
 /** 연결 상태 확인의 시간 상한이다. 넘기면 오프라인으로 본다. */
 const CHAT_STATUS_TIMEOUT_MS = 5_000;
@@ -1469,6 +1507,9 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
       const shouldStream = streamingEnabled;
       let streamingMessageId: string | undefined;
       const handledToolCallIds = new Set<string>();
+      const verificationToolCallIds = new Set<string>();
+      const verificationExecutions = new Map<string, ChatToolExecution>();
+      const toolStartedAt = new Map<string, number>();
       let toolExecutionQueue = Promise.resolve();
       let deferStreamDeltas = false;
       const deferredStreamDeltas: string[] = [];
@@ -1476,10 +1517,9 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
       /*
        * 도구 결과 상태 표시.
        *
-       * 모델은 "이동을 시작했어요"까지만 말한다. 정말 도착했는지, 설정이
-       * 반영됐는지는 화면만 알 수 있으므로 그 결말을 여기서 모아 말풍선에
-       * 붙인다. 결말이 답변 완료보다 늦게 나올 수 있어(이동은 몇 초가 걸린다)
-       * 큐를 붙잡지 않고, 결과가 정해지는 대로 해당 말풍선을 갱신한다.
+       * 정말 도착했는지, 설정이 반영됐는지는 화면만 알 수 있으므로 그 결말을
+       * 여기서 모아 말풍선에 붙인다. 화면 변경 도구는 이 결과를 모델에 다시
+       * 보내 최종 답변도 같은 상태를 말하게 한다.
        */
       const toolResults = new Map<string, ToolResult>();
       // 스트리밍이면 곧 만들 답변 말풍선, 아니면 완료 시점에 만드는 말풍선이다.
@@ -1505,58 +1545,91 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
        * 이동 도구가 정말 목적지에 닿았는지 지켜본다.
        *
        * 앵커가 있는 경로는 도착 이벤트를 기다린다. 앵커가 없는 경로(설정
-       * 페이지)는 경로 전환이 이동의 전부라 기다릴 신호가 없어 곧바로 도착으로
-       * 본다. 상한을 넘기면 실패로 적는다 — 앵커를 찾지 못해 조용히 포기한
+       * 페이지)는 경로 전환이 이동의 전부라 최소 대기 뒤 현재 경로를 확인한다.
+       * 상한을 넘기면 실패로 적는다 — 앵커를 찾지 못해 조용히 포기한
        * 경우에도 사용자는 결과를 알아야 한다.
        */
-      const watchNavigationArrival = (started: ToolResult, route: string) => {
+      const watchNavigationArrival = (
+        started: ToolResult,
+        route: string,
+        startedAt: number,
+      ): Promise<void> => {
         const hashIndex = route.indexOf("#");
         const anchor =
           hashIndex >= 0
             ? decodeURIComponent(route.slice(hashIndex + 1))
             : null;
-        if (!anchor) {
-          recordToolResult({ ...started, status: "arrived" });
-          return;
-        }
+        return new Promise((resolve, reject) => {
+          let settled = false;
+          let timer: number | null = null;
+          const dispose = () => {
+            if (timer !== null) window.clearTimeout(timer);
+            timer = null;
+            window.removeEventListener(
+              CHAT_ACTION_TARGET_ARRIVED_EVENT,
+              handleArrived,
+            );
+            controller.signal.removeEventListener("abort", handleAbort);
+            toolResultWatchersRef.current.delete(dispose);
+          };
+          const settle = async (
+            status: ChatToolResultStatus,
+            detail?: string,
+          ) => {
+            if (settled) return;
+            settled = true;
+            dispose();
+            try {
+              await waitForMinimumToolObservation(
+                startedAt,
+                controller.signal,
+              );
+              const routeReached =
+                status !== "arrived" || browserPathMatchesRoute(route);
+              recordToolResult({
+                ...started,
+                status: routeReached ? status : "failed",
+                ...(routeReached
+                  ? detail
+                    ? { detail }
+                    : {}
+                  : { detail: "목적지 경로를 확인하지 못했어요" }),
+              });
+              resolve();
+            } catch (error) {
+              reject(error);
+            }
+          };
+          function handleArrived(rawEvent: Event) {
+            const arrived = (
+              rawEvent as CustomEvent<ChatActionTargetArrivedDetail>
+            ).detail;
+            if (arrived?.anchor !== anchor) return;
+            void settle("arrived");
+          }
+          function handleAbort() {
+            if (settled) return;
+            settled = true;
+            dispose();
+            reject(new DOMException("The operation was aborted.", "AbortError"));
+          }
 
-        let settled = false;
-        let timer: number | null = null;
-        const dispose = () => {
-          if (timer !== null) window.clearTimeout(timer);
-          timer = null;
-          window.removeEventListener(
+          if (!anchor) {
+            void settle("arrived");
+            return;
+          }
+          window.addEventListener(
             CHAT_ACTION_TARGET_ARRIVED_EVENT,
             handleArrived,
           );
-          toolResultWatchersRef.current.delete(dispose);
-        };
-        const settle = (status: ChatToolResultStatus, detail?: string) => {
-          if (settled) return;
-          settled = true;
-          dispose();
-          recordToolResult({
-            ...started,
-            status,
-            ...(detail ? { detail } : {}),
+          controller.signal.addEventListener("abort", handleAbort, {
+            once: true,
           });
-        };
-        function handleArrived(rawEvent: Event) {
-          const arrived = (
-            rawEvent as CustomEvent<ChatActionTargetArrivedDetail>
-          ).detail;
-          if (arrived?.anchor !== anchor) return;
-          settle("arrived");
-        }
-
-        window.addEventListener(
-          CHAT_ACTION_TARGET_ARRIVED_EVENT,
-          handleArrived,
-        );
-        timer = window.setTimeout(() => {
-          settle("failed", "목적지에 도착하지 못했어요");
-        }, TOOL_ARRIVAL_TIMEOUT_MS);
-        toolResultWatchersRef.current.add(dispose);
+          timer = window.setTimeout(() => {
+            void settle("failed", "목적지에 도착하지 못했어요");
+          }, TOOL_ARRIVAL_TIMEOUT_MS);
+          toolResultWatchersRef.current.add(dispose);
+        });
       };
 
       /**
@@ -1565,7 +1638,10 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
        * 요청값과 컨텍스트의 실제 값을 비교하므로, 도구가 성공을 보고했더라도
        * 화면이 바뀌지 않았다면 실패로 남는다.
        */
-      const recordSettingToolResult = async (execution: ChatToolExecution) => {
+      const recordSettingToolResult = async (
+        execution: ChatToolExecution,
+        startedAt: number,
+      ) => {
         const label = settingToolResultLabel(execution);
         const expected = requestedSettingValue(execution);
         if (!label || !expected) return;
@@ -1576,6 +1652,7 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
               : null,
           expected,
         );
+        await waitForMinimumToolObservation(startedAt, controller.signal);
         recordToolResult({
           callId: execution.toolCallId,
           tool: execution.toolName,
@@ -1588,11 +1665,18 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
       const handleToolExecution = (execution: ChatToolExecution) => {
         if (handledToolCallIds.has(execution.toolCallId)) return;
         handledToolCallIds.add(execution.toolCallId);
-        if (execution.type === "cycle_portfolio_accent") {
+        if (requiresBrowserToolVerification(execution)) {
+          verificationToolCallIds.add(execution.toolCallId);
+          verificationExecutions.set(execution.toolCallId, execution);
+          toolStartedAt.set(execution.toolCallId, performance.now());
+          // 첫 응답은 실제 브라우저 반영 전의 임시 답변이다. 확인 요청의
+          // 최종 답변이 올 때까지 사용자에게 흘리지 않는다.
           deferStreamDeltas = true;
         }
         // 도구 하나가 실패해도 답변 전체를 실패로 만들지 않는다.
         toolExecutionQueue = toolExecutionQueue.then(async () => {
+          const executionStartedAt =
+            toolStartedAt.get(execution.toolCallId) ?? performance.now();
           try {
             if (execution.type === "cycle_portfolio_accent") {
               // 중단·실패로 끝나면 순회 직전의 색으로 되돌린다.
@@ -1612,7 +1696,7 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
                   }
                   setAccent(execution.accents[index] as Accent);
                   if (index + 1 < execution.accents.length) {
-                    await waitForAccentCycleStep(
+                    await waitForAbortableDelay(
                       execution.stepMs,
                       controller.signal,
                     );
@@ -1622,7 +1706,7 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
               } finally {
                 if (!cycleCompleted) setAccent(accentBeforeCycle);
               }
-              await recordSettingToolResult(execution);
+              await recordSettingToolResult(execution, executionStartedAt);
               return;
             }
             const uiCommand = portfolioUiCommandFromChatExecution(execution);
@@ -1636,12 +1720,9 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
               if (execution.type === "control_portfolio_view") {
                 pendingChatNavigationFocusRef.current = true;
               }
-              // 실행 전의 진행 중 경로를 기억해 둔다. 실행 뒤 목적지와 같으면
-              // 이동이 조용히 무시된 것이라 "이미 그 위치"라는 뜻이다.
-              const routeInFlight = activeActionNavigationRouteRef.current;
               const output = executePortfolioUiTool(uiCommand);
               if (!navigating) {
-                await recordSettingToolResult(execution);
+                await recordSettingToolResult(execution, executionStartedAt);
                 return;
               }
               const route =
@@ -1660,15 +1741,21 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
               };
               recordToolResult(started);
               if (!route) {
+                await waitForMinimumToolObservation(
+                  executionStartedAt,
+                  controller.signal,
+                );
                 recordToolResult({
                   ...started,
                   status: "failed",
                   detail: "이동 목적지를 확인하지 못했어요",
                 });
-              } else if (routeInFlight === route) {
-                recordToolResult({ ...started, status: "arrived" });
               } else {
-                watchNavigationArrival(started, route);
+                await watchNavigationArrival(
+                  started,
+                  route,
+                  executionStartedAt,
+                );
               }
               return;
             }
@@ -1693,6 +1780,16 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
               `포트폴리오 도구 '${execution.toolName}'을(를) 실행하지 못했습니다.`,
               toolError,
             );
+            if (requiresBrowserToolVerification(execution)) {
+              try {
+                await waitForMinimumToolObservation(
+                  executionStartedAt,
+                  controller.signal,
+                );
+              } catch {
+                return;
+              }
+            }
             recordToolResult({
               callId: execution.toolCallId,
               tool: execution.toolName,
@@ -1751,7 +1848,7 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
       renderQueueRef.current = renderQueue;
 
       try {
-        const response = shouldStream
+        let response = shouldStream
           ? await requestChatStream(request, controller.signal, {
               onDelta(text) {
                 if (deferStreamDeltas) deferredStreamDeltas.push(text);
@@ -1762,9 +1859,72 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
           : await requestChat(request, controller.signal);
         response.toolExecutions.forEach(handleToolExecution);
         await toolExecutionQueue;
-        deferStreamDeltas = false;
-        for (const text of deferredStreamDeltas) renderQueue?.enqueue(text);
-        deferredStreamDeltas.length = 0;
+
+        if (verificationToolCallIds.size > 0) {
+          const verificationResults: ChatToolVerificationResult[] = [
+            ...verificationToolCallIds,
+          ].map((toolCallId) => {
+            const execution = verificationExecutions.get(toolCallId);
+            const result = toolResults.get(toolCallId);
+            const status =
+              result?.status === "arrived" || result?.status === "applied"
+                ? result.status
+                : "failed";
+            const startedAt = toolStartedAt.get(toolCallId) ?? performance.now();
+            return {
+              toolCallId,
+              toolName: execution?.toolName as ChatToolVerificationResult["toolName"],
+              status,
+              ...(execution?.type === "control_portfolio_view"
+                ? { action: execution.action }
+                : {}),
+              elapsedMs: Math.min(
+                30_000,
+                Math.max(
+                  TOOL_VERIFICATION_MIN_DELAY_MS,
+                  Math.round(performance.now() - startedAt),
+                ),
+              ),
+            };
+          });
+          // 첫 응답은 브라우저 확인 전의 내부 중간 결과다. 화면에는 확인된
+          // 두 번째 답변만 재생한다.
+          deferredStreamDeltas.length = 0;
+          deferStreamDeltas = false;
+          const verifiedUiSettings = uiSettingsRef.current ?? request.uiSettings;
+          const verificationRequest: ChatRequest = {
+            ...request,
+            pageContext: pageContextFromPathname(window.location.pathname),
+            uiSettings: { ...verifiedUiSettings },
+            viewState: readPortfolioViewState(window.location.pathname),
+            toolVerification: { results: verificationResults },
+          };
+          response = shouldStream
+            ? await requestChatStream(
+                verificationRequest,
+                controller.signal,
+                {
+                  onDelta(text) {
+                    renderQueue?.enqueue(text);
+                  },
+                  onTool() {
+                    throw new ChatApiError(
+                      "화면 확인 응답이 새 도구를 호출해 중단했어요.",
+                    );
+                  },
+                },
+              )
+            : await requestChat(verificationRequest, controller.signal);
+          if (response.toolExecutions.length > 0) {
+            throw new ChatApiError(
+              "화면 확인 응답에 예상하지 않은 도구 실행이 포함됐어요.",
+            );
+          }
+        } else {
+          deferStreamDeltas = false;
+          for (const text of deferredStreamDeltas) renderQueue?.enqueue(text);
+          deferredStreamDeltas.length = 0;
+        }
         await renderQueue?.drain();
         if (controller.signal.aborted) {
           throw new DOMException("The operation was aborted.", "AbortError");

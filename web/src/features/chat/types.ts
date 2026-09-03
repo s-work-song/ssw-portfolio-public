@@ -308,6 +308,30 @@ export interface ToolResult {
   detail?: string;
 }
 
+/** 브라우저가 UI 도구 실행 뒤 실제 상태를 다시 읽어 만든 확인 결과다. */
+export interface ChatToolVerificationResult {
+  toolCallId: string;
+  toolName:
+    | "set-portfolio-theme"
+    | "set-portfolio-accent"
+    | "cycle-portfolio-accent"
+    | "set-portfolio-chat-layout"
+    | "set-portfolio-chat-font"
+    | "set-portfolio-chat-font-size"
+    | "set-portfolio-stream-animation"
+    | "control-portfolio-view"
+    | "open-portfolio-settings";
+  status: "arrived" | "applied" | "failed";
+  action?: ChatPortfolioViewAction;
+  /** 실행을 시작한 뒤 결과를 관측하기까지 걸린 시간이다. */
+  elapsedMs: number;
+}
+
+/** 첫 도구 응답 뒤 서버에 보내는 브라우저 확인 보고다. */
+export interface ChatToolVerification {
+  results: ChatToolVerificationResult[];
+}
+
 /** 검증을 마친 챗봇 응답 본문이다. */
 export interface ChatResponse {
   mode: "model" | "retrieval_fallback";
@@ -352,6 +376,8 @@ export interface ChatRequest {
   reasoningEnabled: boolean;
   uiSettings: ChatUiSettings;
   viewState: ChatPortfolioViewState;
+  /** UI 도구 실행 뒤 실제 상태를 확인하는 두 번째 요청에만 붙는다. */
+  toolVerification?: ChatToolVerification;
 }
 
 /** `/api/chat/status` 응답이다. */
