@@ -24,6 +24,7 @@ const SCRAMBLE_TAIL_COUNT = 6;
 /** 스크램블 문자를 갈아 끼우는 주기(ms) */
 const SCRAMBLE_INTERVAL_MS = 70;
 
+/** 스크램블이 덮어쓸 때 골라 쓰는 문자 풀이다. 폭이 들쭉날쭉하지 않도록 라틴 문자와 기호만 담았다. */
 const SCRAMBLE_SET =
   "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789@#%&*+=<>";
 
@@ -34,18 +35,21 @@ const SCRAMBLE_SET =
 const CHUNK_PERIOD = 14;
 const CHUNK_STARTS = new Set([0, 2, 6, 9]);
 
+/** 꼬리를 단어 단위로 쪼개 재생하는 연출들이다. */
 const WORD_ANIMATIONS: ReadonlySet<ChatStreamAnimation> = new Set([
   "word-fade",
   "blur-focus",
   "slide-up",
 ]);
 
+/** 꼬리를 글자 단위로 쪼개 재생하는 연출들이다. */
 const CHAR_ANIMATIONS: ReadonlySet<ChatStreamAnimation> = new Set([
   "mask-wipe",
   "letter-drop",
   "highlight-trail",
 ]);
 
+/** 연출별로 조각 span에 붙일 CSS 클래스다. 여기에 없는 연출은 조각에 클래스를 붙이지 않는다. */
 const PIECE_CLASS: Partial<Record<ChatStreamAnimation, string>> = {
   "word-fade": styles.streamWordFade,
   "blur-focus": styles.streamBlurFocus,
@@ -67,10 +71,14 @@ const PIECE_DURATION_MS: Partial<Record<ChatStreamAnimation, number>> = {
   "highlight-trail": 700,
 };
 
+/** 타자기·토큰 청크 연출이 쓰는 얇은 커서의 깜빡임 주기(ms)다. */
 const CURSOR_DURATION_MS = 1_000;
+/** 스크램블 연출이 쓰는 블록 커서의 깜빡임 주기(ms)다. */
 const BLOCK_CURSOR_DURATION_MS = 900;
+/** 스켈레톤 연출이 쓰는 자리 표시 막대의 재생 주기(ms)다. */
 const SKELETON_DURATION_MS = 1_400;
 
+/** 애니메이션 span 하나로 그려질 꼬리 조각이다. */
 interface TailPiece {
   /** 메시지 안에서의 절대 오프셋. span의 key로 쓴다. */
   key: number;
@@ -79,11 +87,13 @@ interface TailPiece {
   blank: boolean;
 }
 
+/** 텍스트를 굳어 버린 앞부분(head)과 애니메이션이 걸릴 꼬리 조각들로 나눈 결과다. */
 interface TailSplit {
   head: string;
   pieces: TailPiece[];
 }
 
+/** 애니메이션을 걸지 않을 공백 문자인지 판별한다. 정규식보다 호출이 잦아 직접 비교한다. */
 function isSpace(character: string): boolean {
   return (
     character === " " ||
@@ -93,6 +103,7 @@ function isSpace(character: string): boolean {
   );
 }
 
+/** 그 오프셋이 토큰 청크의 시작 위치인지 판별한다. 텍스트 내용과 무관하게 오프셋만 본다. */
 function isChunkStart(offset: number): boolean {
   return CHUNK_STARTS.has(offset % CHUNK_PERIOD);
 }
@@ -124,6 +135,13 @@ function wordTailStart(text: string, maxWords: number): number {
   return end;
 }
 
+/**
+ * 최근 maxWords개 단어만 조각으로 떼어 낸다.
+ *
+ * 공백도 조각으로 남겨 원문 간격이 그대로 유지되게 하되 blank로 표시해
+ * 애니메이션은 걸지 않는다. key로 쓰는 오프셋은 텍스트 시작 기준 절대 위치라,
+ * 창이 밀려도 이미 붙은 조각은 다시 마운트되지 않는다.
+ */
 function splitWordTail(text: string, maxWords: number): TailSplit {
   const start = wordTailStart(text, maxWords);
   const pieces: TailPiece[] = [];
@@ -138,6 +156,12 @@ function splitWordTail(text: string, maxWords: number): TailSplit {
   return { head: text.slice(0, start), pieces };
 }
 
+/**
+ * 최근 maxChars자를 한 글자씩 조각으로 떼어 낸다.
+ *
+ * for...of로 순회하므로 서로게이트 쌍은 한 조각으로 묶이고, 시작 지점도
+ * safeStart로 당겨 잘린 반쪽이 나오지 않게 한다. 스크램블 연출도 이 분할을 쓴다.
+ */
 function splitCharTail(text: string, maxChars: number): TailSplit {
   const start = safeStart(text, Math.max(0, text.length - maxChars));
   const pieces: TailPiece[] = [];
@@ -151,7 +175,13 @@ function splitCharTail(text: string, maxChars: number): TailSplit {
   return { head: text.slice(0, start), pieces };
 }
 
-/** 청크 경계에 맞춰 꼬리를 자르고 2~5자 조각으로 묶는다. */
+/**
+ * 청크 경계에 맞춰 꼬리를 자르고 2~5자 조각으로 묶는다.
+ *
+ * 자르려는 지점이 청크 한가운데면 경계를 만날 때까지 앞으로 물러선다. 그래야
+ * 같은 청크가 매번 같은 오프셋에서 시작해, 창이 밀려도 조각이 다시 쪼개지지 않는다.
+ * 공백도 청크 안에 그대로 흡수되므로 blank 조각은 만들지 않는다.
+ */
 function splitChunkTail(text: string, maxChars: number): TailSplit {
   let start = safeStart(text, Math.max(0, text.length - maxChars));
   while (start > 0 && !isChunkStart(start)) start -= 1;
@@ -181,6 +211,7 @@ function scrambledCharacter(offset: number, tick: number): string {
   return SCRAMBLE_SET[index];
 }
 
+/** 스트리밍 텍스트 한 덩어리를 그리는 데 필요한 값이다. */
 interface StreamingTextProps {
   text: string;
   animation: ChatStreamAnimation;
@@ -193,6 +224,16 @@ interface StreamingTextProps {
   playbackRate?: number;
 }
 
+/**
+ * 선택된 연출로 스트리밍 텍스트를 그린다.
+ *
+ * 연출은 크게 세 갈래다. typewriter·skeleton은 텍스트를 그대로 두고 끝에
+ * 표식만 붙이고, scramble은 꼬리 글자를 무작위 문자로 덮으며, 나머지는 꼬리
+ * 조각마다 CSS 클래스를 입힌다. 아는 연출이 아니면 분할 없이 원문만 내보내
+ * 새 연출 값이 들어와도 화면이 비지 않는다.
+ *
+ * 커서·가장자리 같은 장식은 모두 aria-hidden이고 스트리밍 중에만 붙는다.
+ */
 export function StreamingText({
   text,
   animation,
@@ -201,11 +242,19 @@ export function StreamingText({
 }: Readonly<StreamingTextProps>) {
   const [scrambleTick, setScrambleTick] = useState(0);
   const scrambling = animation === "scramble" && isStreaming;
+  // 미리보기 슬라이더에서 넘어온 값이라 NaN·0·음수까지 들어올 수 있다.
+  // 0.25~4배로 가두고 이상한 값은 1배로 되돌려 애니메이션 시간이 깨지지 않게 한다.
   const safePlaybackRate =
     Number.isFinite(playbackRate) && playbackRate > 0
       ? Math.min(4, Math.max(0.25, playbackRate))
       : 1;
 
+  /**
+   * CSS에 적힌 기본 재생 시간을 배율만큼 늘리거나 줄인 인라인 스타일을 만든다.
+   *
+   * 배율이 1이거나 해당 연출에 정의된 시간이 없으면 undefined를 돌려 스타일을
+   * 붙이지 않고 CSS 기본값을 그대로 쓰게 한다.
+   */
   const animationDurationStyle = (
     durationMs: number | undefined,
   ): CSSProperties | undefined =>
@@ -213,6 +262,13 @@ export function StreamingText({
       ? undefined
       : { animationDuration: `${durationMs / safePlaybackRate}ms` };
 
+  /**
+   * 스크램블 연출이 재생되는 동안에만 틱을 올려 무작위 문자를 갈아 끼운다.
+   *
+   * 다른 연출이거나 스트리밍이 끝나면 타이머를 걸지 않고, 걸려 있던 것도
+   * 정리해 화면이 멈춘 뒤까지 리렌더가 이어지지 않게 한다. 배율을 크게 올려도
+   * 16ms 아래로는 내려가지 않도록 하한을 둔다.
+   */
   useEffect(() => {
     if (!scrambling) return;
     const timer = window.setInterval(
@@ -222,6 +278,12 @@ export function StreamingText({
     return () => window.clearInterval(timer);
   }, [safePlaybackRate, scrambling]);
 
+  /**
+   * 연출 종류에 맞는 꼬리 분할을 고른다. 분할이 필요 없는 연출은 null이다.
+   *
+   * delta가 도착할 때마다 다시 계산되므로 useMemo로 감싸 두었고, 분할 비용은
+   * 전체 길이가 아니라 꼬리 길이에만 비례한다.
+   */
   const split = useMemo<TailSplit | null>(() => {
     if (WORD_ANIMATIONS.has(animation)) {
       return splitWordTail(text, WORD_TAIL_COUNT);
@@ -294,6 +356,7 @@ export function StreamingText({
     );
   }
 
+  // "none"처럼 분할이 필요 없는 연출과, 아직 모르는 값이 들어온 경우의 안전한 기본값이다.
   if (!split) return <>{text}</>;
 
   const pieceClass = PIECE_CLASS[animation];

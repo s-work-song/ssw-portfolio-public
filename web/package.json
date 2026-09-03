@@ -10,7 +10,9 @@
     "start": "next start",
     "serve:static": "node scripts/serve-static.mjs",
     "lint": "eslint",
-    "test:webmcp": "node --test src/features/webmcp/logViewContract.test.mjs"
+    "test:webmcp": "node --test src/features/webmcp/logViewContract.test.mjs",
+    "test:chat-parse": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --test src/features/chat/parse.test.mjs",
+    "test": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --test src/features/webmcp/logViewContract.test.mjs src/features/chat/parse.test.mjs"
   },
   "dependencies": {
     "next": "16.2.9",

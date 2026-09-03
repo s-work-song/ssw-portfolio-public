@@ -40,7 +40,6 @@ jobs:
       # 비어 있으면 챗봇이 "채팅 서버 주소가 설정되지 않았습니다" 안내로 대체한다.
       NEXT_PUBLIC_RAG_API_BASE_URL: ${{ vars.NEXT_PUBLIC_RAG_API_BASE_URL }}
       # 별도 추론 게이트웨이 배포 전에는 비워 두며, 비어 있으면 기존 Sites SSE를 쓴다.
-      NEXT_PUBLIC_INFERENCE_GATEWAY_URL: ${{ vars.NEXT_PUBLIC_INFERENCE_GATEWAY_URL }}
     steps:
       - uses: actions/checkout@v6
 

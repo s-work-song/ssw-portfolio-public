@@ -1,3 +1,14 @@
+/**
+ * 챗봇 화면이 쓰는 고정 문구·선택지·라우팅 표를 모은 모듈이다.
+ *
+ * 도구 허용값은 여기 두지 않고 `portfolio-tools/schema`가 단일 소스로 쥔다.
+ * 이 파일은 그중 스트리밍 연출 목록만 재수출해, 챗봇 쪽 호출부가 스키마
+ * 모듈을 직접 알지 않아도 되게 한다.
+ *
+ * 값 import에 `.ts` 확장자를 붙인 이유: 순수 파서(`parse.ts`)가 이 파일을
+ * 불러 쓰고, 그 파서를 Node가 직접 실행해 테스트한다. Node의 ESM 해석기는
+ * 확장자 없는 상대 경로를 찾지 못한다.
+ */
 import type {
   ActionId,
   ApiAudience,
@@ -8,9 +19,16 @@ import type {
   Tone,
 } from "./types";
 
+export { CHAT_STREAM_ANIMATIONS } from "../portfolio-tools/schema.ts";
+
+/** 채팅을 처음 열었을 때 보여 주는 인사말이다. */
 export const GREETING =
   "안녕하세요. 포트폴리오를 안내하는 AI 챗봇입니다. 관심 있는 주제를 선택하거나 바로 질문해 주세요.";
 
+/**
+ * 온보딩과 투어 종료 화면에서 보여 주는 설정·WebMCP 안내 답변이다.
+ * 서버를 거치지 않고 프런트가 직접 말풍선으로 삽입하는 고정 마크다운이다.
+ */
 export const SETTINGS_WEBMCP_GUIDE = `### 설정과 WebMCP 기능
 
 별도의 설정 페이지에서 테마, 포인트 색상, 채팅 글꼴과 글자 크기, 패널 배치, 답변 스트리밍 연출을 직접 조정할 수 있어요.
@@ -32,17 +50,24 @@ WebMCP 자체뿐 아니라 이를 호출하는 에이전트 하네스와 브라�
 
 현재 이 포트폴리오에서 실제 동작을 확인한 환경은 Codex의 브라우저 도구입니다.`;
 
+/** 말투 선택을 담아 두는 localStorage 키다. */
 export const TONE_STORAGE_KEY = "portfolio-chat-tone";
+/** 스트리밍 사용 여부를 담아 두는 localStorage 키다. */
 export const STREAMING_STORAGE_KEY = "portfolio-chat-streaming";
+/** 사고모드 사용 여부를 담아 두는 localStorage 키다. */
 export const REASONING_STORAGE_KEY = "portfolio-chat-reasoning";
+/** 패널 연출 선택을 담아 두는 localStorage 키다. */
 export const CHAT_ANIMATION_STORAGE_KEY = "portfolio-chat-animation";
 
 /** 채팅창 안의 빠른 토글은 숨기고 설정 페이지에서만 사고 모드를 조절한다. */
 export const REASONING_QUICK_TOGGLE_ENABLED = false;
+/** 저장된 선택이 없을 때의 사고모드 기본값이다. */
 export const DEFAULT_REASONING_ENABLED = false;
 
+/** 서버가 이해하는 말투 값이다. 저장소에서 읽은 값을 검증할 때도 쓴다. */
 export const TONES: readonly Tone[] = ["official", "manager", "mascot"];
 
+/** 패널 열기·닫기 연출 허용값이다. */
 export const CHAT_ANIMATIONS: readonly ChatAnimation[] = [
   "none",
   "slide",
@@ -52,6 +77,7 @@ export const CHAT_ANIMATIONS: readonly ChatAnimation[] = [
 /** 설정을 지우거나 저장소를 쓸 수 없을 때 돌아갈 기본 연출이다. */
 export const DEFAULT_CHAT_ANIMATION: ChatAnimation = "jelly";
 
+/** 설정 화면의 패널 연출 선택지다(값 + 표시 문구). */
 export const CHAT_ANIMATION_OPTIONS: ReadonlyArray<{
   value: ChatAnimation;
   label: string;
@@ -61,25 +87,13 @@ export const CHAT_ANIMATION_OPTIONS: ReadonlyArray<{
   { value: "jelly", label: "젤리" },
 ];
 
+/** 스트리밍 텍스트 연출 선택을 담아 두는 localStorage 키다. */
 export const STREAM_ANIMATION_STORAGE_KEY = "portfolio-chat-stream-animation";
-
-export const CHAT_STREAM_ANIMATIONS: readonly ChatStreamAnimation[] = [
-  "none",
-  "typewriter",
-  "word-fade",
-  "token-chunks",
-  "blur-focus",
-  "slide-up",
-  "skeleton",
-  "mask-wipe",
-  "scramble",
-  "letter-drop",
-  "highlight-trail",
-];
 
 /** 설정을 지우거나 저장소를 쓸 수 없을 때 돌아갈 기본 연출이다. */
 export const DEFAULT_CHAT_STREAM_ANIMATION: ChatStreamAnimation = "word-fade";
 
+/** 설정 화면의 스트리밍 연출 선택지다(값 + 표시 문구 + 한 줄 설명). */
 export const CHAT_STREAM_ANIMATION_OPTIONS: ReadonlyArray<{
   value: ChatStreamAnimation;
   label: string;
@@ -138,12 +152,17 @@ export const CHAT_STREAM_ANIMATION_OPTIONS: ReadonlyArray<{
   },
 ];
 
+/** 채팅 헤더 셀렉트에 노출하는 말투 선택지다. */
 export const TONE_OPTIONS: ReadonlyArray<{ value: Tone; label: string }> = [
   { value: "official", label: "공식 안내자" },
   { value: "manager", label: "개발자 매니저" },
   { value: "mascot", label: "마스코트 펫" },
 ];
 
+/**
+ * 온보딩의 관점 선택지다.
+ * 화면 값(value)과 서버 값(apiValue)이 다른 항목이 있어 둘을 함께 둔다.
+ */
 export const AUDIENCE_OPTIONS: ReadonlyArray<{
   value: AudienceChoice;
   apiValue: ApiAudience;
@@ -183,6 +202,22 @@ export const CHAT_QUICK_START_OPTIONS: ReadonlyArray<{
   },
 ];
 
+/**
+ * 액션 식별자로 빠른 시작 선택지를 찾는 표다.
+ * 온보딩 버튼과 답변 아래 액션 버튼이 같은 문구·같은 질문을 쓰도록 한다.
+ */
+export const CHAT_QUICK_START_OPTION_BY_ACTION_ID: ReadonlyMap<
+  ActionId,
+  (typeof CHAT_QUICK_START_OPTIONS)[number]
+> = new Map(
+  CHAT_QUICK_START_OPTIONS.map((option) => [option.actionId, option] as const),
+);
+
+/**
+ * 액션 식별자에서 실제 이동 경로로 가는 표다.
+ * 경로가 여기에 없으면 이동 자체가 일어나지 않으므로, 이 표가 챗봇이
+ * 보낼 수 있는 목적지의 상한이다.
+ */
 export const ACTION_ROUTES: Readonly<Record<ActionId, string>> = {
   overview: "/about-me#portfolio-overview",
   settings: "/settings",
@@ -248,6 +283,11 @@ export const ACTION_ROUTES: Readonly<Record<ActionId, string>> = {
     "/about-me/log#log-card-why-i-started-software-development",
 };
 
+/**
+ * 액션 버튼에 찍히는 문구다.
+ * 서버가 보낸 label이 이 표와 다르면 파서가 그 액션을 버린다. 서버가 임의
+ * 문구를 버튼 이름으로 밀어 넣지 못하게 하는 장치다.
+ */
 export const ACTION_LABELS: Readonly<Record<ActionId, string>> = {
   overview: "포트폴리오 개요 보기",
   settings: "설정 페이지 보기",
@@ -291,6 +331,7 @@ export const ACTION_LABELS: Readonly<Record<ActionId, string>> = {
   log_hardware_to_software: "하드웨어 관심에서 소프트웨어 개발로 보기",
 };
 
+/** 응답 검증에 쓰는 액션 식별자 허용 목록이다. */
 export const ACTION_IDS: readonly ActionId[] = [
   "overview",
   "settings",
@@ -334,6 +375,12 @@ export const ACTION_IDS: readonly ActionId[] = [
   "log_hardware_to_software",
 ];
 
+/**
+ * 화면에서 고른 관점을 서버가 이해하는 값으로 바꾼다.
+ *
+ * 화면 선택지가 서버 값보다 세분화돼 있어(성격·가치관 등) 표를 한 번 거친다.
+ * 선택이 없거나 표에 없는 값이면 안전한 기본값 `default`를 쓴다.
+ */
 export function audienceToApi(choice: AudienceChoice | null): ApiAudience {
   return (
     AUDIENCE_OPTIONS.find((option) => option.value === choice)?.apiValue ??
@@ -341,6 +388,13 @@ export function audienceToApi(choice: AudienceChoice | null): ApiAudience {
   );
 }
 
+/**
+ * 현재 경로에서 질문 문맥을 판정한다.
+ *
+ * 끝의 슬래시를 지운 뒤 뒤에서부터 좁은 규칙 순으로 맞춰 본다(기록 상세가
+ * 소개 페이지로 잘못 잡히지 않게 하기 위함이다). 어디에도 걸리지 않으면
+ * `default`이고, 서버는 이 값으로 답변의 초점을 조절한다.
+ */
 export function pageContextFromPathname(pathname: string): PageContext {
   const path = pathname.replace(/\/+$/u, "");
 

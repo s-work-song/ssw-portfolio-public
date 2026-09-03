@@ -5,7 +5,6 @@ import ReactDOM from "react-dom";
 export function ChatApiPreconnect() {
   const candidates = [
     process.env.NEXT_PUBLIC_RAG_API_BASE_URL?.trim(),
-    process.env.NEXT_PUBLIC_INFERENCE_GATEWAY_URL?.trim(),
   ].filter((value): value is string => Boolean(value));
   const origins = new Set<string>();
   for (const candidate of candidates) {

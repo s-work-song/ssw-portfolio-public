@@ -1,22 +1,55 @@
+/**
+ * 안내 투어의 단계 정의와 저장 키, 상태 타입을 모아 둔 순수 데이터 모듈이다.
+ *
+ * "무엇을 어떤 순서로 보여 줄지"만 담고, 진행 상태를 바꾸는 로직과 DOM 강조는
+ * useGuidedTour가 맡는다. 브라우저 API를 쓰지 않으므로 훅·카드 컴포넌트 어느
+ * 쪽에서 불러도 부작용이 없다.
+ */
 import type { ActionId } from "./types";
 
+/**
+ * 투어 정의의 판(version)이다.
+ *
+ * 단계 구성을 바꿀 때 이 숫자를 올린다. 아래 두 저장 키에 그대로 섞여 들어가므로,
+ * 예전 판에서 저장한 진행 상태가 새 단계 목록에 잘못 적용되는 일 없이 버려진다.
+ */
 export const GUIDED_TOUR_VERSION = 4;
+/** 투어를 안내한 적이 있는지 기억하는 localStorage 키다. 값은 started·completed·dismissed 중 하나다. */
 export const GUIDED_TOUR_VISIT_KEY = `portfolio-guided-tour:v${GUIDED_TOUR_VERSION}:visit`;
+/** 진행 중인 투어 상태를 탭 단위로 이어 붙이는 sessionStorage 키다. 페이지 이동으로 훅이 다시 마운트돼도 단계가 유지된다. */
 export const GUIDED_TOUR_SESSION_KEY = `portfolio-guided-tour:v${GUIDED_TOUR_VERSION}:session`;
 
+/** 투어 전체의 진행 상태다. `idle`은 아직 시작하지 않았거나 도중에 종료한 상태다. */
 export type GuidedTourStatus = "idle" | "active" | "completed";
+/**
+ * 질문 체험이 걸린 단계에서 지금 어디까지 왔는지 나타낸다.
+ *
+ * `ready`는 체험 없이 바로 넘어갈 수 있는 단계, `waiting-for-ai`는 방문자가
+ * 강조된 버튼을 누르길 기다리는 상태, `answering`은 답변을 받는 중,
+ * `answered`는 답변 확인까지 끝난 상태다.
+ */
 export type GuidedTourInteraction =
   | "ready"
   | "waiting-for-ai"
   | "answering"
   | "answered";
 
+/** 투어가 강조할 수 있는 화면 요소 식별자다. DOM의 `data-guided-tour-target` 속성 값과 1:1로 대응한다. */
 export type GuidedTourTargetId =
   | "cover-letter-overview-ask-ai"
   | "research-optimization-ask-ai"
   | "log-ai-options-ask-ai"
   | "log-overview";
 
+/**
+ * 투어 한 단계의 정의다.
+ *
+ * actionId는 그 단계에서 이동할 콘텐츠 위치이고, targetId가 있으면 도착한
+ * 화면에서 그 요소를 강조한다. requiresQuestion이 true인 단계는 방문자가 직접
+ * 버튼을 눌러 답변을 받아야 진행이 풀리고, targetId만 있는 단계는 강조만 하고
+ * 진행을 막지 않는다. highlightDurationMs를 주면 그 시간이 지난 뒤 강조를
+ * 스스로 거둔다.
+ */
 export interface GuidedTourStep {
   id:
     | "overview"
@@ -39,18 +72,28 @@ export interface GuidedTourStep {
   highlightDurationMs?: number;
 }
 
+/** 투어 진행 상태 한 벌이다. 이 모양 그대로 sessionStorage에 직렬화된다. */
 export interface GuidedTourState {
   status: GuidedTourStatus;
   stepIndex: number;
   interaction: GuidedTourInteraction;
 }
 
+/** 투어를 시작하지 않은 초기 상태다. 방문자가 투어를 중단할 때도 이 값으로 되돌린다. */
 export const IDLE_GUIDED_TOUR_STATE: GuidedTourState = {
   status: "idle",
   stepIndex: 0,
   interaction: "ready",
 };
 
+/**
+ * 방문자를 데려갈 단계 목록이다. 배열 순서가 곧 진행 순서다.
+ *
+ * 소개에서 시작해 이력서·자기소개서·연구 경험을 거쳐 기록으로 끝나는 흐름이며,
+ * 질문 체험은 자기소개서 단계 하나에만 걸어 투어가 중간에 막히는 지점을 최소화했다.
+ * 단계를 더하거나 순서를 바꾸면 GUIDED_TOUR_VERSION도 함께 올려야 저장된
+ * stepIndex가 엉뚱한 단계를 가리키지 않는다.
+ */
 export const GUIDED_TOUR_STEPS: readonly GuidedTourStep[] = [
   {
     id: "overview",
@@ -143,12 +186,26 @@ export const GUIDED_TOUR_STEPS: readonly GuidedTourStep[] = [
   },
 ] as const;
 
+/**
+ * 어떤 단계에 들어갈 때 시작할 interaction 값을 고른다.
+ *
+ * 강조 대상이 있으면서 질문 체험까지 요구하는 단계만 `waiting-for-ai`로 시작해
+ * "다음" 버튼을 잠그고, 나머지는 모두 곧바로 넘어갈 수 있는 `ready`다.
+ * step이 undefined여도 안전하게 `ready`를 돌려주므로 범위를 벗어난 인덱스로
+ * 불러도 예외가 나지 않는다.
+ */
 export function guidedTourInteractionForStep(
   step: GuidedTourStep | undefined,
 ): GuidedTourInteraction {
   return step?.targetId && step.requiresQuestion ? "waiting-for-ai" : "ready";
 }
 
+/**
+ * 현재 상태가 가리키는 단계를 돌려준다.
+ *
+ * 진행 중(`active`)이 아니면 undefined다. stepIndex가 목록 범위를 벗어난
+ * 경우에도 undefined가 나오므로 호출부에서 따로 범위를 검사하지 않는다.
+ */
 export function currentGuidedTourStep(
   state: GuidedTourState,
 ): GuidedTourStep | undefined {

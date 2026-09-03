@@ -1,13 +1,27 @@
+/**
+ * 안내 투어의 두 화면 조각을 담은 표현 전용 모듈이다.
+ *
+ * 첫 방문자에게 투어를 권하는 배너(GuidedTourInvite)와 진행 중 안내 카드
+ * (GuidedTourCard) 모두 상태를 직접 갖지 않고 useGuidedTour가 계산한 값을
+ * 그대로 그린다. 저장소·DOM 접근이 없어 클라이언트 지시자도 필요하지 않다.
+ */
 import { GUIDED_TOUR_STEPS } from "./guidedTour";
 import type { GuidedTourState, GuidedTourStep } from "./guidedTour";
 import type { Ref } from "react";
 import styles from "./GuidedTourCard.module.css";
 
+/** 배너의 두 버튼이 각각 투어 시작과 배너 닫기를 상위로 올린다. */
 interface GuidedTourInviteProps {
   onStart: () => void;
   onDismiss: () => void;
 }
 
+/**
+ * 첫 방문자에게 투어를 권하는 배너다.
+ *
+ * 노출 여부는 훅이 판단하므로 여기서는 조건 없이 그린다. aria-labelledby로
+ * 제목과 묶어 보조 기술이 안내 영역임을 알 수 있게 했다.
+ */
 export function GuidedTourInvite({
   onStart,
   onDismiss,
@@ -33,10 +47,18 @@ export function GuidedTourInvite({
   );
 }
 
+/**
+ * 카드가 그리는 데 필요한 상태와 조작 콜백 묶음이다.
+ *
+ * placement는 카드가 채팅 패널 안(`panel`)에 있는지 화면 위에 따로 떠 있는지
+ * (`external`)를 가리키며, external일 때만 채팅을 여닫는 버튼이 함께 붙는다.
+ * aiAvailable은 질문 체험 안내 문구를 고르는 데만 쓰고 버튼 잠금과는 무관하다.
+ */
 interface GuidedTourCardProps {
   state: GuidedTourState;
   step: GuidedTourStep | null;
   placement: "external" | "panel";
+  /** 패널이 열리는 순간에만 등장 연출을 한 번 재생한다. */
   animateEntrance?: boolean;
   externalChatOpen?: boolean;
   externalChatButtonRef?: Ref<HTMLButtonElement>;
@@ -51,6 +73,18 @@ interface GuidedTourCardProps {
   onToggleExternalChat?: () => void;
 }
 
+/**
+ * 진행 중인 투어의 현재 단계와 다음 행동 버튼을 보여 주는 안내 카드다.
+ *
+ * 완료 상태에서는 단계 안내 대신 마무리 문구와 다시 둘러보기·설정 안내 버튼을
+ * 내놓는다. 질문 체험을 기다리는 동안에는 "다음 장소" 버튼을 감춰 방문자가
+ * 체험을 지나치지 않게 하고, 대신 건너뛰기 버튼만 남긴다. 답변을 받는
+ * 중(answering)에는 이전·현재 장소·종료를 모두 잠가 진행 중인 요청과 화면
+ * 이동이 엇갈리지 않게 한다.
+ *
+ * 단계가 바뀌면 문구만 갈리므로 aria-live="polite"를 걸어 보조 기술이 바뀐
+ * 내용을 읽어 주도록 했다.
+ */
 export function GuidedTourCard({
   state,
   step,
@@ -69,6 +103,8 @@ export function GuidedTourCard({
   onToggleExternalChat,
 }: GuidedTourCardProps) {
   const completed = state.status === "completed";
+  // 완료 상태는 마지막 stepIndex를 그대로 들고 있으므로 진행도만 전체 값으로 채운다.
+  // 진행 중에는 인덱스가 범위를 벗어나도 표시가 깨지지 않도록 전체 개수로 잘라 낸다.
   const progress = completed
     ? GUIDED_TOUR_STEPS.length
     : Math.min(state.stepIndex + 1, GUIDED_TOUR_STEPS.length);

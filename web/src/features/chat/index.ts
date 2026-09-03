@@ -1,3 +1,10 @@
+/**
+ * 챗봇 기능의 공개 진입점이다.
+ *
+ * 바깥 화면이 쓰는 것만 골라 다시 내보내고, ChatWidget이나 파서처럼 기능 안에서만
+ * 쓰는 구현은 감춘다. 페이지 쪽 import 경로를 이 파일 하나로 묶어 두면 내부 파일
+ * 구조를 바꿔도 사용하는 쪽을 건드리지 않는다.
+ */
 export { ChatProvider } from "./ChatProvider";
 export { AskAiButton } from "./AskAiButton";
 export { StreamingText } from "./StreamingText";
@@ -19,7 +26,6 @@ export type {
   ChatStreamAnimation,
   ChatMessage,
   ChatSegment,
-  ChatSource,
   PageContext,
   Tone,
 } from "./types";

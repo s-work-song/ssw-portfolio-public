@@ -20,6 +20,16 @@
   --border-strong: rgba(18,20,45,0.15);
   --shadow: 0 22px 50px -28px rgba(20,24,60,0.20);
   --nav-bg: rgba(244,245,251,0.78);
+  /*
+   * 포인트 색 기본값(인디고)입니다. 저장된 색이 있으면 <head> 부트 스크립트와
+   * ThemeContext가 <html>의 인라인 스타일로 덮어씁니다. 인라인 스타일이 항상
+   * 이기므로 이 기본값은 저장값이 없을 때만 보입니다. 값은
+   * context/accentPalette.ts의 indigo와 같아야 합니다.
+   */
+  --accent: #6366f1;
+  --accent-2: #818cf8;
+  --accent-soft: rgba(99,102,241,0.14);
+  --accent-contrast: #ffffff;
 }
 
 [data-theme='dark'] {

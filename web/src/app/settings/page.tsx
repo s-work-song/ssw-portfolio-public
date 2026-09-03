@@ -30,6 +30,64 @@ import {
   StreamingText,
   useChat,
 } from "../../features/chat";
+import { ACCENTS as ACCENT_KEYS } from "../../features/portfolio-tools/schema";
+import styles from "./page.module.css";
+
+/**
+ * 옵션 요소에 붙이는 클래스다.
+ *
+ * 선택 여부(--on)를 켜는 .optOn과 모양 규칙을 함께 건다. 선택 표시를 React
+ * 상태가 아니라 <html>의 설정 data 속성으로 그리므로, 정적 HTML의 첫 페인트부터
+ * 저장값이 반영된다. 자세한 계약은 context/settingsDataset과 page.module.css에 있다.
+ */
+function optionClass(...shapes: string[]): string {
+  return [styles.optOn, ...shapes].join(" ");
+}
+
+/** 세그먼트 버튼의 모양이다. 선택 여부에 따른 색은 CSS가 맡는다. */
+const SEGMENT_BUTTON_STYLE: React.CSSProperties = {
+  flex: 1,
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  gap: "7px",
+  padding: "11px",
+  borderRadius: "9px",
+  fontSize: "14px",
+  fontWeight: 700,
+  cursor: "pointer",
+  border: "none",
+  transition: "background .2s, color .2s",
+};
+
+/**
+ * 섹션 머리말에 현재 값을 적는 캡션이다.
+ *
+ * 값마다 span을 모두 그려 두고 CSS가 현재 값 하나만 펼친다. React 상태로 하나만
+ * 그리면 하이드레이션이 끝날 때까지 기본값이 보인다.
+ */
+function ValueCaption({
+  option,
+  options,
+}: {
+  option: string;
+  options: ReadonlyArray<{ value: string; label: string }>;
+}) {
+  return (
+    <>
+      {options.map((entry) => (
+        <span
+          key={entry.value}
+          className={optionClass(styles.optText)}
+          data-option={option}
+          data-value={entry.value}
+        >
+          {entry.label}
+        </span>
+      ))}
+    </>
+  );
+}
 
 const STREAM_PREVIEW_TEXT =
   "선택한 효과로 포트폴리오 챗봇의 답변이 실시간으로 표시됩니다.";
@@ -108,6 +166,23 @@ const FAB_ANIMATION_OPTIONS: ReadonlyArray<{
     value: "blur",
     label: "블러 포커스",
     description: "흐릿한 상태에서 또렷하게 등장",
+  },
+];
+
+const CHAT_LAYOUT_OPTIONS: ReadonlyArray<{
+  value: ChatLayout;
+  label: string;
+  description: string;
+}> = [
+  {
+    value: "floating",
+    label: "플로팅 창",
+    description: "현재처럼 콘텐츠 위에 작은 채팅창을 띄웁니다. (기본)",
+  },
+  {
+    value: "dock",
+    label: "오른쪽 고정 패널",
+    description: "채팅이 열리면 오른쪽 전체 높이를 배정하고 본문을 밀어냅니다.",
   },
 ];
 
@@ -227,38 +302,7 @@ export default function SettingsPage() {
     setStreamAnimation(DEFAULT_CHAT_STREAM_ANIMATION);
   };
 
-  const getSegBtnStyle = (active: boolean): React.CSSProperties => {
-    const base: React.CSSProperties = {
-      flex: 1,
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      gap: "7px",
-      padding: "11px",
-      borderRadius: "9px",
-      fontSize: "14px",
-      fontWeight: 700,
-      cursor: "pointer",
-      border: "none",
-      transition: "background .2s, color .2s",
-    };
-    
-    if (active) {
-      return {
-        ...base,
-        background: "var(--accent, #6366f1)",
-        color: "var(--accent-contrast, #fff)",
-        boxShadow: "0 6px 16px -8px var(--accent-soft)",
-      };
-    }
-    return {
-      ...base,
-      background: "transparent",
-      color: "var(--text-dim)",
-    };
-  };
-
-  const accentKeys: Accent[] = ["indigo", "emerald", "amber", "rose", "violet"];
+  const accentKeys: Accent[] = [...ACCENT_KEYS];
   const fabModes: ReadonlyArray<{
     value: FabMode;
     label: string;
@@ -384,7 +428,10 @@ export default function SettingsPage() {
                 onClick={() => setMode("system")}
                 role="radio"
                 aria-checked={mode === "system"}
-                style={getSegBtnStyle(mode === "system")}
+                className={optionClass(styles.optSeg)}
+                data-option="theme-mode"
+                data-value="system"
+                style={SEGMENT_BUTTON_STYLE}
               >
                 <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
                   <rect x="3" y="4" width="18" height="13" rx="2" />
@@ -396,7 +443,10 @@ export default function SettingsPage() {
                 onClick={() => setMode("light")}
                 role="radio"
                 aria-checked={mode === "light"}
-                style={getSegBtnStyle(mode === "light")}
+                className={optionClass(styles.optSeg)}
+                data-option="theme-mode"
+                data-value="light"
+                style={SEGMENT_BUTTON_STYLE}
               >
                 <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
                   <circle cx="12" cy="12" r="4" />
@@ -408,7 +458,10 @@ export default function SettingsPage() {
                 onClick={() => setMode("dark")}
                 role="radio"
                 aria-checked={mode === "dark"}
-                style={getSegBtnStyle(mode === "dark")}
+                className={optionClass(styles.optSeg)}
+                data-option="theme-mode"
+                data-value="dark"
+                style={SEGMENT_BUTTON_STYLE}
               >
                 <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M20 14.5A8 8 0 0 1 9.5 4 7 7 0 1 0 20 14.5z" />
@@ -430,7 +483,10 @@ export default function SettingsPage() {
                 onClick={() => setMotion("system")}
                 role="radio"
                 aria-checked={motion === "system"}
-                style={getSegBtnStyle(motion === "system")}
+                className={optionClass(styles.optSeg)}
+                data-option="motion"
+                data-value="system"
+                style={SEGMENT_BUTTON_STYLE}
               >
                 시스템 따름
               </button>
@@ -439,7 +495,10 @@ export default function SettingsPage() {
                 onClick={() => setMotion("on")}
                 role="radio"
                 aria-checked={motion === "on"}
-                style={getSegBtnStyle(motion === "on")}
+                className={optionClass(styles.optSeg)}
+                data-option="motion"
+                data-value="on"
+                style={SEGMENT_BUTTON_STYLE}
               >
                 항상 켬
               </button>
@@ -448,7 +507,10 @@ export default function SettingsPage() {
                 onClick={() => setMotion("off")}
                 role="radio"
                 aria-checked={motion === "off"}
-                style={getSegBtnStyle(motion === "off")}
+                className={optionClass(styles.optSeg)}
+                data-option="motion"
+                data-value="off"
+                style={SEGMENT_BUTTON_STYLE}
               >
                 항상 끔
               </button>
@@ -465,7 +527,7 @@ export default function SettingsPage() {
                 페이지 이동 애니메이션
               </span>
               <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "12.5px", color: "var(--accent, #6366f1)", whiteSpace: "nowrap" }}>
-                {PAGE_TRANSITION_OPTIONS.find((option) => option.value === pageTransition)?.label}
+                <ValueCaption option="page-transition" options={PAGE_TRANSITION_OPTIONS} />
               </span>
             </div>
             <div id="page-transition-description" style={{ fontSize: "13.5px", color: "var(--text-mute)", marginBottom: "18px", lineHeight: 1.6 }}>
@@ -490,6 +552,9 @@ export default function SettingsPage() {
                     onClick={() => setPageTransition(option.value)}
                     role="radio"
                     aria-checked={active}
+                    className={optionClass(styles.optCard)}
+                    data-option="page-transition"
+                    data-value={option.value}
                     style={{
                       display: "flex",
                       flexDirection: "column",
@@ -499,23 +564,15 @@ export default function SettingsPage() {
                       borderRadius: "12px",
                       textAlign: "left",
                       cursor: "pointer",
-                      background: active
-                        ? "var(--accent-soft, rgba(99,102,241,.14))"
-                        : "var(--bg-elev-2)",
-                      border: active
-                        ? "1.5px solid var(--accent, #6366f1)"
-                        : "1.5px solid var(--border)",
                     }}
                   >
                     <span style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "7px", width: "100%", fontSize: "13.5px", fontWeight: 700 }}>
                       {option.label}
-                      {active && (
-                        <span style={{ width: "17px", height: "17px", borderRadius: "50%", background: "var(--accent, #6366f1)", color: "var(--accent-contrast, #fff)", display: "grid", placeItems: "center", flexShrink: 0 }}>
-                          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.4" strokeLinecap="round" strokeLinejoin="round">
-                            <polyline points="20 6 9 17 4 12" />
-                          </svg>
-                        </span>
-                      )}
+                      <span className={styles.optCheck} style={{ width: "17px", height: "17px", borderRadius: "50%", background: "var(--accent, #6366f1)", color: "var(--accent-contrast, #fff)", display: "grid", placeItems: "center", flexShrink: 0 }}>
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.4" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="20 6 9 17 4 12" />
+                        </svg>
+                      </span>
                     </span>
                     <span style={{ fontSize: "11.5px", color: "var(--text-mute)", lineHeight: 1.45 }}>
                       {option.description}
@@ -534,7 +591,13 @@ export default function SettingsPage() {
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px", marginBottom: "4px" }}>
               <span style={{ fontSize: "16px", fontWeight: 700 }}>포인트 컬러</span>
               <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "12.5px", color: "var(--accent, #6366f1)", whiteSpace: "nowrap" }}>
-                {ACCENTS[accent]?.label || "인디고"}
+                <ValueCaption
+                  option="accent"
+                  options={accentKeys.map((key) => ({
+                    value: key,
+                    label: ACCENTS[key].label,
+                  }))}
+                />
               </span>
             </div>
             <div style={{ fontSize: "13.5px", color: "var(--text-mute)", marginBottom: "18px" }}>버튼과 강조 요소에 쓰이는 색입니다.</div>
@@ -549,7 +612,9 @@ export default function SettingsPage() {
                     aria-label={meta.label}
                     role="radio"
                     aria-checked={active}
-                    className="hover-accent-color"
+                    className={optionClass("hover-accent-color")}
+                    data-option="accent"
+                    data-value={key}
                     style={{
                       width: "50px",
                       height: "50px",
@@ -562,11 +627,9 @@ export default function SettingsPage() {
                       transition: "transform .18s",
                     }}
                   >
-                    {active && (
-                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" style={{ filter: "drop-shadow(0 1px 2px rgba(0,0,0,.4))" }}>
-                        <polyline points="20 6 9 17 4 12" />
-                      </svg>
-                    )}
+                    <svg className={styles.optCheck} width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" style={{ filter: "drop-shadow(0 1px 2px rgba(0,0,0,.4))" }}>
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
                   </button>
                 );
               })}
@@ -578,7 +641,7 @@ export default function SettingsPage() {
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px", marginBottom: "4px" }}>
               <span style={{ fontSize: "16px", fontWeight: 700 }}>플로팅 버튼</span>
               <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "12.5px", color: "var(--accent, #6366f1)", whiteSpace: "nowrap" }}>
-                {fabMode === "quick-menu" ? "빠른 메뉴" : "채팅 바로 열기"}
+                <ValueCaption option="fab-mode" options={fabModes} />
               </span>
             </div>
             <div style={{ fontSize: "13.5px", color: "var(--text-mute)", marginBottom: "18px" }}>
@@ -595,6 +658,9 @@ export default function SettingsPage() {
                       onClick={() => setFabMode(option.value)}
                       role="radio"
                       aria-checked={active}
+                      className={optionClass(styles.optCard)}
+                      data-option="fab-mode"
+                      data-value={option.value}
                       style={{
                         display: "flex",
                         flexDirection: "column",
@@ -604,19 +670,15 @@ export default function SettingsPage() {
                         borderRadius: "13px",
                         cursor: "pointer",
                         transition: "background .2s, border-color .2s",
-                        background: active ? "var(--accent-soft, rgba(99,102,241,.14))" : "var(--bg-elev-2)",
-                        border: active ? "1.5px solid var(--accent, #6366f1)" : "1.5px solid var(--border)",
                       }}
                     >
                       <span style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "8px", width: "100%" }}>
                         <span style={{ fontSize: "14.5px", fontWeight: 700 }}>{option.label}</span>
-                        {active && (
-                          <span style={{ width: "18px", height: "18px", borderRadius: "50%", background: "var(--accent, #6366f1)", color: "var(--accent-contrast, #fff)", display: "grid", placeItems: "center", flexShrink: 0 }}>
-                            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.4" strokeLinecap="round" strokeLinejoin="round">
-                              <polyline points="20 6 9 17 4 12" />
-                            </svg>
-                          </span>
-                        )}
+                        <span className={styles.optCheck} style={{ width: "18px", height: "18px", borderRadius: "50%", background: "var(--accent, #6366f1)", color: "var(--accent-contrast, #fff)", display: "grid", placeItems: "center", flexShrink: 0 }}>
+                          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.4" strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="20 6 9 17 4 12" />
+                          </svg>
+                        </span>
                       </span>
                       <span style={{ fontSize: "12px", color: "var(--text-mute)", lineHeight: 1.45 }}>{option.description}</span>
                     </button>
@@ -625,6 +687,7 @@ export default function SettingsPage() {
               </div>
 
               <div
+                className={styles.fabPreview}
                 style={{
                   flex: "1 1 260px",
                   minWidth: 0,
@@ -633,7 +696,6 @@ export default function SettingsPage() {
                   borderRadius: "14px",
                   background: "linear-gradient(160deg, var(--accent-soft, rgba(99,102,241,.12)), var(--bg-elev-2))",
                   overflow: "hidden",
-                  minHeight: fabMode === "quick-menu" ? "300px" : "240px",
                   transition: "min-height .2s ease",
                 }}
               >
@@ -722,20 +784,24 @@ export default function SettingsPage() {
               </div>
             </div>
 
-            {fabMode === "quick-menu" && (
-              <div
-                style={{
-                  marginTop: "20px",
-                  paddingTop: "18px",
-                  borderTop: "1px solid var(--border)",
-                }}
-              >
+            {/* 빠른 메뉴를 골랐을 때만 보인다. 여닫기는 CSS가 맡아 첫 페인트부터 맞는다. */}
+            <div
+              className={styles.whenQuickMenu}
+              style={{
+                marginTop: "20px",
+                paddingTop: "18px",
+                borderTop: "1px solid var(--border)",
+              }}
+            >
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px", marginBottom: "4px" }}>
                   <span id="fab-animation-title" style={{ fontSize: "14.5px", fontWeight: 700 }}>
                     빠른 메뉴 애니메이션
                   </span>
                   <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "12px", color: "var(--accent, #6366f1)", whiteSpace: "nowrap" }}>
-                    {FAB_ANIMATION_OPTIONS.find((option) => option.value === fabAnim)?.label}
+                    <ValueCaption
+                      option="quick-menu-animation"
+                      options={FAB_ANIMATION_OPTIONS}
+                    />
                   </span>
                 </div>
                 <div id="fab-animation-description" style={{ fontSize: "12.5px", color: "var(--text-mute)", marginBottom: "14px", lineHeight: 1.55 }}>
@@ -760,6 +826,9 @@ export default function SettingsPage() {
                         onClick={() => setFabAnim(option.value)}
                         role="radio"
                         aria-checked={active}
+                        className={optionClass(styles.optCard)}
+                        data-option="quick-menu-animation"
+                        data-value={option.value}
                         style={{
                           display: "flex",
                           flexDirection: "column",
@@ -769,23 +838,15 @@ export default function SettingsPage() {
                           borderRadius: "12px",
                           textAlign: "left",
                           cursor: "pointer",
-                          background: active
-                            ? "var(--accent-soft, rgba(99,102,241,.14))"
-                            : "var(--bg-elev-2)",
-                          border: active
-                            ? "1.5px solid var(--accent, #6366f1)"
-                            : "1.5px solid var(--border)",
                         }}
                       >
                         <span style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "7px", width: "100%", fontSize: "13.5px", fontWeight: 700 }}>
                           {option.label}
-                          {active && (
-                            <span style={{ width: "17px", height: "17px", borderRadius: "50%", background: "var(--accent, #6366f1)", color: "var(--accent-contrast, #fff)", display: "grid", placeItems: "center", flexShrink: 0 }}>
-                              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.4" strokeLinecap="round" strokeLinejoin="round">
-                                <polyline points="20 6 9 17 4 12" />
-                              </svg>
-                            </span>
-                          )}
+                          <span className={styles.optCheck} style={{ width: "17px", height: "17px", borderRadius: "50%", background: "var(--accent, #6366f1)", color: "var(--accent-contrast, #fff)", display: "grid", placeItems: "center", flexShrink: 0 }}>
+                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.4" strokeLinecap="round" strokeLinejoin="round">
+                              <polyline points="20 6 9 17 4 12" />
+                            </svg>
+                          </span>
                         </span>
                         <span style={{ fontSize: "11.5px", color: "var(--text-mute)", lineHeight: 1.45 }}>
                           {option.description}
@@ -794,8 +855,7 @@ export default function SettingsPage() {
                     );
                   })}
                 </div>
-              </div>
-            )}
+            </div>
           </section>
 
           {/* Background Glow */}
@@ -812,6 +872,9 @@ export default function SettingsPage() {
                 aria-label="배경 글로우 전환"
                 role="switch"
                 aria-checked={glow}
+                className={optionClass(styles.optSwitch)}
+                data-option="glow"
+                data-value="true"
                 style={{
                   width: "48px",
                   height: "27px",
@@ -821,10 +884,10 @@ export default function SettingsPage() {
                   transition: "background .2s",
                   border: "1px solid var(--border-strong)",
                   flexShrink: 0,
-                  background: glow ? "var(--accent, #6366f1)" : "var(--bg-elev)",
                 }}
               >
                 <span
+                  className={styles.optSwitchThumb}
                   style={{
                     position: "absolute",
                     top: "2px",
@@ -835,7 +898,6 @@ export default function SettingsPage() {
                     background: "#fff",
                     boxShadow: "0 1px 3px rgba(0,0,0,.3)",
                     transition: "transform .2s",
-                    transform: glow ? "translateX(21px)" : "none",
                   }}
                 />
               </button>
@@ -849,7 +911,7 @@ export default function SettingsPage() {
                 PC 채팅 레이아웃
               </span>
               <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "12.5px", color: "var(--accent, #6366f1)", whiteSpace: "nowrap" }}>
-                {chatLayout === "dock" ? "오른쪽 고정 패널" : "플로팅 창"}
+                <ValueCaption option="chat-layout" options={CHAT_LAYOUT_OPTIONS} />
               </span>
             </div>
             <div id="chat-layout-description" style={{ fontSize: "13.5px", color: "var(--text-mute)", marginBottom: "18px", lineHeight: 1.6 }}>
@@ -861,22 +923,7 @@ export default function SettingsPage() {
               aria-describedby="chat-layout-description"
               style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "10px" }}
             >
-              {([
-                {
-                  value: "floating",
-                  label: "플로팅 창",
-                  description: "현재처럼 콘텐츠 위에 작은 채팅창을 띄웁니다. (기본)",
-                },
-                {
-                  value: "dock",
-                  label: "오른쪽 고정 패널",
-                  description: "채팅이 열리면 오른쪽 전체 높이를 배정하고 본문을 밀어냅니다.",
-                },
-              ] as ReadonlyArray<{
-                value: ChatLayout;
-                label: string;
-                description: string;
-              }>).map((option) => {
+              {CHAT_LAYOUT_OPTIONS.map((option) => {
                 const active = chatLayout === option.value;
                 return (
                   <button
@@ -885,6 +932,9 @@ export default function SettingsPage() {
                     role="radio"
                     aria-checked={active}
                     onClick={() => setChatLayout(option.value)}
+                    className={optionClass(styles.optCard)}
+                    data-option="chat-layout"
+                    data-value={option.value}
                     style={{
                       display: "flex",
                       minHeight: "92px",
@@ -892,12 +942,6 @@ export default function SettingsPage() {
                       gap: "7px",
                       padding: "15px 16px",
                       borderRadius: "13px",
-                      border: active
-                        ? "1.5px solid var(--accent, #6366f1)"
-                        : "1.5px solid var(--border)",
-                      background: active
-                        ? "var(--accent-soft, rgba(99,102,241,.14))"
-                        : "var(--bg-elev-2)",
                       color: "var(--text)",
                       cursor: "pointer",
                       textAlign: "left",
@@ -913,18 +957,18 @@ export default function SettingsPage() {
                 );
               })}
             </div>
-            {chatLayout === "dock" && (
-              <div
-                style={{
-                  display: "grid",
-                  gap: "10px",
-                  marginTop: "14px",
-                  padding: "14px 15px",
-                  border: "1px solid var(--border)",
-                  borderRadius: "13px",
-                  background: "var(--bg-elev-2)",
-                }}
-              >
+            {/* 오른쪽 고정 패널을 골랐을 때만 보인다. 여닫기는 CSS가 맡는다. */}
+            <div
+              className={styles.whenChatDock}
+              style={{
+                gap: "10px",
+                marginTop: "14px",
+                padding: "14px 15px",
+                border: "1px solid var(--border)",
+                borderRadius: "13px",
+                background: "var(--bg-elev-2)",
+              }}
+            >
                 <div
                   style={{
                     display: "flex",
@@ -1006,8 +1050,7 @@ export default function SettingsPage() {
                   패널을 연 뒤 왼쪽 경계를 드래그하거나 이 슬라이더로
                   조절할 수 있습니다.
                 </span>
-              </div>
-            )}
+            </div>
             <div style={{ marginTop: "11px", color: "var(--text-mute)", fontSize: "12.5px", lineHeight: 1.55 }}>
               고정 패널은 화면 너비 1100px 이상에서 적용되며, 더 좁은 화면과 모바일에서는 자동으로 플로팅 창을 사용합니다.
             </div>
@@ -1020,7 +1063,7 @@ export default function SettingsPage() {
                 채팅 글꼴과 크기
               </span>
               <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "12.5px", color: "var(--accent, #6366f1)", whiteSpace: "nowrap" }}>
-                {CHAT_FONT_OPTIONS.find((option) => option.value === chatFont)?.label}
+                <ValueCaption option="chat-font" options={CHAT_FONT_OPTIONS} />
               </span>
             </div>
             <div id="chat-font-description" style={{ fontSize: "13.5px", color: "var(--text-mute)", marginBottom: "18px", lineHeight: 1.6 }}>
@@ -1042,6 +1085,9 @@ export default function SettingsPage() {
                     role="radio"
                     aria-checked={active}
                     onClick={() => setChatFont(option.value)}
+                    className={optionClass(styles.optCard)}
+                    data-option="chat-font"
+                    data-value={option.value}
                     style={{
                       display: "flex",
                       minHeight: "84px",
@@ -1049,12 +1095,6 @@ export default function SettingsPage() {
                       gap: "7px",
                       padding: "14px 15px",
                       borderRadius: "13px",
-                      border: active
-                        ? "1.5px solid var(--accent, #6366f1)"
-                        : "1.5px solid var(--border)",
-                      background: active
-                        ? "var(--accent-soft, rgba(99,102,241,.14))"
-                        : "var(--bg-elev-2)",
                       color: "var(--text)",
                       cursor: "pointer",
                       fontFamily: option.previewFamily,
@@ -1087,21 +1127,15 @@ export default function SettingsPage() {
                     aria-checked={active}
                     aria-label={`${option.label} ${option.pixels}px`}
                     onClick={() => setChatFontSize(option.value)}
+                    className={optionClass(styles.optCard, styles.optAccentText)}
+                    data-option="chat-font-size"
+                    data-value={option.value}
                     style={{
                       display: "grid",
                       minHeight: "58px",
                       padding: "8px",
                       placeItems: "center",
-                      border: active
-                        ? "1.5px solid var(--accent, #6366f1)"
-                        : "1.5px solid var(--border)",
                       borderRadius: "11px",
-                      background: active
-                        ? "var(--accent-soft, rgba(99,102,241,.14))"
-                        : "var(--bg-elev-2)",
-                      color: active
-                        ? "var(--accent, #6366f1)"
-                        : "var(--text-dim)",
                       cursor: "pointer",
                       fontFamily: "var(--chat-font-family)",
                       fontSize: `${option.pixels}px`,
@@ -1146,7 +1180,13 @@ export default function SettingsPage() {
               <div>
                 <div style={{ fontSize: "14.5px", fontWeight: 600 }}>응답 스트리밍</div>
                 <div style={{ fontSize: "12.5px", color: "var(--text-mute)", marginTop: "2px" }}>
-                  {streamingEnabled ? "생성되는 내용을 바로 표시" : "완성 후 한 번에 표시"}
+                  <ValueCaption
+                    option="chat-streaming"
+                    options={[
+                      { value: "true", label: "생성되는 내용을 바로 표시" },
+                      { value: "false", label: "완성 후 한 번에 표시" },
+                    ]}
+                  />
                 </div>
               </div>
               <button
@@ -1156,6 +1196,9 @@ export default function SettingsPage() {
                 aria-checked={streamingEnabled}
                 aria-labelledby="chat-response-title"
                 aria-describedby="chat-streaming-description"
+                className={optionClass(styles.optSwitch)}
+                data-option="chat-streaming"
+                data-value="true"
                 style={{
                   width: "48px",
                   height: "27px",
@@ -1165,11 +1208,11 @@ export default function SettingsPage() {
                   transition: "background .2s",
                   border: "1px solid var(--border-strong)",
                   flexShrink: 0,
-                  background: streamingEnabled ? "var(--accent, #6366f1)" : "var(--bg-elev)",
                 }}
               >
                 <span
                   aria-hidden="true"
+                  className={styles.optSwitchThumb}
                   style={{
                     position: "absolute",
                     top: "2px",
@@ -1180,7 +1223,6 @@ export default function SettingsPage() {
                     background: "#fff",
                     boxShadow: "0 1px 3px rgba(0,0,0,.3)",
                     transition: "transform .2s",
-                    transform: streamingEnabled ? "translateX(21px)" : "none",
                   }}
                 />
               </button>
@@ -1192,7 +1234,10 @@ export default function SettingsPage() {
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px", marginBottom: "4px" }}>
               <span id="stream-animation-title" style={{ fontSize: "16px", fontWeight: 700 }}>응답 텍스트 애니메이션</span>
               <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "12.5px", color: "var(--accent, #6366f1)", whiteSpace: "nowrap" }}>
-                {CHAT_STREAM_ANIMATION_OPTIONS.find((option) => option.value === streamAnimation)?.label || "단어 페이드"}
+                <ValueCaption
+                  option="chat-text-animation"
+                  options={CHAT_STREAM_ANIMATION_OPTIONS}
+                />
               </span>
             </div>
             <div id="stream-animation-description" style={{ fontSize: "13.5px", color: "var(--text-mute)", marginBottom: "18px", lineHeight: 1.6 }}>
@@ -1203,11 +1248,13 @@ export default function SettingsPage() {
                 role="radiogroup"
                 aria-label="응답 텍스트 애니메이션"
                 aria-describedby="stream-animation-description"
+                className={optionClass(styles.optDim)}
+                data-option="chat-streaming"
+                data-value="true"
                 style={{
                   display: "grid",
                   gridTemplateColumns: "repeat(auto-fill, minmax(190px, 1fr))",
                   gap: "10px",
-                  opacity: streamingEnabled ? 1 : 0.5,
                   transition: "opacity .2s",
                 }}
               >
@@ -1220,6 +1267,9 @@ export default function SettingsPage() {
                       onClick={() => setStreamAnimation(option.value)}
                       role="radio"
                       aria-checked={active}
+                      className={optionClass(styles.optCard)}
+                      data-option="chat-text-animation"
+                      data-value={option.value}
                       style={{
                         display: "flex",
                         flexDirection: "column",
@@ -1229,19 +1279,15 @@ export default function SettingsPage() {
                         borderRadius: "13px",
                         cursor: "pointer",
                         transition: "background .2s, border-color .2s",
-                        background: active ? "var(--accent-soft, rgba(99,102,241,.14))" : "var(--bg-elev-2)",
-                        border: active ? "1.5px solid var(--accent, #6366f1)" : "1.5px solid var(--border)",
                       }}
                     >
                       <span style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "8px", width: "100%" }}>
                         <span style={{ fontSize: "14.5px", fontWeight: 700 }}>{option.label}</span>
-                        {active && (
-                          <span style={{ width: "18px", height: "18px", borderRadius: "50%", background: "var(--accent, #6366f1)", color: "var(--accent-contrast, #fff)", display: "grid", placeItems: "center", flexShrink: 0 }}>
-                            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.4" strokeLinecap="round" strokeLinejoin="round">
-                              <polyline points="20 6 9 17 4 12" />
-                            </svg>
-                          </span>
-                        )}
+                        <span className={styles.optCheck} style={{ width: "18px", height: "18px", borderRadius: "50%", background: "var(--accent, #6366f1)", color: "var(--accent-contrast, #fff)", display: "grid", placeItems: "center", flexShrink: 0 }}>
+                          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.4" strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="20 6 9 17 4 12" />
+                          </svg>
+                        </span>
                       </span>
                       <span style={{ fontSize: "12px", color: "var(--text-mute)", lineHeight: 1.45 }}>{option.description}</span>
                     </button>
@@ -1420,7 +1466,10 @@ export default function SettingsPage() {
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px", marginBottom: "4px" }}>
               <span id="chat-animation-title" style={{ fontSize: "16px", fontWeight: 700 }}>채팅창 애니메이션</span>
               <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "12.5px", color: "var(--accent, #6366f1)", whiteSpace: "nowrap" }}>
-                {CHAT_ANIMATION_OPTIONS.find((option) => option.value === chatAnimation)?.label || "젤리"}
+                <ValueCaption
+                  option="chat-panel-animation"
+                  options={CHAT_ANIMATION_OPTIONS}
+                />
               </span>
             </div>
             <div id="chat-animation-description" style={{ fontSize: "13.5px", color: "var(--text-mute)", marginBottom: "18px", lineHeight: 1.6 }}>
@@ -1439,7 +1488,10 @@ export default function SettingsPage() {
                   onClick={() => setChatAnimation(option.value)}
                   role="radio"
                   aria-checked={chatAnimation === option.value}
-                  style={getSegBtnStyle(chatAnimation === option.value)}
+                  className={optionClass(styles.optSeg)}
+                  data-option="chat-panel-animation"
+                  data-value={option.value}
+                  style={SEGMENT_BUTTON_STYLE}
                 >
                   {option.label}
                 </button>
