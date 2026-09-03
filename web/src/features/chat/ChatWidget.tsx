@@ -65,7 +65,7 @@ const MOBILE_TOUR_REVEAL_DELAY_MS = 500;
 /** 둘러보기 카드가 붙고 떨어질 때 패널 레이아웃이 바뀌는 시간이다. */
 const TOUR_LAYOUT_TRANSITION_MS = 420;
 /** 이 시간 동안 새 텍스트가 오지 않으면 "오래 걸리는 중" 안내로 바꾼다. */
-const SLOW_RESPONSE_NOTICE_MS = 12_000;
+const SLOW_RESPONSE_NOTICE_MS = 20_000;
 /** 젤리 엔진이 콘텐츠 래퍼를 찾을 때 쓰는 전역 클래스명(엔진 계약)이다. */
 const JELLY_CONTENT_CLASS = "chat-content-wrapper";
 
