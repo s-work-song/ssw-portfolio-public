@@ -35,7 +35,6 @@ import {
   SETTINGS_WEBMCP_GUIDE,
   STREAMING_STORAGE_KEY,
   STREAM_ANIMATION_STORAGE_KEY,
-  TONES,
   TONE_STORAGE_KEY,
   UI_TOOL_NOT_CALLED_RESULT,
   audienceToApi,
@@ -380,10 +379,6 @@ function historyFromMessages(messages: ChatMessage[]): ChatHistoryItem[] {
 }
 
 /** 저장소에서 읽은 값이 지원하는 말투인지 확인한다. */
-function isTone(value: string | null): value is Tone {
-  return value !== null && TONES.includes(value as Tone);
-}
-
 /** 저장소에서 읽은 값이 지원하는 패널 연출인지 확인한다. */
 function isChatAnimation(value: string | null): value is ChatAnimation {
   return (
@@ -408,6 +403,7 @@ function isStreamAnimation(
  */
 interface PendingRetry {
   message: string;
+  responseMode?: "default" | "explanation";
   history: ChatHistoryItem[];
   audienceOverride?: AudienceChoice;
   assistantMessageId?: string;
@@ -591,9 +587,7 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
   useIsomorphicLayoutEffect(() => {
     try {
       const storedTone = window.localStorage.getItem(TONE_STORAGE_KEY);
-      if (isTone(storedTone)) {
-        setTone(storedTone);
-      } else if (storedTone !== null) {
+      if (storedTone !== "official") {
         window.localStorage.setItem(TONE_STORAGE_KEY, "official");
       }
     } catch {
@@ -1488,6 +1482,7 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
       abortRef.current = controller;
       const request: ChatRequest = {
         message: pending.message,
+        responseMode: pending.responseMode ?? "default",
         history: pending.history,
         audience: audienceToApi(pending.audienceOverride ?? audience),
         tone,
@@ -2089,7 +2084,7 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
    * 기록에 중복으로 들어가지 않게 하기 위함이다. 재시도 재료도 여기서 남긴다.
    */
   const sendMessage = useCallback(
-    async (content: string, audienceOverride?: AudienceChoice) => {
+    async (content: string, audienceOverride?: AudienceChoice, responseMode: "default" | "explanation" = "default") => {
       const message = content.trim();
       if (!message || !canRequest() || inFlightRef.current) {
         return;
@@ -2105,7 +2100,7 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
           kind: "message",
         },
       ]);
-      const pending = { message, history, audienceOverride };
+      const pending = { message, history, audienceOverride, responseMode };
       retryRef.current = pending;
       await performRequest(pending);
     },
@@ -2202,11 +2197,10 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
   }, []);
 
   /** 답변 말투를 바꾸고 저장소에 남긴다. 허용 목록 밖 값은 무시한다. */
-  const selectTone = useCallback((nextTone: Tone) => {
-    if (!TONES.includes(nextTone)) return;
-    setTone(nextTone);
+  const selectTone = useCallback(() => {
+    setTone("official");
     try {
-      window.localStorage.setItem(TONE_STORAGE_KEY, nextTone);
+      window.localStorage.setItem(TONE_STORAGE_KEY, "official");
     } catch {
       // 저장 실패가 현재 대화의 말투 변경을 막지는 않는다.
     }

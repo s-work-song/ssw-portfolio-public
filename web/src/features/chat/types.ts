@@ -369,6 +369,8 @@ export interface ChatMessage {
 /** 서버로 보내는 질문 요청 본문이다. */
 export interface ChatRequest {
   message: string;
+  /** 버튼으로 질문한 경우 설명을 요구하며 모델의 화면 변경 도구는 사용하지 않는다. */
+  responseMode?: "default" | "explanation";
   history: ChatHistoryItem[];
   audience: ApiAudience;
   tone: Tone;

@@ -66,7 +66,7 @@ export function AskAiButton({
           ? beginGuidedTourQuestion(guidedTourTarget)
           : false;
         open({ focusInput: false });
-        await sendMessage(question);
+        await sendMessage(question, undefined, "explanation");
         if (advancesTour && guidedTourTarget) {
           completeGuidedTourQuestion(guidedTourTarget);
         }

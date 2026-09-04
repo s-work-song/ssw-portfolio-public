@@ -307,7 +307,6 @@ export function ChatWidget() {
     retryWaitSeconds,
     messages,
     audience,
-    tone,
     streamingEnabled,
     reasoningEnabled,
     effectiveChatAnimation,
@@ -674,7 +673,7 @@ export function ChatWidget() {
   const startQuickAction = useCallback(
     (prompt: string, actionId: ActionId, audienceOverride: AudienceChoice) => {
       setActiveQuickDestination(actionId);
-      void sendMessage(prompt, audienceOverride);
+      void sendMessage(prompt, audienceOverride, "explanation");
       window.requestAnimationFrame(() => navigateAction(actionId));
     },
     [navigateAction, sendMessage],
@@ -684,7 +683,7 @@ export function ChatWidget() {
   const chooseAudience = useCallback(
     (choice: AudienceChoice, prompt: string) => {
       selectAudience(choice);
-      void sendMessage(prompt, choice);
+      void sendMessage(prompt, choice, "explanation");
     },
     [selectAudience, sendMessage],
   );
@@ -746,7 +745,7 @@ export function ChatWidget() {
           return next;
         });
       }
-      void sendMessage(question);
+      void sendMessage(question, undefined, "explanation");
     },
     [sendMessage],
   );
@@ -1531,7 +1530,9 @@ export function ChatWidget() {
                     <label>
                       <span className={styles.visuallyHidden}>말투 선택</span>
                       <select
-                        value={tone}
+                        value="official"
+                        disabled
+                        title="현재 공식 안내자로 고정되어 있습니다."
                         onChange={(event) =>
                           selectTone(
                             event.currentTarget.value as

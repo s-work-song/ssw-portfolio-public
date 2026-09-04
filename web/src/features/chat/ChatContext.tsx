@@ -81,6 +81,7 @@ export interface ChatContextValue {
   sendMessage: (
     message: string,
     audienceOverride?: AudienceChoice,
+    responseMode?: "default" | "explanation",
   ) => Promise<void>;
   /** 생성 중인 답변을 중단한다. 그 시점까지 받은 내용은 그대로 남는다. */
   stopGenerating: () => void;
