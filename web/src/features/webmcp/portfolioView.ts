@@ -84,7 +84,7 @@ export interface PortfolioViewTarget {
    * 목적지를 가리키는 짧은 명사구다.
    *
    * `message`에서 "…로 이동을 시작했습니다"를 뺀 형태로, 화면의 도구 결과
-   * 상태 줄("이동 완료 · {label}")과 서버 도구 결과(publicResult.label)가
+   * 상태 줄("도구 호출 · {label}")과 서버 도구 결과(publicResult.label)가
    * 같은 문구를 쓰도록 여기 한 곳에 둔다.
    */
   label: string;

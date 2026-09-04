@@ -31,6 +31,7 @@ import {
   isAllowed,
   isRecord,
   isString,
+  normalizePortfolioToolName,
 } from "../portfolio-tools/schema.ts";
 import type {
   ActionId,
@@ -270,10 +271,11 @@ export function parsePortfolioViewState(
 export function parseToolExecution(value: unknown): ChatToolExecution | null {
   if (!isRecord(value) || !isToolCallId(value.toolCallId)) return null;
   const toolCallId = value.toolCallId;
+  const toolName = normalizePortfolioToolName(value.toolName);
 
   switch (value.type) {
     case "report_portfolio_view_state": {
-      if (value.toolName !== "get-portfolio-view-state") return null;
+      if (toolName !== "get_portfolio_view_state") return null;
       if (typeof value.available !== "boolean") return null;
       const viewState =
         value.viewState === null ? null : parsePortfolioViewState(value.viewState);
@@ -282,13 +284,13 @@ export function parseToolExecution(value: unknown): ChatToolExecution | null {
       return {
         type: "report_portfolio_view_state",
         toolCallId,
-        toolName: "get-portfolio-view-state",
+        toolName: "get_portfolio_view_state",
         available: value.available,
         viewState,
       };
     }
     case "control_portfolio_view": {
-      if (value.toolName !== "control-portfolio-view") return null;
+      if (toolName !== "control_portfolio_view") return null;
       if (!isAllowed(value.action, PORTFOLIO_VIEW_ACTIONS)) return null;
       const action = value.action as ChatPortfolioViewAction;
       const requiresYear = (YEAR_DETAIL_ACTIONS as readonly string[]).includes(
@@ -303,28 +305,28 @@ export function parseToolExecution(value: unknown): ChatToolExecution | null {
       return {
         type: "control_portfolio_view",
         toolCallId,
-        toolName: "control-portfolio-view",
+        toolName: "control_portfolio_view",
         action,
         ...(year ? { year } : {}),
       };
     }
     case "open_portfolio_settings": {
-      if (value.toolName !== "open-portfolio-settings") return null;
+      if (toolName !== "open_portfolio_settings") return null;
       return {
         type: "open_portfolio_settings",
         toolCallId,
-        toolName: "open-portfolio-settings",
+        toolName: "open_portfolio_settings",
       };
     }
     case "report_portfolio_ui_settings": {
-      if (value.toolName !== "get-portfolio-ui-settings") return null;
+      if (toolName !== "get_portfolio_ui_settings") return null;
       if (typeof value.available !== "boolean") return null;
       const raw = value.uiSettings;
       if (raw === null) {
         return {
           type: "report_portfolio_ui_settings",
           toolCallId,
-          toolName: "get-portfolio-ui-settings",
+          toolName: "get_portfolio_ui_settings",
           available: value.available,
           uiSettings: null,
         };
@@ -346,7 +348,7 @@ export function parseToolExecution(value: unknown): ChatToolExecution | null {
       return {
         type: "report_portfolio_ui_settings",
         toolCallId,
-        toolName: "get-portfolio-ui-settings",
+        toolName: "get_portfolio_ui_settings",
         available: value.available,
         uiSettings: {
           theme: raw.theme,
@@ -365,27 +367,27 @@ export function parseToolExecution(value: unknown): ChatToolExecution | null {
       };
     }
     case "set_portfolio_theme": {
-      if (value.toolName !== "set-portfolio-theme") return null;
+      if (toolName !== "set_portfolio_theme") return null;
       if (!isAllowed(value.theme, THEMES)) return null;
       return {
         type: "set_portfolio_theme",
         toolCallId,
-        toolName: "set-portfolio-theme",
+        toolName: "set_portfolio_theme",
         theme: value.theme,
       };
     }
     case "set_portfolio_accent": {
-      if (value.toolName !== "set-portfolio-accent") return null;
+      if (toolName !== "set_portfolio_accent") return null;
       if (!isAllowed(value.accent, ACCENTS)) return null;
       return {
         type: "set_portfolio_accent",
         toolCallId,
-        toolName: "set-portfolio-accent",
+        toolName: "set_portfolio_accent",
         accent: value.accent,
       };
     }
     case "cycle_portfolio_accent": {
-      if (value.toolName !== "cycle-portfolio-accent") return null;
+      if (toolName !== "cycle_portfolio_accent") return null;
       // 색을 하나씩 훑는 연출이라 "모든 색이 한 번씩" 들어와야 의미가 있다.
       if (
         !Array.isArray(value.accents) ||
@@ -406,76 +408,54 @@ export function parseToolExecution(value: unknown): ChatToolExecution | null {
       return {
         type: "cycle_portfolio_accent",
         toolCallId,
-        toolName: "cycle-portfolio-accent",
+        toolName: "cycle_portfolio_accent",
         accents: value.accents as Array<(typeof ACCENTS)[number]>,
         stepMs: Number(value.stepMs),
       };
     }
     case "set_portfolio_chat_layout": {
-      if (value.toolName !== "set-portfolio-chat-layout") return null;
+      if (toolName !== "set_portfolio_chat_layout") return null;
       if (!isAllowed(value.layout, CHAT_LAYOUTS)) return null;
       return {
         type: "set_portfolio_chat_layout",
         toolCallId,
-        toolName: "set-portfolio-chat-layout",
+        toolName: "set_portfolio_chat_layout",
         layout: value.layout,
       };
     }
     case "set_portfolio_chat_font": {
-      if (value.toolName !== "set-portfolio-chat-font") return null;
+      if (toolName !== "set_portfolio_chat_font") return null;
       if (!isAllowed(value.font, CHAT_FONTS)) return null;
       return {
         type: "set_portfolio_chat_font",
         toolCallId,
-        toolName: "set-portfolio-chat-font",
+        toolName: "set_portfolio_chat_font",
         font: value.font,
       };
     }
     case "set_portfolio_chat_font_size": {
-      if (value.toolName !== "set-portfolio-chat-font-size") return null;
+      if (toolName !== "set_portfolio_chat_font_size") return null;
       if (!isAllowed(value.size, CHAT_FONT_SIZES)) return null;
       return {
         type: "set_portfolio_chat_font_size",
         toolCallId,
-        toolName: "set-portfolio-chat-font-size",
+        toolName: "set_portfolio_chat_font_size",
         size: value.size,
       };
     }
     case "set_portfolio_stream_animation": {
-      if (value.toolName !== "set-portfolio-stream-animation") return null;
+      if (toolName !== "set_portfolio_stream_animation") return null;
       if (!isAllowed(value.animation, CHAT_STREAM_ANIMATIONS)) return null;
       return {
         type: "set_portfolio_stream_animation",
         toolCallId,
-        toolName: "set-portfolio-stream-animation",
+        toolName: "set_portfolio_stream_animation",
         animation: value.animation,
       };
     }
-    case "show_portfolio_log_results": {
-      if (value.toolName !== "search-portfolio-logs") return null;
-      if (
-        !isString(value.query) ||
-        value.query.length < 1 ||
-        value.query.length > 200 ||
-        !Array.isArray(value.matchedSlugs)
-      ) {
-        return null;
-      }
-      // slug는 그대로 주소가 되므로 형태를 좁히고 최대 5개만 남긴다.
-      const matchedSlugs = [...new Set(value.matchedSlugs)]
-        .filter(
-          (slug): slug is string =>
-            isString(slug) && /^[a-z0-9-]{1,120}$/u.test(slug),
-        )
-        .slice(0, 5);
-      return {
-        type: "show_portfolio_log_results",
-        toolCallId,
-        toolName: "search-portfolio-logs",
-        query: value.query,
-        matchedSlugs,
-      };
-    }
+    // 제거한 검색 도구의 과거 응답은 화면에 적용하지 않는다.
+    case "show_portfolio_log_results":
+      return null;
     default:
       return null;
   }

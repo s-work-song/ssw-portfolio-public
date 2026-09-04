@@ -39,6 +39,7 @@ import {
 import { useChat } from "./ChatContext";
 import { GuidedTourCard, GuidedTourInvite } from "./GuidedTourCard";
 import { ChatOnboarding } from "./ChatOnboarding";
+import { onboardingPresentation } from "./onboardingPolicy";
 import {
   ChatAvailabilityCheckingScreen,
   ChatOfflineBanner,
@@ -399,12 +400,11 @@ export function ChatWidget() {
     inputRef,
     onValueChange: setDraft,
   });
-  const showOnboarding =
-    availability === "online" &&
-    messages.length === 1 &&
-    messages[0]?.kind === "greeting" &&
-    guidedTour.status === "idle" &&
-    !isLoading;
+  const onboarding = onboardingPresentation({
+    availability,
+    guidedTourStatus: guidedTour.status,
+    isLoading,
+  });
   const guidedTourAvailable = availability === "online";
   const guidedTourVisible =
     guidedTourAvailable &&
@@ -1623,8 +1623,9 @@ export function ChatWidget() {
                         onAskSuggestedQuestion={askSuggestedQuestion}
                         onRetry={handleRetry}
                       />
-                      {message.kind === "greeting" && showOnboarding && (
+                      {message.kind === "greeting" && onboarding.visible && (
                         <ChatOnboarding
+                          disabled={onboarding.disabled}
                           audience={audience}
                           onStartGuidedTour={startGuidedTourFromChat}
                           onShowSettingsGuide={showSettingsGuideFromOnboarding}

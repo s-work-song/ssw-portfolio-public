@@ -36,16 +36,16 @@ flowchart TD
   end
 
   subgraph tools["features/portfolio-tools"]
-    Schema["schema.ts<br/>허용값 inputSchema parse"]
+    Schema["schema.ts<br/>호환 re-export"]
+    Contract["contract.ts<br/>ToolDefinition + Registry"]
+    Domains["settings.ts · view.ts · logs.ts<br/>입력 정의"]
     Executor["portfolioUiToolExecutor<br/>단일 실행기"]
   end
 
   subgraph webmcp["features/webmcp"]
     Gate["PortfolioWebMcp<br/>지원 감지 게이트"]
     ToolsReg["PortfolioWebMcpTools<br/>도구 등록"]
-    Bridge["PortfolioLogViewBridge<br/>기록 검색 결과 반영"]
     View["portfolioView<br/>화면 상태 읽기와 제어"]
-    LogView["logSearchView<br/>logViewContract"]
   end
 
   Markdown["react-markdown"]
@@ -55,7 +55,6 @@ flowchart TD
   Layout --> Theme
   Layout --> Provider
   Layout --> Gate
-  Layout --> Bridge
 
   Provider --> Context
   Provider --> Widget
@@ -64,7 +63,6 @@ flowchart TD
   Provider --> Tour
   Provider --> Executor
   Provider --> View
-  Provider --> LogView
 
   Widget --> Message
   Widget --> Onboarding
@@ -77,8 +75,6 @@ flowchart TD
 
   ToolsReg --> Executor
   ToolsReg --> LogApi
-  Bridge --> LogView
-  LogView --> LogApi
 
   Executor --> Schema
   Executor --> View
@@ -91,9 +87,10 @@ flowchart TD
 
 - 챗봇 상태는 전부 `ChatProvider` 한 곳에 있고, `ChatWidget` 아래의 컴포넌트는
   받은 것을 그리기만 한다. 그래서 말풍선에 `memo`가 걸려도 안전하다.
-- `schema.ts`가 도구 허용값의 단일 소스다. 파서·실행기·타입·WebMCP 입력
-  스키마가 모두 여기서 파생돼, 한쪽만 고쳐 어긋나는 일이 생기지 않는다.
-  다만 이 단일 소스는 저장소 안에서만 유효하다. 서버 목록(비공개
+- settings·view·logs 도메인의 `ToolDefinition` 입력 정의가 허용값, TypeScript 입력
+  타입, WebMCP JSON Schema와 실행 직전 파서를 함께 만든다. `ToolRegistry`는 등록 전에
+  중복·형식 오류를 막고, `schema.ts`는 파서·실행기의 호환 진입점으로 같은 정의를 재수출한다.
+  이 단일 소스는 저장소 안에서만 유효하다. 서버 목록(비공개
   `backend/src/shared/view-targets.js`)과는 **수동 동기화**이므로, 이동
   목적지를 더할 때는 양쪽을 함께 고쳐야 한다. 프런트 테스트가 목적지 개수를
   못 박아 두어, 한쪽만 고치면 최소한 개수에서 걸린다.
@@ -183,6 +180,10 @@ sequenceDiagram
   답변은 보류하고, 최소 500ms 뒤 현재 설정과 URL·DOM 기반 화면 상태를 다시 읽어
   `toolVerification` 확인 요청을 보낸다. 모델에는 확인 요청에서 도구를 다시
   노출하지 않으며, `arrived`·`applied`일 때만 완료형 답변을 재생한다.
+  확인 요청은 대화 이력을 비우고 사고 모드를 끈다. 서버는 관측 결과·현재 상태와
+  말투만 전달하는 짧은 보고 경로를 사용하며, 내부 호출 형식은 표시 전에 걸러낸다.
+- 인사말 아래 안내 카드는 대화가 시작돼도 같은 스크롤 위치에 남는다. 온라인·투어
+  미진행 조건은 유지하고, 답변 생성 중에는 카드의 버튼만 비활성화한다.
 - `done`의 선택 필드 `uiToolOutcome`은 서버가 "도구를 써야 하는 요청인데 끝내
   실행하지 않았다"(`not_called`)를 알리는 통로다. 없거나 모르는 값이면 무시해
   옛 서버 응답과도 계속 맞물린다.
@@ -209,8 +210,6 @@ flowchart TD
   ViewCtl["runPortfolioViewAction<br/>연구 상세 펼침 접기"]
 
   Cycle["cycle_portfolio_accent<br/>ChatProvider가 직접 순회"]
-  LogResult["show_portfolio_log_results"]
-  BridgeNode["PortfolioLogViewBridge"]
 
   ModelTool --> Parse
   Parse --> Adapter
@@ -224,24 +223,21 @@ flowchart TD
   Executor --> Runtime
   Runtime --> ThemeSet
   Runtime --> Router
+  Domains --> Contract
+  Schema --> Domains
+  Executor --> Schema
   Executor --> ViewCtl
   ViewCtl --> Router
 
   Parse --> Cycle
-  Parse --> LogResult
-  LogResult --> BridgeNode
-  BridgeNode --> Router
 ```
 
 - 출발지는 둘이지만 도착지는 하나다. 챗봇이 지시한 것이든 에이전트가 호출한
   것이든 `PortfolioUiToolCommand`가 되어 같은 실행기를 지난다.
-- 검증도 한곳이다. `schema.ts`의 허용 목록이 SSE 응답 파서와 WebMCP 입력
-  파서 양쪽에 쓰여, "챗봇으로는 되는데 도구로는 안 되는" 차이가 생기지 않는다.
-- 예외가 둘 있다. 포인트 색상 순회는 시간이 걸리는 연출이라 중단 신호를 함께
-  다뤄야 해서 `ChatProvider`가 직접 처리하고, 기록 검색 결과 표시는 화면 설정
-  변경이 아니라 목록 상태 준비라 이벤트로 다리를 건넌다.
-- 그 다리(`PortfolioLogViewBridge`)는 WebMCP 지원 여부와 무관하게 항상 켜 둔다.
-  챗봇만 쓰는 방문자도 같은 동작을 봐야 하기 때문이다.
+- 검증도 한곳이다. 도메인 입력 정의가 SSE 응답 파서와 WebMCP 등록·실행 양쪽에
+  쓰여, "챗봇으로는 되는데 도구로는 안 되는" 차이가 생기지 않는다.
+- 포인트 색상 순회는 중단 신호를 함께 다뤄야 해서 `ChatProvider`가 직접 처리한다.
+- 모델 로그 검색과 검색 결과 자동 이동은 제거했다. 기록 페이지의 직접 검색과 기본 RAG는 유지한다.
 
 ---
 
@@ -320,9 +316,8 @@ flowchart TD
 | 말풍선 · 온보딩 · 연결 안내 | `src/features/chat/MessageItem.tsx`, `ChatOnboarding.tsx`, `ChatOfflineNotice.tsx` |
 | 네트워크와 SSE | `src/features/chat/api.ts` |
 | 순수 파서와 그 테스트 | `src/features/chat/parse.ts`, `parse.test.mjs` |
-| 도구 허용값 단일 소스 (서버 `backend/src/shared/view-targets.js`와 수동 동기화) | `src/features/portfolio-tools/schema.ts` |
+| 도구 계약 단일 소스 (서버 `backend/src/shared/view-targets.js`와 수동 동기화) | `src/features/portfolio-tools/contract.ts`, `settings.ts`, `view.ts`, `logs.ts` (`schema.ts`는 호환 re-export) |
 | 도구 결과 상태 줄 문구 | `src/features/chat/constants.ts`, `MessageItem.tsx` |
 | 도구 실행기 | `src/features/portfolio-tools/portfolioUiToolExecutor.ts` |
 | WebMCP 등록과 게이트 | `src/features/webmcp/PortfolioWebMcp.tsx`, `PortfolioWebMcpTools.tsx` |
 | 화면 상태 읽기와 제어 · 이동 목적지 표 | `src/features/webmcp/portfolioView.ts` |
-| 기록 검색 결과 반영 | `src/features/webmcp/PortfolioLogViewBridge.tsx`, `logSearchView.ts` |

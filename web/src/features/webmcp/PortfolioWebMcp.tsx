@@ -42,8 +42,7 @@ function readModelContextAvailableOnServer(): boolean {
  * 브라우저가 WebMCP를 지원할 때만 도구 등록 컴포넌트를 붙인다.
  *
  * 지원하지 않으면 아무것도 그리지 않고, 등록 청크도 내려받지 않는다.
- * 챗봇의 기록 검색 결과 표시는 이 게이트와 무관하게 동작해야 하므로
- * `PortfolioLogViewBridge`가 따로 담당한다.
+ * 기록 검색은 직접 검색 UI에서만 제공하고 에이전트 도구로는 등록하지 않는다.
  *
  * `useSyncExternalStore`를 쓰는 이유는 서버 스냅숏을 따로 줄 수 있어서다.
  * 렌더 중에 document를 바로 읽으면 정적 export의 하이드레이션이 어긋난다.

@@ -10,7 +10,6 @@ import { ThemeProvider } from "../context/ThemeContext";
 import { THEME_BOOT_SCRIPT } from "../context/settingsDataset";
 import { ChatProvider } from "../features/chat";
 import { ChatApiPreconnect } from "./ChatApiPreconnect";
-import { PortfolioLogViewBridge } from "../features/webmcp/PortfolioLogViewBridge";
 import { PortfolioWebMcp } from "../features/webmcp/PortfolioWebMcp";
 
 const notoSansKr = Noto_Sans_KR({
@@ -42,9 +41,8 @@ export const metadata: Metadata = {
  * 뒤 마운트 후 effect가 저장값으로 바꿔, 새로고침마다 한 번 깜빡인다.
  * 계약은 `context/settingsDataset`가 쥔다.
  *
- * WebMCP 관련 컴포넌트는 두 갈래로 나눠 붙인다. 기록 검색 결과를 화면에
- * 반영하는 다리는 항상 켜 두고, 도구 등록은 브라우저가 WebMCP를 지원할 때만
- * 지연 로딩한다.
+ * WebMCP 도구 등록은 브라우저가 지원할 때만 지연 로딩한다.
+ * 기록 검색은 사용자가 기록 페이지에서 직접 수행한다.
  */
 export default function RootLayout({
   children,
@@ -65,8 +63,6 @@ export default function RootLayout({
         <ChatApiPreconnect />
         <ThemeProvider>
           <ChatProvider>
-            {/* 챗봇 기록 검색 결과 반영은 WebMCP 지원과 무관하게 항상 켠다. */}
-            <PortfolioLogViewBridge />
             {/* 도구 등록은 브라우저가 WebMCP를 지원할 때만 지연 로딩한다. */}
             <PortfolioWebMcp />
             {children}

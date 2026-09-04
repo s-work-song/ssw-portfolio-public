@@ -86,41 +86,41 @@ export function executePortfolioUiTool(
   const { input } = command;
 
   switch (command.name) {
-    case 'get-portfolio-ui-settings': {
-      PORTFOLIO_UI_TOOLS['get-portfolio-ui-settings'].parse(input);
+    case 'get_portfolio_ui_settings': {
+      PORTFOLIO_UI_TOOLS['get_portfolio_ui_settings'].parse(input);
       return { ok: true, uiSettings: runtime.getSettings() };
     }
-    case 'set-portfolio-theme': {
-      const { theme } = PORTFOLIO_UI_TOOLS['set-portfolio-theme'].parse(input);
+    case 'set_portfolio_theme': {
+      const { theme } = PORTFOLIO_UI_TOOLS['set_portfolio_theme'].parse(input);
       runtime.setMode(theme);
       return { ok: true, theme, message: `화면 모드를 ${theme}(으)로 변경했습니다.` };
     }
-    case 'set-portfolio-accent': {
-      const { accent } = PORTFOLIO_UI_TOOLS['set-portfolio-accent'].parse(input);
+    case 'set_portfolio_accent': {
+      const { accent } = PORTFOLIO_UI_TOOLS['set_portfolio_accent'].parse(input);
       runtime.setAccent(accent);
       return { ok: true, accent, message: `포인트 색상을 ${accent}(으)로 변경했습니다.` };
     }
-    case 'set-portfolio-chat-layout': {
+    case 'set_portfolio_chat_layout': {
       const { layout } =
-        PORTFOLIO_UI_TOOLS['set-portfolio-chat-layout'].parse(input);
+        PORTFOLIO_UI_TOOLS['set_portfolio_chat_layout'].parse(input);
       runtime.setChatLayout(layout);
       return { ok: true, layout, message: `채팅 레이아웃을 ${layout}(으)로 변경했습니다.` };
     }
-    case 'set-portfolio-chat-font': {
+    case 'set_portfolio_chat_font': {
       const { font } =
-        PORTFOLIO_UI_TOOLS['set-portfolio-chat-font'].parse(input);
+        PORTFOLIO_UI_TOOLS['set_portfolio_chat_font'].parse(input);
       runtime.setChatFont(font);
       return { ok: true, font, message: `채팅 글꼴을 ${font}(으)로 변경했습니다.` };
     }
-    case 'set-portfolio-chat-font-size': {
+    case 'set_portfolio_chat_font_size': {
       const { size } =
-        PORTFOLIO_UI_TOOLS['set-portfolio-chat-font-size'].parse(input);
+        PORTFOLIO_UI_TOOLS['set_portfolio_chat_font_size'].parse(input);
       runtime.setChatFontSize(size);
       return { ok: true, size, message: `채팅 글자 크기를 ${size}(으)로 변경했습니다.` };
     }
-    case 'set-portfolio-stream-animation': {
+    case 'set_portfolio_stream_animation': {
       const { animation } =
-        PORTFOLIO_UI_TOOLS['set-portfolio-stream-animation'].parse(input);
+        PORTFOLIO_UI_TOOLS['set_portfolio_stream_animation'].parse(input);
       runtime.setStreamAnimation(animation);
       return {
         ok: true,
@@ -128,16 +128,16 @@ export function executePortfolioUiTool(
         message: `채팅 스트리밍 연출을 ${animation}(으)로 변경했습니다.`,
       };
     }
-    case 'get-portfolio-view-state': {
-      PORTFOLIO_UI_TOOLS['get-portfolio-view-state'].parse(input);
+    case 'get_portfolio_view_state': {
+      PORTFOLIO_UI_TOOLS['get_portfolio_view_state'].parse(input);
       return {
         ok: true,
         viewState: readPortfolioViewState(window.location.pathname),
       };
     }
-    case 'control-portfolio-view': {
+    case 'control_portfolio_view': {
       const { action, year } =
-        PORTFOLIO_UI_TOOLS['control-portfolio-view'].parse(input);
+        PORTFOLIO_UI_TOOLS['control_portfolio_view'].parse(input);
       const target = runPortfolioViewAction(action, runtime.navigateRoute, year);
       return {
         ok: true,
@@ -148,8 +148,8 @@ export function executePortfolioUiTool(
         ...(target.researchYear ? { year: target.researchYear } : {}),
       };
     }
-    case 'open-portfolio-settings': {
-      PORTFOLIO_UI_TOOLS['open-portfolio-settings'].parse(input);
+    case 'open_portfolio_settings': {
+      PORTFOLIO_UI_TOOLS['open_portfolio_settings'].parse(input);
       runtime.navigateRoute('/settings');
       return {
         ok: true,

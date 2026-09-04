@@ -152,7 +152,7 @@ export interface ChatSegment {
 export interface ChatLogSearchToolExecution {
   type: "show_portfolio_log_results";
   toolCallId: string;
-  toolName: "search-portfolio-logs";
+  toolName: "search_portfolio_logs";
   query: string;
   matchedSlugs: string[];
 }
@@ -161,7 +161,7 @@ export interface ChatLogSearchToolExecution {
 export interface ChatThemeToolExecution {
   type: "set_portfolio_theme";
   toolCallId: string;
-  toolName: "set-portfolio-theme";
+  toolName: "set_portfolio_theme";
   theme: (typeof THEMES)[number];
 }
 
@@ -169,7 +169,7 @@ export interface ChatThemeToolExecution {
 export interface ChatAccentToolExecution {
   type: "set_portfolio_accent";
   toolCallId: string;
-  toolName: "set-portfolio-accent";
+  toolName: "set_portfolio_accent";
   accent: (typeof ACCENTS)[number];
 }
 
@@ -177,7 +177,7 @@ export interface ChatAccentToolExecution {
 export interface ChatAccentCycleToolExecution {
   type: "cycle_portfolio_accent";
   toolCallId: string;
-  toolName: "cycle-portfolio-accent";
+  toolName: "cycle_portfolio_accent";
   accents: Array<(typeof ACCENTS)[number]>;
   stepMs: number;
 }
@@ -186,7 +186,7 @@ export interface ChatAccentCycleToolExecution {
 export interface ChatLayoutToolExecution {
   type: "set_portfolio_chat_layout";
   toolCallId: string;
-  toolName: "set-portfolio-chat-layout";
+  toolName: "set_portfolio_chat_layout";
   layout: (typeof CHAT_LAYOUTS)[number];
 }
 
@@ -194,7 +194,7 @@ export interface ChatLayoutToolExecution {
 export interface ChatFontToolExecution {
   type: "set_portfolio_chat_font";
   toolCallId: string;
-  toolName: "set-portfolio-chat-font";
+  toolName: "set_portfolio_chat_font";
   font: (typeof CHAT_FONTS)[number];
 }
 
@@ -202,7 +202,7 @@ export interface ChatFontToolExecution {
 export interface ChatFontSizeToolExecution {
   type: "set_portfolio_chat_font_size";
   toolCallId: string;
-  toolName: "set-portfolio-chat-font-size";
+  toolName: "set_portfolio_chat_font_size";
   size: (typeof CHAT_FONT_SIZES)[number];
 }
 
@@ -210,7 +210,7 @@ export interface ChatFontSizeToolExecution {
 export interface ChatStreamAnimationToolExecution {
   type: "set_portfolio_stream_animation";
   toolCallId: string;
-  toolName: "set-portfolio-stream-animation";
+  toolName: "set_portfolio_stream_animation";
   animation: ChatStreamAnimation;
 }
 
@@ -218,7 +218,7 @@ export interface ChatStreamAnimationToolExecution {
 export interface ChatUiSettingsReportToolExecution {
   type: "report_portfolio_ui_settings";
   toolCallId: string;
-  toolName: "get-portfolio-ui-settings";
+  toolName: "get_portfolio_ui_settings";
   available: boolean;
   uiSettings: ChatUiSettings | null;
 }
@@ -227,7 +227,7 @@ export interface ChatUiSettingsReportToolExecution {
 export interface ChatSettingsNavigationToolExecution {
   type: "open_portfolio_settings";
   toolCallId: string;
-  toolName: "open-portfolio-settings";
+  toolName: "open_portfolio_settings";
 }
 
 /** 화면 이동과 연구 상세 제어 동작 식별자다. */
@@ -245,7 +245,7 @@ export type ChatPortfolioResearchYear =
 export interface ChatPortfolioViewToolExecution {
   type: "control_portfolio_view";
   toolCallId: string;
-  toolName: "control-portfolio-view";
+  toolName: "control_portfolio_view";
   action: ChatPortfolioViewAction;
   year?: ChatPortfolioResearchYear;
 }
@@ -254,7 +254,7 @@ export interface ChatPortfolioViewToolExecution {
 export interface ChatPortfolioViewStateReportToolExecution {
   type: "report_portfolio_view_state";
   toolCallId: string;
-  toolName: "get-portfolio-view-state";
+  toolName: "get_portfolio_view_state";
   available: boolean;
   viewState: ChatPortfolioViewState | null;
 }
@@ -312,15 +312,15 @@ export interface ToolResult {
 export interface ChatToolVerificationResult {
   toolCallId: string;
   toolName:
-    | "set-portfolio-theme"
-    | "set-portfolio-accent"
-    | "cycle-portfolio-accent"
-    | "set-portfolio-chat-layout"
-    | "set-portfolio-chat-font"
-    | "set-portfolio-chat-font-size"
-    | "set-portfolio-stream-animation"
-    | "control-portfolio-view"
-    | "open-portfolio-settings";
+    | "set_portfolio_theme"
+    | "set_portfolio_accent"
+    | "cycle_portfolio_accent"
+    | "set_portfolio_chat_layout"
+    | "set_portfolio_chat_font"
+    | "set_portfolio_chat_font_size"
+    | "set_portfolio_stream_animation"
+    | "control_portfolio_view"
+    | "open_portfolio_settings";
   status: "arrived" | "applied" | "failed";
   action?: ChatPortfolioViewAction;
   /** 실행을 시작한 뒤 결과를 관측하기까지 걸린 시간이다. */

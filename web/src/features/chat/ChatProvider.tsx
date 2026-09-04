@@ -47,7 +47,6 @@ import { ChatWidget } from "./ChatWidget";
 import { loadMarkdownRenderer } from "./MessageItem";
 import { StreamRenderQueue } from "./streamRenderQueue";
 import { useGuidedTour } from "./useGuidedTour";
-import { dispatchPortfolioModelToolExecution } from "../webmcp/logSearchView";
 import { readPortfolioViewState } from "../webmcp/portfolioView";
 import {
   executePortfolioUiTool as runPortfolioUiTool,
@@ -1765,9 +1764,6 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
             ) {
               return;
             }
-            if (execution.type === "show_portfolio_log_results") {
-              dispatchPortfolioModelToolExecution(execution);
-            }
           } catch (toolError) {
             if (
               toolError instanceof DOMException &&
@@ -1894,6 +1890,8 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
           const verifiedUiSettings = uiSettingsRef.current ?? request.uiSettings;
           const verificationRequest: ChatRequest = {
             ...request,
+            history: [],
+            reasoningEnabled: false,
             pageContext: pageContextFromPathname(window.location.pathname),
             uiSettings: { ...verifiedUiSettings },
             viewState: readPortfolioViewState(window.location.pathname),

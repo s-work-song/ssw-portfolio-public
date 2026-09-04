@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * 첫 대화에서만 인사말 아래에 붙는 시작 안내다.
+ * 대화가 이어져도 인사말 아래에 남는 시작 안내다.
  *
  * 빈 입력창만 두면 방문자가 무엇을 물어야 할지 모른다. 그래서 둘러보기,
  * 설정·WebMCP 안내, 바로 갈 수 있는 목적지, 관점 선택을 한 화면에 모아
@@ -34,6 +34,7 @@ const AUDIENCE_PROMPTS: Readonly<Record<AudienceChoice, string>> = {
 interface ChatOnboardingProps {
   /** 이미 고른 관점이다. 선택 표시(aria-pressed)에만 쓴다. */
   audience: AudienceChoice | null;
+  disabled?: boolean;
   onStartGuidedTour: () => void;
   onShowSettingsGuide: () => void;
   /** 질문 전송과 콘텐츠 이동을 함께 시작한다. */
@@ -49,18 +50,19 @@ interface ChatOnboardingProps {
 /**
  * 온보딩 선택지를 그린다.
  *
- * 표시 조건(첫 대화인지, 온라인인지 등)은 판단하지 않는다. 그 판정은 대화
+ * 표시 조건(온라인인지, 투어 중인지 등)은 판단하지 않는다. 그 판정은 대화
  * 상태를 쥔 위젯 본체가 하고, 이 컴포넌트는 "보여 달라고 하면 그린다".
  */
 export function ChatOnboarding({
   audience,
+  disabled = false,
   onStartGuidedTour,
   onShowSettingsGuide,
   onStartQuickAction,
   onSelectAudience,
 }: Readonly<ChatOnboardingProps>) {
   return (
-    <fieldset className={styles.onboarding}>
+    <fieldset className={styles.onboarding} disabled={disabled}>
       <legend>
         어떤 내용이 궁금한가요? 선택하면 맞춤 소개를 시작해요.
       </legend>
@@ -83,7 +85,7 @@ export function ChatOnboarding({
         >
           <span>
             <strong>설정·WebMCP 도구 알아보기</strong>
-            <small>설정 변경과 기록 검색·이동 도구를 살펴봐요.</small>
+            <small>설정 변경과 화면 이동 도구를 살펴봐요.</small>
           </span>
           <span aria-hidden="true">→</span>
         </button>

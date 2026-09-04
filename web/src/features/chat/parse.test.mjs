@@ -1,3 +1,4 @@
+import { PORTFOLIO_LOG_TOOL_DEFINITIONS } from '../portfolio-tools/logs.ts';
 // 챗봇 응답 파서(`parse.ts`)의 계약을 브라우저 없이 검증한다.
 // Node가 타입을 지우고 TypeScript 원본을 그대로 실행하므로 별도 빌드가 없다.
 import assert from 'node:assert/strict';
@@ -17,7 +18,17 @@ import {
   retryAfterMsFromHeader,
 } from './parse.ts';
 import { ACTION_LABELS } from './constants.ts';
-import { PORTFOLIO_VIEW_ACTIONS } from '../portfolio-tools/schema.ts';
+import { onboardingPresentation } from './onboardingPolicy.ts';
+import { toolResultText } from './toolResultPresentation.ts';
+import {
+  PORTFOLIO_VIEW_ACTIONS,
+  PORTFOLIO_UI_TOOLS,
+  PORTFOLIO_UI_TOOL_NAMES,
+  ToolDefinition,
+  ToolRegistry,
+  emptyInputDefinition,
+  normalizePortfolioToolName,
+} from '../portfolio-tools/schema.ts';
 
 /** 형식은 통과하되 본문만 바꿔 쓰는 최소 응답 골격이다. */
 function chatResponse(overrides = {}) {
@@ -37,6 +48,27 @@ function chatResponse(overrides = {}) {
     ...overrides,
   };
 }
+
+test('도구 결과 배지는 이동·변경·상세 제어 모두 도구 호출로 표시한다', () => {
+  for (const status of ['arrived', 'applied']) {
+    for (const label of ['2023년 연구 상세 펼치기', '연구 경험의 2025년 위치', '다크 모드']) {
+      assert.equal(toolResultText({ status, label }), `도구 호출 · ${label}`);
+    }
+  }
+  assert.equal(toolResultText({ status: 'started', label: '연구 상세' }), '도구 호출 중…');
+  assert.equal(toolResultText({ status: 'failed', label: '연구 상세' }), '도구 호출 실패 · 연구 상세');
+  assert.equal(toolResultText({ status: 'failed', label: '연구 상세', detail: '확인 시간 초과' }), '도구 호출 실패 · 연구 상세: 확인 시간 초과');
+});
+
+test('안내 카드는 대화 생성 중에도 남고 선택만 비활성화한다', () => {
+  for (const isLoading of [false, true]) {
+    assert.deepEqual(onboardingPresentation({ availability: 'online', guidedTourStatus: 'idle', isLoading }),
+      { visible: true, disabled: isLoading });
+  }
+  for (const [availability, guidedTourStatus] of [['offline', 'idle'], ['checking', 'idle'], ['online', 'active'], ['online', 'completed']]) {
+    assert.equal(onboardingPresentation({ availability, guidedTourStatus, isLoading: false }).visible, false);
+  }
+});
 
 /** 도구 실행 payload의 공통 부분이다. */
 function execution(type, toolName, rest = {}) {
@@ -170,21 +202,61 @@ test('retry-after: 없거나 이상하면 기본 10초, 아주 크면 5분에서
   assert.equal(retryAfterMsFromHeader('99999'), 300_000);
 });
 
+test('도구: 등록 키와 이름은 모두 snake_case이고 과거 별칭은 입력에서만 정규화한다', () => {
+  assert.deepEqual(Object.keys(PORTFOLIO_UI_TOOLS), [...PORTFOLIO_UI_TOOL_NAMES]);
+  for (const name of PORTFOLIO_UI_TOOL_NAMES) {
+    assert.match(name, /^[a-z][a-z0-9_]*$/u);
+    assert.equal(PORTFOLIO_UI_TOOLS[name].name, name);
+    assert.equal(normalizePortfolioToolName(name.replaceAll('_', '-')), name);
+  }
+  assert.equal(normalizePortfolioToolName('unknown-tool'), 'unknown-tool');
+  assert.equal(normalizePortfolioToolName(null), null);
+});
+
+test('도구 registry: 특수 키·중복·하이픈 이름을 등록 전에 거부한다', () => {
+  const input = emptyInputDefinition('테스트');
+  assert.throws(
+    () => new ToolRegistry([
+      new ToolDefinition('__proto__', input),
+    ]),
+    /snake_case/u,
+  );
+  assert.throws(
+    () => new ToolRegistry([
+      new ToolDefinition('same_tool', input),
+      new ToolDefinition('same_tool', input),
+    ]),
+    /중복/u,
+  );
+});
+
+test('도구: 이전 서버의 하이픈 이름도 새 이름으로 반환하고 인자와 원본은 보존한다', () => {
+  const legacy = execution('control_portfolio_view', 'control-portfolio-view', {
+    action: 'cover-letter',
+  });
+  assert.deepEqual(parseToolExecution(legacy), {
+    ...legacy, toolName: 'control_portfolio_view',
+  });
+  assert.equal(legacy.toolName, 'control-portfolio-view');
+  assert.equal(parseToolExecution(execution('set_portfolio_theme', 'set-portfolio-theme', { theme: 'dark' })).toolName, 'set_portfolio_theme');
+  assert.equal(parseToolExecution(execution('set_portfolio_theme', 'set_portfolio-theme', { theme: 'dark' })), null);
+});
+
 test('도구: 화면 모드 변경을 파싱하고 목록 밖 값은 거부한다', () => {
   assert.deepEqual(
     parseToolExecution(
-      execution('set_portfolio_theme', 'set-portfolio-theme', { theme: 'dark' }),
+      execution('set_portfolio_theme', 'set_portfolio_theme', { theme: 'dark' }),
     ),
     {
       type: 'set_portfolio_theme',
       toolCallId: 'call-1',
-      toolName: 'set-portfolio-theme',
+      toolName: 'set_portfolio_theme',
       theme: 'dark',
     },
   );
   assert.equal(
     parseToolExecution(
-      execution('set_portfolio_theme', 'set-portfolio-theme', {
+      execution('set_portfolio_theme', 'set_portfolio_theme', {
         theme: 'system',
       }),
     ),
@@ -195,7 +267,7 @@ test('도구: 화면 모드 변경을 파싱하고 목록 밖 값은 거부한�
 test('도구: 포인트 색상은 허용 목록 안에서만 통과한다', () => {
   assert.equal(
     parseToolExecution(
-      execution('set_portfolio_accent', 'set-portfolio-accent', {
+      execution('set_portfolio_accent', 'set_portfolio_accent', {
         accent: 'violet',
       }),
     ).accent,
@@ -203,7 +275,7 @@ test('도구: 포인트 색상은 허용 목록 안에서만 통과한다', () =
   );
   assert.equal(
     parseToolExecution(
-      execution('set_portfolio_accent', 'set-portfolio-accent', {
+      execution('set_portfolio_accent', 'set_portfolio_accent', {
         accent: 'neon',
       }),
     ),
@@ -215,7 +287,7 @@ test('도구: 색상 순회는 다섯 색이 모두 한 번씩, 간격이 범위
   const accents = ['indigo', 'emerald', 'amber', 'rose', 'violet'];
   assert.equal(
     parseToolExecution(
-      execution('cycle_portfolio_accent', 'cycle-portfolio-accent', {
+      execution('cycle_portfolio_accent', 'cycle_portfolio_accent', {
         accents,
         stepMs: 300,
       }),
@@ -224,7 +296,7 @@ test('도구: 색상 순회는 다섯 색이 모두 한 번씩, 간격이 범위
   );
   assert.equal(
     parseToolExecution(
-      execution('cycle_portfolio_accent', 'cycle-portfolio-accent', {
+      execution('cycle_portfolio_accent', 'cycle_portfolio_accent', {
         accents: ['indigo', 'indigo', 'amber', 'rose', 'violet'],
         stepMs: 300,
       }),
@@ -233,7 +305,7 @@ test('도구: 색상 순회는 다섯 색이 모두 한 번씩, 간격이 범위
   );
   assert.equal(
     parseToolExecution(
-      execution('cycle_portfolio_accent', 'cycle-portfolio-accent', {
+      execution('cycle_portfolio_accent', 'cycle_portfolio_accent', {
         accents,
         stepMs: 50,
       }),
@@ -245,7 +317,7 @@ test('도구: 색상 순회는 다섯 색이 모두 한 번씩, 간격이 범위
 test('도구: 화면 제어는 연도 인자 규칙까지 확인한다', () => {
   assert.equal(
     parseToolExecution(
-      execution('control_portfolio_view', 'control-portfolio-view', {
+      execution('control_portfolio_view', 'control_portfolio_view', {
         action: 'resume',
       }),
     ).action,
@@ -254,7 +326,7 @@ test('도구: 화면 제어는 연도 인자 규칙까지 확인한다', () => {
   // 연도별 상세 제어에는 연도가 반드시 있어야 한다.
   assert.equal(
     parseToolExecution(
-      execution('control_portfolio_view', 'control-portfolio-view', {
+      execution('control_portfolio_view', 'control_portfolio_view', {
         action: 'expand-research-year-details',
       }),
     ),
@@ -262,7 +334,7 @@ test('도구: 화면 제어는 연도 인자 규칙까지 확인한다', () => {
   );
   assert.equal(
     parseToolExecution(
-      execution('control_portfolio_view', 'control-portfolio-view', {
+      execution('control_portfolio_view', 'control_portfolio_view', {
         action: 'expand-research-year-details',
         year: '2024',
       }),
@@ -272,7 +344,7 @@ test('도구: 화면 제어는 연도 인자 규칙까지 확인한다', () => {
   // 연도를 요구하지 않는 동작에 연도를 붙이면 거부한다.
   assert.equal(
     parseToolExecution(
-      execution('control_portfolio_view', 'control-portfolio-view', {
+      execution('control_portfolio_view', 'control_portfolio_view', {
         action: 'resume',
         year: '2024',
       }),
@@ -282,7 +354,7 @@ test('도구: 화면 제어는 연도 인자 규칙까지 확인한다', () => {
   // 목록에 없는 연도와 동작도 거부한다.
   assert.equal(
     parseToolExecution(
-      execution('control_portfolio_view', 'control-portfolio-view', {
+      execution('control_portfolio_view', 'control_portfolio_view', {
         action: 'expand-research-year-details',
         year: '1999',
       }),
@@ -291,7 +363,7 @@ test('도구: 화면 제어는 연도 인자 규칙까지 확인한다', () => {
   );
   assert.equal(
     parseToolExecution(
-      execution('control_portfolio_view', 'control-portfolio-view', {
+      execution('control_portfolio_view', 'control_portfolio_view', {
         action: 'delete-everything',
       }),
     ),
@@ -305,7 +377,7 @@ test('도구: 소개 페이지 안의 이동 목적지도 허용 목록에 들�
   assert.equal(PORTFOLIO_VIEW_ACTIONS.length, 27);
   assert.equal(
     parseToolExecution(
-      execution('control_portfolio_view', 'control-portfolio-view', {
+      execution('control_portfolio_view', 'control_portfolio_view', {
         action: 'past-work-archive',
       }),
     ).action,
@@ -313,7 +385,7 @@ test('도구: 소개 페이지 안의 이동 목적지도 허용 목록에 들�
   );
   assert.equal(
     parseToolExecution(
-      execution('control_portfolio_view', 'control-portfolio-view', {
+      execution('control_portfolio_view', 'control_portfolio_view', {
         action: 'project-ecommerce-demo',
       }),
     ).action,
@@ -322,7 +394,7 @@ test('도구: 소개 페이지 안의 이동 목적지도 허용 목록에 들�
   // 새 목적지도 연도 인자를 받지 않는다.
   assert.equal(
     parseToolExecution(
-      execution('control_portfolio_view', 'control-portfolio-view', {
+      execution('control_portfolio_view', 'control_portfolio_view', {
         action: 'ai-collaboration-projects',
         year: '2024',
       }),
@@ -349,7 +421,7 @@ test('응답: uiToolOutcome은 아는 값만 남기고 나머지는 무시한다
 test('도구: 채팅 글꼴과 글자 크기는 허용 목록 안에서만 통과한다', () => {
   assert.equal(
     parseToolExecution(
-      execution('set_portfolio_chat_font', 'set-portfolio-chat-font', {
+      execution('set_portfolio_chat_font', 'set_portfolio_chat_font', {
         font: 'noto-sans-kr',
       }),
     ).font,
@@ -357,7 +429,7 @@ test('도구: 채팅 글꼴과 글자 크기는 허용 목록 안에서만 통�
   );
   assert.equal(
     parseToolExecution(
-      execution('set_portfolio_chat_font', 'set-portfolio-chat-font', {
+      execution('set_portfolio_chat_font', 'set_portfolio_chat_font', {
         font: 'comic-sans',
       }),
     ),
@@ -367,7 +439,7 @@ test('도구: 채팅 글꼴과 글자 크기는 허용 목록 안에서만 통�
     parseToolExecution(
       execution(
         'set_portfolio_chat_font_size',
-        'set-portfolio-chat-font-size',
+        'set_portfolio_chat_font_size',
         { size: 'xlarge' },
       ),
     ).size,
@@ -377,7 +449,7 @@ test('도구: 채팅 글꼴과 글자 크기는 허용 목록 안에서만 통�
     parseToolExecution(
       execution(
         'set_portfolio_chat_font_size',
-        'set-portfolio-chat-font-size',
+        'set_portfolio_chat_font_size',
         { size: 'huge' },
       ),
     ),
@@ -390,7 +462,7 @@ test('도구: 스트리밍 연출은 허용 목록 안에서만 통과한다', (
     parseToolExecution(
       execution(
         'set_portfolio_stream_animation',
-        'set-portfolio-stream-animation',
+        'set_portfolio_stream_animation',
         { animation: 'scramble' },
       ),
     ).animation,
@@ -400,7 +472,7 @@ test('도구: 스트리밍 연출은 허용 목록 안에서만 통과한다', (
     parseToolExecution(
       execution(
         'set_portfolio_stream_animation',
-        'set-portfolio-stream-animation',
+        'set_portfolio_stream_animation',
         { animation: 'explode' },
       ),
     ),
@@ -408,31 +480,18 @@ test('도구: 스트리밍 연출은 허용 목록 안에서만 통과한다', (
   );
 });
 
-test('도구: 기록 검색 결과는 slug 형태를 좁히고 다섯 개까지만 남긴다', () => {
-  const parsed = parseToolExecution(
-    execution('show_portfolio_log_results', 'search-portfolio-logs', {
-      query: 'AI 협업',
-      matchedSlugs: [
-        'first-log',
-        'first-log',
-        '../../etc/passwd',
-        'Second-Log',
-        'a',
-        'b',
-        'c',
-        'd',
-        'e',
-        'f',
-      ],
-    }),
-  );
-  assert.deepEqual(parsed.matchedSlugs, ['first-log', 'a', 'b', 'c', 'd']);
+test('검색 도구는 등록하지 않고 과거 검색 결과 지시는 거절한다', () => {
+  assert.deepEqual(PORTFOLIO_LOG_TOOL_DEFINITIONS.map(({ name }) => name), ['get_portfolio_log_outline', 'open_portfolio_log']);
+  for (const toolName of ['search_portfolio_logs', 'search-portfolio-logs']) {
+    assert.equal(parseToolExecution(execution('show_portfolio_log_results', toolName, { query: 'AI', matchedSlugs: ['first-log'] })), null);
+  }
 });
+
 
 test('도구: toolName이 어긋나거나 toolCallId가 없으면 거부한다', () => {
   assert.equal(
     parseToolExecution(
-      execution('set_portfolio_theme', 'set-portfolio-accent', {
+      execution('set_portfolio_theme', 'set_portfolio_accent', {
         theme: 'dark',
       }),
     ),
@@ -441,7 +500,7 @@ test('도구: toolName이 어긋나거나 toolCallId가 없으면 거부한다',
   assert.equal(
     parseToolExecution({
       type: 'set_portfolio_theme',
-      toolName: 'set-portfolio-theme',
+      toolName: 'set_portfolio_theme',
       theme: 'dark',
     }),
     null,
@@ -449,7 +508,7 @@ test('도구: toolName이 어긋나거나 toolCallId가 없으면 거부한다',
   assert.equal(
     parseToolExecution({
       type: 'set_portfolio_theme',
-      toolName: 'set-portfolio-theme',
+      toolName: 'set_portfolio_theme',
       toolCallId: 'x'.repeat(129),
       theme: 'dark',
     }),
@@ -460,10 +519,10 @@ test('도구: toolName이 어긋나거나 toolCallId가 없으면 거부한다',
 
 test('도구 목록: 실패한 항목만 버리고 최대 여덟 개까지 적용한다', () => {
   const valid = () =>
-    execution('set_portfolio_theme', 'set-portfolio-theme', { theme: 'dark' });
+    execution('set_portfolio_theme', 'set_portfolio_theme', { theme: 'dark' });
   const values = [
     ...Array.from({ length: 10 }, () => valid()),
-    { type: 'set_portfolio_theme', toolName: 'set-portfolio-theme' },
+    { type: 'set_portfolio_theme', toolName: 'set_portfolio_theme' },
   ];
   assert.equal(parseToolExecutions(values).length, 8);
   assert.deepEqual(parseToolExecutions('배열이 아님'), []);

@@ -63,33 +63,39 @@
 
 ### WebMCP 도구
 
+로그 검색·연관 기록 검색은 챗봇과 WebMCP에서 제공하지 않습니다. 기록 페이지의
+직접 검색과 기본 RAG는 유지하며, WebMCP에는 UI 10개와 기록 목차·열기 2개를 등록합니다.
+
+툴 이름은 챗봇·WebMCP·모델 API 모두 snake_case로 통일합니다. 이전 서버에서 온
+하이픈 이름은 응답 파서에서만 정규화하며, WebMCP에는 언더스코어 이름만 등록합니다.
+URL·앵커·action 식별자와 글꼴 값 등은 이 이름 변경의 대상이 아닙니다.
+
 `document.modelContext`를 제공하는 브라우저·에이전트 환경에서만 등록됩니다.
 지원하지 않는 환경에서는 등록 코드 자체를 내려받지 않습니다.
 
 | 도구 | read-only | 하는 일 |
 | --- | --- | --- |
-| `get-portfolio-ui-settings` | ✅ | 현재 테마·포인트 색상·채팅 레이아웃·글꼴·글자 크기·답변 연출을 읽습니다. |
-| `get-portfolio-view-state` | ✅ | 현재 페이지·앵커·연구 탭·연구 연도·상세 펼침 상태를 읽습니다. |
-| `get-portfolio-log-outline` | ✅ | 기록 하나의 제목·요약·태그와 소제목 목록을 읽습니다. |
-| `find-related-portfolio-logs` | ✅ | 기준 기록과 태그·키워드가 겹치는 다른 기록을 찾습니다. |
-| `set-portfolio-theme` | ❌ | 라이트·다크 모드를 바꿉니다. |
-| `set-portfolio-accent` | ❌ | 포인트 색상을 바꿉니다. |
-| `set-portfolio-chat-layout` | ❌ | 채팅 패널을 플로팅·오른쪽 고정으로 바꿉니다. |
-| `set-portfolio-chat-font` | ❌ | 채팅 글꼴을 바꿉니다. |
-| `set-portfolio-chat-font-size` | ❌ | 채팅 글자 크기를 바꿉니다. |
-| `set-portfolio-stream-animation` | ❌ | 답변 스트리밍 연출을 바꿉니다. |
-| `control-portfolio-view` | ❌ | 페이지·연구 탭·연구 연도·소개 페이지 안의 섹션과 개별 항목으로 이동하고 연구 상세를 펼치거나 접습니다. |
-| `open-portfolio-settings` | ❌ | 설정 페이지로 이동합니다. |
-| `search-portfolio-logs` | ❌ | 공개 기록을 검색하고 결과를 목록 화면에 반영합니다. |
-| `open-portfolio-log` | ❌ | 기록 상세 또는 지정한 소제목 위치로 이동합니다. |
+| `get_portfolio_ui_settings` | ✅ | 현재 테마·포인트 색상·채팅 레이아웃·글꼴·글자 크기·답변 연출을 읽습니다. |
+| `get_portfolio_view_state` | ✅ | 현재 페이지·앵커·연구 탭·연구 연도·상세 펼침 상태를 읽습니다. |
+| `get_portfolio_log_outline` | ✅ | 기록 하나의 제목·요약·태그와 소제목 목록을 읽습니다. |
+| `set_portfolio_theme` | ❌ | 라이트·다크 모드를 바꿉니다. |
+| `set_portfolio_accent` | ❌ | 포인트 색상을 바꿉니다. |
+| `set_portfolio_chat_layout` | ❌ | 채팅 패널을 플로팅·오른쪽 고정으로 바꿉니다. |
+| `set_portfolio_chat_font` | ❌ | 채팅 글꼴을 바꿉니다. |
+| `set_portfolio_chat_font_size` | ❌ | 채팅 글자 크기를 바꿉니다. |
+| `set_portfolio_stream_animation` | ❌ | 답변 스트리밍 연출을 바꿉니다. |
+| `control_portfolio_view` | ❌ | 페이지·연구 탭·연구 연도·소개 페이지 안의 섹션과 개별 항목으로 이동하고 연구 상세를 펼치거나 접습니다. |
+| `open_portfolio_settings` | ❌ | 설정 페이지로 이동합니다. |
+| `open_portfolio_log` | ❌ | 기록 상세 또는 지정한 소제목 위치로 이동합니다. |
 
 read-only가 아닌 도구는 화면을 실제로 바꾸거나 이동시킵니다. 허용값과 입력
-스키마는 `src/features/portfolio-tools/schema.ts` 한 곳에서 정의하고, 챗봇
-응답 파서와 WebMCP 등록이 같은 정의를 씁니다. 다만 서버가 쥔 같은 목록(비공개
+스키마는 `src/features/portfolio-tools/settings.ts`, `view.ts`, `logs.ts`의 도메인
+정의에서 만들고, `ToolDefinition`/`ToolRegistry`와 호환 진입점 `schema.ts`를 통해
+챗봇 응답 파서와 WebMCP 등록이 같은 정의를 씁니다. 다만 서버가 쥔 같은 목록(비공개
 `backend/src/shared/view-targets.js`)과는 저장소가 갈라져 있어 **수동으로**
 맞춥니다. 목적지를 더할 때는 양쪽을 함께 고쳐야 합니다.
 
-`control-portfolio-view`의 이동 목적지는 27개입니다.
+`control_portfolio_view`의 이동 목적지는 27개입니다.
 
 | 묶음 | action |
 | --- | --- |
