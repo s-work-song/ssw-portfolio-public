@@ -140,6 +140,12 @@
   font-weight: 700;
 }
 
+.markdownBody > :is(.bodyH1, .bodyH2, .bodyH3):first-child {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: 0;
+}
+
 .bodyParagraph {
   margin: 0 0 1.35em;
   color: var(--text-dim);
