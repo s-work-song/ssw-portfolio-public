@@ -1,0 +1,161 @@
+/*
+ * 설정 화면의 "선택됨" 표시를 그리는 규칙입니다.
+ *
+ * 정적 export는 빌드 시점 기본값으로 HTML을 만들고, 하이드레이션은 첫 페인트
+ * 뒤에야 끝납니다. 그래서 선택 표시를 React 상태로 칠하면 새로고침마다 기본값이
+ * 한 번 스쳐 갑니다. 대신 <head>의 부트 스크립트가 파싱 도중 <html>에 심는 설정
+ * data 속성을 보고 CSS가 칠하면, 첫 페인트부터 저장값이 반영됩니다.
+ *
+ * 동작 방식은 단순합니다. 모든 옵션 요소가 .optOn으로 --on: 0을 갖고, 현재 값과
+ * 같은 요소만 아래 목록에서 --on: 1이 됩니다. 나머지 규칙은 그 0/1을 색·투명도·
+ * 이동거리로 바꿉니다. color-mix의 비율을 calc(var(--on) * 100%)로 쓰면 선택
+ * 여부에 따라 두 색 사이를 오갑니다.
+ *
+ * 아래 선택자 목록은 context/settingsDataset.ts의 SETTINGS_DATASET을 기계적으로
+ * 펼친 것입니다(속성 14개 × 값 52개). 허용값을 늘리면 이 목록도 함께
+ * 늘려야 합니다. React는 aria-checked·클릭 핸들러·라벨만 그대로 관리합니다.
+ */
+
+/* 옵션 요소의 기본은 "선택 안 됨"입니다. */
+.optOn {
+  --on: 0;
+}
+
+/* 현재 저장값과 같은 요소만 켭니다. */
+:global(:root[data-theme-mode="light"]) .optOn[data-option="theme-mode"][data-value="light"],
+:global(:root[data-theme-mode="dark"]) .optOn[data-option="theme-mode"][data-value="dark"],
+:global(:root[data-theme-mode="system"]) .optOn[data-option="theme-mode"][data-value="system"],
+:global(:root[data-accent="indigo"]) .optOn[data-option="accent"][data-value="indigo"],
+:global(:root[data-accent="emerald"]) .optOn[data-option="accent"][data-value="emerald"],
+:global(:root[data-accent="amber"]) .optOn[data-option="accent"][data-value="amber"],
+:global(:root[data-accent="rose"]) .optOn[data-option="accent"][data-value="rose"],
+:global(:root[data-accent="violet"]) .optOn[data-option="accent"][data-value="violet"],
+:global(:root[data-motion="system"]) .optOn[data-option="motion"][data-value="system"],
+:global(:root[data-motion="on"]) .optOn[data-option="motion"][data-value="on"],
+:global(:root[data-motion="off"]) .optOn[data-option="motion"][data-value="off"],
+:global(:root[data-page-transition="none"]) .optOn[data-option="page-transition"][data-value="none"],
+:global(:root[data-page-transition="slide"]) .optOn[data-option="page-transition"][data-value="slide"],
+:global(:root[data-page-transition="fade"]) .optOn[data-option="page-transition"][data-value="fade"],
+:global(:root[data-page-transition="lift"]) .optOn[data-option="page-transition"][data-value="lift"],
+:global(:root[data-fab-mode="chat"]) .optOn[data-option="fab-mode"][data-value="chat"],
+:global(:root[data-fab-mode="quick-menu"]) .optOn[data-option="fab-mode"][data-value="quick-menu"],
+:global(:root[data-quick-menu-animation="none"]) .optOn[data-option="quick-menu-animation"][data-value="none"],
+:global(:root[data-quick-menu-animation="rise"]) .optOn[data-option="quick-menu-animation"][data-value="rise"],
+:global(:root[data-quick-menu-animation="slide"]) .optOn[data-option="quick-menu-animation"][data-value="slide"],
+:global(:root[data-quick-menu-animation="pop"]) .optOn[data-option="quick-menu-animation"][data-value="pop"],
+:global(:root[data-quick-menu-animation="blur"]) .optOn[data-option="quick-menu-animation"][data-value="blur"],
+:global(:root[data-chat-layout="floating"]) .optOn[data-option="chat-layout"][data-value="floating"],
+:global(:root[data-chat-layout="dock"]) .optOn[data-option="chat-layout"][data-value="dock"],
+:global(:root[data-glow="true"]) .optOn[data-option="glow"][data-value="true"],
+:global(:root[data-glow="false"]) .optOn[data-option="glow"][data-value="false"],
+:global(:root[data-chat-font="pretendard"]) .optOn[data-option="chat-font"][data-value="pretendard"],
+:global(:root[data-chat-font="noto-sans-kr"]) .optOn[data-option="chat-font"][data-value="noto-sans-kr"],
+:global(:root[data-chat-font="system"]) .optOn[data-option="chat-font"][data-value="system"],
+:global(:root[data-chat-font-size="small"]) .optOn[data-option="chat-font-size"][data-value="small"],
+:global(:root[data-chat-font-size="medium"]) .optOn[data-option="chat-font-size"][data-value="medium"],
+:global(:root[data-chat-font-size="large"]) .optOn[data-option="chat-font-size"][data-value="large"],
+:global(:root[data-chat-font-size="xlarge"]) .optOn[data-option="chat-font-size"][data-value="xlarge"],
+:global(:root[data-chat-tone="official"]) .optOn[data-option="chat-tone"][data-value="official"],
+:global(:root[data-chat-tone="manager"]) .optOn[data-option="chat-tone"][data-value="manager"],
+:global(:root[data-chat-tone="mascot"]) .optOn[data-option="chat-tone"][data-value="mascot"],
+:global(:root[data-chat-streaming="true"]) .optOn[data-option="chat-streaming"][data-value="true"],
+:global(:root[data-chat-streaming="false"]) .optOn[data-option="chat-streaming"][data-value="false"],
+:global(:root[data-chat-text-animation="none"]) .optOn[data-option="chat-text-animation"][data-value="none"],
+:global(:root[data-chat-text-animation="typewriter"]) .optOn[data-option="chat-text-animation"][data-value="typewriter"],
+:global(:root[data-chat-text-animation="word-fade"]) .optOn[data-option="chat-text-animation"][data-value="word-fade"],
+:global(:root[data-chat-text-animation="token-chunks"]) .optOn[data-option="chat-text-animation"][data-value="token-chunks"],
+:global(:root[data-chat-text-animation="blur-focus"]) .optOn[data-option="chat-text-animation"][data-value="blur-focus"],
+:global(:root[data-chat-text-animation="slide-up"]) .optOn[data-option="chat-text-animation"][data-value="slide-up"],
+:global(:root[data-chat-text-animation="skeleton"]) .optOn[data-option="chat-text-animation"][data-value="skeleton"],
+:global(:root[data-chat-text-animation="mask-wipe"]) .optOn[data-option="chat-text-animation"][data-value="mask-wipe"],
+:global(:root[data-chat-text-animation="scramble"]) .optOn[data-option="chat-text-animation"][data-value="scramble"],
+:global(:root[data-chat-text-animation="letter-drop"]) .optOn[data-option="chat-text-animation"][data-value="letter-drop"],
+:global(:root[data-chat-text-animation="highlight-trail"]) .optOn[data-option="chat-text-animation"][data-value="highlight-trail"],
+:global(:root[data-chat-panel-animation="none"]) .optOn[data-option="chat-panel-animation"][data-value="none"],
+:global(:root[data-chat-panel-animation="slide"]) .optOn[data-option="chat-panel-animation"][data-value="slide"],
+:global(:root[data-chat-panel-animation="jelly"]) .optOn[data-option="chat-panel-animation"][data-value="jelly"] {
+  --on: 1;
+}
+
+/* 세그먼트 버튼입니다(화면 모드·모션·채팅창 애니메이션). */
+.optSeg {
+  background: color-mix(in srgb, var(--accent) calc(var(--on) * 100%), transparent);
+  color: color-mix(in srgb, var(--accent-contrast) calc(var(--on) * 100%), var(--text-dim));
+  box-shadow: 0 6px 16px -8px
+    color-mix(in srgb, var(--accent-soft) calc(var(--on) * 100%), transparent);
+}
+
+/* 카드 버튼입니다(페이지 전환·플로팅 버튼·빠른 메뉴 연출·채팅 배치·글꼴·응답 연출). */
+.optCard {
+  background: color-mix(in srgb, var(--accent-soft) calc(var(--on) * 100%), var(--bg-elev-2));
+  border: 1.5px solid color-mix(in srgb, var(--accent) calc(var(--on) * 100%), var(--border));
+}
+
+/* 글자 크기 버튼은 글자색까지 포인트 컬러로 바뀝니다. */
+.optAccentText {
+  color: color-mix(in srgb, var(--accent) calc(var(--on) * 100%), var(--text-dim));
+}
+
+/*
+ * 선택 표시 체크 배지입니다. 예전에는 선택했을 때만 렌더했지만, 지금은 자리를
+ * 유지한 채 보이기만 바꿉니다. 선택이 바뀌어도 줄바꿈이 흔들리지 않습니다.
+ */
+.optCheck {
+  opacity: var(--on);
+}
+
+/* 스위치입니다(배경 글로우·응답 스트리밍). */
+.optSwitch {
+  background: color-mix(in srgb, var(--accent) calc(var(--on) * 100%), var(--bg-elev));
+}
+
+.optSwitchThumb {
+  transform: translateX(calc(var(--on) * 21px));
+}
+
+/* 플로팅 버튼 미리보기 패널의 높이도 값에 따라 달라집니다. */
+.fabPreview {
+  min-height: 240px;
+}
+
+:global(:root[data-fab-mode="quick-menu"]) .fabPreview {
+  min-height: 300px;
+}
+
+/*
+ * 값에 따라 통째로 나타나는 영역입니다.
+ * React 조건부 렌더로 두면 하이드레이션이 끝나야 나타나 화면이 한 번 늘어납니다.
+ * 항상 렌더해 두고 여닫기만 CSS가 맡습니다.
+ */
+.whenQuickMenu {
+  display: none;
+}
+
+:global(:root[data-fab-mode=quick-menu]) .whenQuickMenu {
+  display: block;
+}
+
+.whenChatDock {
+  display: none;
+}
+
+:global(:root[data-chat-layout=dock]) .whenChatDock {
+  display: grid;
+}
+
+/*
+ * 스트리밍을 끄면 응답 연출 목록을 흐리게 보여 줍니다.
+ * 선택 여부를 그대로 불투명도로 씁니다.
+ */
+.optDim {
+  opacity: calc(0.5 + var(--on) * 0.5);
+}
+
+/*
+ * 섹션 머리말의 현재 값 캡션입니다. 값마다 span을 모두 렌더하고 현재 값만
+ * 크기를 갖게 합니다. display는 커스텀 속성으로 바꿀 수 없어 글자 크기를 접습니다.
+ */
+.optText {
+  font-size: calc(var(--on) * 12.5px);
+  line-height: calc(var(--on) * 1.45);
+}

@@ -1,0 +1,315 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1200" viewBox="0 0 1400 1050" fill="none" role="img" aria-labelledby="title description">
+  <title id="title">입체적인 게임패드</title>
+  <desc id="description">따뜻한 회색 배경에 비스듬하게 놓인 아이보리색 게임패드. 검은색 그립과 아날로그 스틱, 방향키, 네 가지 색상의 버튼, 작은 청록색 상태 표시등을 갖춘 입체적인 SVG 일러스트.</desc>
+  <defs>
+    <radialGradient id="backdrop" cx="0.28" cy="0.13" r="0.95">
+      <stop stop-color="#f7f5ef"/>
+      <stop offset="0.52" stop-color="#e8e7e0"/>
+      <stop offset="1" stop-color="#cdd2ce"/>
+    </radialGradient>
+    <radialGradient id="shell" cx="0.34" cy="0.08" r="0.94">
+      <stop stop-color="#fffff9"/>
+      <stop offset="0.36" stop-color="#f0f1e9"/>
+      <stop offset="0.69" stop-color="#d6dcd6"/>
+      <stop offset="0.9" stop-color="#afb9b2"/>
+      <stop offset="1" stop-color="#8a9993"/>
+    </radialGradient>
+    <linearGradient id="underside" x1="616" y1="310" x2="752" y2="812" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#4b5252"/>
+      <stop offset="0.36" stop-color="#333d3e"/>
+      <stop offset="0.72" stop-color="#202a2d"/>
+      <stop offset="0.9" stop-color="#121c20"/>
+      <stop offset="1" stop-color="#354044"/>
+    </linearGradient>
+    <linearGradient id="seam" x1="495" y1="308" x2="792" y2="775" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#b8c1b9"/>
+      <stop offset="0.28" stop-color="#8d9c96"/>
+      <stop offset="0.72" stop-color="#53645f"/>
+      <stop offset="1" stop-color="#99aba1"/>
+    </linearGradient>
+    <radialGradient id="leftSculpt" cx="0.69" cy="0.17" r="0.88">
+      <stop stop-color="#ffffff" stop-opacity="0"/>
+      <stop offset="0.52" stop-color="#ffffff" stop-opacity="0.08"/>
+      <stop offset="0.79" stop-color="#809187" stop-opacity="0.06"/>
+      <stop offset="1" stop-color="#586c62" stop-opacity="0.51"/>
+    </radialGradient>
+    <radialGradient id="rightSculpt" cx="0.26" cy="0.13" r="1.05">
+      <stop stop-color="#ffffff" stop-opacity="0"/>
+      <stop offset="0.53" stop-color="#ffffff" stop-opacity="0.14"/>
+      <stop offset="0.77" stop-color="#76887c" stop-opacity="0.1"/>
+      <stop offset="1" stop-color="#596b63" stop-opacity="0.55"/>
+    </radialGradient>
+    <linearGradient id="leftGrip" x1="252" y1="631" x2="369" y2="672" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#17272d"/>
+      <stop offset="0.2" stop-color="#28383d"/>
+      <stop offset="0.6" stop-color="#39484a"/>
+      <stop offset="1" stop-color="#1d2b31"/>
+    </linearGradient>
+    <linearGradient id="rightGrip" x1="1070" y1="621" x2="1160" y2="703" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#4d5b5b"/>
+      <stop offset="0.4" stop-color="#344346"/>
+      <stop offset="0.78" stop-color="#18282e"/>
+      <stop offset="1" stop-color="#111e25"/>
+    </linearGradient>
+    <radialGradient id="controlSurround" cx="0.34" cy="0.14" r="0.86">
+      <stop stop-color="#ffffff"/>
+      <stop offset="0.6" stop-color="#e4e9df"/>
+      <stop offset="0.91" stop-color="#afbdb3"/>
+      <stop offset="1" stop-color="#738980"/>
+    </radialGradient>
+    <linearGradient id="socketRim" x1="-47" y1="-58" x2="42" y2="62" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#7b8881"/>
+      <stop offset="0.19" stop-color="#3e4c47"/>
+      <stop offset="0.5" stop-color="#172729"/>
+      <stop offset="0.78" stop-color="#556961"/>
+      <stop offset="1" stop-color="#d3ddd1"/>
+    </linearGradient>
+    <radialGradient id="socketWell" cx="0.5" cy="0.2" r="0.91">
+      <stop stop-color="#040e13"/>
+      <stop offset="0.55" stop-color="#17262c"/>
+      <stop offset="0.83" stop-color="#344548"/>
+      <stop offset="1" stop-color="#75857f"/>
+    </radialGradient>
+    <linearGradient id="stem" x1="-34" y1="7" x2="34" y2="7" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#15242b"/>
+      <stop offset="0.3" stop-color="#566764"/>
+      <stop offset="0.42" stop-color="#87948a"/>
+      <stop offset="0.6" stop-color="#344748"/>
+      <stop offset="1" stop-color="#0b1820"/>
+    </linearGradient>
+    <linearGradient id="stickSide" x1="-44" y1="-23" x2="31" y2="27" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#52615f"/>
+      <stop offset="0.3" stop-color="#344548"/>
+      <stop offset="0.62" stop-color="#14262e"/>
+      <stop offset="1" stop-color="#0b1a23"/>
+    </linearGradient>
+    <radialGradient id="stickTop" cx="0.33" cy="0.18" r="0.92">
+      <stop stop-color="#657570"/>
+      <stop offset="0.4" stop-color="#3b5051"/>
+      <stop offset="0.78" stop-color="#273d44"/>
+      <stop offset="1" stop-color="#172c36"/>
+    </radialGradient>
+    <radialGradient id="stickConcave" cx="0.61" cy="0.74" r="0.89">
+      <stop stop-color="#4a6060"/>
+      <stop offset="0.45" stop-color="#364d51"/>
+      <stop offset="0.79" stop-color="#21373e"/>
+      <stop offset="1" stop-color="#142932"/>
+    </radialGradient>
+    <linearGradient id="buttonSide" x1="-26" y1="-20" x2="25" y2="26" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#566862"/>
+      <stop offset="0.3" stop-color="#2a4143"/>
+      <stop offset="0.72" stop-color="#102630"/>
+      <stop offset="1" stop-color="#203841"/>
+    </linearGradient>
+    <radialGradient id="buttonTop" cx="0.26" cy="0.11" r="1.02">
+      <stop stop-color="#76897c"/>
+      <stop offset="0.2" stop-color="#415c56"/>
+      <stop offset="0.58" stop-color="#203e40"/>
+      <stop offset="0.88" stop-color="#172f38"/>
+      <stop offset="1" stop-color="#3a5354"/>
+    </radialGradient>
+    <linearGradient id="buttonGlint" x1="-18" y1="-33" x2="16" y2="-9" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#f4ffec" stop-opacity="0.54"/>
+      <stop offset="0.6" stop-color="#ffffff" stop-opacity="0.1"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="dpadTop" x1="-37" y1="-53" x2="37" y2="44" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#61716b"/>
+      <stop offset="0.4" stop-color="#3e5453"/>
+      <stop offset="1" stop-color="#1a323b"/>
+    </linearGradient>
+    <linearGradient id="dpadBevel" x1="-49" y1="-40" x2="49" y2="42" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#9ba99a"/>
+      <stop offset="0.36" stop-color="#526961"/>
+      <stop offset="0.7" stop-color="#0b222e"/>
+      <stop offset="1" stop-color="#415a5b"/>
+    </linearGradient>
+    <linearGradient id="shoulder" x1="0" y1="0" x2="0.2" y2="1">
+      <stop stop-color="#74827a"/>
+      <stop offset="0.15" stop-color="#4c5c57"/>
+      <stop offset="0.57" stop-color="#2e3c3d"/>
+      <stop offset="1" stop-color="#111e25"/>
+    </linearGradient>
+    <linearGradient id="bridgeLight" x1="0" y1="0" x2="0" y2="1">
+      <stop stop-color="#ffffff" stop-opacity="0.8"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+    <radialGradient id="statusGlow">
+      <stop stop-color="#72e7c6" stop-opacity="0.7"/>
+      <stop offset="0.5" stop-color="#65e3bd" stop-opacity="0.2"/>
+      <stop offset="1" stop-color="#65e3bd" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="floorBlur" x="-40%" y="-100%" width="180%" height="300%" color-interpolation-filters="sRGB"><feGaussianBlur stdDeviation="24"/></filter>
+    <filter id="groundContact" x="-40%" y="-100%" width="180%" height="300%" color-interpolation-filters="sRGB"><feGaussianBlur stdDeviation="9"/></filter>
+    <filter id="controlShadow" x="-40%" y="-70%" width="180%" height="240%" color-interpolation-filters="sRGB"><feGaussianBlur stdDeviation="6"/></filter>
+    <filter id="buttonShadow" x="-55%" y="-70%" width="210%" height="240%" color-interpolation-filters="sRGB"><feGaussianBlur stdDeviation="3"/></filter>
+    <filter id="softReflection" x="-30%" y="-40%" width="160%" height="180%" color-interpolation-filters="sRGB"><feGaussianBlur stdDeviation="1.5"/></filter>
+    <filter id="grain" x="0" y="0" width="100%" height="100%" color-interpolation-filters="sRGB">
+      <feTurbulence type="fractalNoise" baseFrequency="0.75" numOctaves="3" seed="24" stitchTiles="stitch"/>
+      <feColorMatrix type="saturate" values="0"/>
+      <feComposite in2="SourceGraphic" operator="in"/>
+    </filter>
+    <pattern id="gripDots" width="7" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(15)">
+      <circle cx="2" cy="2" r="0.9" fill="#b9c8b8" opacity="0.22"/>
+      <circle cx="2.3" cy="2.8" r="0.85" fill="#07181f" opacity="0.38"/>
+    </pattern>
+    <path id="silhouette" d="M500 286C456 276 408 279 375 303C336 332 315 380 297 435L226 642C210 694 228 740 268 759C309 779 345 758 371 722L463 604C481 582 501 576 528 576H872C899 576 919 582 937 604L1029 722C1055 758 1091 779 1132 759C1172 740 1190 694 1174 642L1103 435C1085 380 1064 332 1025 303C992 279 944 276 900 286C780 302 620 302 500 286Z"/>
+    <path id="leftGripShape" d="M294 514C312 563 340 603 379 636L330 714C313 739 291 748 271 737C242 722 233 690 246 651Z"/>
+    <path id="rightGripShape" d="M1106 514C1088 563 1060 603 1021 636L1070 714C1087 739 1109 748 1129 737C1158 722 1167 690 1154 651Z"/>
+    <clipPath id="shellClip"><use href="#silhouette"/></clipPath>
+
+    <!-- 두 스틱에 공통으로 쓰는 소켓, 축, 고무 캡. -->
+    <g id="stick">
+      <ellipse cx="9" cy="26" rx="77" ry="49" fill="#20372f" opacity="0.25" filter="url(#controlShadow)"/>
+      <ellipse cy="8" rx="82" ry="65" fill="url(#controlSurround)"/>
+      <ellipse cy="8" rx="76" ry="59" fill="url(#socketRim)"/>
+      <ellipse cy="8" rx="71" ry="54" fill="url(#socketWell)" stroke="#0e2027" stroke-width="1.8"/>
+      <path d="M-70 13C-68 41-36 62 1 62C39 62 70 41 71 14" stroke="#f0f5e7" stroke-opacity="0.52" stroke-width="1.2"/>
+      <ellipse cx="8" cy="20" rx="43" ry="28" fill="#020d15" opacity="0.7" filter="url(#buttonShadow)"/>
+      <path d="M-31-18H31V14C31 28 17 36 0 36C-17 36-31 28-31 14Z" fill="url(#stem)"/>
+      <path d="M-57-24V-9C-57 15-32 31 0 31C32 31 57 15 57-9V-24Z" fill="url(#stickSide)" stroke="#112630" stroke-width="0.8"/>
+      <path d="M-53-5C-42 24 41 29 54-6" stroke="#769186" stroke-width="1" stroke-opacity="0.35"/>
+      <ellipse cy="-24" rx="57" ry="44" fill="url(#stickTop)" stroke="#273e44" stroke-width="1.2"/>
+      <ellipse cy="-24" rx="53" ry="40" stroke="#a9b8a6" stroke-opacity="0.4" stroke-width="1" stroke-dasharray="1.1 3"/>
+      <ellipse cy="-24" rx="46" ry="34" fill="url(#stickConcave)" stroke="#102833" stroke-opacity="0.8" stroke-width="1"/>
+      <ellipse cy="-24" rx="40" ry="29" stroke="#759488" stroke-opacity="0.21" stroke-width="0.8"/>
+      <path d="M-54-34C-47-55-23-67 0-67C16-67 31-63 42-56" stroke="#c5d0bc" stroke-opacity="0.6" stroke-width="1.2" stroke-linecap="round"/>
+      <path d="M-35-4C-18 9 17 9 34-4" stroke="#9eb3a3" stroke-opacity="0.36" stroke-width="1.3" stroke-linecap="round"/>
+      <ellipse cy="-24" rx="48" ry="36" fill="#c3d0c0" filter="url(#grain)" opacity="0.07"/>
+    </g>
+
+    <!-- 색상 문자를 얹기 전의 공통 버튼. -->
+    <g id="faceButton">
+      <ellipse cx="4" cy="14" rx="30" ry="24" fill="#344d40" opacity="0.33" filter="url(#buttonShadow)"/>
+      <ellipse cy="8" rx="31" ry="25" fill="#6f8475"/>
+      <ellipse cy="7" rx="28.5" ry="23" fill="#102b32"/>
+      <path d="M-26-10V3C-26 16-14 25 0 25C14 25 26 16 26 3V-10Z" fill="url(#buttonSide)"/>
+      <path d="M-22 13C-12 25 14 26 24 10" stroke="#8ba092" stroke-width="0.8" stroke-opacity="0.6"/>
+      <ellipse cy="-10" rx="26" ry="22" fill="url(#buttonTop)" stroke="#1e383c" stroke-width="1.1"/>
+      <path d="M-24-15C-18-32 8-36 22-22C6-24-7-13-19-8Z" fill="url(#buttonGlint)"/>
+      <path d="M-22-21C-15-31-2-34 9-30" stroke="#e8f4d7" stroke-width="1.2" stroke-opacity="0.64" stroke-linecap="round"/>
+    </g>
+  </defs>
+
+  <rect width="1400" height="1050" fill="url(#backdrop)"/>
+
+  <!-- 본체가 바닥에서 약간 솟아 보이도록 넓은 그림자와 접지 그림자를 분리한다. -->
+  <ellipse cx="740" cy="728" rx="409" ry="111" transform="rotate(-11 740 728)" fill="#46574e" opacity="0.17" filter="url(#floorBlur)"/>
+  <ellipse cx="361" cy="828" rx="84" ry="25" transform="rotate(-13 361 828)" fill="#293e34" opacity="0.25" filter="url(#groundContact)"/>
+  <ellipse cx="1154" cy="668" rx="78" ry="24" transform="rotate(-13 1154 668)" fill="#223e33" opacity="0.26" filter="url(#groundContact)"/>
+
+  <g transform="rotate(-12 700 525)">
+    <!-- 뒤쪽 트리거와 범퍼. -->
+    <path d="M385 314L397 268C403 248 420 239 445 241L525 249C551 251 566 266 565 286L564 320Z" fill="#1a292d"/>
+    <path d="M397 278C398 259 416 249 440 251L522 259C541 261 551 270 553 285L550 310L389 305Z" fill="url(#shoulder)"/>
+    <path d="M410 258C423 253 437 254 453 256L522 263" stroke="#b6c1ad" stroke-opacity="0.65" stroke-width="1.4" stroke-linecap="round"/>
+    <path d="M836 320L835 286C834 266 849 251 875 249L955 241C980 239 997 248 1003 268L1015 314Z" fill="#14262c"/>
+    <path d="M847 285C849 270 859 261 878 259L960 251C984 249 1002 259 1003 278L1011 305L850 310Z" fill="url(#shoulder)"/>
+    <path d="M873 264L949 256C968 254 981 257 989 266" stroke="#a1b3a0" stroke-opacity="0.63" stroke-width="1.4" stroke-linecap="round"/>
+
+    <!-- 아래쪽 검은 하우징과 얇은 조립 이음선. -->
+    <use href="#silhouette" transform="translate(10 34)" fill="url(#underside)" stroke="#263c3b" stroke-width="1.3"/>
+    <path d="M249 719C257 780 319 811 366 754L465 628C485 608 506 610 531 610H877C904 610 922 619 938 640L1047 771C1085 813 1151 789 1174 752" stroke="#7e9187" stroke-opacity="0.25" stroke-width="1.5"/>
+    <use href="#silhouette" transform="translate(2 7)" fill="url(#seam)"/>
+    <use href="#silhouette" fill="url(#shell)" stroke="#dce4d5" stroke-width="1.5"/>
+
+    <g clip-path="url(#shellClip)">
+      <!-- 손잡이 곡면은 넓고 부드러운 명암으로 표현한다. -->
+      <path d="M382 301C422 285 486 299 519 330C556 365 555 431 525 477C506 508 472 553 449 588L370 724C339 770 300 783 267 761C223 732 216 689 235 634L306 423C325 369 346 328 382 301Z" fill="url(#leftSculpt)"/>
+      <path d="M1018 301C978 285 914 299 881 330C844 365 845 431 875 477C894 508 928 553 951 588L1030 724C1061 770 1100 783 1133 761C1177 732 1184 689 1165 634L1094 423C1075 369 1054 328 1018 301Z" fill="url(#rightSculpt)"/>
+      <path d="M509 294C612 312 788 312 891 294L867 352C769 328 631 328 533 352Z" fill="url(#bridgeLight)" opacity="0.36"/>
+      <path d="M485 564C527 539 586 532 637 537C686 542 718 542 766 537C816 532 874 539 915 563L885 594H511Z" fill="#c3cec2" opacity="0.23"/>
+
+      <!-- 손잡이 바깥쪽의 미끄럼 방지 고무. -->
+      <use href="#leftGripShape" fill="url(#leftGrip)" stroke="#91a294" stroke-width="1"/>
+      <use href="#leftGripShape" fill="url(#gripDots)"/>
+      <path d="M293 520C310 565 339 606 373 635L325 711C313 729 301 736 288 736" stroke="#71887b" stroke-opacity="0.6" stroke-width="1.2"/>
+      <use href="#rightGripShape" fill="url(#rightGrip)" stroke="#768d7e" stroke-width="1"/>
+      <use href="#rightGripShape" fill="url(#gripDots)"/>
+      <path d="M1107 520C1090 565 1061 606 1027 635L1075 711C1087 729 1099 736 1112 736" stroke="#b0c0ab" stroke-opacity="0.43" stroke-width="1.3"/>
+
+      <!-- 사출 플라스틱 표면의 아주 미세한 질감. -->
+      <rect x="200" y="275" width="1000" height="510" fill="#8a9989" filter="url(#grain)" opacity="0.028"/>
+      <path d="M270 565L241 650C226 696 240 732 272 748" stroke="#ffffff" stroke-width="3" stroke-opacity="0.41" stroke-linecap="round"/>
+      <path d="M336 375C362 308 408 285 474 291" stroke="#fffff9" stroke-width="3.5" stroke-opacity="0.76" stroke-linecap="round"/>
+      <path d="M963 286C1008 285 1045 313 1069 360" stroke="#fbfff1" stroke-width="2.2" stroke-opacity="0.53" stroke-linecap="round"/>
+      <path d="M383 700L461 602C481 576 507 572 530 572H871C898 572 922 583 939 605" stroke="#fffff4" stroke-width="2.1" stroke-opacity="0.48"/>
+    </g>
+
+    <!-- 왼쪽 아날로그 스틱. -->
+    <use href="#stick" transform="translate(454 402)"/>
+
+    <!-- 십자 방향키의 오목한 받침과 두께. -->
+    <g transform="translate(551 514)">
+      <ellipse cx="7" cy="19" rx="70" ry="52" fill="#375042" opacity="0.24" filter="url(#controlShadow)"/>
+      <ellipse cy="5" rx="68" ry="54" fill="url(#controlSurround)"/>
+      <ellipse cy="5" rx="61" ry="47" fill="#81968a"/>
+      <ellipse cy="3" rx="59" ry="45" fill="#b6c7b7"/>
+      <path d="M-19-39H19V-16H48V16H19V39H-19V16H-48V-16H-19Z" transform="translate(0 11)" fill="#152c34" stroke="#18303a" stroke-width="4" stroke-linejoin="round"/>
+      <path d="M-19-47H19V-20H48V12H19V39H-19V12H-48V-20H-19Z" fill="url(#dpadTop)" stroke="url(#dpadBevel)" stroke-width="3.5" stroke-linejoin="round"/>
+      <path d="M-17-45H17V-18H46" stroke="#a7b9a4" stroke-opacity="0.62" stroke-width="1.2" stroke-linejoin="round"/>
+      <path d="M-46 10H-17V37" stroke="#a1b39e" stroke-opacity="0.34" stroke-width="1.1"/>
+      <path d="M-18-18L18 12M18-18L-18 12" stroke="#8da28d" stroke-width="0.7" stroke-opacity="0.17"/>
+      <path d="M0-36L-6-28H6Z" fill="#122b34" fill-opacity="0.72"/>
+      <path d="M0 28L-6 20H6Z" fill="#839d8b" fill-opacity="0.38"/>
+      <path d="M-36-4L-28-10V2Z" fill="#142e37" fill-opacity="0.7"/>
+      <path d="M36-4L28-10V2Z" fill="#8aa291" fill-opacity="0.33"/>
+      <ellipse cy="-3" rx="12" ry="9" fill="#294249" opacity="0.31"/>
+    </g>
+
+    <!-- 오른쪽 아날로그 스틱. -->
+    <use href="#stick" transform="translate(849 503)"/>
+
+    <!-- 네 개의 둥근 버튼과 양각 문자. -->
+    <g transform="translate(949 340)">
+      <use href="#faceButton"/>
+      <path d="M-7-19L0-10L7-19M0-10V0" stroke="#f1d57e" stroke-width="3.1" stroke-linecap="round" stroke-linejoin="round"/>
+    </g>
+    <g transform="translate(1008 391)">
+      <use href="#faceButton"/>
+      <path d="M-6-20H1C10-20 10-11 1-11H-6M1-11C11-11 11-1 1-1H-6V-20" stroke="#eb9b90" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/>
+    </g>
+    <g transform="translate(949 441)">
+      <use href="#faceButton"/>
+      <path d="M-8-1L0-20L8-1M-5-8H5" stroke="#a4d9ac" stroke-width="2.9" stroke-linecap="round" stroke-linejoin="round"/>
+    </g>
+    <g transform="translate(890 391)">
+      <use href="#faceButton"/>
+      <path d="M-7-19L7-1M7-19L-7-1" stroke="#8ac9e0" stroke-width="3" stroke-linecap="round"/>
+    </g>
+
+    <!-- 중앙의 작은 시스템 버튼과 메뉴 버튼. -->
+    <g transform="translate(700 362)">
+      <ellipse cy="8" rx="29" ry="23" fill="#617f6e" opacity="0.29" filter="url(#buttonShadow)"/>
+      <ellipse cy="3" rx="27" ry="21" fill="#94a791"/>
+      <ellipse cy="1" rx="25" ry="20" fill="#19313a"/>
+      <path d="M-23-6V0C-23 11-13 19 0 19C13 19 23 11 23 0V-6Z" fill="#203941"/>
+      <ellipse cy="-6" rx="23" ry="18" fill="url(#buttonTop)" stroke="#546f61" stroke-width="1"/>
+      <path d="M-8-4L0-11L8-4V4H-8Z" stroke="#d9e7cd" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M-3 4V-1H3V4" stroke="#d9e7cd" stroke-width="1.5"/>
+    </g>
+    <g transform="translate(630 386)">
+      <ellipse cy="3" rx="19" ry="15" fill="#acbdae"/>
+      <ellipse cy="0" rx="17" ry="13" fill="#415e58" stroke="#6a8371" stroke-width="1"/>
+      <rect x="-7" y="-5" width="10" height="7" rx="1" stroke="#c9d9be" stroke-width="1.2"/>
+      <path d="M-3-1V6H7V-1H3" stroke="#c9d9be" stroke-width="1.2" stroke-linejoin="round"/>
+    </g>
+    <g transform="translate(770 386)">
+      <ellipse cy="3" rx="19" ry="15" fill="#a0b4a1"/>
+      <ellipse cy="0" rx="17" ry="13" fill="#354f4e" stroke="#687e69" stroke-width="1"/>
+      <path d="M-6-4H6M-6 0H6M-6 4H6" stroke="#d2ddc6" stroke-width="1.4" stroke-linecap="round"/>
+    </g>
+    <ellipse cx="700" cy="415" rx="35" ry="13" fill="url(#statusGlow)"/>
+    <rect x="687" y="411" width="26" height="5" rx="2.5" fill="#557a69"/>
+    <rect x="690" y="412" width="20" height="2.7" rx="1.35" fill="#aaffdb"/>
+
+    <!-- 앞면 하단의 충전 단자와 작은 나사. -->
+    <path d="M674 592H728V606H674Z" fill="#11262e" stroke="#5f7768" stroke-width="1.3" stroke-linejoin="round"/>
+    <rect x="681" y="595" width="40" height="7" rx="3.5" fill="#05151e"/>
+    <path d="M688 600H714" stroke="#5b7065" stroke-width="1.2"/>
+    <ellipse cx="395" cy="704" rx="5" ry="4" fill="#122b32" stroke="#6f8374" stroke-width="1"/>
+    <path d="M392 704H398" stroke="#81968a" stroke-width="0.9"/>
+    <ellipse cx="1031" cy="707" rx="5" ry="4" fill="#10272e" stroke="#637b6d" stroke-width="1"/>
+    <path d="M1028 707H1034" stroke="#7a9181" stroke-width="0.9"/>
+  </g>
+</svg>
