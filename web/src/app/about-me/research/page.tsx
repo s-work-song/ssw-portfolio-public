@@ -8,7 +8,7 @@ import ResearchViewer from '@/components/ResearchViewer';
 
 export const metadata = {
   title: '연구 경험 | Research Experience',
-  description: '로우레벨 최적화 및 에이전틱 코딩 연구 경험',
+  description: '하드웨어 성능 측정, 저수준 소프트웨어 최적화 및 AI 활용 실험 기록',
 };
 
 export default function ResearchExperiencePage() {
@@ -45,7 +45,7 @@ export default function ResearchExperiencePage() {
             연구 경험 (Research Experience)
           </h2>
           <p style={{ fontSize: 'clamp(0.98rem, 2.4vw, 1.0625rem)', color: 'var(--text-dim)', maxWidth: '850px', lineHeight: 1.6, margin: 0, wordBreak: 'keep-all' }}>
-            하드웨어 최적화부터 로우레벨 제어, 소프트웨어 아키텍처 및 데이터 최적화까지 이어지는 전반적인 엔지니어링 여정의 상세 실험 보고서입니다.
+            하드웨어 구성과 성능 측정, 저수준 소프트웨어 최적화, 개발 도구 및 AI 활용에 관한 실험 과정과 결과를 정리했습니다.
           </p>
         </div>
       </section>

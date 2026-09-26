@@ -263,10 +263,10 @@ export default function ResearchViewer() {
         boxShadow: 'var(--shadow)'
       }}>
         <h3 style={{ fontSize: '1.4rem', fontWeight: 700, marginBottom: '12px', color: 'var(--text)' }}>
-          더 많은 고민과 개발 일지를 기록합니다
+          관련 개발 기록 및 회고
         </h3>
         <p style={{ color: 'var(--text-dim)', marginBottom: '24px', fontSize: '0.975rem', lineHeight: 1.6, maxWidth: '650px', margin: '0 auto 24px' }}>
-          저의 일상적인 생각, 기술적 고민, 그리고 프로젝트 사후 회고를 Log에서 편하게 읽어보세요.
+          개발 과정에서 검토한 내용과 프로젝트 회고는 기록(Log) 페이지에서 확인할 수 있습니다.
         </p>
         <Link href="/about-me/log" className="hover-btn-primary" style={{
           display: 'inline-block',
@@ -279,7 +279,7 @@ export default function ResearchViewer() {
           boxShadow: 'var(--shadow)',
           transition: 'all 0.15s ease'
         }}>
-          기록(Log) 보러 가기
+          기록(Log) 확인하기
         </Link>
       </section>
     </div>

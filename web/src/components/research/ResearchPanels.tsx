@@ -31,15 +31,15 @@ export default function ResearchPanels({ activeTab }: { activeTab: ResearchTabId
               scrollMarginTop: '96px',
             }}>
               <h3 style={{ fontSize: '1.35rem', fontWeight: 700, margin: '0 0 12px 0', color: 'var(--text)' }}>
-                실험 연구 개요 · 동기
+                연구·실험 개요 및 목적
               </h3>
               <p style={{ margin: 0, fontSize: '1rem', lineHeight: 1.7, color: 'var(--text-dim)', wordBreak: 'keep-all' }}>
-                단순히 코드를 작성하는 것을 넘어, 하드웨어 성능 한계를 측정하고 계층별 병목을 해소하는 데 흥미를 가진 엔지니어입니다.
-                웹 SI 실무를 마친 후 공백기를 활용하여 CPU 파이프라인(분기 예측), SIMD 명령어(AVX2), 메모리/파일 입출력(Memory Mapped File),
-                비트 수준 직렬화, 그리고 소형 무선 전송 대역폭까지 컴퓨팅 계층 전반을 수치와 실측 기반으로 독학하고 실험한 기록입니다.
+                하드웨어와 소프트웨어의 계층별 성능 특성을 측정하고 병목 요인을 분석하는 것을 목적으로 수행한 개인 학습 및 실험 기록입니다.
+                웹 SI 실무 이후 CPU 파이프라인(분기 예측), SIMD 명령어(AVX2), 메모리·파일 입출력(Memory Mapped File),
+                비트 수준 직렬화와 무선 전송 대역폭을 대상으로 구현 방식과 측정 결과를 비교했습니다.
               </p>
               <div style={{ marginTop: '16px' }}>
-                <AskAiButton align="end" question="포트폴리오의 실험 연구 동기와 연구 주제들이 어떤 흐름으로 연결되는지 설명해 주세요." />
+                <AskAiButton align="end" question="포트폴리오의 연구·실험 목적과 주제별 연관성을 설명해 주세요." />
               </div>
             </section>
 
@@ -107,7 +107,7 @@ export default function ResearchPanels({ activeTab }: { activeTab: ResearchTabId
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
                   <h3 style={{ fontSize: '1.25rem', fontWeight: 700, margin: 0, color: 'var(--text)' }}>
-                    분기 예측 실패 제거와 SIMD 벡터화
+                    조건 분기와 SIMD 벡터화 성능 비교
                   </h3>
                   <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--accent, #6366f1)', border: '1px solid var(--border)', borderRadius: '99px', padding: '3px 10px', background: 'var(--bg-elev-2)' }}>
                     CPU Architecture
@@ -115,9 +115,9 @@ export default function ResearchPanels({ activeTab }: { activeTab: ResearchTabId
                 </div>
                 <p style={{ marginTop: '10px', fontSize: '0.95rem', lineHeight: 1.6, color: 'var(--text-dim)', wordBreak: 'keep-all' }}>
                   바이트 배열에서 범위 조건을 충족하는 값을 필터링하여 합산하는 동작을 표준 조건 분기, 부호 비트 트릭을 이용한 브랜치리스(Branchless),
-                  그리고 256비트 AVX2 SIMD 벡터 연산으로 각각 구현하여 성능 차이를 정밀 검증했습니다.
+                  그리고 256비트 AVX2 SIMD 벡터 연산으로 각각 구현하여 처리 시간을 비교했습니다.
                 </p>
-                <AskAiButton align="end" question="「분기 예측 실패 제거와 SIMD 벡터화」 실험의 가설, 구현 방식과 측정 결과를 설명해 주세요." />
+                <AskAiButton align="end" question="「조건 분기와 SIMD 벡터화 성능 비교」 실험의 가설, 구현 방식과 측정 결과를 설명해 주세요." />
                 <BenchmarkEvidence projectId="simd-avx2" />
               </div>
 
@@ -140,7 +140,7 @@ foreach (byte v in src) {
 return sum;`}
                   </pre>
                   <div style={{ fontSize: '0.8rem', color: 'var(--text-dim)', lineHeight: 1.5, borderTop: '1px solid var(--border)', paddingTop: '10px', marginTop: 'auto' }}>
-                    조건 분기 발생으로 데이터가 무작위로 분포되어 있을 때 분기 예측 실패(Branch Misprediction) 병목이 대량 발생합니다.
+                    데이터가 무작위로 분포된 조건에서 분기 예측 실패(Branch Misprediction)에 따른 처리 시간 증가를 확인했습니다.
                   </div>
                 </div>
 
@@ -156,7 +156,7 @@ foreach (byte v in src) {
 return sum;`}
                   </pre>
                   <div style={{ fontSize: '0.8rem', color: 'var(--text-dim)', lineHeight: 1.5, borderTop: '1px solid var(--border)', paddingTop: '10px', marginTop: 'auto' }}>
-                    비트 이동 및 XOR 트릭을 적용해 조건부 분기(if)를 제거하고, 정렬 여부와 관계없이 일관된 처리 시간을 확보합니다.
+                    비트 이동 및 XOR 연산으로 조건부 분기(if)를 제거한 구현입니다. 해당 측정에서 정렬 여부에 따른 처리 시간 차이가 작았습니다.
                   </div>
                 </div>
               </div>
@@ -174,7 +174,7 @@ foreach (var v in vSpan) {
 return Vector256.Sum(accumulator) + ScalarSum(src[남은_청크..]);`}
                 </pre>
                 <div style={{ fontSize: '0.8rem', color: 'var(--text-dim)', lineHeight: 1.5, borderTop: '1px solid var(--border)', paddingTop: '10px', marginTop: 'auto' }}>
-                  MemoryMarshal.Cast를 통해 Span의 데이터 복사 없이 Vector256로 재해석하고, JIT 컴파일러에 의해 CPU가 지원하는 최적의 AVX2 명령어로 직접 병렬 연산을 수행합니다.
+                  MemoryMarshal.Cast로 Span의 데이터를 복사 없이 Vector256로 재해석하고, JIT 컴파일을 통해 AVX2 명령어를 사용하는 벡터 연산을 수행합니다.
                 </div>
               </div>
 
@@ -351,14 +351,14 @@ return Vector256.Sum(accumulator) + ScalarSum(src[남은_청크..]);`}
               {/* Cross-platform comparisons */}
               <div style={{ marginTop: '8px' }}>
                 <div style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text)', marginBottom: '10px' }}>
-                  이종 플랫폼 및 환경 크로스 실험 결과
+                  플랫폼·실행 환경별 성능 비교
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px' }}>
                   <div style={{ padding: '16px', background: 'var(--bg-elev-2)', borderRadius: '12px', border: '1px solid var(--border)' }}>
                     <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--accent, #6366f1)' }}>C++ Google Benchmark</div>
                     <div style={{ fontSize: '1.25rem', fontWeight: 700, margin: '6px 0', fontFamily: 'monospace' }}>34.5 μs</div>
                     <div style={{ fontSize: '0.8rem', color: 'var(--text-mute)', lineHeight: 1.4 }}>
-                      C# 관리형 코드(37 μs)와 거의 차이가 없는 마이크로초 단위의 네이티브 근접 성능을 확인했습니다.
+                      해당 측정에서 C# 관리형 코드(37 μs)와 C++ 구현의 처리 시간이 유사한 수준임을 확인했습니다.
                     </div>
                   </div>
                   <div style={{ padding: '16px', background: 'var(--bg-elev-2)', borderRadius: '12px', border: '1px solid var(--border)' }}>
@@ -399,8 +399,7 @@ return Vector256.Sum(accumulator) + ScalarSum(src[남은_청크..]);`}
                 </span>
               </div>
               <p style={{ margin: 0, fontSize: '0.95rem', lineHeight: 1.6, color: 'var(--text-dim)', wordBreak: 'keep-all' }}>
-                바이트 배열(0~255)의 정렬에서 표준 `Array.Sort` O(N log N) 대비 카운팅 횟수가 제한적이라는 점을 활용하여 O(N) 계수 정렬(Counting Sort)을
-                포인터 연산(`unsafe`)과 루프 언롤링을 동원해 최적화하였습니다.
+                바이트 배열(0~255)의 제한된 값 범위를 활용해 O(N) 계수 정렬(Counting Sort)을 구현하고, 표준 `Array.Sort` O(N log N)과 비교했습니다. 포인터 연산(`unsafe`)과 루프 언롤링을 적용한 구현의 처리 시간도 측정했습니다.
               </p>
               <AskAiButton align="end" question="「바이트 배열 정렬 및 레지스터 스필링」 연구에서 선택한 최적화와 검증 결과를 설명해 주세요." />
               <BenchmarkEvidence projectId="counting-sort" />
@@ -422,7 +421,7 @@ while (current < end) {
 }`}
                   </pre>
                   <div style={{ fontSize: '0.8rem', color: 'var(--text-dim)', lineHeight: 1.5, borderTop: '1px solid var(--border)', paddingTop: '10px', marginTop: 'auto' }}>
-                    4개의 독립 카운트 버퍼를 스택 메모리에 확보(`stackalloc`)하고, 4바이트씩 병렬 카운팅하여 Write-After-Write(WAW) 데이터 의존성을 해소해 명령어 수준 병렬성(ILP)을 극대화합니다.
+                    4개의 독립 카운트 버퍼를 스택 메모리에 확보(`stackalloc`)하고, 4바이트씩 병렬 카운팅하여 Write-After-Write(WAW) 데이터 의존성을 줄이고 명령어 수준 병렬성(ILP)을 활용합니다.
                   </div>
                 </div>
 
@@ -433,7 +432,7 @@ while (current < end) {
                       언롤링 버퍼 단계를 4Way에서 8Way로 올렸을 때, x86 CPU의 범용 레지스터 개수 한계를 초과하여 일부 변수와 포인터가
                       L1 캐시나 메모리 스택으로 밀려나 성능이 하락했습니다.
                       실측 상 <strong>4-Way(461 μs)</strong>가 <strong>8-Way(587 μs)</strong>보다 약 27% 빨랐으며,
-                      레지스터 여유 대역을 고려한 실무적 튜닝이 핵심이었습니다.
+                      레지스터 사용량에 따른 언롤링 단계별 성능 차이를 확인했습니다.
                     </p>
                   </div>
 
@@ -468,7 +467,7 @@ while (current < end) {
             }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
                 <h3 style={{ fontSize: '1.25rem', fontWeight: 700, margin: 0, color: 'var(--text)' }}>
-                  AoS vs SoA 메모리 정렬 및 캐시 히트
+                  AoS·SoA 메모리 배치와 캐시 활용 비교
                 </h3>
                 <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--accent, #6366f1)', border: '1px solid var(--border)', borderRadius: '99px', padding: '3px 10px', background: 'var(--bg-elev-2)' }}>
                   DoD Layout
@@ -478,7 +477,7 @@ while (current < end) {
                 Unity ECS/DOTS 환경 설계 및 C# 고성능 처리를 분석하며 AoS(Array of Structs, 구조체의 배열)와
                 SoA(Struct of Arrays, 배열의 구조체) 레이아웃에 따른 하드웨어 L1/L2 캐시 라인(64바이트) 충전 효율을 비교 분석했습니다.
               </p>
-              <AskAiButton align="end" question="「AoS vs SoA 메모리 정렬 및 캐시 히트」 실험을 객체지향 구조와 데이터 지향 설계의 차이 중심으로 설명해 주세요." />
+              <AskAiButton align="end" question="「AoS·SoA 메모리 배치와 캐시 활용 비교」 실험을 객체지향 구조와 데이터 지향 설계의 차이 중심으로 설명해 주세요." />
 
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px' }}>
                 <div style={{ padding: '16px', background: 'var(--bg-elev-2)', borderRadius: '12px', border: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -491,7 +490,7 @@ while (current < end) {
 Entity[] entities = new Entity[N];`}
                   </pre>
                   <div style={{ fontSize: '0.8rem', color: 'var(--text-dim)', lineHeight: 1.5, borderTop: '1px solid var(--border)', paddingTop: '10px', marginTop: 'auto' }}>
-                    순회 시 한 필드(x)만 업데이트해도 인접 필드가 L1/L2 캐시라인에 함께 로드되므로, 불필요한 전송 대역폭 낭비와 캐시 미스를 유발합니다.
+                    한 필드(x)만 순회해도 인접 필드가 L1/L2 캐시라인에 함께 로드되는 구조입니다. 접근하지 않는 필드가 캐시 공간과 전송 대역폭을 함께 사용합니다.
                   </div>
                 </div>
 
@@ -503,7 +502,7 @@ float[] ys = new float[N];
 float[] vxs = new float[N];`}
                   </pre>
                   <div style={{ fontSize: '0.8rem', color: 'var(--text-dim)', lineHeight: 1.5, borderTop: '1px solid var(--border)', paddingTop: '10px', marginTop: 'auto' }}>
-                    x좌표 연산 시 xs 배열 메모리가 연속 배치되어 64바이트 캐시라인 충전 효율이 극대화되며, 데이터 지향 설계(DoD) 및 SIMD 병렬 벡터화에 최적화됩니다.
+                    x좌표 연산에 필요한 xs 배열의 값이 연속 배치되어 64바이트 캐시라인을 활용하기 쉬운 구조입니다. 데이터 지향 설계(DoD)와 SIMD 벡터화에 적용했습니다.
                   </div>
                 </div>
               </div>
@@ -523,15 +522,14 @@ float[] vxs = new float[N];`}
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
                   <h3 style={{ fontSize: '1.25rem', fontWeight: 700, margin: 0, color: 'var(--text)' }}>
-                    대용량 파일 비교: 메모리 매핑(MMF) vs Stream
+                    파일 비교 성능: 메모리 매핑(MMF)과 Stream
                   </h3>
                   <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--accent, #6366f1)', border: '1px solid var(--border)', borderRadius: '99px', padding: '3px 10px', background: 'var(--bg-elev-2)' }}>
                     File I/O
                   </span>
                 </div>
                 <p style={{ marginTop: '10px', fontSize: '0.95rem', lineHeight: 1.6, color: 'var(--text-dim)', wordBreak: 'keep-all' }}>
-                  10MB 대용량 텍스트 파일의 일치 여부를 대조하는 실험을 수행하며 OS의 가상 메모리 관리 기법을 응용한
-                  메모리 매핑 파일(Memory Mapped File)과 일반 스트림 청크 비교 성능을 실측했습니다.
+                  10MB 텍스트 파일의 일치 여부를 비교하는 조건에서, OS의 가상 메모리 관리 기법을 활용한 메모리 매핑 파일(Memory Mapped File)과 일반 스트림 청크 방식의 처리 시간을 측정했습니다.
                 </p>
                 <AskAiButton align="end" question="「메모리 매핑 파일과 Stream 비교」 실험의 조건, 결과와 적용 판단 기준을 설명해 주세요." />
               </div>
@@ -640,9 +638,9 @@ float[] vxs = new float[N];`}
                   L3 캐시 대역폭 한계와 병렬 효율 연구 (i5-9600K 9MB L3 기준)
                 </div>
                 <p style={{ margin: '8px 0 0', fontSize: '0.875rem', lineHeight: 1.6, color: 'var(--text-dim)', wordBreak: 'keep-all' }}>
-                  병렬 처리가 무조건 단일 처리보다 빠르지 않음을 보이기 위해 L3 캐시(9MB) 한계점 전후로 연산 범위(8MB vs 16MB)를 나누어 벤치마크했습니다.
-                  L3 캐시 용량 한계 이내(8MB)에서는 멀티 스레드 병렬 처리가 월등히 빨랐으나, L3 캐시를 완전히 초과하는 16MB 데이터에서는 단일 스레드와 병렬 처리의 차이가 소멸했습니다.
-                  모든 CPU 코어가 한정된 DRAM 버스 대역폭을 공유해야 하는 <strong>메모리 대역폭 병목</strong>이 원인임을 파악하였습니다.
+                  데이터 크기에 따른 병렬 처리 효과를 비교하기 위해 L3 캐시(9MB) 용량 전후로 연산 범위(8MB vs 16MB)를 나누어 벤치마크했습니다.
+                  해당 측정에서 L3 캐시 용량 이내(8MB)에서는 병렬 처리 시간이 짧았으나, L3 캐시 용량을 초과한 16MB 데이터에서는 단일 스레드와 병렬 처리의 시간 차이가 관찰되지 않았습니다.
+                  CPU 코어가 DRAM 버스 대역폭을 공유하는 조건에서 나타나는 <strong>메모리 대역폭 병목</strong>과 관련된 결과로 분석했습니다.
                 </p>
               </div>
             </div>
@@ -674,7 +672,7 @@ float[] vxs = new float[N];`}
                   </span>
                 </div>
                 <p style={{ marginTop: '10px', fontSize: '0.95rem', lineHeight: 1.6, color: 'var(--text-dim)', wordBreak: 'keep-all' }}>
-                  게임 입력 프레임 기록(마우스 좌표 양자화, 버튼 비트, 스크롤 정규화) 데이터를 다양한 포맷으로 직렬화 및 압축하여 물리적 전송 크기를 최소화하는 구조를 연구했습니다.
+                  게임 입력 프레임 기록(마우스 좌표 양자화, 버튼 비트, 스크롤 정규화) 데이터를 여러 포맷으로 직렬화·압축하고, 전송 데이터 크기의 차이를 비교했습니다.
                 </p>
                 <AskAiButton align="end" question="「프레임 기록 직렬화 크기 최적화」에서 비교한 포맷과 압축 결과를 설명해 주세요." />
                 <BenchmarkEvidence projectId="serialization-protobuf" />
@@ -697,7 +695,7 @@ float[] vxs = new float[N];`}
                         <td style={{ padding: '8px', fontWeight: 600 }}>JSON (표준)</td>
                         <td style={{ padding: '8px', textAlign: 'right', fontFamily: 'monospace' }}>68,502</td>
                         <td style={{ padding: '8px', textAlign: 'right', color: 'var(--text-mute)' }}>기준 (1.0x)</td>
-                        <td style={{ padding: '8px', color: 'var(--text-mute)', fontSize: '0.8rem' }}>필드명 중복 및 텍스트 변환으로 오버헤드가 극심함</td>
+                        <td style={{ padding: '8px', color: 'var(--text-mute)', fontSize: '0.8rem' }}>필드명 중복과 텍스트 표현에 필요한 추가 데이터 포함</td>
                       </tr>
                       <tr style={{ borderBottom: '1px solid var(--border)' }}>
                         <td style={{ padding: '8px', fontWeight: 600 }}>Raw Binary (이진)</td>
@@ -734,7 +732,7 @@ float[] vxs = new float[N];`}
                   직렬화 포맷 및 압축 방식별 크기 대조
                 </div>
                 <div style={{ fontSize: '0.75rem', color: 'var(--text-mute)', marginBottom: '16px', fontFamily: 'monospace' }}>
-                  선형 스케일 (bytes, 짧을수록 용량 최소화)
+                  선형 스케일 (bytes, 짧을수록 데이터 크기가 작음)
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
@@ -834,8 +832,8 @@ ulong restored = Bmi2.X64.ParallelBitDeposit(bits, mask);`}
                 </span>
               </div>
               <p style={{ margin: 0, fontSize: '0.95rem', lineHeight: 1.6, color: 'var(--text-dim)', wordBreak: 'keep-all' }}>
-                직렬화 크기 감소가 연산 최적화보다 더 강력한 이유는 <strong>물리 계층 전송 속도</strong>가 최대의 병목이기 때문입니다.
-                L1 캐시와 블루투스 전송은 나노초당 처리량에서 최대 약 1,800만 배의 차이가 나므로, 대역폭이 좁아질수록 CPU 연산을 더 수행하더라도 압축하여 전송량을 줄이는 것이 훨씬 이득입니다.
+                대역폭이 제한된 환경에서는 <strong>물리 계층 전송 속도</strong>가 전체 처리 시간의 주요 병목이 될 수 있습니다.
+                아래 비교에 사용한 L1 캐시와 블루투스 전송은 나노초당 처리량에서 최대 약 1,800만 배의 차이가 있습니다. 이러한 조건에서는 CPU 압축 연산 비용과 전송량 감소에 따른 시간 절감 효과를 함께 비교할 필요가 있습니다.
               </p>
               <AskAiButton align="end" question="「컴퓨팅 물리 계층별 대역폭과 전송 최적화」 실험이 실제 통신 구현에 어떻게 반영됐는지 설명해 주세요." />
 
@@ -893,7 +891,7 @@ ulong restored = Bmi2.X64.ParallelBitDeposit(bits, mask);`}
                 <p style={{ margin: '8px 0 0', fontSize: '0.875rem', lineHeight: 1.6, color: 'var(--text-dim)', wordBreak: 'keep-all' }}>
                   무선 직렬 전송 대역폭의 병목을 직접 측정하기 위해 PC와 안드로이드 스마트폰을 블루투스 SPP 소켓으로 연결하고 60MB 파일을 전송하는 앱을 제작했습니다.
                   <strong>비압축 원본 전송 시 대역폭 한계로 5분 이상</strong>이 소요되었으나, <strong>GZip 압축을 적용하자 전송 데이터 크기가 줄어 약 1분 이내로 완료</strong>되며 전송 시간을 5배 단축시켰습니다.
-                  대역폭이 협소할수록 전송 전 CPU 압축 연산 오버헤드보다 전송 크기 감소의 이점이 지배적임을 정량적으로 입증했습니다.
+                  해당 전송 조건에서 CPU 압축 연산이 추가되더라도 전송 데이터 크기 감소로 전체 전송 시간이 줄어드는 것을 확인했습니다.
                 </p>
               </div>
             </div>
@@ -924,15 +922,14 @@ ulong restored = Bmi2.X64.ParallelBitDeposit(bits, mask);`}
                 </span>
               </div>
               <p style={{ margin: 0, fontSize: '0.95rem', lineHeight: 1.6, color: 'var(--text-dim)', wordBreak: 'keep-all' }}>
-                최적화 로직과 반복되는 데이터 바인딩 코드 작성의 휴먼 에러를 막기 위해 C# Roslyn 컴파일러를 활용한
-                소스 생성기(Source Generator)를 구축했습니다.
+                최적화 로직과 반복적인 데이터 바인딩 코드를 작성할 때 발생하는 수작업 오류를 줄이기 위해 C# Roslyn 컴파일러 기반 소스 생성기(Source Generator)를 구현했습니다.
               </p>
               <AskAiButton align="end" question="「Roslyn 기반 메타 프로그래밍 및 코드 생성기」의 목적, 구현 범위와 효과를 설명해 주세요." />
 
               <ul style={{ paddingLeft: '20px', margin: 0, color: 'var(--text-dim)', lineHeight: 1.7, fontSize: '0.95rem' }}>
                 <li><strong>리소스 매핑 자동화</strong>: 에셋이나 리소스 폴더의 구조적 변화를 분석하여 상응하는 Enum 클래스를 빌드 시점에 자동 생성합니다.</li>
                 <li><strong>BMI2 최적화 마스크 생성</strong>: 특정 구조체들의 bool 멤버 선언부 및 필드 순서를 파싱하여, CPU BMI2 명령 연산(PEXT/PDEP)을 수행할 비트 마스크 상수를 컴파일 타임에 자동으로 추적 및 코드화합니다.</li>
-                <li><strong>런타임 안전 보장</strong>: 메타 정보에 기초해 타입 체크를 빌드 과정에서 강제함으로써 휴먼 에러로 인한 런타임 캐스팅 오류나 범위 초과 버그를 사전에 완전 차단했습니다.</li>
+                <li><strong>빌드 시점 검증</strong>: 메타 정보를 바탕으로 타입 검사를 빌드 과정에 적용해 캐스팅·범위 관련 오류를 사전에 확인하도록 구성했습니다.</li>
               </ul>
             </div>
 
@@ -949,20 +946,20 @@ ulong restored = Bmi2.X64.ParallelBitDeposit(bits, mask);`}
             }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
                 <h3 style={{ fontSize: '1.25rem', fontWeight: 700, margin: 0, color: 'var(--text)' }}>
-                  생성형 AI 에이전틱 코딩 접목 실험
+                  생성형 AI 기반 개발 및 검증 실험
                 </h3>
                 <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--accent, #6366f1)', border: '1px solid var(--border)', borderRadius: '99px', padding: '3px 10px', background: 'var(--bg-elev-2)' }}>
                   AI Orchestration
                 </span>
               </div>
               <p style={{ margin: 0, fontSize: '0.95rem', lineHeight: 1.6, color: 'var(--text-dim)', wordBreak: 'keep-all' }}>
-                로컬 경량 LLM(Gemma, Llama) 구동 및 다양한 클라우드 기반 모델 연동 실무를 바탕으로 대형 언어 모델과의 유기적인 협업 체계를 테스트했습니다.
+                로컬 경량 LLM(Gemma, Llama) 실행 환경과 클라우드 기반 모델 연동을 구성하고, 대형 언어 모델을 개발·검증 과정에 활용하는 방법을 실험했습니다.
               </p>
-              <AskAiButton align="end" question="「생성형 AI 에이전틱 코딩 접목 실험」에서 AI에 맡긴 역할과 사람이 검증한 범위를 설명해 주세요." />
+              <AskAiButton align="end" question="「생성형 AI 기반 개발 및 검증 실험」에서 AI에 맡긴 역할과 사람이 검증한 범위를 설명해 주세요." />
 
               <ul style={{ paddingLeft: '20px', margin: 0, color: 'var(--text-dim)', lineHeight: 1.7, fontSize: '0.95rem' }}>
-                <li><strong>자동 테스트 설계</strong>: 작성된 로우레벨 최적화 및 BCL 함수에 대한 복잡한 경계 조건 케이스를 생성형 AI 프롬프트 체인으로 유도하여 단위 테스트(Unit Test)를 자동 구성 및 검증하는 가공 파이프라인을 운영했습니다.</li>
-                <li><strong>에이전트 조율</strong>: Claude Code 등의 AI 인터페이스 터미널 도구를 페어 프로그래밍의 파트너로 활용하여, 성능 보틀넥 추적을 위한 가설 수립 ➔ 테스트 코드 생성 ➔ 벤치마크 실측 ➔ 피드백 반영 리팩토링의 루프를 주도하며 코딩 생산성을 극대화하였습니다.</li>
+                <li><strong>단위 테스트 생성 및 검증</strong>: 저수준 최적화 및 BCL 함수의 경계 조건을 대상으로, 생성형 AI 프롬프트 체인을 활용해 단위 테스트(Unit Test)를 생성하고 검증하는 절차를 구성했습니다.</li>
+                <li><strong>에이전트 역할 분담</strong>: Claude Code 등의 터미널 기반 AI 도구를 활용해 성능 병목 분석을 위한 가설 수립 ➔ 테스트 코드 생성 ➔ 벤치마크 측정 ➔ 결과에 따른 리팩터링을 반복하는 개발 절차를 운영했습니다.</li>
               </ul>
             </div>
           </div>

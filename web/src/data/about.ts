@@ -89,7 +89,7 @@ export const aboutDestinations: AboutDestination[] = [
   {
     title: '연구 경험 (Research)',
     href: '/about-me/research',
-    desc: '하드웨어 한계 돌파(오버클럭, RAID 0)부터 로우레벨 소프트웨어 최적화(SIMD, AVX2, CUDA) 및 AI 에이전트 오케스트레이션 실험 로그입니다.',
+    desc: 'CPU 오버클럭·RAID 0 구성, SIMD·AVX2·CUDA 기반 성능 최적화, AI 에이전트 오케스트레이션의 실험 과정과 결과를 정리한 기록입니다.',
     emoji: '🔬',
     linkText: '연구 경험 보러 가기 →',
   },

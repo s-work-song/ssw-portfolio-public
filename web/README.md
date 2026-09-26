@@ -144,7 +144,7 @@ npm run lint       # ESLint
 npm test           # 순수 로직 테스트 (node --test)
 ```
 
-`npm test`는 브라우저 없이 도는 네 묶음을 실행합니다.
+`npm test`는 브라우저 없이 도는 다섯 묶음을 실행합니다.
 
 - `src/features/chat/parse.test.mjs` — SSE 블록 파싱, 응답 검증, 도구 실행
   허용값, 재시도 대기 시간 환산
@@ -152,6 +152,7 @@ npm test           # 순수 로직 테스트 (node --test)
   화면 상태로 좁히는 계약
 - `scripts/local-fonts.test.mjs` — 로컬 폰트 파일·해시·라이선스와 외부 Google Fonts 요청 제거
 - `src/data/agentExperiments.test.mjs` — 실험별 제작 모델·버전·음악 제작 경로와 숨김 상태
+- `src/data/research.test.mjs` — 연구 문구·제목과 측정 수치, 연구 탭·시기 계약
 
 타입 검사는 `npx tsc --noEmit`으로 따로 실행합니다.
 
