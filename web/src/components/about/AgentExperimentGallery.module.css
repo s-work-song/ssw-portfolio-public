@@ -71,10 +71,11 @@
 .description > p:not(.eyebrow) { color: var(--text-dim); line-height: 1.7; margin: 0; word-break: keep-all; }
 .tags { display: flex; flex-wrap: wrap; gap: 8px; padding: 0; margin: 16px 0 0; list-style: none; }
 .tags li { padding: 4px 9px; border-radius: 5px; background: var(--bg-elev-2); color: var(--text-dim); font-size: .78rem; }
-.details { display: flex; flex-direction: column; align-items: flex-start; gap: 18px; padding-left: 26px; border-left: 1px solid var(--border); }
+.details { display: flex; min-width: 0; flex-direction: column; align-items: flex-start; gap: 18px; padding-left: 26px; border-left: 1px solid var(--border); }
 .details dl { margin: 0; display: grid; gap: 12px; font-size: .85rem; line-height: 1.6; }
 .details dt { color: var(--text-mute); font-size: .75rem; }
-.details dd { margin: 3px 0 0; color: var(--text-dim); }
+.details dd { margin: 3px 0 0; color: var(--text-dim); overflow-wrap: anywhere; }
+.modelVia { display: block; margin-top: 3px; color: var(--text-mute); font-size: .75rem; }
 .details a { display: inline-flex; gap: 24px; align-items: center; min-height: 42px; padding: 8px 14px; border-radius: 8px; background: var(--accent, #6366f1); color: white; font-size: .875rem; font-weight: 600; text-decoration: none; }
 .filmstrip { position: relative; display: flex; overflow-x: auto; gap: 12px; padding: 2px 4px 8px; margin: -2px -4px 14px; scrollbar-width: thin; }
 .filmstrip button { display: flex; flex: 0 0 250px; align-items: center; gap: 14px; padding: 16px; border: 1px solid var(--border); border-radius: 10px; text-align: left; font: inherit; color: var(--text-dim); background: var(--bg-elev); cursor: pointer; }

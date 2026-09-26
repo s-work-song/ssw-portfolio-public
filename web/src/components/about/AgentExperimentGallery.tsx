@@ -166,10 +166,19 @@ export default function AgentExperimentGallery() {
               <ul className={styles.tags}>{active.focus.map((focus) => <li key={focus}>{focus}</li>)}</ul>
             </div>
             <div className={styles.details}>
-              <dl>
-                <div><dt>모델·도구</dt><dd>{active.models ? '모델별 제작 기록 정리 예정' : '제작 기록 확인 후 추가'}</dd></div>
-                <div><dt>실험 기록</dt><dd>요구사항·개입 과정·결과 정리 예정</dd></div>
-              </dl>
+              {active.modelCredits?.length ? (
+                <dl aria-label="사용 모델">
+                  {active.modelCredits.map((credit) => (
+                    <div key={credit.purpose ?? 'models'}>
+                      <dt>{credit.purpose ?? '사용 모델'}</dt>
+                      <dd>
+                        {credit.models.join(' · ')}
+                        {credit.via && <small className={styles.modelVia}>{credit.via}를 통해 제작</small>}
+                      </dd>
+                    </div>
+                  ))}
+                </dl>
+              ) : null}
               {active.demoUrl && <a href={active.demoUrl} target="_blank" rel="noopener noreferrer" aria-label={`${active.title} ${active.demoLabel ?? '직접 실행'}, 새 탭`}>{active.demoLabel ?? '직접 실행'} <span aria-hidden="true">↗</span></a>}
             </div>
           </div>

@@ -10,6 +10,12 @@ export type AgentExperiment = {
   demoUrl?: string;
   demoLabel?: string;
   images?: Array<{ src: string; alt: string; caption: string }>;
+  /** 실제 제작에 사용한 모델. 비교 화면용 models와 구분한다. */
+  modelCredits?: Array<{
+    purpose?: '코드' | '2D 에셋' | '배경음악';
+    models: string[];
+    via?: string;
+  }>;
   models?: string[];
 };
 
@@ -20,6 +26,7 @@ export const agentExperiments: AgentExperiment[] = [
     title: 'SVG 일러스트 제작',
     description: 'SVG 도형과 그라디언트를 조합해 게임패드와 물이 반쯤 담긴 유리잔을 표현한 벡터 일러스트입니다.',
     focus: ['벡터 일러스트', '도형·그라디언트', '해상도 독립'],
+    modelCredits: [{ models: ['GPT-6 Astra'] }],
     images: [
       {
         src: '/images/agent-experiments/svg/gamepad.svg',
@@ -39,6 +46,10 @@ export const agentExperiments: AgentExperiment[] = [
     title: 'Planet Defense',
     description: 'GPT로 제작한 이미지 리소스를 활용하고, 자동 요격과 액티브 스킬, 웨이브 사이의 방어망 정비를 결합한 행성 방어 게임입니다.',
     focus: ['전투 시스템', '성장·강화', 'GPT 이미지'],
+    modelCredits: [
+      { purpose: '코드', models: ['GPT-5.6 Sol'] },
+      { purpose: '2D 에셋', models: ['GPT Image 2'] },
+    ],
     demoUrl: 'https://ssw-planet-defense.swsongab11572.chatgpt.site/',
     images: [
       {
@@ -59,6 +70,11 @@ export const agentExperiments: AgentExperiment[] = [
     title: '물고기 키우기',
     description: 'GPT로 제작한 이미지 리소스를 활용해 물고기 육성과 재화 수집, 침입자 방어를 결합한 수족관 게임입니다. 배경음악은 Gemini를 통해 Lyria 3로 제작했습니다.',
     focus: ['육성·경제', 'GPT 이미지', 'Lyria 3 BGM'],
+    modelCredits: [
+      { purpose: '코드', models: ['GPT-5.6 Sol'] },
+      { purpose: '2D 에셋', models: ['GPT Image 2'] },
+      { purpose: '배경음악', models: ['Lyria 3'], via: 'Gemini' },
+    ],
     demoUrl: 'https://aqua-guardian.swsongab11572.chatgpt.site/',
     images: [
       {
@@ -79,6 +95,7 @@ export const agentExperiments: AgentExperiment[] = [
     title: '게임 모음 플랫폼',
     description: '오목·스네이크 같은 2D 브라우저 게임을 한곳에 모으고, 게임 기록과 랭킹 기능을 구성한 웹 플랫폼입니다.',
     focus: ['2D 브라우저 게임', '게임 모음', '기록·랭킹'],
+    modelCredits: [{ models: ['Fable 5', 'Opus 4.8', 'GPT-5.6 Sol', 'GPT Image 2'] }],
     images: [
       {
         src: '/images/projects/game-collection/ssw-web-games-main.webp',
@@ -93,6 +110,7 @@ export const agentExperiments: AgentExperiment[] = [
     title: '비행 시뮬레이터',
     description: 'Three.js와 WebGL을 이용해 활주로 이륙과 비행 조작, 계기 HUD를 구현한 브라우저 3D 비행 시뮬레이터입니다.',
     focus: ['Three.js', 'WebGL', '3D 비행 조작'],
+    modelCredits: [{ models: ['Opus 5'] }],
     demoUrl: 'https://skyward-flight-simulator.swsongab11572.chatgpt.site/',
     images: [
       {
