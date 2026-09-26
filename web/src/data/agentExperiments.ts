@@ -110,7 +110,7 @@ export const agentExperiments: AgentExperiment[] = [
     title: '비행 시뮬레이터',
     description: 'Three.js와 WebGL을 이용해 활주로 이륙과 비행 조작, 계기 HUD를 구현한 브라우저 3D 비행 시뮬레이터입니다.',
     focus: ['Three.js', 'WebGL', '3D 비행 조작'],
-    modelCredits: [{ models: ['Opus 5'] }],
+    modelCredits: [{ models: ['Opus 5', 'GPT-5.6 Sol'] }],
     demoUrl: 'https://skyward-flight-simulator.swsongab11572.chatgpt.site/',
     images: [
       {

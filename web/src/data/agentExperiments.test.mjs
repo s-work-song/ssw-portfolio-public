@@ -13,7 +13,7 @@ test('공개 실험 다섯 항목에 확인된 제작 모델과 버전을 표시
     'planet-defense': ['GPT-5.6 Sol', 'GPT Image 2'],
     'aqua-guardian': ['GPT-5.6 Sol', 'GPT Image 2', 'Lyria 3'],
     'project-game-collection-platform': ['Fable 5', 'Opus 4.8', 'GPT-5.6 Sol', 'GPT Image 2'],
-    'flight-simulator-experiment': ['Opus 5'],
+    'flight-simulator-experiment': ['Opus 5', 'GPT-5.6 Sol'],
   });
 });
 
