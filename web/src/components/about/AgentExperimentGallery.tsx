@@ -5,12 +5,9 @@ import { agentExperiments } from '@/data/agentExperiments';
 import ProjectMediaCarousel from './ProjectMediaCarousel';
 import styles from './AgentExperimentGallery.module.css';
 
-const categories = [
-  'SVG 제작',
-  '2D 게임 제작',
-  '3D 게임 제작',
-  'Blender 3D 에셋 제작',
-] as const;
+// 탭, 슬라이드, 직접 링크 모두 동일한 노출 목록을 사용한다.
+const visibleExperiments = agentExperiments.filter((item) => !item.hidden);
+const categories = [...new Set(visibleExperiments.map((item) => item.category))];
 
 function CapturePlaceholder({ label }: { label: string }) {
   return (
@@ -28,11 +25,11 @@ function CapturePlaceholder({ label }: { label: string }) {
 
 /** 자동 재생 없이 실험을 탐색하고, 모델 비교는 같은 화면에서 확인하는 갤러리다. */
 export default function AgentExperimentGallery() {
-  const [category, setCategory] = useState<(typeof categories)[number]>('SVG 제작');
-  const [selectedId, setSelectedId] = useState(agentExperiments[0].id);
+  const [category, setCategory] = useState<(typeof categories)[number]>(visibleExperiments[0]?.category ?? 'SVG 제작');
+  const [selectedId, setSelectedId] = useState(visibleExperiments[0]?.id ?? '');
   const [selectedModel, setSelectedModel] = useState(0);
   const itemRefs = useRef<(HTMLButtonElement | null)[]>([]);
-  const experiments = agentExperiments.filter((item) => item.category === category);
+  const experiments = visibleExperiments.filter((item) => item.category === category);
   const index = Math.max(0, experiments.findIndex((item) => item.id === selectedId));
   const active = experiments[index];
 
@@ -44,7 +41,7 @@ export default function AgentExperimentGallery() {
       } catch {
         return;
       }
-      const target = agentExperiments.find((item) => item.id === hash);
+      const target = visibleExperiments.find((item) => item.id === hash);
       if (!target) return;
       setCategory(target.category);
       setSelectedId(target.id);
@@ -54,6 +51,8 @@ export default function AgentExperimentGallery() {
     window.addEventListener('hashchange', selectHashExperiment);
     return () => window.removeEventListener('hashchange', selectHashExperiment);
   }, []);
+
+  if (!active) return null;
 
   function select(nextIndex: number, focus = false) {
     const next = (nextIndex + experiments.length) % experiments.length;
@@ -84,9 +83,8 @@ export default function AgentExperimentGallery() {
         <div>
           <p className={styles.eyebrow}>AI EXPERIMENTS</p>
           <h3 id="agent-experiments-heading">AI 에이전트 성능·활용 실험</h3>
-          <p className={styles.intro}>2D·3D 게임 구현부터 Blender 에셋과 SVG 일러스트 제작, 같은 과제의 모델별 결과 비교까지.</p>
+          <p className={styles.intro}>SVG 일러스트 제작부터 2D·3D 게임 구현까지, AI 에이전트와 함께 진행한 실험을 소개합니다.</p>
         </div>
-        <span className={styles.draft}>레이아웃 미리보기</span>
       </header>
 
       <div className={styles.toolbar}>
@@ -94,7 +92,7 @@ export default function AgentExperimentGallery() {
           {categories.map((value) => (
             <button key={value} type="button" aria-pressed={category === value} onClick={() => {
               setCategory(value);
-              setSelectedId(agentExperiments.find((item) => item.category === value)!.id);
+              setSelectedId(visibleExperiments.find((item) => item.category === value)!.id);
               setSelectedModel(0);
             }}>{value}</button>
           ))}

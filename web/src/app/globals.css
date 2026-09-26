@@ -3,13 +3,15 @@
  * 페이지 고유 배치는 CSS Module에 두고, 여러 라우트가 공유하는 규칙만 이 파일에서 관리합니다.
  */
 @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css');
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+@import '../assets/fonts/noto-sans-kr.css';
+@import '../assets/fonts/jetbrains-mono.css';
 
 * {
   box-sizing: border-box;
 }
 
 :root {
+  --font-noto-sans-kr: 'Noto Sans KR', system-ui, sans-serif;
   --bg: #f4f5fb;
   --bg-elev: #ffffff;
   --bg-elev-2: #f3f4fa;

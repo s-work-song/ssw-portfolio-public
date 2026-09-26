@@ -144,11 +144,20 @@ npm run lint       # ESLint
 npm test           # 순수 로직 테스트 (node --test)
 ```
 
-`npm test`는 브라우저 없이 도는 두 묶음을 실행합니다.
+`npm test`는 브라우저 없이 도는 세 묶음을 실행합니다.
 
 - `src/features/chat/parse.test.mjs` — SSE 블록 파싱, 응답 검증, 도구 실행
   허용값, 재시도 대기 시간 환산
 - `src/features/webmcp/logViewContract.test.mjs` — 기록 검색 결과를 목록
   화면 상태로 좁히는 계약
+- `scripts/local-fonts.test.mjs` — 로컬 폰트 파일·해시·라이선스와 외부 Google Fonts 요청 제거
 
 타입 검사는 `npx tsc --noEmit`으로 따로 실행합니다.
+
+### 폰트 파일
+
+Noto Sans KR와 JetBrains Mono는 [`src/assets/fonts/`](src/assets/fonts/README.md)에
+파일을 보관해 빌드 시 Google Fonts 다운로드 없이 사용합니다. 브라우저도 두 글꼴을
+사이트의 정적 자산에서 읽습니다. 한글의 글자 범위별 분할과 가변 굵기를 유지하며,
+OFL 라이선스는 `public/fonts/licenses/`를 통해 배포에 포함합니다.
+기본 본문 글꼴 Pretendard의 기존 jsDelivr 로딩은 별개로 유지합니다.

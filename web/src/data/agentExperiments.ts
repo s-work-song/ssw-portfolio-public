@@ -5,6 +5,8 @@ export type AgentExperiment = {
   title: string;
   description: string;
   focus: string[];
+  /** 데이터와 구현을 보존하면서 갤러리 노출만 숨긴다. */
+  hidden?: boolean;
   demoUrl?: string;
   demoLabel?: string;
   images?: Array<{ src: string; alt: string; caption: string }>;
@@ -102,6 +104,7 @@ export const agentExperiments: AgentExperiment[] = [
   },
   {
     id: 'fps-model-comparison',
+    hidden: true,
     category: '3D 게임 제작',
     title: 'FPS 제작 테스트',
     description: '같은 제작 과제를 모델별로 진행하고, 결과 화면과 구현 내용을 비교할 예정입니다.',
@@ -110,6 +113,7 @@ export const agentExperiments: AgentExperiment[] = [
   },
   {
     id: 'blender-3d-assets',
+    hidden: true,
     category: 'Blender 3D 에셋 제작',
     title: 'Blender 3D 에셋 제작',
     description: 'Blender로 제작한 3D 모델과 리깅·애니메이션 결과를 정리하고 비교할 자리입니다.',

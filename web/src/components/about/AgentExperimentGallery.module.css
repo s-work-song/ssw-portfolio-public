@@ -12,7 +12,6 @@
 .eyebrow { margin: 0 0 8px; font-size: .78rem; font-weight: 700; letter-spacing: .12em; color: var(--accent, #6366f1); }
 .heading h3 { margin: 0; font-size: clamp(1.35rem, 3vw, 1.75rem); line-height: 1.4; word-break: keep-all; }
 .intro { margin: 12px 0 0; color: var(--text-dim); line-height: 1.7; }
-.draft { flex-shrink: 0; padding: 6px 10px; border: 1px dashed var(--border-strong); border-radius: 6px; color: var(--text-mute); font-size: .75rem; }
 .toolbar { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 16px; }
 .filters, .controls, .modelSwitcher { display: flex; gap: 6px; align-items: center; }
 .filters { flex-wrap: wrap; }
