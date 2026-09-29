@@ -31,6 +31,15 @@
 .section button:focus-visible, .section a:focus-visible { outline: 2px solid var(--accent, #6366f1); outline-offset: 3px; }
 .stage { border: 1px solid var(--border-strong); border-radius: 16px; overflow: hidden; }
 .slide { animation: reveal 220ms ease-out; }
+.animationGroups { display: grid; gap: 20px; padding: 20px; background: var(--bg-elev-2); }
+.animationGroupTitle { margin: 0 0 10px; color: var(--accent, #6366f1); font-size: .88rem; font-weight: 700; }
+.animationCards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.animationCard { min-width: 0; padding: 10px; border: 1px solid var(--border); border-radius: 10px; background: var(--bg-elev); }
+.animationCardEmpty { visibility: hidden; }
+.animationCardTitle { margin: 0 0 8px; color: var(--text); font-size: .83rem; font-weight: 700; overflow-wrap: anywhere; }
+.animationCard .capture { min-height: 0; aspect-ratio: 16 / 9; padding: 8px; gap: 6px; }
+.animationCard .capture span { font-size: .75rem; }
+.animationCard .capture small { display: none; }
 .singlePreview { position: relative; background: var(--bg-elev-2); }
 .previewLabel {
   position: absolute;
@@ -61,7 +70,16 @@
   text-shadow: none;
   backdrop-filter: blur(8px);
 }
+.pairedPreview .previewLabel { position: relative; top: auto; left: auto; right: auto; padding: 14px 14px 0; }
+.mediaPair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; padding: 14px; }
+.mediaPairPane { min-width: 0; }
+.mediaPairHeading { margin: 0 0 8px; color: var(--text-dim); font-size: .82rem; font-weight: 700; }
+.mediaPair .experimentCarousel, .mediaPair .videoFrame { padding: 0; }
 .experimentCarousel { padding: 0 14px 14px; }
+.singlePreview > .capture { aspect-ratio: 16 / 9; }
+.videoFrame { padding: 0 14px 14px; }
+.videoPlayer { display: block; width: 100%; aspect-ratio: 16 / 9; border: 1px solid var(--border); border-radius: 12px; background: #000; object-fit: contain; }
+.videoCaption { margin: 10px 0 0; color: var(--text-mute); font-size: .85rem; }
 .capture { min-height: 180px; aspect-ratio: 16 / 7; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; color: var(--text-mute); background: linear-gradient(125deg, transparent, color-mix(in srgb, var(--accent, #6366f1) 5%, transparent)); }
 .capture svg { opacity: .65; }
 .capture > span { font-size: .9rem; }
@@ -77,6 +95,11 @@
 .details dd { margin: 3px 0 0; color: var(--text-dim); overflow-wrap: anywhere; }
 .modelVia { display: block; margin-top: 3px; color: var(--text-mute); font-size: .75rem; }
 .details a { display: inline-flex; gap: 24px; align-items: center; min-height: 42px; padding: 8px 14px; border-radius: 8px; background: var(--accent, #6366f1); color: white; font-size: .875rem; font-weight: 600; text-decoration: none; }
+.downloads { width: 100%; }
+.downloads > p { margin: 0 0 8px; color: var(--text-mute); font-size: .75rem; }
+.downloadLinks { display: flex; flex-wrap: wrap; gap: 8px; }
+.downloadLinks a { gap: 8px; border: 1px solid color-mix(in srgb, var(--accent, #6366f1) 36%, transparent); background: color-mix(in srgb, var(--accent, #6366f1) 9%, var(--bg-elev)); color: var(--accent, #6366f1); }
+.downloadLinks a:hover { background: color-mix(in srgb, var(--accent, #6366f1) 16%, var(--bg-elev)); }
 .filmstrip { position: relative; display: flex; overflow-x: auto; gap: 12px; padding: 2px 4px 8px; margin: -2px -4px 14px; scrollbar-width: thin; }
 .filmstrip button { display: flex; flex: 0 0 250px; align-items: center; gap: 14px; padding: 16px; border: 1px solid var(--border); border-radius: 10px; text-align: left; font: inherit; color: var(--text-dim); background: var(--bg-elev); cursor: pointer; }
 .filmstrip button[aria-pressed='true'] { border-color: var(--accent, #6366f1); background: color-mix(in srgb, var(--accent, #6366f1) 7%, var(--bg-elev)); }
@@ -98,6 +121,7 @@
 .srOnly { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 @keyframes reveal { from { opacity: 0; transform: translateX(8px); } to { opacity: 1; transform: translateX(0); } }
 @media (max-width: 900px) {
+  .mediaPair { grid-template-columns: minmax(0, 1fr); }
   .heading { flex-direction: column; gap: 12px; }
   .caption { grid-template-columns: minmax(0, 1fr); gap: 20px; padding: 20px; }
   .details { padding: 18px 0 0; border-left: 0; border-top: 1px solid var(--border); }
@@ -110,13 +134,23 @@
 }
 @media (max-width: 480px) {
   .section { padding: 18px; }
+  .animationGroups { gap: 14px; padding: 10px; }
+  .animationCards { gap: 6px; }
+  .animationCard { padding: 6px; }
+  .animationCardTitle { min-height: 2.4em; font-size: .68rem; line-height: 1.2; }
+  .animationCard .capture { min-height: 72px; }
+  .animationCard .capture svg { width: 18px; height: 18px; }
+  .animationCard .capture span { font-size: .65rem; }
   .toolbar { gap: 10px; }
   .filters { width: 100%; flex-wrap: nowrap; overflow-x: auto; padding-bottom: 4px; scrollbar-width: thin; }
   .filters button { flex: 0 0 auto; padding-inline: 11px; }
   .capture { min-height: 210px; }
   .comparison { padding: 14px; }
   .previewLabel { inset: 14px 14px auto; }
+  .pairedPreview .previewLabel { padding: 10px 10px 0; }
+  .mediaPair { gap: 14px; padding: 10px; }
   .experimentCarousel { padding: 0 10px 12px; }
+  .videoFrame { padding: 0 10px 12px; }
   .filmstrip button { flex-basis: 235px; }
 }
 @media (prefers-reduced-motion: reduce) { .slide { animation: none; } }

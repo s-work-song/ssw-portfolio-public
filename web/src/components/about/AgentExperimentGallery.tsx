@@ -1,24 +1,52 @@
 'use client';
 
 import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
-import { agentExperiments } from '@/data/agentExperiments';
+import { agentExperiments, type AgentExperiment } from '@/data/agentExperiments';
 import ProjectMediaCarousel from './ProjectMediaCarousel';
 import styles from './AgentExperimentGallery.module.css';
 
 // 탭, 슬라이드, 직접 링크 모두 동일한 노출 목록을 사용한다.
 const visibleExperiments = agentExperiments.filter((item) => !item.hidden);
 const categories = [...new Set(visibleExperiments.map((item) => item.category))];
+const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? '';
 
-function CapturePlaceholder({ label }: { label: string }) {
+function CapturePlaceholder({ label, kind = 'capture' }: { label: string; kind?: 'capture' | 'image' | 'video' | 'svg-animation' }) {
+  const message = kind === 'video' ? '영상 준비 중' : kind === 'svg-animation' ? 'SVG 애니메이션 준비 중' : kind === 'image' ? '사진 준비 중' : '결과 캡처 준비 중';
   return (
-    <div className={styles.capture} aria-label={`${label} 캡처 준비 중`}>
-      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.3" aria-hidden="true">
-        <rect x="3" y="4" width="18" height="16" rx="2" />
-        <circle cx="8" cy="9" r="1.5" />
-        <path d="m3 17 5-5 4 4 4-6 5 7" />
-      </svg>
-      <span>결과 캡처 준비 중</span>
+    <div className={styles.capture} aria-label={`${label} ${message}`}>
+      {kind === 'video' ? (
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.3" aria-hidden="true">
+          <rect x="3" y="4" width="18" height="16" rx="2" />
+          <path d="m10 8 6 4-6 4z" />
+        </svg>
+      ) : (
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.3" aria-hidden="true">
+          <rect x="3" y="4" width="18" height="16" rx="2" />
+          <circle cx="8" cy="9" r="1.5" />
+          <path d="m3 17 5-5 4 4 4-6 5 7" />
+        </svg>
+      )}
+      <span>{message}</span>
       <small>{label}</small>
+    </div>
+  );
+}
+
+function ExperimentVideo({ title, video }: { title: string; video: NonNullable<AgentExperiment['video']> }) {
+  return (
+    <div className={styles.videoFrame}>
+      <video
+        className={styles.videoPlayer}
+        controls
+        playsInline
+        preload="none"
+        poster={video.poster ? `${basePath}${video.poster}` : undefined}
+        aria-label={`${title} 영상`}
+      >
+        <source src={`${basePath}${video.src}`} type="video/mp4" />
+        브라우저에서 MP4 영상을 재생할 수 없습니다.
+      </video>
+      {video.caption && <p className={styles.videoCaption}>{video.caption}</p>}
     </div>
   );
 }
@@ -83,7 +111,7 @@ export default function AgentExperimentGallery() {
         <div>
           <p className={styles.eyebrow}>AI EXPERIMENTS</p>
           <h3 id="agent-experiments-heading">AI 에이전트 성능·활용 실험</h3>
-          <p className={styles.intro}>SVG 일러스트 제작부터 2D·3D 게임 구현까지, AI 에이전트와 함께 진행한 실험을 소개합니다.</p>
+          <p className={styles.intro}>SVG·게임 실험과 Blender 에셋·영상·ComfyUI 작업을 소개합니다.</p>
         </div>
       </header>
 
@@ -94,7 +122,7 @@ export default function AgentExperimentGallery() {
               setCategory(value);
               setSelectedId(visibleExperiments.find((item) => item.category === value)!.id);
               setSelectedModel(0);
-            }}>{value}</button>
+            }}>{value === 'Blender 3D 에셋 제작' ? 'Blender' : value}</button>
           ))}
         </div>
         <div className={styles.controls}>
@@ -118,7 +146,35 @@ export default function AgentExperimentGallery() {
 
       <div id="agent-experiment-stage" className={styles.stage}>
         <article key={active.id} className={styles.slide} aria-label={active.title}>
-          {active.models ? (
+          {active.animationGroups?.length ? (
+            <div className={styles.animationGroups} aria-label={`${active.title} 모델별 애니메이션 비교`}>
+              {active.animationGroups.map((group) => (
+                <div key={group.label} className={styles.animationGroup} role="group" aria-label={`${group.label} 모델 결과`}>
+                  <p className={styles.animationGroupTitle}>{group.label}</p>
+                  <div className={styles.animationCards}>
+                    {group.items.map((entry, slotIndex) => (
+                      <div key={entry.model ?? `${group.label}-${slotIndex}`} className={`${styles.animationCard} ${entry.model === null ? styles.animationCardEmpty : ''}`} aria-hidden={entry.model === null || undefined}>
+                        {entry.model === null ? null : (
+                          <>
+                            <p className={styles.animationCardTitle}>{entry.model}</p>
+                            {entry.image ? (
+                              <ProjectMediaCarousel
+                                gallery={{ images: [entry.image], placeholder: `${entry.model} SVG 애니메이션 준비 중` }}
+                                projectTitle={`${active.title} · ${entry.model}`}
+                                imageSizes="(max-width: 480px) 30vw, 280px"
+                              />
+                            ) : (
+                              <CapturePlaceholder label={entry.model} kind="svg-animation" />
+                            )}
+                          </>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : active.models ? (
             <div className={styles.comparison}>
               <div className={styles.comparisonHeading}>
                 <span>같은 과제, 서로 다른 결과</span>
@@ -141,9 +197,27 @@ export default function AgentExperimentGallery() {
               <p className={styles.conditions}>비교 조건 · 공통 요구사항, 작업 시간·예산, 수정 지시와 리소스 사용 범위는 실험 후 정리할 예정입니다.</p>
             </div>
           ) : (
-            <div className={styles.singlePreview}>
-              <div className={styles.previewLabel}><span>{active.category}</span><span>SCREEN / VIDEO</span></div>
-              {active.images?.length ? (
+            <div className={`${styles.singlePreview} ${active.video && active.images?.length ? styles.pairedPreview : ''}`}>
+              <div className={styles.previewLabel}><span>{active.category}</span><span>{active.video && active.images?.length ? 'IMAGE / VIDEO' : active.category === '영상물' ? 'VIDEO' : 'SCREEN / VIDEO'}</span></div>
+              {active.video && active.images?.length ? (
+                <div className={styles.mediaPair}>
+                  <div className={styles.mediaPairPane}>
+                    <p className={styles.mediaPairHeading}>생성 이미지</p>
+                    <ProjectMediaCarousel
+                      className={styles.experimentCarousel}
+                      gallery={{ images: active.images, placeholder: `${active.title} 이미지 준비 중` }}
+                      projectTitle={active.title}
+                      imageSizes="(max-width: 900px) calc(100vw - 72px), 450px"
+                    />
+                  </div>
+                  <div className={styles.mediaPairPane}>
+                    <p className={styles.mediaPairHeading}>5초 생성 영상</p>
+                    <ExperimentVideo title={active.title} video={active.video} />
+                  </div>
+                </div>
+              ) : active.video ? (
+                <ExperimentVideo title={active.title} video={active.video} />
+              ) : active.images?.length ? (
                 <ProjectMediaCarousel
                   className={styles.experimentCarousel}
                   gallery={{
@@ -154,7 +228,7 @@ export default function AgentExperimentGallery() {
                   imageSizes="(max-width: 900px) calc(100vw - 72px), 900px"
                 />
               ) : (
-                <CapturePlaceholder label={active.title} />
+                <CapturePlaceholder label={active.title} kind={active.category === '영상물' ? 'video' : 'image'} />
               )}
             </div>
           )}
@@ -178,6 +252,18 @@ export default function AgentExperimentGallery() {
                     </div>
                   ))}
                 </dl>
+              ) : null}
+              {active.downloads?.length ? (
+                <div className={styles.downloads} aria-label="Blender 파일 다운로드">
+                  <p>Blender 파일 다운로드</p>
+                  <div className={styles.downloadLinks}>
+                    {active.downloads.map((file) => (
+                      <a key={file.src} href={`${basePath}${file.src}`} download aria-label={`${file.label} Blender 파일 다운로드`}>
+                        {file.label} <span aria-hidden="true">↓</span>
+                      </a>
+                    ))}
+                  </div>
+                </div>
               ) : null}
               {active.demoUrl && <a href={active.demoUrl} target="_blank" rel="noopener noreferrer" aria-label={`${active.title} ${active.demoLabel ?? '직접 실행'}, 새 탭`}>{active.demoLabel ?? '직접 실행'} <span aria-hidden="true">↗</span></a>}
             </div>

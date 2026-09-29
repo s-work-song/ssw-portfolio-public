@@ -1,7 +1,7 @@
 /** 실험 갤러리의 공개 메타데이터. 미확인 제작 정보와 결과는 채우지 않는다. */
 export type AgentExperiment = {
   id: string;
-  category: '2D 게임 제작' | '3D 게임 제작' | 'Blender 3D 에셋 제작' | 'SVG 제작';
+  category: '2D 게임 제작' | '3D 게임 제작' | 'Blender 3D 에셋 제작' | 'SVG 제작' | '영상물' | 'ComfyUI 활용';
   title: string;
   description: string;
   focus: string[];
@@ -10,9 +10,18 @@ export type AgentExperiment = {
   demoUrl?: string;
   demoLabel?: string;
   images?: Array<{ src: string; alt: string; caption: string }>;
+  /** 모델별 애니메이션을 동시에 비교한다. 파일이 없는 칸은 준비 중으로 표시한다. */
+  animationGroups?: Array<{
+    label: 'Claude' | 'GPT' | 'Grok·Gemini';
+    items: Array<{ model: string | null; image?: { src: string; alt: string } }>;
+  }>;
+  /** 공개 폴더에 실제 파일이 있는 다운로드만 등록한다. */
+  downloads?: Array<{ src: string; label: string }>;
+  /** 공개 폴더에 실제 파일이 있는 영상만 등록한다. */
+  video?: { src: string; poster?: string; caption?: string };
   /** 실제 제작에 사용한 모델. 비교 화면용 models와 구분한다. */
   modelCredits?: Array<{
-    purpose?: '코드' | '2D 에셋' | '배경음악';
+    purpose?: '코드' | '2D 에셋' | '배경음악' | '워크플로우와 프롬프트' | '이미지' | '영상' | '가전' | '음식 · 도넛' | '음식 · 와플' | '음식 · 마카롱' | 'Claude' | 'GPT' | 'Grok' | 'Gemini';
     models: string[];
     via?: string;
   }>;
@@ -37,6 +46,45 @@ export const agentExperiments: AgentExperiment[] = [
         src: '/images/agent-experiments/svg/half-full-glass.svg',
         alt: '밝은 회색 탁자 위에 물이 절반 높이까지 담긴 투명한 SVG 유리잔',
         caption: '투명도와 반사광을 표현한 반쯤 찬 유리잔',
+      },
+    ],
+  },
+  {
+    id: 'claude-pelican-svg-animation',
+    category: 'SVG 제작',
+    title: '자전거 타는 펠리컨 애니메이션',
+    description: 'Claude 3종과 GPT-6 Astra·Sol·Luna, Grok 4.7, Gemini 3.8 Flash의 펠리컨 SVG 애니메이션을 동시에 비교합니다.',
+    focus: ['SVG 애니메이션', '모델별 비교', '펠리컨'],
+    modelCredits: [
+      { purpose: 'Claude', models: ['Fable 5.1', 'Opus 5.5', 'Sonnet 5.5'] },
+      { purpose: 'GPT', models: ['GPT-6 Astra', 'GPT-6 Sol', 'GPT-6 Luna'] },
+      { purpose: 'Grok', models: ['Grok 4.7'] },
+      { purpose: 'Gemini', models: ['Gemini 3.8 Flash'] },
+    ],
+    animationGroups: [
+      {
+        label: 'Claude',
+        items: [
+          { model: 'Fable 5.1', image: { src: '/images/agent-experiments/svg/pelican/01-fable-5-1.svg', alt: 'Fable 5.1로 제작한 자전거 타는 펠리컨 SVG 애니메이션' } },
+          { model: 'Opus 5.5', image: { src: '/images/agent-experiments/svg/pelican/02-opus-5-5.svg', alt: 'Opus 5.5로 제작한 자전거 타는 펠리컨 SVG 애니메이션' } },
+          { model: 'Sonnet 5.5', image: { src: '/images/agent-experiments/svg/pelican/03-sonnet-5-5.svg', alt: 'Sonnet 5.5로 제작한 자전거 타는 펠리컨 SVG 애니메이션' } },
+        ],
+      },
+      {
+        label: 'GPT',
+        items: [
+          { model: 'GPT-6 Astra', image: { src: '/images/agent-experiments/svg/pelican/05-gpt-6-astra.svg', alt: 'GPT-6 Astra로 제작한 자전거 타는 펠리컨 SVG 애니메이션' } },
+          { model: 'GPT-6 Sol', image: { src: '/images/agent-experiments/svg/pelican/06-gpt-6-sol.svg', alt: 'GPT-6 Sol로 제작한 자전거 타는 펠리컨 SVG 애니메이션' } },
+          { model: 'GPT-6 Luna', image: { src: '/images/agent-experiments/svg/pelican/04-gpt-6-luna.svg', alt: 'GPT-6 Luna로 제작한 자전거 타는 펠리컨 SVG 애니메이션' } },
+        ],
+      },
+      {
+        label: 'Grok·Gemini',
+        items: [
+          { model: 'Grok 4.7', image: { src: '/images/agent-experiments/svg/pelican/08-grok-4-7.svg', alt: 'Grok 4.7로 제작한 자전거 타는 펠리컨 SVG 애니메이션' } },
+          { model: 'Gemini 3.8 Flash', image: { src: '/images/agent-experiments/svg/pelican/07-gemini-3-8-flash.svg', alt: 'Gemini 3.8 Flash로 제작한 자전거 타는 펠리컨 SVG 애니메이션' } },
+          { model: null },
+        ],
       },
     ],
   },
@@ -119,6 +167,210 @@ export const agentExperiments: AgentExperiment[] = [
         caption: '활주로 이륙과 비행 계기 HUD를 구현한 브라우저 3D 게임',
       },
     ],
+  },
+  {
+    id: 'siege-warfare',
+    category: '3D 게임 제작',
+    title: '공성전 (Siege Warfare)',
+    description: '발리스타·투석기·트레뷰셋으로 성문과 탑, 본성을 공략하는 3D 브라우저 게임입니다. 성벽 블록의 물리적 파괴와 레벨별 목표를 구현했습니다.',
+    focus: ['3D 공성전', '물리 기반 성벽 파괴', '공성 무기 조작'],
+    modelCredits: [{ models: ['Opus 5', 'GPT-5.6 Sol'] }],
+    demoUrl: 'https://ssw-siege-warfare.swsongab11572.chatgpt.site/',
+    images: [
+      {
+        src: '/images/agent-experiments/siege-warfare/01-ballista-wide.jpg',
+        alt: '발리스타를 조준해 성문을 공략하는 공성전 레벨 1 플레이 화면',
+        caption: '발리스타로 성문을 공략하는 레벨 1',
+      },
+      {
+        src: '/images/agent-experiments/siege-warfare/02-trebuchet-impact.png',
+        alt: '트레뷰셋 포탄에 맞은 본성 성벽의 블록이 무너지고 흩어지는 레벨 3 플레이 화면',
+        caption: '트레뷰셋 포격으로 본성 성벽이 무너지는 장면',
+      },
+    ],
+  },
+  {
+    id: 'blender-medieval-weapons',
+    category: 'Blender 3D 에셋 제작',
+    title: '중세 무기',
+    description: '검·폴암·방패 등 중세 무기 에셋을 종류별로 정리하고 셰이딩과 와이어프레임 작업 화면을 함께 보여줍니다.',
+    focus: ['중세 무기', 'Blender 3D', '셰이딩·와이어프레임'],
+    modelCredits: [{ models: ['Opus 5.5'] }],
+    images: [
+      {
+        src: '/images/agent-experiments/blender-medieval-weapons/05-scale-comparison.jpg',
+        alt: '검과 장병기 및 방패를 같은 축척으로 나란히 세운 중세 무기고 화면',
+        caption: '중세 무기고 — 무기와 방패의 축척 비교',
+      },
+      {
+        src: '/images/agent-experiments/blender-medieval-weapons/01-catalog.jpg',
+        alt: '검과 철퇴 등 중세 무기 렌더 카드를 세 열로 보여주는 전체 목록 화면',
+        caption: '중세 무기 에셋의 전체 목록',
+      },
+      {
+        src: '/images/agent-experiments/blender-medieval-weapons/02-weapons-detail.jpg',
+        alt: '할버드와 플랜지드 메이스, 워해머를 나란히 보여주는 3D 렌더',
+        caption: '할버드·플랜지드 메이스·워해머 상세',
+      },
+      {
+        src: '/images/agent-experiments/blender-medieval-weapons/03-shields.jpg',
+        alt: '카이트 실드와 원형 방패, 히터 실드의 앞면과 뒷면을 비교하는 3D 렌더',
+        caption: '형태와 무늬가 다른 방패 렌더',
+      },
+      {
+        src: '/images/agent-experiments/blender-medieval-weapons/04-shading-wireframe.jpg',
+        alt: '검 모델의 완성 셰이딩과 삼각형 메시 와이어프레임을 좌우로 비교한 화면',
+        caption: '검의 셰이딩과 와이어프레임 비교',
+      },
+    ],
+  },
+  {
+    id: 'blender-food',
+    category: 'Blender 3D 에셋 제작',
+    title: '음식·가전',
+    description: '가전 세 종류와 모델별로 제작한 도넛·와플·마카롱 렌더를 함께 소개합니다.',
+    focus: ['음식', '가전', 'Blender 3D'],
+    modelCredits: [
+      { purpose: '가전', models: ['GPT-6 Astra'] },
+      { purpose: '음식 · 도넛', models: ['GPT-6 Astra'] },
+      { purpose: '음식 · 와플', models: ['Grok 4.6'] },
+      { purpose: '음식 · 마카롱', models: ['Opus 5.5'] },
+    ],
+    images: [
+      {
+        src: '/images/agent-experiments/blender-food/01-mixer.png',
+        alt: '투명한 유리 용기와 금속 조작부가 보이는 믹서 렌더',
+        caption: '믹서 · GPT-6 Astra',
+      },
+      {
+        src: '/images/agent-experiments/blender-food/02-waffle-maker.png',
+        alt: '원형 격자판을 열어 둔 와플 메이커 렌더',
+        caption: '와플 메이커 · GPT-6 Astra',
+      },
+      {
+        src: '/images/agent-experiments/blender-food/03-toaster.png',
+        alt: '두 개의 투입구와 측면 레버가 보이는 금속 토스터 렌더',
+        caption: '토스터 · GPT-6 Astra',
+      },
+      {
+        src: '/images/agent-experiments/blender-food/04-donut-gpt-6-astra.png',
+        alt: '분홍색 아이싱과 스프링클이 올라간 도넛 렌더',
+        caption: '도넛 · GPT-6 Astra',
+      },
+      {
+        src: '/images/agent-experiments/blender-food/05-waffle-grok-4-6.png',
+        alt: '흰 접시에 올린 둥근 와플 렌더',
+        caption: '와플 · Grok 4.6',
+      },
+      {
+        src: '/images/agent-experiments/blender-food/06-macaron-opus-5-5.png',
+        alt: '흰 접시에 담긴 여러 색상의 마카롱 렌더',
+        caption: '마카롱 · Opus 5.5',
+      },
+    ],
+    downloads: [
+      { src: '/models/agent-experiments/blender-food/kitchen-mixer.blend', label: '믹서' },
+      { src: '/models/agent-experiments/blender-food/kitchen-waffle-maker.blend', label: '와플 메이커' },
+      { src: '/models/agent-experiments/blender-food/kitchen-toaster.blend', label: '토스터' },
+    ],
+  },
+  {
+    id: 'blender-subway',
+    category: 'Blender 3D 에셋 제작',
+    title: '지하철',
+    description: '승강장·열차·개찰구를 포함한 지하철역 공간을 단면과 내부 시점으로 보여줍니다.',
+    focus: ['지하철역 공간', '승강장·열차', '개찰구'],
+    modelCredits: [{ models: ['GPT-6 Astra'] }],
+    images: [
+      {
+        src: '/images/agent-experiments/blender-subway/01-station-cutaway.png',
+        alt: '승강장과 열차, 개찰구가 한눈에 보이는 지하철역의 등각 단면 이미지',
+        caption: '지하철역 구조와 열차를 한눈에 보는 단면',
+      },
+      {
+        src: '/images/agent-experiments/blender-subway/02-platform.png',
+        alt: '스크린도어와 기둥, 대기 공간이 길게 이어지는 지하철 승강장 내부',
+        caption: '스크린도어가 설치된 승강장 내부',
+      },
+      {
+        src: '/images/agent-experiments/blender-subway/03-ticket-gates.png',
+        alt: '여러 개의 개찰구와 휠체어용 통로가 보이는 지하철역 입구',
+        caption: '일반 개찰구와 접근성 통로',
+      },
+    ],
+  },
+  {
+    id: 'motion-graphics',
+    category: '영상물',
+    title: '모션그래픽',
+    description: '형태 변형과 이징, 데이터 모션을 담은 모션그래픽 영상입니다.',
+    focus: ['모션그래픽', '영상 제작'],
+    modelCredits: [{ models: ['Opus 5.5'] }],
+    video: {
+      src: '/media/agent-experiments/motion-graphics/main.mp4',
+      poster: '/media/agent-experiments/motion-graphics/poster.jpg',
+      caption: '형태와 데이터의 움직임을 엮은 모션그래픽',
+    },
+  },
+  {
+    id: 'spaceship-simulation',
+    category: '영상물',
+    title: '우주선 시뮬레이션',
+    description: '우주선 콕핏 HUD와 행성 접근 장면을 담은 시뮬레이션 영상입니다.',
+    focus: ['우주선 시뮬레이션', '콕핏 HUD'],
+    modelCredits: [{ models: ['Opus 5.5'] }],
+    video: {
+      src: '/media/agent-experiments/spaceship-simulation/main.mp4',
+      poster: '/media/agent-experiments/spaceship-simulation/poster.jpg',
+      caption: '콕핏 HUD에서 바라보는 행성 접근 장면',
+    },
+  },
+  {
+    id: 'comfyui-qwen-wan',
+    category: 'ComfyUI 활용',
+    title: 'ComfyUI 이미지 → 5초 영상',
+    description: 'GPT-6 Sol이 ComfyUI 워크플로우와 프롬프트를 구성하고, Qwen Image 2512 FP8 E4M3FN으로 이미지를 생성한 뒤 Wan 2.2 I2V 14B FP8로 5초 영상을 제작했습니다.',
+    focus: ['ComfyUI', '이미지 생성', '이미지→영상'],
+    modelCredits: [
+      { purpose: '워크플로우와 프롬프트', models: ['GPT-6 Sol'] },
+      { purpose: '이미지', models: ['Qwen Image 2512 FP8 E4M3FN'] },
+      { purpose: '영상', models: ['Wan 2.2 I2V 14B FP8'] },
+    ],
+    images: [
+      {
+        src: '/images/agent-experiments/comfyui/cafe-qwen-image-2512.png',
+        alt: '비 오는 저녁 거리의 S-WORK COFFEE 카페 이미지',
+        caption: 'Qwen Image 2512로 생성한 카페 이미지',
+      },
+    ],
+    video: {
+      src: '/media/agent-experiments/comfyui-qwen-wan/cafe-i2v-5s.mp4',
+      poster: '/images/agent-experiments/comfyui/cafe-qwen-image-2512.png',
+      caption: 'Wan 2.2 I2V로 이미지에서 생성한 5초 영상',
+    },
+  },
+  {
+    id: 'comfyui-gpt-image2-wan',
+    category: 'ComfyUI 활용',
+    title: 'GPT Image 2 → 5초 영상',
+    description: 'GPT Image 2로 생성한 행성 탐사 이미지를 ComfyUI에서 Wan 2.2 I2V 14B FP8로 5초 영상으로 확장했습니다.',
+    focus: ['GPT Image 2', 'ComfyUI', '이미지→영상'],
+    modelCredits: [
+      { purpose: '이미지', models: ['GPT Image 2'] },
+      { purpose: '영상', models: ['Wan 2.2 I2V 14B FP8'] },
+    ],
+    images: [
+      {
+        src: '/images/agent-experiments/comfyui/astronaut-gpt-image-2.png',
+        alt: '우주비행사가 외계 행성의 암석 지형에서 우주선과 고리 행성을 바라보는 이미지',
+        caption: 'GPT Image 2로 생성한 행성 탐사 이미지',
+      },
+    ],
+    video: {
+      src: '/media/agent-experiments/comfyui-gpt-image2-wan/astronaut-i2v-5s.mp4',
+      poster: '/images/agent-experiments/comfyui/astronaut-gpt-image-2.png',
+      caption: 'Wan 2.2 I2V로 이미지에서 생성한 5초 영상',
+    },
   },
   {
     id: 'fps-model-comparison',

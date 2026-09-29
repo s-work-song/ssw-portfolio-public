@@ -14,6 +14,50 @@
 - **기록**: 기술적 성찰과 개인적인 회고
 - **포트폴리오 AI**: 공개된 내용을 질문으로 탐색하는 안내 기능
 
+## 실험 갤러리 미디어
+
+SVG 탭에는 일러스트 항목과 자전거 타는 펠리컨 애니메이션 항목을 둡니다.
+펠리컨 항목은 `images/agent-experiments/svg/pelican/`에 Fable 5.1·Opus 5.5·
+Sonnet 5.5의 SVG를 연결했습니다. 그 아래에는 GPT-6 Astra·Sol·Luna의 SVG를
+같은 3열 그리드에 연결했습니다. 세 번째 행은 Grok·Gemini로 표시하고,
+Grok 4.7과 Gemini 3.8 Flash SVG도 같은 폴더에 연결했습니다.
+마지막 칸은 문구와 장식 없이 공란으로 남겨둡니다.
+
+Blender의 중세 무기 항목에는 캡처 다섯 장, 음식·가전에는 가전 세 장과
+도넛·와플·마카롱 세 장, 지하철에는 이미지 세 장을 표시합니다. 가전은 GPT-6 Astra,
+음식은 도넛 GPT-6 Astra·와플 Grok 4.6·마카롱 Opus 5.5로 항목별 제작 모델을 표시합니다.
+사진을 추가할 때는 해당 항목의 폴더에 넣고 `src/data/agentExperiments.ts`의
+`images`에 경로와 설명을 등록합니다.
+
+| Blender 항목 | 사진 폴더 (`public/` 아래) |
+| --- | --- |
+| 중세 무기 | `images/agent-experiments/blender-medieval-weapons/` |
+| 음식·가전 | `images/agent-experiments/blender-food/` |
+| 지하철 | `images/agent-experiments/blender-subway/` |
+
+음식·가전의 믹서·와플 메이커·토스터 Blender 파일은 각각
+`models/agent-experiments/blender-food/`에 공개용으로 두고, 해당 항목의 다운로드 버튼에 연결했습니다.
+다른 Blender 항목에는 모델 다운로드를 제공하지 않습니다.
+
+영상은 아래 경로에 압축된 공개용 MP4와 `poster.jpg`를 두고, 같은 데이터 파일의
+`video`에 두 경로를 등록했습니다. 기본 재생 컨트롤이 있는 플레이어로 보여줍니다.
+원본 영상은 공개 폴더 밖에 보관합니다.
+
+| 영상 항목 | 파일 경로 (`public/` 아래) | 제작 모델 |
+| --- | --- | --- |
+| 모션그래픽 | `media/agent-experiments/motion-graphics/main.mp4` | Opus 5.5 |
+| 우주선 시뮬레이션 | `media/agent-experiments/spaceship-simulation/main.mp4` | Opus 5.5 |
+
+ComfyUI 활용 첫 사례는 `images/agent-experiments/comfyui/cafe-qwen-image-2512.png`의
+생성 이미지와 `media/agent-experiments/comfyui-qwen-wan/cafe-i2v-5s.mp4`의
+5초 영상을 나란히 표시합니다. 워크플로우와 프롬프트는 GPT-6 Sol, 이미지는 Qwen Image 2512
+FP8 E4M3FN, 영상은 Wan 2.2 I2V 14B FP8을 사용했습니다. 공개용 영상은 브라우저
+호환성을 위해 H.264로 변환했고, 사용자가 준 HEVC 원본은 다운로드 폴더에 남겨뒀습니다.
+두 번째 사례는 `images/agent-experiments/comfyui/astronaut-gpt-image-2.png`의
+GPT Image 2 이미지와 `media/agent-experiments/comfyui-gpt-image2-wan/astronaut-i2v-5s.mp4`의
+Wan 2.2 I2V 14B FP8 5초 영상을 함께 표시합니다. 두 번째 영상은 이미 H.264라
+원본을 그대로 복사했으며, 확인되지 않은 워크플로우·프롬프트 제작 모델은 표기하지 않습니다.
+
 ## 공개 범위
 
 이 디렉터리에는 브라우저에서 동작하는 화면과 공개 가능한 프런트엔드 코드만
