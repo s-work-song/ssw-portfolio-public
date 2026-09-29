@@ -110,6 +110,34 @@ function ExperimentAudio({ title, audio }: { title: string; audio: NonNullable<A
   );
 }
 
+function ExperimentImageBlock({ title, mediaTitle, images, credits }: {
+  title: string;
+  mediaTitle: string;
+  images: NonNullable<AgentExperiment['images']>;
+  credits?: AgentExperiment['modelCredits'];
+}) {
+  const [imageIndex, setImageIndex] = useState(0);
+  const currentImage = images[imageIndex] ?? images[0];
+  const imageCredit = currentImage?.modelCreditPurpose
+    ? credits?.find((credit) => credit.purpose === currentImage.modelCreditPurpose)
+    : undefined;
+
+  return (
+    <ExperimentMediaBlock
+      title={currentImage?.title ?? mediaTitle}
+      credits={imageCredit ? [{ models: imageCredit.models, via: imageCredit.via }] : credits}
+    >
+      <ProjectMediaCarousel
+        className={styles.experimentCarousel}
+        gallery={{ images, placeholder: `${title} 화면을 추가할 자리입니다.` }}
+        projectTitle={title}
+        imageSizes="(max-width: 900px) calc(100vw - 72px), 900px"
+        onActiveIndexChange={setImageIndex}
+      />
+    </ExperimentMediaBlock>
+  );
+}
+
 /** 자동 재생 없이 실험을 탐색하고, 모델 비교는 같은 화면에서 확인하는 갤러리다. */
 export default function AgentExperimentGallery() {
   const [category, setCategory] = useState<(typeof categories)[number]>(visibleExperiments[0]?.category ?? 'SVG 제작');
@@ -320,26 +348,22 @@ export default function AgentExperimentGallery() {
             </div>
           ) : (
             <div className={styles.mediaStack}>
-              <ExperimentMediaBlock
-                title={active.video ? '영상' : active.category === 'Blender 3D 에셋 제작' ? '3D 모델링 결과' : active.category === 'SVG 제작' ? 'SVG 제작 결과' : '게임 플레이 캡처'}
-                credits={active.modelCredits?.filter((credit) => !active.audio || credit.purpose !== '배경음악')}
-              >
-                {active.video ? (
+              {active.video ? (
+                <ExperimentMediaBlock title="영상" credits={active.modelCredits}>
                   <ExperimentVideo title={active.title} video={active.video} />
-                ) : active.images?.length ? (
-                  <ProjectMediaCarousel
-                    className={styles.experimentCarousel}
-                    gallery={{
-                      images: active.images,
-                      placeholder: `${active.title} 화면을 추가할 자리입니다.`,
-                    }}
-                    projectTitle={active.title}
-                    imageSizes="(max-width: 900px) calc(100vw - 72px), 900px"
-                  />
-                ) : (
+                </ExperimentMediaBlock>
+              ) : active.images?.length ? (
+                <ExperimentImageBlock
+                  title={active.title}
+                  mediaTitle={active.category === 'Blender 3D 에셋 제작' ? '3D 모델링 결과' : active.category === 'SVG 제작' ? 'SVG 제작 결과' : '게임 플레이 캡처'}
+                  images={active.images}
+                  credits={active.modelCredits?.filter((credit) => !active.audio || credit.purpose !== '배경음악')}
+                />
+              ) : (
+                <ExperimentMediaBlock title={active.category} credits={active.modelCredits}>
                   <CapturePlaceholder label={active.title} kind={active.category === '영상물' ? 'video' : 'image'} />
-                )}
-              </ExperimentMediaBlock>
+                </ExperimentMediaBlock>
+              )}
             </div>
           )}
           {active.audio && <ExperimentAudio title={active.title} audio={active.audio} />}

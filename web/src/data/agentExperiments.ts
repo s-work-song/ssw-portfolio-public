@@ -1,5 +1,12 @@
 export type AgentExperimentVideo = { src: string; poster?: string; caption?: string };
-export type AgentExperimentImage = { src: string; alt: string; caption: string };
+export type AgentExperimentImage = {
+  src: string;
+  alt: string;
+  caption: string;
+  /** 사진별 헤더가 필요할 때만 작품명과 기존 제작 모델 항목을 연결한다. */
+  title?: string;
+  modelCreditPurpose?: NonNullable<AgentExperimentModelCredit['purpose']>;
+};
 export type AgentExperimentModelCredit = {
   purpose?: '코드' | '2D 에셋' | '배경음악' | '워크플로우와 프롬프트' | '프롬프트' | '이미지' | '영상' | '위 영상' | '아래 영상' | 'Blender 모델링' | '가전' | '음식 · 도넛' | '음식 · 와플' | '음식 · 마카롱' | 'Claude' | 'GPT' | 'Grok' | 'Gemini';
   models: string[];
@@ -261,31 +268,43 @@ export const agentExperiments: AgentExperiment[] = [
     images: [
       {
         src: '/images/agent-experiments/blender-food/01-mixer.png',
+        title: '믹서',
+        modelCreditPurpose: '가전',
         alt: '투명한 유리 용기와 금속 조작부가 보이는 믹서 렌더',
         caption: '믹서 · GPT-6 Astra',
       },
       {
         src: '/images/agent-experiments/blender-food/02-waffle-maker.png',
+        title: '와플 메이커',
+        modelCreditPurpose: '가전',
         alt: '원형 격자판을 열어 둔 와플 메이커 렌더',
         caption: '와플 메이커 · GPT-6 Astra',
       },
       {
         src: '/images/agent-experiments/blender-food/03-toaster.png',
+        title: '토스터',
+        modelCreditPurpose: '가전',
         alt: '두 개의 투입구와 측면 레버가 보이는 금속 토스터 렌더',
         caption: '토스터 · GPT-6 Astra',
       },
       {
         src: '/images/agent-experiments/blender-food/04-donut-gpt-6-astra.png',
+        title: '도넛',
+        modelCreditPurpose: '음식 · 도넛',
         alt: '분홍색 아이싱과 스프링클이 올라간 도넛 렌더',
         caption: '도넛 · GPT-6 Astra',
       },
       {
         src: '/images/agent-experiments/blender-food/05-waffle-grok-4-6.png',
+        title: '와플',
+        modelCreditPurpose: '음식 · 와플',
         alt: '흰 접시에 올린 둥근 와플 렌더',
         caption: '와플 · Grok 4.6',
       },
       {
         src: '/images/agent-experiments/blender-food/06-macaron-opus-5-5.png',
+        title: '마카롱',
+        modelCreditPurpose: '음식 · 마카롱',
         alt: '흰 접시에 담긴 여러 색상의 마카롱 렌더',
         caption: '마카롱 · Opus 5.5',
       },

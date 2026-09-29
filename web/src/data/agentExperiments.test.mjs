@@ -204,6 +204,35 @@ test('Blender 작업 이미지와 사무실의 참고 이미지 및 구현 렌�
   assert.equal(office.downloads, undefined);
 });
 
+test('음식·가전의 사진별 헤더는 기존 제작 모델 요약을 참조하고 다른 항목은 유지한다', async () => {
+  const food = visible.find((item) => item.id === 'blender-food');
+  assert.deepEqual(food.images.map((image) => ({
+    title: image.title,
+    purpose: image.modelCreditPurpose,
+    models: food.modelCredits.find((credit) => credit.purpose === image.modelCreditPurpose)?.models,
+  })), [
+    { title: '믹서', purpose: '가전', models: ['GPT-6 Astra'] },
+    { title: '와플 메이커', purpose: '가전', models: ['GPT-6 Astra'] },
+    { title: '토스터', purpose: '가전', models: ['GPT-6 Astra'] },
+    { title: '도넛', purpose: '음식 · 도넛', models: ['GPT-6 Astra'] },
+    { title: '와플', purpose: '음식 · 와플', models: ['Grok 4.6'] },
+    { title: '마카롱', purpose: '음식 · 마카롱', models: ['Opus 5.5'] },
+  ]);
+  assert.ok(visible.filter((item) => item.id !== food.id).every((item) => (
+    [...(item.images ?? []), ...(item.imageGroups ?? []).flatMap((group) => group.images)]
+      .every((image) => image.title === undefined && image.modelCreditPurpose === undefined)
+  )));
+  const component = await readFile(new URL('../components/about/AgentExperimentGallery.tsx', import.meta.url), 'utf8');
+  assert.match(component, /title=\{currentImage\?\.title \?\? mediaTitle\}/);
+  assert.match(component, /credit\.purpose === currentImage\.modelCreditPurpose/);
+  assert.match(component, /onActiveIndexChange=\{setImageIndex\}/);
+  assert.match(component, /<article key=\{active\.id\}/);
+  assert.match(component, /active\.modelCredits\.map/);
+  const carousel = await readFile(new URL('../components/about/ProjectMediaCarousel.tsx', import.meta.url), 'utf8');
+  assert.match(carousel, /setActiveIndex\(nextIndex\);\s*onActiveIndexChange\?\.\(nextIndex\)/);
+  assert.match(carousel, /setActiveIndex\(index\);\s*onActiveIndexChange\?\.\(index\)/);
+});
+
 test('음식·가전에만 세 Blender 원본 다운로드를 제공한다', async () => {
   const food = visible.find((item) => item.id === 'blender-food');
   assert.deepEqual(food.downloads, [

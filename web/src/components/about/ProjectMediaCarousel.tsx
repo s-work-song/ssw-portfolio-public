@@ -18,6 +18,8 @@ interface ProjectMediaCarouselProps {
   projectTitle: string;
   className?: string;
   imageSizes?: string;
+  /** 전환이 수락되면 원본 이미지의 0 기반 인덱스를 알린다. 초기 인덱스는 0이다. */
+  onActiveIndexChange?: (index: number) => void;
 }
 
 export default function ProjectMediaCarousel({
@@ -25,6 +27,7 @@ export default function ProjectMediaCarousel({
   projectTitle,
   className,
   imageSizes = '(max-width: 720px) 100vw, 520px',
+  onActiveIndexChange,
 }: ProjectMediaCarouselProps) {
   const [activeIndex, setActiveIndex] = useState(0);
   const [trackPosition, setTrackPosition] = useState(1);
@@ -158,6 +161,7 @@ export default function ProjectMediaCarousel({
     setIsTransitioning(true);
     setTrackPosition(nextPosition);
     setActiveIndex(nextIndex);
+    onActiveIndexChange?.(nextIndex);
     scheduleTransitionCompletion(nextPosition);
   };
   const selectSlide = (index: number) => {
@@ -168,6 +172,7 @@ export default function ProjectMediaCarousel({
     transferSlideFocus(index);
     setIsTransitioning(true);
     setActiveIndex(index);
+    onActiveIndexChange?.(index);
     setTrackPosition(index + 1);
     scheduleTransitionCompletion(index + 1);
   };

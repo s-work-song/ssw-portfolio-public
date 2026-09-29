@@ -35,6 +35,9 @@ Grok 4.7과 Gemini 3.8 Flash SVG도 같은 폴더에 연결했습니다.
 Blender의 중세 무기 항목에는 캡처 다섯 장, 음식·가전에는 가전 세 장과
 도넛·와플·마카롱 세 장, 지하철에는 이미지 세 장, 도시 거리에는 렌더 여섯 장을 표시합니다. 가전은 GPT-6 Astra,
 음식은 도넛 GPT-6 Astra·와플 Grok 4.6·마카롱 Opus 5.5로 항목별 제작 모델을 표시합니다.
+음식·가전의 사진별 `title`과 `modelCreditPurpose`를 기존 `modelCredits`에 연결해,
+슬라이드 전환 시 상단 헤더에는 현재 작품명과 제작 모델만 표시합니다.
+오른쪽 아래 전체 모델 요약과 Blender 다운로드는 유지합니다.
 사진을 추가할 때는 해당 항목의 폴더에 넣고 `src/data/agentExperiments.ts`의
 `images`에 경로와 설명을 등록합니다.
 
