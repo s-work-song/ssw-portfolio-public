@@ -53,7 +53,7 @@ export const agentExperiments: AgentExperiment[] = [
     id: 'claude-pelican-svg-animation',
     category: 'SVG 제작',
     title: '자전거 타는 펠리컨 애니메이션',
-    description: 'Claude 3종과 GPT-6 Astra·Sol·Luna, Grok 4.7, Gemini 3.8 Flash의 펠리컨 SVG 애니메이션을 동시에 비교합니다.',
+    description: 'Claude 3종과 GPT-6 3종, Grok 4.7, Gemini 3.8 Flash에 동일한 프롬프트를 각각 단 한 번 입력해 얻은 펠리컨 SVG 애니메이션 결과를 비교합니다.',
     focus: ['SVG 애니메이션', '모델별 비교', '펠리컨'],
     modelCredits: [
       { purpose: 'Claude', models: ['Fable 5.1', 'Opus 5.5', 'Sonnet 5.5'] },

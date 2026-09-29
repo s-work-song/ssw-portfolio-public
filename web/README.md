@@ -17,6 +17,7 @@
 ## 실험 갤러리 미디어
 
 SVG 탭에는 일러스트 항목과 자전거 타는 펠리컨 애니메이션 항목을 둡니다.
+펠리컨 비교는 동일한 프롬프트를 각 모델에 단 한 번씩 입력해 얻은 결과를 사용합니다.
 펠리컨 항목은 `images/agent-experiments/svg/pelican/`에 Fable 5.1·Opus 5.5·
 Sonnet 5.5의 SVG를 연결했습니다. 그 아래에는 GPT-6 Astra·Sol·Luna의 SVG를
 같은 3열 그리드에 연결했습니다. 세 번째 행은 Grok·Gemini로 표시하고,
