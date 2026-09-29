@@ -16,6 +16,14 @@
 
 ## 실험 갤러리 미디어
 
+각 분류 안의 실험 선택 카드는 화면 너비에 맞춰 줄바꿈하며, 사진은 기존 좌우 슬라이드로 탐색합니다.
+
+물고기 키우기는 수조·상점 이미지 슬라이더와 하단 설명 사이에 BGM `The Saltwater Hour` 플레이어를 표시합니다.
+음원은 `media/agent-experiments/aqua-guardian/the-saltwater-hour.mp3`에 두며,
+Gemini를 통해 Lyria 3로 제작한 게임 배경음악입니다. 원본 MP3를 재인코딩 없이 사용합니다.
+실험 데이터의 선택적 `audio` 항목으로 이미지 슬라이더와 독립적으로 재생하며,
+이미지를 넘겨도 음악은 유지합니다. 자동 재생하지 않고, 다른 실험이나 분류로 이동하면 재생을 멈춥니다.
+
 SVG 탭에는 일러스트 항목과 자전거 타는 펠리컨 애니메이션 항목을 둡니다.
 펠리컨 비교는 동일한 프롬프트를 각 모델에 단 한 번씩 입력해 얻은 결과를 사용합니다.
 펠리컨 항목은 `images/agent-experiments/svg/pelican/`에 Fable 5.1·Opus 5.5·
@@ -25,7 +33,7 @@ Grok 4.7과 Gemini 3.8 Flash SVG도 같은 폴더에 연결했습니다.
 마지막 칸은 문구와 장식 없이 공란으로 남겨둡니다.
 
 Blender의 중세 무기 항목에는 캡처 다섯 장, 음식·가전에는 가전 세 장과
-도넛·와플·마카롱 세 장, 지하철에는 이미지 세 장을 표시합니다. 가전은 GPT-6 Astra,
+도넛·와플·마카롱 세 장, 지하철에는 이미지 세 장, 도시 거리에는 렌더 여섯 장을 표시합니다. 가전은 GPT-6 Astra,
 음식은 도넛 GPT-6 Astra·와플 Grok 4.6·마카롱 Opus 5.5로 항목별 제작 모델을 표시합니다.
 사진을 추가할 때는 해당 항목의 폴더에 넣고 `src/data/agentExperiments.ts`의
 `images`에 경로와 설명을 등록합니다.
@@ -35,18 +43,37 @@ Blender의 중세 무기 항목에는 캡처 다섯 장, 음식·가전에는 �
 | 중세 무기 | `images/agent-experiments/blender-medieval-weapons/` |
 | 음식·가전 | `images/agent-experiments/blender-food/` |
 | 지하철 | `images/agent-experiments/blender-subway/` |
+| 도시 거리 | `images/agent-experiments/blender-city/` |
+| 사무실 | `images/agent-experiments/blender-office/` |
+
+도시 거리는 GPT-6 Astra로 제작한 가상의 한국 도심 「한빛대로」입니다.
+2560×1440 JPEG 여섯 장을 재압축 없이 사용하며, 전체 조감도를 첫 이미지로 두고
+대로 전경·교차로·서측 인도·동측 인도·횡단보도 모서리 순서로 탐색합니다.
+PNG 원본과 Blender 씬은 공개 폴더에 포함하지 않습니다.
+사무실은 GPT-6 Astra로 프롬프트를 작성해 GPT Image 2.5로 참고 이미지를 먼저 생성한 뒤,
+이를 기준으로 GPT-6 Astra가 Blender 모델링을 진행한 작업입니다.
+`imageGroups`를 통해 참고 이미지 `01-reference.png`와 실제 Blender 렌더를 위아래 별도 블록으로 표시합니다.
+각 블록 헤더에 제작 단계와 모델을 표시하고, Blender 결과는 입구 전경·책상 상세·반대편 전경·회의실 순서의 슬라이더로 탐색합니다.
+렌더는 2560×1440 고품질 JPEG를 재압축 없이 사용하며, PNG 렌더 원본과 Blender 씬은 공개 폴더에 포함하지 않습니다.
 
 음식·가전의 믹서·와플 메이커·토스터 Blender 파일은 각각
 `models/agent-experiments/blender-food/`에 공개용으로 두고, 해당 항목의 다운로드 버튼에 연결했습니다.
 다른 Blender 항목에는 모델 다운로드를 제공하지 않습니다.
 
-영상은 아래 경로에 압축된 공개용 MP4와 `poster.jpg`를 두고, 같은 데이터 파일의
-`video`에 두 경로를 등록했습니다. 기본 재생 컨트롤이 있는 플레이어로 보여줍니다.
+영상은 아래 경로에 공개용 MP4와 표지 이미지를 두고, 같은 데이터 파일의
+`video` 또는 모델별 `videos`에 경로를 등록합니다. 기본 재생 컨트롤이 있는 플레이어로 보여줍니다.
 원본 영상은 공개 폴더 밖에 보관합니다.
+모션그래픽은 Opus 5.5 영상을 위에, GPT-6 Astra 영상을 아래에 같은 폭으로 배치합니다.
+각 영상 헤더에는 ‘제작 모델’과 모델명만 표시하고, 하단 사용 모델은 위·아래 영상으로 구분합니다.
+다른 이미지·영상도 제작 단계와 모델 헤더가 있는 공통 미디어 블록으로 감싸며,
+ComfyUI는 이미지와 영상 각각에 해당 모델을 표시합니다. 모델별 SVG 비교 그리드는 기존 카드별 모델명을 유지합니다.
+자동 재생과 사전 영상 다운로드는 하지 않으며, 하나를 재생하면 같은 항목의 다른 영상은 일시정지합니다.
+Astra 영상은 제공된 1080p·60fps H.264/AAC MP4를 재인코딩 없이 사용합니다.
 
 | 영상 항목 | 파일 경로 (`public/` 아래) | 제작 모델 |
 | --- | --- | --- |
-| 모션그래픽 | `media/agent-experiments/motion-graphics/main.mp4` | Opus 5.5 |
+| 모션그래픽 · 위 영상 | `media/agent-experiments/motion-graphics/main.mp4` | Opus 5.5 |
+| 모션그래픽 · 아래 영상 | `media/agent-experiments/motion-graphics/astra.mp4` | GPT-6 Astra |
 | 우주선 시뮬레이션 | `media/agent-experiments/spaceship-simulation/main.mp4` | Opus 5.5 |
 
 ComfyUI 활용 첫 사례는 `images/agent-experiments/comfyui/cafe-qwen-image-2512.png`의

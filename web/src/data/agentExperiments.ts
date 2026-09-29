@@ -1,3 +1,11 @@
+export type AgentExperimentVideo = { src: string; poster?: string; caption?: string };
+export type AgentExperimentImage = { src: string; alt: string; caption: string };
+export type AgentExperimentModelCredit = {
+  purpose?: '코드' | '2D 에셋' | '배경음악' | '워크플로우와 프롬프트' | '프롬프트' | '이미지' | '영상' | '위 영상' | '아래 영상' | 'Blender 모델링' | '가전' | '음식 · 도넛' | '음식 · 와플' | '음식 · 마카롱' | 'Claude' | 'GPT' | 'Grok' | 'Gemini';
+  models: string[];
+  via?: string;
+};
+
 /** 실험 갤러리의 공개 메타데이터. 미확인 제작 정보와 결과는 채우지 않는다. */
 export type AgentExperiment = {
   id: string;
@@ -9,7 +17,16 @@ export type AgentExperiment = {
   hidden?: boolean;
   demoUrl?: string;
   demoLabel?: string;
-  images?: Array<{ src: string; alt: string; caption: string }>;
+  images?: AgentExperimentImage[];
+  /** 참고 이미지와 구현 결과처럼 제작 단계가 다른 이미지를 별도 블록으로 표시한다. */
+  imageGroups?: Array<{
+    title: string;
+    description?: string;
+    modelCredits: AgentExperimentModelCredit[];
+    images: AgentExperimentImage[];
+  }>;
+  /** 이미지 슬라이더와 설명 사이에서 독립적으로 재생할 BGM. */
+  audio?: { src: string; title: string; model: string; via?: string; caption: string };
   /** 모델별 애니메이션을 동시에 비교한다. 파일이 없는 칸은 준비 중으로 표시한다. */
   animationGroups?: Array<{
     label: 'Claude' | 'GPT' | 'Grok·Gemini';
@@ -18,13 +35,11 @@ export type AgentExperiment = {
   /** 공개 폴더에 실제 파일이 있는 다운로드만 등록한다. */
   downloads?: Array<{ src: string; label: string }>;
   /** 공개 폴더에 실제 파일이 있는 영상만 등록한다. */
-  video?: { src: string; poster?: string; caption?: string };
+  video?: AgentExperimentVideo;
+  /** 같은 작업의 모델별 영상을 등록 순서대로 한 열에 표시한다. */
+  videos?: Array<{ label: string; model: string; video: AgentExperimentVideo }>;
   /** 실제 제작에 사용한 모델. 비교 화면용 models와 구분한다. */
-  modelCredits?: Array<{
-    purpose?: '코드' | '2D 에셋' | '배경음악' | '워크플로우와 프롬프트' | '이미지' | '영상' | '가전' | '음식 · 도넛' | '음식 · 와플' | '음식 · 마카롱' | 'Claude' | 'GPT' | 'Grok' | 'Gemini';
-    models: string[];
-    via?: string;
-  }>;
+  modelCredits?: AgentExperimentModelCredit[];
   models?: string[];
 };
 
@@ -124,6 +139,13 @@ export const agentExperiments: AgentExperiment[] = [
       { purpose: '배경음악', models: ['Lyria 3'], via: 'Gemini' },
     ],
     demoUrl: 'https://aqua-guardian.swsongab11572.chatgpt.site/',
+    audio: {
+      src: '/media/agent-experiments/aqua-guardian/the-saltwater-hour.mp3',
+      title: 'The Saltwater Hour',
+      model: 'Lyria 3',
+      via: 'Gemini',
+      caption: '물고기 키우기에 사용한 배경음악',
+    },
     images: [
       {
         src: '/images/agent-experiments/fish-raising-tank.webp',
@@ -300,17 +322,127 @@ export const agentExperiments: AgentExperiment[] = [
     ],
   },
   {
+    id: 'blender-city',
+    category: 'Blender 3D 에셋 제작',
+    title: '도시 거리',
+    description: '왕복 6차선 도로와 고층 빌딩, 한글 상가 간판·신호등·가로수로 구성한 가상의 한국 도심 「한빛대로」입니다. 대로 전경과 조감도, 눈높이 1.7m의 보행자 시점으로 공간을 살펴봅니다.',
+    focus: ['한국 도심 환경', '왕복 6차선', '보행자 시점'],
+    modelCredits: [{ models: ['GPT-6 Astra'] }],
+    images: [
+      {
+        src: '/images/agent-experiments/blender-city/01_city_overview.jpg',
+        alt: '6차선 대로 양쪽으로 서로 다른 높이의 고층 건물이 배치된 가상 한국 도심의 조감도',
+        caption: '전체 조감도 — 도로와 고층 업무지구의 배치',
+      },
+      {
+        src: '/images/agent-experiments/blender-city/02_boulevard_hero.jpg',
+        alt: '고층 빌딩과 한글 상가 간판 사이로 왕복 6차선 도로와 차량이 이어지는 한빛대로 전경',
+        caption: '한빛대로 전경 — 고층 빌딩과 왕복 6차선 도로',
+      },
+      {
+        src: '/images/agent-experiments/blender-city/03_road_intersection.jpg',
+        alt: '한국 도심 교차로의 신호등과 횡단보도, 파란 시내버스와 주황색 택시가 보이는 도로 시점',
+        caption: '교차로와 도로 — 횡단보도·신호등·차량',
+      },
+      {
+        src: '/images/agent-experiments/blender-city/04_sidewalk_west.jpg',
+        alt: '은행과 커피숍의 한글 간판을 왼쪽에 두고 가로수가 늘어선 서측 인도를 바라보는 시점',
+        caption: '서측 인도 — 눈높이 1.7m의 보행자 시점',
+      },
+      {
+        src: '/images/agent-experiments/blender-city/05_sidewalk_east.jpg',
+        alt: '한글 상가와 가로수, 버스정류장과 파란 시내버스가 보이는 동측 인도',
+        caption: '동측 인도 — 상가와 가로수·버스정류장',
+      },
+      {
+        src: '/images/agent-experiments/blender-city/06_crosswalk_corner.jpg',
+        alt: '한빛대로 도로명판과 보행 신호등, 점자블록과 횡단보도 너머의 고층 건물이 보이는 교차로 모서리',
+        caption: '횡단보도 모서리 — 도로명판과 보행 시설물',
+      },
+    ],
+  },
+  {
+    id: 'blender-office',
+    category: 'Blender 3D 에셋 제작',
+    title: '사무실',
+    description: 'GPT-6 Astra로 프롬프트를 작성해 GPT Image 2.5로 사무실 이미지를 먼저 생성하고, 이를 바탕으로 GPT-6 Astra가 공간 배치·가구·재질을 Blender로 모델링했습니다. 참고 이미지와 실제 Blender 구현 결과를 별도 블록으로 나누어 보여줍니다.',
+    focus: ['이미지 기반 모델링', '사무실', 'Blender 3D'],
+    modelCredits: [
+      { purpose: '프롬프트', models: ['GPT-6 Astra'] },
+      { purpose: '이미지', models: ['GPT Image 2.5'] },
+      { purpose: 'Blender 모델링', models: ['GPT-6 Astra'] },
+    ],
+    imageGroups: [
+      {
+        title: '생성한 참고 이미지',
+        description: 'Blender 모델링 전에 생성한 공간 시안입니다.',
+        modelCredits: [
+          { purpose: '프롬프트', models: ['GPT-6 Astra'] },
+          { purpose: '이미지', models: ['GPT Image 2.5'] },
+        ],
+        images: [{
+          src: '/images/agent-experiments/blender-office/01-reference.png',
+          alt: '낮은 파티션과 책상, 서류장·복합기·정수기와 안쪽 회의실이 있는 사무실의 사전 생성 참고 이미지',
+          caption: '먼저 생성한 참고 이미지 · Blender 구현 결과 아님',
+        }],
+      },
+      {
+        title: 'Blender 구현 결과',
+        description: '참고 이미지를 바탕으로 제작한 3D 공간의 실제 렌더입니다.',
+        modelCredits: [{ purpose: 'Blender 모델링', models: ['GPT-6 Astra'] }],
+        images: [
+          {
+            src: '/images/agent-experiments/blender-office/02-entrance.jpg',
+            alt: '입구에서 바라본 Blender 사무실 모델링의 책상·회색 파티션과 서류장·복합기·정수기, 안쪽 회의실',
+            caption: 'Blender 구현 — 참고 이미지의 구도를 따른 입구 전경',
+          },
+          {
+            src: '/images/agent-experiments/blender-office/03-workstation-detail.jpg',
+            alt: 'Blender로 모델링한 사무실의 모니터·키보드·파일철과 낮은 파티션, 메시 의자 상세',
+            caption: 'Blender 구현 — 책상·파티션·사무용 의자 상세',
+          },
+          {
+            src: '/images/agent-experiments/blender-office/04-reverse-aisle.jpg',
+            alt: 'Blender 사무실 안쪽에서 입구를 바라본 업무 공간과 중앙 통로, 블라인드 창 전경',
+            caption: 'Blender 구현 — 안쪽에서 입구 방향으로 바라본 전경',
+          },
+          {
+            src: '/images/agent-experiments/blender-office/05-meeting-room.jpg',
+            alt: 'Blender로 모델링한 사무실 안쪽의 유리 칸막이와 테이블·의자·화이트보드가 있는 작은 회의실',
+            caption: 'Blender 구현 — 사무실 안쪽의 작은 회의실',
+          },
+        ],
+      },
+    ],
+  },
+  {
     id: 'motion-graphics',
     category: '영상물',
     title: '모션그래픽',
-    description: '형태 변형과 이징, 데이터 모션을 담은 모션그래픽 영상입니다.',
+    description: 'Opus 5.5와 GPT-6 Astra를 활용해 제작한 모션그래픽 영상입니다. 각 영상 위에 제작 모델을 표시했습니다.',
     focus: ['모션그래픽', '영상 제작'],
-    modelCredits: [{ models: ['Opus 5.5'] }],
-    video: {
-      src: '/media/agent-experiments/motion-graphics/main.mp4',
-      poster: '/media/agent-experiments/motion-graphics/poster.jpg',
-      caption: '형태와 데이터의 움직임을 엮은 모션그래픽',
-    },
+    modelCredits: [
+      { purpose: '위 영상', models: ['Opus 5.5'] },
+      { purpose: '아래 영상', models: ['GPT-6 Astra'] },
+    ],
+    videos: [
+      {
+        label: '위 영상',
+        model: 'Opus 5.5',
+        video: {
+          src: '/media/agent-experiments/motion-graphics/main.mp4',
+          poster: '/media/agent-experiments/motion-graphics/poster.jpg',
+        },
+      },
+      {
+        label: '아래 영상',
+        model: 'GPT-6 Astra',
+        video: {
+          src: '/media/agent-experiments/motion-graphics/astra.mp4',
+          poster: '/media/agent-experiments/motion-graphics/astra-poster.jpg',
+        },
+      },
+    ],
   },
   {
     id: 'spaceship-simulation',

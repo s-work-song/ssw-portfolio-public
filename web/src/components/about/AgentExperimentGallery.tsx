@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, type KeyboardEvent, type ReactNode } from 'react';
 import { agentExperiments, type AgentExperiment } from '@/data/agentExperiments';
 import ProjectMediaCarousel from './ProjectMediaCarousel';
 import styles from './AgentExperimentGallery.module.css';
@@ -42,6 +42,12 @@ function ExperimentVideo({ title, video }: { title: string; video: NonNullable<A
         preload="none"
         poster={video.poster ? `${basePath}${video.poster}` : undefined}
         aria-label={`${title} 영상`}
+        onPlay={(event) => {
+          const currentVideo = event.currentTarget;
+          currentVideo.closest('article')?.querySelectorAll('video').forEach((otherVideo) => {
+            if (otherVideo !== currentVideo) otherVideo.pause();
+          });
+        }}
       >
         <source src={`${basePath}${video.src}`} type="video/mp4" />
         브라우저에서 MP4 영상을 재생할 수 없습니다.
@@ -51,15 +57,88 @@ function ExperimentVideo({ title, video }: { title: string; video: NonNullable<A
   );
 }
 
+function ExperimentMediaBlock({ title, eyebrow, description, credits, children }: {
+  title: string;
+  eyebrow?: string;
+  description?: string;
+  credits?: AgentExperiment['modelCredits'];
+  children: ReactNode;
+}) {
+  return (
+    <section className={styles.mediaBlock} aria-label={title}>
+      <header className={styles.mediaHeader}>
+        {eyebrow && <p className={styles.mediaEyebrow}>{eyebrow}</p>}
+        <h4>{title}</h4>
+        {description && <p>{description}</p>}
+        {credits?.length ? (
+          <dl className={styles.mediaCredits} aria-label={`${title} 제작 모델`}>
+            {credits.map((credit) => (
+              <div key={credit.purpose ?? 'models'}>
+                <dt>{credit.purpose ?? '제작 모델'}</dt>
+                <dd>{credit.models.join(' · ')}{credit.via && <small>{credit.via}를 통해 제작</small>}</dd>
+              </div>
+            ))}
+          </dl>
+        ) : null}
+      </header>
+      {children}
+    </section>
+  );
+}
+
+function ExperimentAudio({ title, audio }: { title: string; audio: NonNullable<AgentExperiment['audio']> }) {
+  const playerRef = useRef<HTMLAudioElement | null>(null);
+
+  useEffect(() => {
+    const player = playerRef.current;
+    return () => { player?.pause(); };
+  }, []);
+
+  return (
+    <section className={styles.audioPanel} aria-label={`${title} BGM`}>
+      <div className={styles.audioInfo}>
+        <p className={styles.eyebrow}>GAME BGM</p>
+        <h4>{audio.title}</h4>
+        <p>{audio.caption}</p>
+        <p className={styles.audioCredit}>{audio.model}{audio.via ? ` · ${audio.via}를 통해 제작` : ''}</p>
+      </div>
+      <audio ref={playerRef} className={styles.audioPlayer} controls preload="none" aria-label={`${audio.title} BGM 재생`}>
+        <source src={`${basePath}${audio.src}`} type="audio/mpeg" />
+        브라우저에서 MP3 음원을 재생할 수 없습니다.
+      </audio>
+    </section>
+  );
+}
+
 /** 자동 재생 없이 실험을 탐색하고, 모델 비교는 같은 화면에서 확인하는 갤러리다. */
 export default function AgentExperimentGallery() {
   const [category, setCategory] = useState<(typeof categories)[number]>(visibleExperiments[0]?.category ?? 'SVG 제작');
   const [selectedId, setSelectedId] = useState(visibleExperiments[0]?.id ?? '');
   const [selectedModel, setSelectedModel] = useState(0);
+  const [filterIndicator, setFilterIndicator] = useState<{ x: number; y: number; width: number; height: number } | null>(null);
+  const filterListRef = useRef<HTMLDivElement | null>(null);
+  const filterButtonRefs = useRef(new Map<string, HTMLButtonElement>());
   const itemRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const experiments = visibleExperiments.filter((item) => item.category === category);
   const index = Math.max(0, experiments.findIndex((item) => item.id === selectedId));
   const active = experiments[index];
+
+  useLayoutEffect(() => {
+    const list = filterListRef.current;
+    const button = filterButtonRefs.current.get(category);
+    if (!list || !button) return;
+    const measure = () => {
+      const next = { x: button.offsetLeft, y: button.offsetTop, width: button.offsetWidth, height: button.offsetHeight };
+      setFilterIndicator((previous) => previous
+        && previous.x === next.x && previous.y === next.y
+        && previous.width === next.width && previous.height === next.height ? previous : next);
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(list);
+    observer.observe(button);
+    return () => observer.disconnect();
+  }, [category]);
 
   useEffect(() => {
     const selectHashExperiment = () => {
@@ -86,13 +165,8 @@ export default function AgentExperimentGallery() {
     const next = (nextIndex + experiments.length) % experiments.length;
     setSelectedId(experiments[next].id);
     setSelectedModel(0);
-    // 목록만 가로로 이동시킨다. 페이지나 채팅 패널의 스크롤은 건드리지 않는다.
-    const button = itemRefs.current[next];
-    if (button) {
-      const list = button.parentElement;
-      if (list) list.scrollLeft = button.offsetLeft - list.offsetLeft;
-      if (focus) button.focus({ preventScroll: true });
-    }
+    // 줄바꿈 목록에서는 키보드 포커스만 옮기고 페이지 스크롤은 유지한다.
+    if (focus) itemRefs.current[next]?.focus({ preventScroll: true });
   }
 
   function handleKey(event: KeyboardEvent<HTMLButtonElement>, itemIndex: number) {
@@ -111,37 +185,50 @@ export default function AgentExperimentGallery() {
         <div>
           <p className={styles.eyebrow}>AI EXPERIMENTS</p>
           <h3 id="agent-experiments-heading">AI 에이전트 성능·활용 실험</h3>
-          <p className={styles.intro}>SVG·게임 실험과 Blender 에셋·영상·ComfyUI 작업을 소개합니다.</p>
+          <div className={styles.introPanel}>
+            <p className={styles.intro}>AI 활용과 모델 성능 벤치마킹을 취미로 삼아 다양한 실험을 하고 있습니다. 모델마다 무엇을 어느 수준까지 해낼 수 있는지 직접 확인하고, 새로운 작업에 활용해 보는 과정에서 나온 결과물들을 이곳에 모았습니다. SVG 애니메이션부터 게임, Blender 모델링, 이미지·영상 생성까지 여러 영역을 탐색하고 있습니다.</p>
+            <p className={styles.intro}>개발을 중심으로 경험을 쌓아 온 만큼, 디자인과 시각적 표현은 상대적으로 익숙하지 않은 영역이었습니다. 하지만 AI와 함께 작업하면서 혼자서는 구현하기 어려웠던 아이디어를 구체화하고, 부족했던 부분을 보완할 수 있다는 가능성을 느꼈습니다. 그 가능성을 실제 작업으로 연결하려면 모델이 잘하는 일과 한계를 이해하는 것이 중요하다고 생각합니다. 다양한 과제를 직접 시도하며, 작업과 상황에 따라 어떤 맥락을 어떻게 제공해야 원하는 결과에 가까워지는지 알아가고 있습니다.</p>
+          </div>
         </div>
       </header>
 
       <div className={styles.toolbar}>
-        <div className={styles.filters} role="group" aria-label="실험 분류">
+        <div ref={filterListRef} className={styles.filters} role="group" aria-label="실험 분류">
+          {filterIndicator && <span className={styles.filterIndicator} aria-hidden="true" style={{
+            width: filterIndicator.width,
+            height: filterIndicator.height,
+            transform: `translate3d(${filterIndicator.x}px, ${filterIndicator.y}px, 0)`,
+          }} />}
           {categories.map((value) => (
-            <button key={value} type="button" aria-pressed={category === value} onClick={() => {
+            <button key={value} ref={(button) => {
+              if (button) filterButtonRefs.current.set(value, button);
+              else filterButtonRefs.current.delete(value);
+            }} type="button" aria-pressed={category === value} onClick={() => {
               setCategory(value);
               setSelectedId(visibleExperiments.find((item) => item.category === value)!.id);
               setSelectedModel(0);
             }}>{value === 'Blender 3D 에셋 제작' ? 'Blender' : value}</button>
           ))}
         </div>
-        <div className={styles.controls}>
-          <span aria-live="polite" aria-atomic="true">{String(index + 1).padStart(2, '0')} / {String(experiments.length).padStart(2, '0')}<span className={styles.srOnly}> · {active.title}</span></span>
-          <button type="button" aria-label="이전 실험" disabled={experiments.length < 2} onClick={() => select(index - 1)}>←</button>
-          <button type="button" aria-label="다음 실험" disabled={experiments.length < 2} onClick={() => select(index + 1)}>→</button>
-        </div>
       </div>
 
-      <div className={styles.filmstrip} role="group" aria-label="실험 바로 선택">
-        {experiments.map((item, itemIndex) => (
-          <button key={item.id} id={item.id} ref={(element) => { itemRefs.current[itemIndex] = element; }} type="button"
-            aria-pressed={active.id === item.id} aria-controls="agent-experiment-stage"
-            onClick={() => select(itemIndex)} onKeyDown={(event) => handleKey(event, itemIndex)}>
-            <span className={styles.itemNumber}>{String(itemIndex + 1).padStart(2, '0')}</span>
-            <span><small>{item.category}{item.models ? ' · 예정' : ''}</small><strong>{item.title}</strong></span>
-            <span className={styles.itemArrow} aria-hidden="true">↗</span>
-          </button>
-        ))}
+      <div className={styles.experimentNavigation}>
+        <div className={styles.filmstrip} role="group" aria-label="실험 바로 선택">
+          {experiments.map((item, itemIndex) => (
+            <button key={item.id} id={item.id} ref={(element) => { itemRefs.current[itemIndex] = element; }} type="button"
+              aria-pressed={active.id === item.id} aria-controls="agent-experiment-stage"
+              onClick={() => select(itemIndex)} onKeyDown={(event) => handleKey(event, itemIndex)}>
+              <span className={styles.itemNumber}>{String(itemIndex + 1).padStart(2, '0')}</span>
+              <span><small>{item.category}{item.models ? ' · 예정' : ''}</small><strong>{item.title}</strong></span>
+              <span className={styles.itemArrow} aria-hidden="true">↗</span>
+            </button>
+          ))}
+        </div>
+        <div className={styles.controls} role="group" aria-label="선택한 분류의 실험 탐색">
+          <span aria-live="polite" aria-atomic="true">{String(index + 1).padStart(2, '0')} / {String(experiments.length).padStart(2, '0')}<span className={styles.srOnly}> · {active.title}</span></span>
+          <button type="button" aria-label="이전 실험" aria-controls="agent-experiment-stage" disabled={experiments.length < 2} onClick={() => select(index - 1)}>←</button>
+          <button type="button" aria-label="다음 실험" aria-controls="agent-experiment-stage" disabled={experiments.length < 2} onClick={() => select(index + 1)}>→</button>
+        </div>
       </div>
 
       <div id="agent-experiment-stage" className={styles.stage}>
@@ -174,6 +261,27 @@ export default function AgentExperimentGallery() {
                 </div>
               ))}
             </div>
+          ) : active.videos?.length ? (
+            <div className={styles.videoStack} aria-label={`${active.title} 모델별 영상`}>
+              {active.videos.map((entry) => (
+                <ExperimentMediaBlock key={entry.video.src} title={entry.model} eyebrow="제작 모델">
+                  <ExperimentVideo title={`${active.title} · ${entry.model}`} video={entry.video} />
+                </ExperimentMediaBlock>
+              ))}
+            </div>
+          ) : active.imageGroups?.length ? (
+            <div className={styles.mediaStack}>
+              {active.imageGroups.map((group) => (
+                <ExperimentMediaBlock key={group.title} title={group.title} description={group.description} credits={group.modelCredits}>
+                  <ProjectMediaCarousel
+                    className={styles.experimentCarousel}
+                    gallery={{ images: group.images, placeholder: `${group.title} 이미지 준비 중` }}
+                    projectTitle={`${active.title} · ${group.title}`}
+                    imageSizes="(max-width: 900px) calc(100vw - 72px), 900px"
+                  />
+                </ExperimentMediaBlock>
+              ))}
+            </div>
           ) : active.models ? (
             <div className={styles.comparison}>
               <div className={styles.comparisonHeading}>
@@ -196,42 +304,45 @@ export default function AgentExperimentGallery() {
               </div>
               <p className={styles.conditions}>비교 조건 · 공통 요구사항, 작업 시간·예산, 수정 지시와 리소스 사용 범위는 실험 후 정리할 예정입니다.</p>
             </div>
-          ) : (
-            <div className={`${styles.singlePreview} ${active.video && active.images?.length ? styles.pairedPreview : ''}`}>
-              <div className={styles.previewLabel}><span>{active.category}</span><span>{active.video && active.images?.length ? 'IMAGE / VIDEO' : active.category === '영상물' ? 'VIDEO' : 'SCREEN / VIDEO'}</span></div>
-              {active.video && active.images?.length ? (
-                <div className={styles.mediaPair}>
-                  <div className={styles.mediaPairPane}>
-                    <p className={styles.mediaPairHeading}>생성 이미지</p>
-                    <ProjectMediaCarousel
-                      className={styles.experimentCarousel}
-                      gallery={{ images: active.images, placeholder: `${active.title} 이미지 준비 중` }}
-                      projectTitle={active.title}
-                      imageSizes="(max-width: 900px) calc(100vw - 72px), 450px"
-                    />
-                  </div>
-                  <div className={styles.mediaPairPane}>
-                    <p className={styles.mediaPairHeading}>5초 생성 영상</p>
-                    <ExperimentVideo title={active.title} video={active.video} />
-                  </div>
-                </div>
-              ) : active.video ? (
-                <ExperimentVideo title={active.title} video={active.video} />
-              ) : active.images?.length ? (
+          ) : active.video && active.images?.length ? (
+            <div className={styles.mediaPair}>
+              <ExperimentMediaBlock title="생성 이미지" credits={active.modelCredits?.filter((credit) => credit.purpose === '이미지' || credit.purpose === '워크플로우와 프롬프트')}>
                 <ProjectMediaCarousel
                   className={styles.experimentCarousel}
-                  gallery={{
-                    images: active.images,
-                    placeholder: `${active.title} 화면을 추가할 자리입니다.`,
-                  }}
+                  gallery={{ images: active.images, placeholder: `${active.title} 이미지 준비 중` }}
                   projectTitle={active.title}
-                  imageSizes="(max-width: 900px) calc(100vw - 72px), 900px"
+                  imageSizes="(max-width: 900px) calc(100vw - 72px), 450px"
                 />
-              ) : (
-                <CapturePlaceholder label={active.title} kind={active.category === '영상물' ? 'video' : 'image'} />
-              )}
+              </ExperimentMediaBlock>
+              <ExperimentMediaBlock title="5초 생성 영상" credits={active.modelCredits?.filter((credit) => credit.purpose === '영상' || credit.purpose === '워크플로우와 프롬프트')}>
+                <ExperimentVideo title={active.title} video={active.video} />
+              </ExperimentMediaBlock>
+            </div>
+          ) : (
+            <div className={styles.mediaStack}>
+              <ExperimentMediaBlock
+                title={active.video ? '영상' : active.category === 'Blender 3D 에셋 제작' ? '3D 모델링 결과' : active.category === 'SVG 제작' ? 'SVG 제작 결과' : '게임 플레이 캡처'}
+                credits={active.modelCredits?.filter((credit) => !active.audio || credit.purpose !== '배경음악')}
+              >
+                {active.video ? (
+                  <ExperimentVideo title={active.title} video={active.video} />
+                ) : active.images?.length ? (
+                  <ProjectMediaCarousel
+                    className={styles.experimentCarousel}
+                    gallery={{
+                      images: active.images,
+                      placeholder: `${active.title} 화면을 추가할 자리입니다.`,
+                    }}
+                    projectTitle={active.title}
+                    imageSizes="(max-width: 900px) calc(100vw - 72px), 900px"
+                  />
+                ) : (
+                  <CapturePlaceholder label={active.title} kind={active.category === '영상물' ? 'video' : 'image'} />
+                )}
+              </ExperimentMediaBlock>
             </div>
           )}
+          {active.audio && <ExperimentAudio title={active.title} audio={active.audio} />}
           <div className={styles.caption}>
             <div className={styles.description}>
               <p className={styles.eyebrow}>{active.category}</p>

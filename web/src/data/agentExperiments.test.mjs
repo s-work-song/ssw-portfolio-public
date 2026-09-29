@@ -5,6 +5,32 @@ import { agentExperiments } from './agentExperiments.ts';
 
 const visible = agentExperiments.filter((item) => !item.hidden);
 
+test('실험 선택 목록은 가로 스크롤 없이 줄바꿈하고 키보드 탐색을 유지한다', async () => {
+  const css = await readFile(new URL('../components/about/AgentExperimentGallery.module.css', import.meta.url), 'utf8');
+  const filmstrip = css.match(/\.filmstrip\s*\{([^}]+)\}/)?.[1];
+  assert.ok(filmstrip);
+  assert.match(filmstrip, /flex-wrap:\s*wrap/);
+  assert.doesNotMatch(filmstrip, /overflow-x:\s*(?:auto|scroll)/);
+  const component = await readFile(new URL('../components/about/AgentExperimentGallery.tsx', import.meta.url), 'utf8');
+  assert.doesNotMatch(component, /scrollLeft/);
+  assert.match(component, /focus\(\{ preventScroll: true \}\)/);
+  assert.match(css, /\.filters\s*\{[^}]*grid-template-columns:\s*repeat\(6, minmax\(0, 1fr\)\)/);
+  assert.match(css, /@media \(max-width: 900px\)\s*\{\s*\.filters\s*\{\s*grid-template-columns:\s*repeat\(3, minmax\(0, 1fr\)\)/);
+  assert.match(css, /@media \(max-width: 600px\)\s*\{\s*\.filters\s*\{\s*grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\)/);
+  assert.doesNotMatch(css, /\.filters\s*\{[^}]*overflow-x:\s*(?:auto|scroll)/);
+  const categoryToolbar = component.slice(component.indexOf('<div className={styles.toolbar}>'), component.indexOf('<div className={styles.experimentNavigation}>'));
+  assert.doesNotMatch(categoryToolbar, /styles.controls/);
+  assert.match(component, /styles\.experimentNavigation[\s\S]*styles\.filmstrip[\s\S]*styles\.controls[\s\S]*id="agent-experiment-stage"/);
+  assert.match(css, /\.controls\s*\{[^}]*justify-content:\s*flex-end/);
+  assert.match(css, /\.experimentNavigation\s*\{[^}]*border-bottom:/);
+  assert.match(css, /\.filters button\s*\{[^}]*width:\s*100%/);
+  assert.match(css, /\.filterIndicator\s*\{[^}]*transition:\s*transform 240ms/);
+  assert.match(css, /prefers-reduced-motion: reduce[\s\S]*filterIndicator[\s\S]*transition: none/);
+  assert.match(css, /:global\(:root:not\(\[data-motion='on'\]\)\) \.filterIndicator/);
+  assert.match(component, /new ResizeObserver\(measure\)/);
+  assert.match(component, /translate3d\(\$\{filterIndicator\.x\}px/);
+});
+
 test('펠리컨 애니메이션은 8개 결과와 빈 한 칸을 3열 그리드로 표시한다', async () => {
   const svg = visible.filter((item) => item.category === 'SVG 제작');
   assert.deepEqual(svg.map((item) => item.id), ['svg-illustrations', 'claude-pelican-svg-animation']);
@@ -63,17 +89,19 @@ test('제작 모델이 확인된 공개 실험에 모델과 버전을 표시한�
     'blender-medieval-weapons': ['Opus 5.5'],
     'blender-food': ['GPT-6 Astra', 'GPT-6 Astra', 'Grok 4.6', 'Opus 5.5'],
     'blender-subway': ['GPT-6 Astra'],
-    'motion-graphics': ['Opus 5.5'],
+    'blender-city': ['GPT-6 Astra'],
+    'blender-office': ['GPT-6 Astra', 'GPT Image 2.5', 'GPT-6 Astra'],
+    'motion-graphics': ['Opus 5.5', 'GPT-6 Astra'],
     'spaceship-simulation': ['Opus 5.5'],
     'comfyui-qwen-wan': ['GPT-6 Sol', 'Qwen Image 2512 FP8 E4M3FN', 'Wan 2.2 I2V 14B FP8'],
     'comfyui-gpt-image2-wan': ['GPT Image 2', 'Wan 2.2 I2V 14B FP8'],
   });
 });
 
-test('Blender 중세 무기·음식·가전·지하철 이미지를 표시한다', async () => {
+test('Blender 작업 이미지와 사무실의 참고 이미지 및 구현 렌더를 순서대로 표시한다', async () => {
   const blender = visible.filter((item) => item.category === 'Blender 3D 에셋 제작');
   assert.deepEqual(blender.map((item) => item.id), [
-    'blender-medieval-weapons', 'blender-food', 'blender-subway',
+    'blender-medieval-weapons', 'blender-food', 'blender-subway', 'blender-city', 'blender-office',
   ]);
   assert.deepEqual(blender[0].images?.map((image) => image.src), [
     '/images/agent-experiments/blender-medieval-weapons/05-scale-comparison.jpg',
@@ -125,6 +153,55 @@ test('Blender 중세 무기·음식·가전·지하철 이미지를 표시한다
     assert.equal(bytes.readUInt32BE(20), 900);
   }
   assert.deepEqual(blender[2].modelCredits, [{ models: ['GPT-6 Astra'] }]);
+  const city = blender[3];
+  assert.equal(city.title, '도시 거리');
+  assert.deepEqual(city.modelCredits, [{ models: ['GPT-6 Astra'] }]);
+  assert.deepEqual(city.images.map((image) => image.src), [
+    '/images/agent-experiments/blender-city/01_city_overview.jpg',
+    '/images/agent-experiments/blender-city/02_boulevard_hero.jpg',
+    '/images/agent-experiments/blender-city/03_road_intersection.jpg',
+    '/images/agent-experiments/blender-city/04_sidewalk_west.jpg',
+    '/images/agent-experiments/blender-city/05_sidewalk_east.jpg',
+    '/images/agent-experiments/blender-city/06_crosswalk_corner.jpg',
+  ]);
+  for (const image of city.images) {
+    const bytes = await readFile(new URL(`../../public${image.src}`, import.meta.url));
+    assert.deepEqual([...bytes.subarray(0, 3)], [255, 216, 255]);
+    assert.ok(bytes.length > 20_000 && bytes.length < 1_000_000);
+    assert.ok(image.alt.length > 0 && image.caption.length > 0);
+  }
+  const office = blender[4];
+  assert.equal(office.title, '사무실');
+  assert.equal(office.images, undefined);
+  assert.deepEqual(office.imageGroups.map((group) => group.title), ['생성한 참고 이미지', 'Blender 구현 결과']);
+  assert.deepEqual(office.imageGroups.map((group) => group.images.length), [1, 4]);
+  const officeImages = office.imageGroups.flatMap((group) => group.images);
+  assert.deepEqual(officeImages.map((image) => image.src), [
+    '/images/agent-experiments/blender-office/01-reference.png',
+    '/images/agent-experiments/blender-office/02-entrance.jpg',
+    '/images/agent-experiments/blender-office/03-workstation-detail.jpg',
+    '/images/agent-experiments/blender-office/04-reverse-aisle.jpg',
+    '/images/agent-experiments/blender-office/05-meeting-room.jpg',
+  ]);
+  assert.match(office.description, /이미지를 먼저 생성하고.*Blender로 모델링/);
+  assert.match(officeImages[0].caption, /참고 이미지.*Blender 구현 결과 아님/);
+  const reference = await readFile(new URL(`../../public${officeImages[0].src}`, import.meta.url));
+  assert.deepEqual([...reference.subarray(0, 8)], [137, 80, 78, 71, 13, 10, 26, 10]);
+  assert.ok(reference.readUInt32BE(16) >= 1600);
+  for (const image of officeImages.slice(1)) {
+    const bytes = await readFile(new URL(`../../public${image.src}`, import.meta.url));
+    assert.deepEqual([...bytes.subarray(0, 3)], [255, 216, 255]);
+    assert.ok(bytes.length > 20_000 && bytes.length < 1_000_000);
+    assert.match(image.caption, /^Blender 구현 — /);
+    assert.ok(image.alt.length > 0);
+  }
+  assert.deepEqual(office.imageGroups[0].modelCredits, [
+    { purpose: '프롬프트', models: ['GPT-6 Astra'] },
+    { purpose: '이미지', models: ['GPT Image 2.5'] },
+  ]);
+  assert.deepEqual(office.imageGroups[1].modelCredits, [{ purpose: 'Blender 모델링', models: ['GPT-6 Astra'] }]);
+  assert.deepEqual(office.modelCredits, office.imageGroups.flatMap((group) => group.modelCredits));
+  assert.equal(office.downloads, undefined);
 });
 
 test('음식·가전에만 세 Blender 원본 다운로드를 제공한다', async () => {
@@ -146,23 +223,57 @@ test('음식·가전에만 세 Blender 원본 다운로드를 제공한다', asy
   assert.match(source, /href=\{`\$\{basePath\}\$\{file\.src\}`\} download/);
 });
 
-test('영상물 두 항목은 압축된 MP4와 표지 이미지를 연결한다', async () => {
-  const videos = visible.filter((item) => item.category === '영상물');
-  assert.deepEqual(videos.map((item) => item.id), ['motion-graphics', 'spaceship-simulation']);
-  assert.deepEqual(videos.map((item) => item.video?.src), [
+test('이미지와 영상은 제작 단계 및 모델 헤더가 있는 미디어 블록으로 구분한다', async () => {
+  const component = await readFile(new URL('../components/about/AgentExperimentGallery.tsx', import.meta.url), 'utf8');
+  const css = await readFile(new URL('../components/about/AgentExperimentGallery.module.css', import.meta.url), 'utf8');
+  assert.match(component, /function ExperimentMediaBlock/);
+  assert.match(component, /<header className=\{styles\.mediaHeader\}/);
+  assert.match(component, /credit\.purpose \?\? '제작 모델'/);
+  assert.match(component, /active\.imageGroups\.map[\s\S]*credits=\{group\.modelCredits\}/);
+  assert.match(component, /title="생성 이미지"[^\n]*credit\.purpose === '이미지'/);
+  assert.match(component, /title="5초 생성 영상"[^\n]*credit\.purpose === '영상'/);
+  assert.doesNotMatch(component, /SCREEN \/ VIDEO|IMAGE \/ VIDEO|styles\.previewLabel/);
+  assert.match(css, /\.mediaBlock\s*\{[^}]*min-width:\s*0[^}]*border:/);
+  assert.match(css, /\.mediaCredits\s*\{[^}]*flex-wrap:\s*wrap/);
+});
+
+test('모션그래픽은 Opus 위·Astra 아래 순서로 제작 모델 헤더가 있는 개별 플레이어를 연결한다', async () => {
+  const items = visible.filter((item) => item.category === '영상물');
+  assert.deepEqual(items.map((item) => item.id), ['motion-graphics', 'spaceship-simulation']);
+  const [motion, spaceship] = items;
+  assert.equal(motion.video, undefined);
+  assert.deepEqual(motion.videos.map(({ label, model }) => ({ label, model })), [
+    { label: '위 영상', model: 'Opus 5.5' },
+    { label: '아래 영상', model: 'GPT-6 Astra' },
+  ]);
+  assert.deepEqual(motion.modelCredits, motion.videos.map(({ label, model }) => ({ purpose: label, models: [model] })));
+  assert.deepEqual(spaceship.modelCredits, [{ models: ['Opus 5.5'] }]);
+  const videos = [...motion.videos.map((entry) => entry.video), spaceship.video];
+  assert.deepEqual(videos.map((video) => video.src), [
     '/media/agent-experiments/motion-graphics/main.mp4',
+    '/media/agent-experiments/motion-graphics/astra.mp4',
     '/media/agent-experiments/spaceship-simulation/main.mp4',
   ]);
-  assert.ok(videos.every((item) => item.modelCredits?.[0]?.models[0] === 'Opus 5.5'));
-  for (const item of videos) {
-    const videoPath = new URL(`../../public${item.video.src}`, import.meta.url);
-    const posterPath = new URL(`../../public${item.video.poster}`, import.meta.url);
+  for (const video of videos) {
+    const videoPath = new URL(`../../public${video.src}`, import.meta.url);
+    const posterPath = new URL(`../../public${video.poster}`, import.meta.url);
     const videoBytes = await readFile(videoPath);
     const posterBytes = await readFile(posterPath);
     assert.equal(videoBytes.toString('ascii', 4, 8), 'ftyp');
     assert.ok((await stat(videoPath)).size < 20_000_000);
     assert.deepEqual([...posterBytes.subarray(0, 3)], [255, 216, 255]);
   }
+  const component = await readFile(new URL('../components/about/AgentExperimentGallery.tsx', import.meta.url), 'utf8');
+  const css = await readFile(new URL('../components/about/AgentExperimentGallery.module.css', import.meta.url), 'utf8');
+  assert.match(component, /active\.videos\.map/);
+  const videoBlocks = component.slice(component.indexOf('active.videos.map'), component.indexOf('active.imageGroups?.length'));
+  assert.match(videoBlocks, /ExperimentMediaBlock[^>]*title=\{entry\.model\}/);
+  assert.match(videoBlocks, /eyebrow="제작 모델"/);
+  assert.doesNotMatch(videoBlocks, /entry\.label|위 영상|아래 영상/);
+  assert.match(component, /otherVideo !== currentVideo.*otherVideo\.pause\(\)/);
+  assert.match(component, /preload="none"/);
+  assert.doesNotMatch(component, /\bautoPlay\b/);
+  assert.match(css, /\.videoStack\s*\{[^}]*flex-direction:\s*column/);
 });
 
 test('ComfyUI 활용 첫 사례는 이미지와 5초 영상을 함께 표시하고 제작 단계를 구분한다', async () => {
@@ -236,7 +347,7 @@ test('공성전은 3D 게임 탭에서 발리스타와 성벽 파괴 캡처 및 
   }
 });
 
-test('Planet Defense에는 배경음악을 넣지 않고 물고기 키우기에만 제작 경로를 표시한다', () => {
+test('물고기 키우기는 이미지 슬라이더와 설명 사이에 독립 BGM 플레이어를 둔다', async () => {
   const planet = agentExperiments.find((item) => item.id === 'planet-defense');
   const fish = agentExperiments.find((item) => item.id === 'aqua-guardian');
   assert.deepEqual(planet.modelCredits, [
@@ -247,6 +358,24 @@ test('Planet Defense에는 배경음악을 넣지 않고 물고기 키우기에�
     ...planet.modelCredits,
     { purpose: '배경음악', models: ['Lyria 3'], via: 'Gemini' },
   ]);
+  assert.equal(planet.audio, undefined);
+  assert.equal(fish.images.length, 2);
+  assert.deepEqual(fish.audio, {
+    src: '/media/agent-experiments/aqua-guardian/the-saltwater-hour.mp3',
+    title: 'The Saltwater Hour', model: 'Lyria 3', via: 'Gemini',
+    caption: '물고기 키우기에 사용한 배경음악',
+  });
+  const bytes = await readFile(new URL(`../../public${fish.audio.src}`, import.meta.url));
+  assert.ok(bytes.toString('ascii', 0, 3) === 'ID3' || (bytes[0] === 0xff && (bytes[1] & 0xe0) === 0xe0));
+  assert.ok(bytes.length > 1_000_000 && bytes.length < 10_000_000);
+  const component = await readFile(new URL('../components/about/AgentExperimentGallery.tsx', import.meta.url), 'utf8');
+  assert.match(component, /<audio[\s\S]*?preload="none"/);
+  assert.match(component, /player\?\.pause\(\)/);
+  assert.match(component, /active\.audio && <ExperimentAudio[\s\S]*?<div className=\{styles\.caption\}/);
+  assert.match(component, /<article key=\{active\.id\}/);
+  const carousel = await readFile(new URL('../components/about/ProjectMediaCarousel.tsx', import.meta.url), 'utf8');
+  assert.doesNotMatch(carousel, /<audio|gallery\.audio|BGM 듣기/);
+  assert.doesNotMatch(component, /\bautoPlay\b/);
 });
 
 test('제작 모델 정보가 기존 모델 비교 화면을 활성화하지 않고 숨김 항목도 보존한다', () => {
