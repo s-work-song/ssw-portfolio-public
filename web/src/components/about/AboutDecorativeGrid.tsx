@@ -15,7 +15,7 @@ export default function AboutDecorativeGrid() {
         bottom: 0,
         backgroundImage: 'radial-gradient(var(--border) 1px, transparent 1px)',
         backgroundSize: '24px 24px',
-        opacity: 0.3,
+        opacity: 'var(--surface-pattern-opacity, 0.3)',
         pointerEvents: 'none',
       }}
     />

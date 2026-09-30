@@ -17,6 +17,19 @@
   z-index: 200;
 }
 
+:global(:root[data-theme='dark']) :is(.trigger, .triggerMenuOpen, .quickMenuAction, .panel, .panelDocked) {
+  box-shadow: none;
+}
+
+:global(:root[data-theme='dark']) .guidedTourStart {
+  background: var(--chat-bg-soft);
+  border-color: var(--chat-border);
+}
+
+:global(:root[data-theme='dark']) :is(.userMessage, .composer button, .trigger > span:first-child) {
+  color: var(--accent-contrast);
+}
+
 .trigger {
   position: fixed;
   right: 24px;

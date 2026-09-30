@@ -39,7 +39,7 @@ export default function CoverLetterPage() {
           bottom: 0,
           backgroundImage: 'radial-gradient(var(--border) 1px, transparent 1px)',
           backgroundSize: '24px 24px',
-          opacity: 0.3,
+          opacity: 'var(--surface-pattern-opacity, 0.3)',
           pointerEvents: 'none'
         }} />
         <div style={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -80,7 +80,7 @@ export default function CoverLetterPage() {
           bottom: 0,
           backgroundImage: 'radial-gradient(var(--border) 1px, transparent 1px)',
           backgroundSize: '24px 24px',
-          opacity: 0.3,
+          opacity: 'var(--surface-pattern-opacity, 0.3)',
           pointerEvents: 'none'
         }} />
 
@@ -177,7 +177,7 @@ export default function CoverLetterPage() {
 
       <section style={{ 
         padding: '40px', 
-        background: 'linear-gradient(135deg, var(--bg-elev-2), var(--bg))', 
+        background: 'var(--surface-fill, linear-gradient(135deg, var(--bg-elev-2), var(--bg)))',
         borderRadius: '24px', 
         textAlign: 'center',
         border: '1px solid var(--border)',

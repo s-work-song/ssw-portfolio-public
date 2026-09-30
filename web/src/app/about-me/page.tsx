@@ -262,7 +262,7 @@ export default function OverviewPage() {
       {/* Bottom CTA to start with Resume */}
       <section style={{ 
         padding: '36px', 
-        background: 'linear-gradient(135deg, var(--bg-elev-2), var(--bg))', 
+        background: 'var(--surface-fill, linear-gradient(135deg, var(--bg-elev-2), var(--bg)))',
         borderRadius: '24px', 
         textAlign: 'center',
         border: '1px solid var(--border)',

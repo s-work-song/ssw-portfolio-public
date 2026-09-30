@@ -11,6 +11,9 @@
 .heading { display: flex; justify-content: space-between; gap: 20px; align-items: flex-start; margin-bottom: 28px; }
 .heading > div { min-width: 0; width: 100%; }
 .introPanel, .filters button { scroll-margin-top: 108px; }
+:global(:root[data-theme='dark']) .filterIndicator { box-shadow: none; }
+:global(:root[data-theme='dark']) .introPanel { background: var(--bg-elev-2); border-left-color: var(--border-strong); }
+:global(:root[data-theme='dark']) .capture { background: var(--bg-elev-2); }
 .eyebrow { margin: 0 0 8px; font-size: .78rem; font-weight: 700; letter-spacing: .12em; color: var(--accent, #6366f1); }
 .heading h3 { margin: 0; font-size: clamp(1.35rem, 3vw, 1.75rem); line-height: 1.4; word-break: keep-all; }
 .introPanel { margin-top: 20px; padding: clamp(16px, 2.5vw, 24px); border: 1px solid var(--border); border-left: 3px solid color-mix(in srgb, var(--accent, #6366f1) 55%, var(--border)); border-radius: 4px 14px 14px 4px; background: color-mix(in srgb, var(--accent, #6366f1) 4%, var(--bg-elev-2)); }

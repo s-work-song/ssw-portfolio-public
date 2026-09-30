@@ -35,16 +35,27 @@
 }
 
 [data-theme='dark'] {
-  --bg: #0a0b12;
-  --bg-elev: #11131f;
-  --bg-elev-2: #171a2a;
-  --text: #eef0f6;
-  --text-dim: #a6abc4;
-  --text-mute: #8f96ae;
-  --border: rgba(255,255,255,0.08);
-  --border-strong: rgba(255,255,255,0.16);
-  --shadow: 0 24px 60px -24px rgba(0,0,0,0.65);
-  --nav-bg: rgba(10,11,18,0.72);
+  --bg: #111315;
+  --bg-elev: #1b1e22;
+  --bg-elev-2: #24282d;
+  --text: #edf0f3;
+  --text-dim: #b7bdc5;
+  --text-mute: #9fa6af;
+  --border: #34383e;
+  --border-strong: #484e57;
+  --shadow: none;
+  --nav-bg: #111315;
+  --surface-fill: var(--bg-elev-2);
+  --surface-pattern-opacity: 0;
+}
+
+/* 저장된 팔레트는 유지하고 기본 인디고의 다크 표현만 선명한 블루로 바꾼다.
+   Provider의 인라인 토큰보다 우선해야 테마 전환 시에도 같은 색을 유지한다. */
+:root[data-theme='dark']:is([data-accent='indigo'], :not([data-accent])) {
+  --accent: #326bd3 !important;
+  --accent-2: #7aabff !important;
+  --accent-soft: rgba(50,107,211,0.12) !important;
+  --accent-contrast: #ffffff !important;
 }
 
 html {
@@ -574,6 +585,16 @@ input, select, textarea, button {
   transform: translateY(-3px);
   filter: brightness(1.15);
   box-shadow: 0 12px 24px -8px var(--accent) !important;
+}
+
+/* 다크 표면은 빛 번짐 대신 테두리와 면 색상으로 상태를 구분한다. */
+:root[data-theme='dark'] .hover-btn-primary {
+  color: var(--accent-contrast) !important;
+}
+
+:root[data-theme='dark'] .hover-btn-primary:hover {
+  filter: none;
+  box-shadow: none !important;
 }
 
 .hover-btn-secondary {

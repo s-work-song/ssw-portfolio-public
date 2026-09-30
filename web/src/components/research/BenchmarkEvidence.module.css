@@ -10,6 +10,11 @@
   border-radius: 16px;
 }
 
+:global(:root[data-theme='dark']) :is(.evidence, .catalog) {
+  background: var(--bg-elev-2);
+  border-color: var(--border);
+}
+
 .evidence {
   display: flex;
   flex-direction: column;

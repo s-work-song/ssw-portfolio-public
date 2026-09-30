@@ -4,6 +4,30 @@
   gap: 10px;
 }
 
+:global(:root[data-theme='dark']) .frame {
+  background: var(--bg-elev-2);
+}
+
+:global(:root[data-theme='dark']) :is(.navButton, .counter, .lightboxClose, .lightboxNav) {
+  background: var(--bg-elev-2);
+  color: var(--text);
+  backdrop-filter: none;
+}
+
+:global(:root[data-theme='dark']) .lightboxOverlay {
+  background: rgb(17 19 21 / 92%);
+  backdrop-filter: none;
+}
+
+:global(:root[data-theme='dark']) .lightboxDialog {
+  background: var(--bg-elev);
+  box-shadow: none;
+}
+
+:global(:root[data-theme='dark']) .dotActive {
+  box-shadow: none;
+}
+
 .frame {
   position: relative;
   aspect-ratio: 16 / 9;

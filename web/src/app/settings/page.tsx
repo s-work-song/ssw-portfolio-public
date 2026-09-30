@@ -694,7 +694,7 @@ export default function SettingsPage() {
                   position: "relative",
                   border: "1px solid var(--border)",
                   borderRadius: "14px",
-                  background: "linear-gradient(160deg, var(--accent-soft, rgba(99,102,241,.12)), var(--bg-elev-2))",
+                  background: "var(--surface-fill, linear-gradient(160deg, var(--accent-soft, rgba(99,102,241,.12)), var(--bg-elev-2)))",
                   overflow: "hidden",
                   transition: "min-height .2s ease",
                 }}
@@ -1300,7 +1300,7 @@ export default function SettingsPage() {
                   padding: "16px",
                   borderRadius: "14px",
                   border: "1px solid var(--border)",
-                  background: "linear-gradient(145deg, var(--bg-elev-2), var(--accent-soft, rgba(99,102,241,.10)))",
+                  background: "var(--surface-fill, linear-gradient(145deg, var(--bg-elev-2), var(--accent-soft, rgba(99,102,241,.10))))",
                 }}
               >
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px", marginBottom: "12px", flexWrap: "wrap" }}>

@@ -37,7 +37,7 @@ export default function ResearchExperiencePage() {
           bottom: 0,
           backgroundImage: 'radial-gradient(var(--border) 1px, transparent 1px)',
           backgroundSize: '24px 24px',
-          opacity: 0.3,
+          opacity: 'var(--surface-pattern-opacity, 0.3)',
           pointerEvents: 'none'
         }} />
         <div style={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', gap: '16px' }}>

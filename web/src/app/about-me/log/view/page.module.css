@@ -4,6 +4,10 @@
   gap: 32px;
 }
 
+:global(:root[data-theme='dark']) .readingSurface {
+  background: var(--bg-elev);
+}
+
 .readingSurface {
   padding: clamp(28px, 5vw, 58px);
   border: 1px solid var(--border-strong);

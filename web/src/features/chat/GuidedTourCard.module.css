@@ -11,6 +11,16 @@
   box-shadow: 0 22px 60px -28px rgba(15, 18, 45, 0.62);
 }
 
+:global(:root[data-theme='dark']) :is(.invite, .card) {
+  background: var(--chat-bg);
+  border-color: var(--chat-border);
+  box-shadow: none;
+}
+
+:global(:root[data-theme='dark']) :is(.aiMark, .externalChatButton > span:first-child, .primary) {
+  color: var(--accent-contrast);
+}
+
 .invite {
   position: fixed;
   right: 24px;

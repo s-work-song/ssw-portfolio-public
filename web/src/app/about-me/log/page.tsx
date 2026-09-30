@@ -51,7 +51,7 @@ export default function LogPage() {
 
       <section style={{ 
         padding: '40px', 
-        background: 'linear-gradient(135deg, var(--bg-elev-2), var(--bg))', 
+        background: 'var(--surface-fill, linear-gradient(135deg, var(--bg-elev-2), var(--bg)))',
         borderRadius: '24px', 
         textAlign: 'center',
         border: '1px solid var(--border)',
