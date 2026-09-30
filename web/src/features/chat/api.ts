@@ -128,7 +128,7 @@ export async function requestChat(
     response = await fetch(endpoint, {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify(request),
+      body: JSON.stringify({ ...request, toolHistory: request.toolVerification ? request.toolHistory : undefined }),
       signal,
     });
   } catch (error) {
@@ -341,7 +341,7 @@ export async function requestChatStream(
           accept: "text/event-stream",
           "content-type": "application/json",
         },
-        body: JSON.stringify(request),
+        body: JSON.stringify({ ...request, toolHistory: request.toolVerification ? request.toolHistory : undefined }),
         signal: deadline.signal,
       });
     } catch (error) {

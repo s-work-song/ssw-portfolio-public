@@ -187,6 +187,17 @@ sequenceDiagram
   사고 모드를 끈다. `requestVerifiedToolResponse`가 도구 실행 큐 완료 뒤에만
   현재 URL·DOM 상태와 최신 설정을 읽는다. 서버는 도구를 다시 노출하지 않고
   최종 일반 답변만 생성하며, 내부 호출 형식은 표시 전에 걸러낸다.
+- 선택 `modelHistory`가 있으면 실제 assistant 호출·tool 결과·공개 최종 답변을 다음
+  질문의 이력에 그대로 펼친다. ID·raw arguments·결과 문자열을 요약하지 않고,
+  visible assistant를 중복하지 않는다. 브라우저 확인 전에는 임시 본문을 빼고 실제
+  관측으로 해당 tool content만 교체해 `toolHistory`로 보낸다. 확인 요청만 실패한
+  재시도는 같은 질문·입력 ID·관측 체인으로 보고만 요청해 변경 도구를 재실행하지 않는다.
+  구형 API가 선택 필드를 생략하면 기존 일반 user/assistant 이력을 사용한다.
+- 이력은 메모리에만 보관하고 기본 최근 대화 묶음 5개·wire 130개·12,000자 한계를
+  함께 적용한다. 호출·결과 메시지가 늘어도 일반 대화의 5개 사용자 턴을 유지하도록
+  wire 수와 사용자 턴 수를 분리했다. 문자 예산에는 ID·도구명·인수도 포함한다.
+  오래된 턴 전체를 제거하므로 호출 없이 tool 결과만 남지 않는다. 비공개 system/RAG,
+  추론 본문과 실행 전 완료 문장은 보관하지 않으며 전체 KV 캐시 적중을 보장하지 않는다.
 - 인사말 아래 안내 카드는 대화가 시작돼도 같은 스크롤 위치에 남는다. 온라인·투어
   미진행 조건은 유지하고, 답변 생성 중에는 카드의 버튼만 비활성화한다.
   관점 선택·추천 질문·카드의 AI 질문은 `responseMode: explanation`을 요청과 재시도에
@@ -366,6 +377,7 @@ flowchart TD
 | 도구 결과 상태 줄 문구 | `src/features/chat/constants.ts`, `MessageItem.tsx` |
 | 실패 상태 · 로컬 진단 · 재시도 · 대화 이력 | `src/features/chat/chatFailure.ts`, `chatHistory.ts`, `ChatProvider.tsx`, `chatFailure.test.mjs` |
 | 도구 완료 후 최신 브라우저 상태와 최종 답변 요청 | `src/features/chat/toolVerificationRequest.ts`, `ChatProvider.tsx` |
+| 공개 native 대화·원문 이력·사용자 턴 단위 예산 | `src/features/chat/modelHistory.ts`, `chatHistory.ts`, `modelHistory.test.mjs` |
 | 대화 · 입력별 추적 ID 수명과 HTTP LAN UUID | `src/features/chat/chatRequestIdentity.ts`, `chatRequestIdentity.test.mjs`, `types.ts` |
 | 도구 실행기 | `src/features/portfolio-tools/portfolioUiToolExecutor.ts` |
 | 공통 색상 순회 | `src/features/portfolio-tools/accentCycle.ts`, `src/features/chat/ChatProvider.tsx` |

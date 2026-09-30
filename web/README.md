@@ -275,10 +275,14 @@ npm run lint       # ESLint
 npm test           # 순수 로직 테스트 (node --test)
 ```
 
-`npm test`는 브라우저 없이 도는 여섯 묶음을 실행합니다.
+`npm test`는 다음 브라우저 없는 순수 로직 묶음을 실행합니다.
 
 - `src/features/chat/parse.test.mjs` — SSE 블록 파싱, 응답 검증, 도구 실행
   허용값, 재시도 대기 시간 환산
+- `src/features/chat/modelHistory.test.mjs` — 공개 native 호출/결과 이력, 실제 브라우저 결과
+  교체, 확인 재시도, 사용자 턴 단위 보존 및 문자 예산
+- `src/features/chat/chatFailure.test.mjs`, `chatRequestIdentity.test.mjs` — 실패/중단 이력 제외,
+  오류 원문 미노출, 동일 대화·입력 ID와 reset/재시도 수명
 - `src/features/webmcp/logViewContract.test.mjs` — 기록 검색 결과를 목록
   화면 상태로 좁히는 계약
 - `scripts/local-fonts.test.mjs` — 로컬 폰트 파일·해시·라이선스와 외부 Google Fonts 요청 제거
@@ -287,6 +291,14 @@ npm test           # 순수 로직 테스트 (node --test)
 - `src/data/research.test.mjs` — 연구 문구·제목과 측정 수치, 연구 탭·시기 계약
 
 타입 검사는 `npx tsc --noEmit`으로 따로 실행합니다.
+
+완료된 채팅은 선택 `modelHistory`에 공개 assistant 호출·tool 결과·최종 답변이 있을 때
+다음 요청의 이력으로 그대로 펼칩니다. 비공개 system/RAG·추론 본문을 보관하지 않으며
+visible assistant 답변을 중복하지 않습니다. 기본은 사용자 대화 묶음 5개·wire 130개·전체
+12,000자이고, 오래된 사용자 턴을 통째로 제거해 orphan tool 결과를 만들지 않습니다.
+브라우저 확인 요청이 실패한 재시도는 원래 질문과 관측 `toolHistory`로 보고만 다시 요청해
+이미 적용한 변경을 반복하지 않습니다. 필드가 없는 구형 API 응답은 기존 일반 이력으로
+처리합니다. 대화/이력은 브라우저 메모리에만 두며 전체 KV 캐시 적중률을 보장하지 않습니다.
 
 ### 폰트 파일
 

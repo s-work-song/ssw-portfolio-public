@@ -137,11 +137,18 @@ export type ActionId =
   | "log_ai_writing"
   | "log_hardware_to_software";
 
-/** 서버로 보내는 이전 대화 한 턴이다. */
-export interface ChatHistoryItem {
-  role: "user" | "assistant";
-  content: string;
+/** 모델이 생성한 호출 식별자와 인수 문자열은 정규화하지 않고 보존한다. */
+export interface ChatHistoryToolCall {
+  id: string;
+  type: "function";
+  function: { name: string; arguments: string };
 }
+
+/** 공개 답변과 완결된 네이티브 도구 호출/결과를 그대로 재전송하는 모델 이력이다. */
+export type ChatHistoryItem =
+  | { role: "user"; content: string }
+  | { role: "assistant"; content: string | null; tool_calls?: ChatHistoryToolCall[] }
+  | { role: "tool"; content: string; tool_call_id: string };
 
 /** 답변에 붙는 이동 버튼 하나다. label은 프런트가 정의한 문구여야 한다. */
 export interface ChatAction {
@@ -342,6 +349,8 @@ export interface ChatToolVerification {
 
 /** 검증을 마친 챗봇 응답 본문이다. */
 export interface ChatResponse {
+  /** 현재 턴의 공개 모델 이력. 사용자 질문은 프런트에서 별도로 보존한다. */
+  modelHistory?: ChatHistoryItem[];
   mode: "model" | "retrieval_fallback";
   status: "online" | "upstream_offline";
   generated: boolean;
@@ -362,6 +371,8 @@ export interface ChatResponse {
 
 /** 화면에 그려지는 말풍선 하나다. */
 export interface ChatMessage {
+  /** 완료된 응답의 재전송용 이력. 세션 메모리에만 두고 화면/저장소에는 쓰지 않는다. */
+  modelHistory?: ChatHistoryItem[];
   id: string;
   role: "user" | "assistant";
   content: string;
@@ -415,6 +426,8 @@ export interface ChatRequest {
   viewState: ChatPortfolioViewState;
   /** UI 도구 실행 뒤 실제 상태를 확인하는 두 번째 요청에만 붙는다. */
   toolVerification?: ChatToolVerification;
+  /** 현재 질문 뒤의 완결된 도구 체인. 브라우저 검증 후속 요청에만 사용한다. */
+  toolHistory?: ChatHistoryItem[];
 }
 
 /** `/api/chat/status` 응답이다. */

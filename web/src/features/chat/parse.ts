@@ -15,6 +15,7 @@ import {
   DEFAULT_CHAT_STREAM_ANIMATION,
   TONES,
 } from "./constants.ts";
+import { responseModelHistory } from "./modelHistory.ts";
 import {
   ACCENTS,
   CHAT_FONTS,
@@ -536,6 +537,10 @@ export function parseChatResponse(value: unknown): ChatResponse {
   const parsedSegments = segments
     .map(parseSegment)
     .filter((segment): segment is ChatSegment => segment !== null);
+  const parsedToolExecutions = parseToolExecutions(toolExecutions);
+  const awaitingBrowser = parsedToolExecutions.some((execution) =>
+    execution.type !== "report_portfolio_ui_settings" && execution.type !== "report_portfolio_view_state");
+  const modelHistory = responseModelHistory(value.modelHistory, answer, awaitingBrowser);
 
   // 빈 말풍선으로 굳지 않도록, 보여줄 본문이 하나도 없으면 실패로 처리한다.
   if (!answer.trim() && parsedSegments.length === 0) {
@@ -545,6 +550,7 @@ export function parseChatResponse(value: unknown): ChatResponse {
   }
 
   return {
+    ...(modelHistory ? { modelHistory } : {}),
     mode: validMode,
     status: validStatus,
     generated,
@@ -559,7 +565,7 @@ export function parseChatResponse(value: unknown): ChatResponse {
       .slice(0, 2),
     // 백엔드와 프론트의 순차 배포 중에도 기존 응답을 계속 읽는다.
     suggestedQuestions: parseSuggestedQuestions(suggestedQuestions),
-    toolExecutions: parseToolExecutions(toolExecutions),
+    toolExecutions: parsedToolExecutions,
     cached,
     // 보고하지 않는 서버와 모르는 값은 모두 없는 것으로 본다.
     ...(isAllowed(uiToolOutcome, UI_TOOL_OUTCOMES)

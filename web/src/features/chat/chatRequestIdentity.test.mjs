@@ -86,6 +86,7 @@ test('Provider는 메시지와 같은 메모리 수명으로 ID를 보존하고 
   assert.equal(retry.includes('nextTurnIds'), false);
   assert.ok(retry.includes('performRequest(pending)'));
   const api = readFileSync(new URL('./api.ts', import.meta.url), 'utf8');
-  assert.ok(api.includes('body: JSON.stringify(request)'));
+  const serializedBodies = api.match(/body: JSON\.stringify\(\{ \.\.\.request, toolHistory: request\.toolVerification \? request\.toolHistory : undefined \}\)/g) ?? [];
+  assert.equal(serializedBodies.length, 2, 'JSON 및 SSE 요청 모두 같은 request/ID를 그대로 전송하고 toolHistory만 검증 요청에 제한한다');
   assert.equal(api.includes('X-Conversation-ID'), false, '추적 헤더는 백엔드/런처가 맡는다');
 });

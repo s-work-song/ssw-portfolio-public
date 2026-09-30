@@ -130,9 +130,13 @@ test('실패 질문·답변·설명과 중단/스트리밍 답변은 다음 모�
   ]);
 });
 
-test('모델 이력의 턴 수·문자 상한은 추출 전과 같다', () => {
-  assert.equal(historyFromMessages(Array.from({ length: 12 }, (_, n) =>
-    message(String(n), 'assistant', '정상', { generationState: 'complete' }))).length, 10);
+test('일반 대화의 최근 다섯 USER 턴과 12000자 상한을 유지한다', () => {
+  const messages = Array.from({ length: 6 }, (_, n) => [
+    message(`u${n}`, 'user', `질문${n}`),
+    message(`a${n}`, 'assistant', `답변${n}`, { generationState: 'complete' }),
+  ]).flat();
+  assert.deepEqual(historyFromMessages(messages), messages.slice(2).map(({ role, content }) => ({ role, content })));
+  assert.equal(historyFromMessages(messages).length, 10);
   assert.deepEqual(historyFromMessages([message('big', 'user', 'x'.repeat(12_001))]), []);
 });
 

@@ -369,6 +369,9 @@ interface PendingRetry extends ChatRequestIds {
   history: ChatHistoryItem[];
   audienceOverride?: AudienceChoice;
   assistantMessageId?: string;
+  toolHistory?: ChatRequest["toolHistory"];
+  toolVerification?: ChatRequest["toolVerification"];
+  toolResults?: ToolResult[];
 }
 
 /**
@@ -1491,7 +1494,11 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
         audience: audienceToApi(pending.audienceOverride ?? audience),
         tone,
         pageContext,
-        reasoningEnabled,
+        reasoningEnabled: pending.toolVerification ? false : reasoningEnabled,
+        ...(pending.toolVerification ? {
+          toolVerification: pending.toolVerification,
+          ...(pending.toolHistory ? { toolHistory: pending.toolHistory } : {}),
+        } : {}),
         uiSettings: {
           theme: mode,
           accent,
@@ -1521,7 +1528,9 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
        * 정말 도착했는지, 설정이 반영됐는지는 화면만 알 수 있으므로 그 결말을
        * 여기서 모아 말풍선에 붙이고 같은 대화 문맥의 후속 모델 요청에 전달한다.
        */
-      const toolResults = new Map<string, ToolResult>();
+      const toolResults = new Map<string, ToolResult>(
+        (pending.toolResults ?? []).map((result) => [result.callId, result]),
+      );
       // 스트리밍이면 곧 만들 답변 말풍선, 아니면 완료 시점에 만드는 말풍선이다.
       let toolResultMessageId: string | undefined;
       const publishToolResults = () => {
@@ -1686,6 +1695,9 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
       };
 
       const handleToolExecution = (execution: ChatToolExecution) => {
+        if (pending.toolVerification) {
+          throw new ChatApiError("화면 확인 응답이 새 도구를 호출해 중단했어요.");
+        }
         if (handledToolCallIds.has(execution.toolCallId)) return;
         handledToolCallIds.add(execution.toolCallId);
         if (requiresBrowserToolVerification(execution)) {
@@ -1910,8 +1922,13 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
               uiSettingChanges: [...uiSettingChangesRef.current],
               viewState: readPortfolioViewState(window.location.pathname),
             }),
-            (verificationRequest) => shouldStream
-              ? requestChatStream(
+            (verificationRequest) => {
+              // 확인 요청만 실패했을 때 도구를 다시 실행하지 않고 같은 원질문과
+              // 관측된 체인으로 재시도한다. 이전 완료 이력은 변경하지 않는다.
+              pending.toolVerification = verificationRequest.toolVerification;
+              pending.toolHistory = verificationRequest.toolHistory;
+              pending.toolResults = [...toolResults.values()];
+              return shouldStream ? requestChatStream(
                   verificationRequest,
                   controller.signal,
                   {
@@ -1925,8 +1942,10 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
                     },
                   },
                 )
-              : requestChat(verificationRequest, controller.signal),
+              : requestChat(verificationRequest, controller.signal);
+            },
             controller.signal,
+            response.modelHistory,
           );
         } else {
           deferStreamDeltas = false;
@@ -1966,6 +1985,7 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
           );
         }
         const completedMessage: ChatMessage = {
+          ...(response.modelHistory ? { modelHistory: response.modelHistory } : {}),
           id: streamingMessageId ?? nextId("assistant"),
           role: "assistant",
           content: response.answer,
