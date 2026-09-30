@@ -18,6 +18,12 @@
 
 각 분류 안의 실험 선택 카드는 화면 너비에 맞춰 줄바꿈하며, 사진은 기존 좌우 슬라이드로 탐색합니다.
 
+Swiper 미디어 이동, Radix 게임·이미지 팝업과 연구 탭·설정 라디오,
+Zod 기록 API 검증을 함께 적용합니다. 아래 절은 각 도입 단계와 비교 기준의 기록입니다.
+실험 브랜치는 해당 단계의 스냅샷으로 보존하며, 통합 버전은 `main`과 `dev`에서 관리합니다.
+공개 Pages 배포는 `main` 푸시로 진행합니다. 기존 워크플로는 `dev` 푸시도 배포를
+실행하므로, 같은 변경의 중복 배포를 피하려면 로컬 통합 후 `main`만 푸시합니다.
+
 ### Swiper 전환 실험
 
 `experiment/swiper-media-galleries` 브랜치에서는 [Swiper React](https://swiperjs.com/react)
@@ -37,13 +43,14 @@
 Swiper의 짧은 스와이프 판정은 기존 거리 계산과 완전히 같지는 않습니다. 실제 모바일
 다중 터치·핀치는 별도 기기 QA가 필요하며, Node 테스트나 좁은 뷰포트 검사만으로 검증하지 않습니다.
 
-이 실험의 기준점은 공개 `main`의 `97bc782`입니다. 푸시/배포하지 않은 로컬 실험은
+이 실험의 기준점은 도입 전 `main`의 `97bc782`입니다. 과거 구현과 비교할 때는
 공개 저장소 루트에서 아래처럼 전환합니다. 소스 브랜치를 바꾼 뒤 개발 화면을 새로고침하고,
 정적 `out/`을 제공하고 있었다면 빌드를 다시 해야 합니다.
 
 ```bash
-git switch main                              # 기존 커스텀 슬라이드로 복귀
+git switch --detach 97bc782                   # 도입 전 커스텀 슬라이드 비교
 git switch experiment/swiper-media-galleries # Swiper 실험으로 돌아오기
+git switch main                              # 현재 통합 버전으로 복귀
 ```
 
 새 작업으로 변경 사항이 생긴 상태에서는 먼저 그 변경을 보존합니다. 강제 전환이나
@@ -53,8 +60,7 @@ git switch experiment/swiper-media-galleries # Swiper 실험으로 돌아오기
 
 `05a1ccf`는 Swiper 실험을 포함하는 기준점 머지 커밋입니다.
 `experiment/radix-media-dialogs`는 이 기준점에서 만든 1차 Radix 실험 브랜치이며,
-실험 결과는 현재 로컬 `dev`에도 머지되어 있습니다.
-공개 `main`이나 운영 배포로 승격한 것은 아닙니다.
+이 구현은 후속 도입 결과와 함께 현재 통합 프런트엔드에 포함합니다.
 
 `@radix-ui/react-dialog` 1.1.23을 고정하고, 게임 실행과 이미지 확대를 공유
 `MediaDialog`로 연결합니다. 디자인 CSS, Swiper의 현재 이미지·제목·제작 모델 연동,
@@ -75,15 +81,16 @@ Radix와 새 런타임 종속성의 라이선스 고지는
 
 Radix 적용 전 상태와 비교할 때는 공개 저장소 루트에서
 `git switch experiment/swiper-media-galleries`로 전환합니다. 이 상태에도 Swiper는 남습니다.
-`git switch main`은 기존 커스텀 슬라이드 구현이며, 현재 통합 상태로 돌아오려면
-`git switch dev`로 전환합니다. 원래 Radix 실험 구현은
+도입 전 커스텀 슬라이드까지 비교하려면 `git switch --detach 97bc782`를 사용합니다.
+현재 통합 상태로 돌아오려면 `git switch main` 또는 `git switch dev`로 전환합니다.
+원래 Radix 실험 구현은
 `experiment/radix-media-dialogs`에 보존되어 있습니다.
 정적 `out/`은 브랜치 변경만으로 바뀌지 않으므로 다시 빌드해야 합니다.
 
 ### Zod 기록 API 실험
 
 `experiment/zod-log-api`는 Swiper·Radix를 통합한 기준점 `8813f3d`에서 시작했습니다.
-목록·상세 검증의 실험 결과는 현재 로컬 `dev`에도 머지되어 있습니다.
+목록·상세 검증의 도입 결과는 현재 통합 프런트엔드에 포함합니다.
 기록 목록(`GET /api/logs`)과 상세(`GET /api/logs/:slug`) 응답만 먼저 검증합니다.
 검색·목차·이동·연관 조회의 응답 검증과 채팅 파서는 이번 범위 밖입니다.
 
@@ -117,6 +124,51 @@ HTTP 200이어도 JSON 또는 응답 형식이 잘못되면 기존 `LogApiError`
 Zod 적용 전 코드와 비교할 때는 `git switch experiment/radix-media-dialogs`로 전환합니다.
 이 상태에는 Swiper와 Radix 팝업이 남습니다. 현재 통합 상태로 돌아올 때는 `git switch dev`입니다.
 미커밋 변경이 있을 때는 브랜치 전환만으로 원복되지 않으며, 정적 export도 다시 빌드해야 합니다.
+
+### Radix 연구 탭·설정 실험
+
+`experiment/radix-tabs-settings`는 Zod까지 통합한 로컬 `dev`의 `11f6ca8`에서 시작합니다.
+이 브랜치의 도입 결과도 현재 통합 프런트엔드에 포함합니다.
+`@radix-ui/react-tabs` 1.1.21과 `@radix-ui/react-radio-group` 1.4.7을 고정하고,
+연구 대분류·성능 세부 탭과 설정의 단일 선택 12개 그룹에 적용합니다.
+기존 CSS·표시 순서·설정 setter·저장 방식과 자동 제어 `data-*` 표식은 유지합니다.
+스위치 두 개, 고정 패널 너비 슬라이더, 초기화 버튼과 영상 뷰어는 변경하지 않습니다.
+
+연구 탭은 controlled `activationMode="manual"`입니다. Tab으로 그룹에 들어가면
+선택된 탭으로 진입하며, 방향키·Home/End는 포커스만 옮깁니다. Enter/Space 또는
+클릭으로 내용을 바꿉니다. 기존 URL hash·탭/패널 ID·전환 애니메이션·상세 상태는
+기존 viewer가 계속 소유하며, Radix Content로 패널의 마운트 정책을 바꾸지 않습니다.
+mousedown/keydown과 뒤따르는 click의 동일 선택 요청은 한 번으로 합칩니다.
+
+설정 RadioGroup은 Tab으로 선택 항목에 진입하고 다음 Tab은 다음 그룹으로 나갑니다.
+방향키는 이동한 항목을 선택하고 Space도 선택합니다. Enter는 라디오 선택을 하지 않으며,
+Home/End는 포커스만 옮깁니다. 선택은 기존 typed Item `onClick` 한 경로에서 처리합니다.
+빠른 keyup이 Radix의 0ms 포커스 이동보다 먼저 처리되면 내부 선택 클릭이 누락될 수 있어,
+작은 그룹 래퍼가 해당 입력의 누락 클릭만 보완합니다. 정상 클릭을 먼저 관찰하면
+보완하지 않으며, 포인터·다른 키·그룹 밖 이동·unmount에서 대기 요청을 정리합니다.
+포커스 계산은 Radix에 맡기고 새 전역 키보드 리스너나 별도의 DOM 래퍼는 넣지 않습니다.
+SSR의 숨김 radio input은 레이아웃에 참여하지 않으며, 현재 form 없는 화면에서는
+하이드레이션 후 제거됩니다. 모바일 폭 QA는 실제 기기·터치 성능 검증과 구분합니다.
+
+2026-09-30 동일한 로컬 프로덕션 빌드의 HTML 직접 참조 JS를 파일별 gzip으로 합산하면
+연구 화면은 263,944 → 273,012 bytes(+9,068, 약 8.9 KiB), 설정 화면은
+244,754 → 255,755 bytes(+11,001, 약 10.7 KiB)입니다. 다른 확인 화면의 JS 변화는
+랜딩·기록 목록·기록 상세 각각 +125 bytes, 소개 +549 bytes이며 CSS는 모두 같습니다.
+실제 HTTP 전송량·클릭 지연·메모리 측정은 아니며 지연 로딩 청크도 별도입니다.
+
+`npm run test:radix-controls`는 탭 요청 중복 정책, 라디오 빠른 keyup 보완·취소 정책,
+controlled 값·기존 클릭/ARIA/스타일/제어 표식·버전·라이선스 계약을 검사합니다.
+키보드·마우스·새로고침과 좁은 화면 검증은 별도로 수행합니다. 이번 LAN 개발 URL에서는
+WebMCP 도구가 노출되지 않았지만, localhost 정적 화면에서는 등록 도구의 실제 연구 탭
+이동·설정 반영을 확인했습니다. 공통 실행기·스키마의 CPU mock 검증도 별도로 수행하며,
+브라우저 지원 범위를 일반화하거나 실제 모델 추론까지 검증한 것으로 보지 않습니다.
+추가 런타임 패키지의 MIT 고지는 `public/licenses/radix-controls-LICENSES.txt`에 둡니다.
+
+탭·설정 적용 전 상태와 비교하려면 공개 저장소 루트에서 `git switch --detach 11f6ca8`로
+전환합니다. 이 상태에는 Zod·Swiper·Radix 팝업이 남습니다. 원래 탭·설정 실험은
+`experiment/radix-tabs-settings`에 보존합니다. 현재 통합 버전으로 돌아올 때는
+`git switch main` 또는 `git switch dev`를 사용합니다. 새 변경이 있으면 먼저 보존하고,
+정적 `out/`은 브랜치 변경 뒤 다시 빌드합니다. 원격 푸시·배포는 별도 승인 대상입니다.
 
 물고기 키우기는 수조·상점 이미지 슬라이더와 하단 설명 사이에 BGM `The Saltwater Hour` 플레이어를 표시합니다.
 음원은 `media/agent-experiments/aqua-guardian/the-saltwater-hour.mp3`에 두며,
