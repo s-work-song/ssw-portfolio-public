@@ -150,16 +150,16 @@ sequenceDiagram
     end
     P->>P: 말풍선을 complete로 교체
   else 서버가 오류 이벤트
-    S-->>A: event error, 도구 실패라면 선택 explanation
-    A-->>P: ChatApiError와 안전한 설명
-    P->>P: 말풍선을 failed로 사유 표시
-    opt 도구 실패 설명이 있음
-      P->>P: 같은 대화에 별도 설명 말풍선 추가
+    S-->>A: event error
+    A-->>P: ChatApiError
+    P->>P: 실행 전 보류 본문 폐기, failed와 고정 재시도 안내
+    opt 정확한 localhost 또는 루프백 호스트
+      P->>P: 허용된 오류 코드와 재시도 대기만 콘솔 기록
     end
   else 유휴 또는 전체 시간 초과
     A->>A: deadline 만료로 중단
     A-->>P: ChatApiError code timeout
-    P->>P: 말풍선을 failed로 사유 표시
+    P->>P: 말풍선을 failed로 고정 재시도 안내
   else 사용자가 중단
     U->>P: stopGenerating
     P->>Q: cancel
@@ -176,15 +176,17 @@ sequenceDiagram
   수신 자체가 생존 신호라 유휴 타이머만 되감는다.
 - 시간 상한은 두 겹이다. 전체 8분은 처음부터 흐르고, 유휴 60초는 바이트가
   올 때마다 초기화된다. 만료로 끊긴 경우에만 `timeout` 코드가 붙어, 사용자
-  중단과 다른 안내가 나간다.
+  중단과 다른 실패 상태가 남는다. 오류 원문은 표시하지 않는다.
 - `done` 본문이 검증을 통과하지 못하거나 보여 줄 본문이 하나도 없으면
   `empty_answer`로 실패시킨다. 빈 말풍선이 화면에 굳는 것보다 낫다.
 - 화면 이동·설정 변경 도구가 있으면 도구 큐가 실제 결말까지 기다린다. 첫 서버
   답변은 보류하고, 최소 500ms 뒤 현재 설정과 URL·DOM 기반 화면 상태를 다시 읽어
   `toolVerification` 확인 요청을 보낸다. 모델에는 확인 요청에서 도구를 다시
   노출하지 않으며, `arrived`·`applied`일 때만 완료형 답변을 재생한다.
-  확인 요청은 대화 이력을 비우고 사고 모드를 끈다. 서버는 관측 결과·현재 상태와
-  말투만 전달하는 짧은 보고 경로를 사용하며, 내부 호출 형식은 표시 전에 걸러낸다.
+  설명 요청과 순수 UI 조작 모두 확인 요청에서 원래 질문과 대화 이력을 유지하고
+  사고 모드를 끈다. `requestVerifiedToolResponse`가 도구 실행 큐 완료 뒤에만
+  현재 URL·DOM 상태와 최신 설정을 읽는다. 서버는 도구를 다시 노출하지 않고
+  최종 일반 답변만 생성하며, 내부 호출 형식은 표시 전에 걸러낸다.
 - 인사말 아래 안내 카드는 대화가 시작돼도 같은 스크롤 위치에 남는다. 온라인·투어
   미진행 조건은 유지하고, 답변 생성 중에는 카드의 버튼만 비활성화한다.
   관점 선택·추천 질문·카드의 AI 질문은 `responseMode: explanation`을 요청과 재시도에
@@ -195,10 +197,21 @@ sequenceDiagram
   아니다. 일부만 지시했으면 `incomplete`, 도구가 불필요했으면 `not_required`다.
   `not_called`는 하위 호환값이고, 현재 필수 도구가 끝내 실패하면 `done` 대신
   오류 이벤트가 온다.
-- `tool_call_failed`의 선택 `explanation`은 서버가 확인된 실패 분류만으로 같은
-  요청에서 생성한 짧은 안내다. 추가 생성이 실패하면 고정 안내를 사용한다.
-  프런트는 실패 알림 다음에 별도 말풍선으로 보여 주고, 재시도 때 두 말풍선을
-  함께 지운다. 이 설명과 실패한 질문·답변은 다음 모델 대화 이력에서 제외한다.
+- 오류의 원문 `message`와 구형 서버의 선택 `explanation`은 화면에 넣지 않는다.
+  사용자에게는 고정된 실패 상태와 재시도만 남긴다. 구형 `failure_explanation`
+  메시지도 렌더와 대화 이력에서 제외한다. 이미 보인 정상 부분 답변은 실패
+  상태로 보존하지만, 도구 실행 전 본문과 보류 delta는 오류 시 되살리지 않는다.
+  정확한 `localhost`, `127.0.0.1`, `[::1]`, `::1`에서만 제한된 콘솔 진단을
+  남긴다. LAN·공개 주소·localhost 하위 도메인·SSR은 출력하지 않는다.
+  로그에는 허용된 오류 코드·재시도 대기만 포함하고 오류 객체, 원문, 질문,
+  대화 이력, 요청 본문·헤더, 모델 추론은 포함하지 않는다.
+- API 본문의 선택 `conversationId`·`turnId`는 UUID다. 대화 ID는 여러 질문에
+  걸쳐 유지하고 새 입력마다 턴 ID를 만든다. 같은 질문의 재시도·도구 후속
+  확인은 pending에 캡처한 두 ID를 그대로 보낸다. 새 대화는 대화 ID를 바꾸며,
+  메시지를 새로고침에서 복원하지 않으므로 ID도 브라우저 메모리만 쓴다.
+  HTTP LAN에서 `crypto.randomUUID`를 쓸 수 없으면 `getRandomValues`로 v4 UUID를
+  만든다. 질문·추론·프롬프트를 식별자로 사용하지 않는다. 추적 헤더와
+  개별 모델 요청 ID는 백엔드/런처의 책임이며 공개 프런트는 만들지 않는다.
 
 ---
 
@@ -296,7 +309,7 @@ stateDiagram-v2
   end note
 
   note right of failed
-    사유는 말풍선 안에 붙는다
+    고정된 실패 안내만 말풍선 안에 붙는다
     재시도 버튼은 마지막 실패에만 나온다
     429는 남은 초 동안 버튼을 잠근다
   end note
@@ -325,10 +338,11 @@ flowchart TD
 - 답변 말풍선의 상태는 넷이다. 생성 중 안내는 `streaming`이면서 아직 본문이
   비어 있을 때만 나온다. 실패·중단 배지 아래에 "생성하고 있어요"가 함께 뜨면
   서로 모순된 안내가 되기 때문이다.
-- 실패 사유는 하단 오류 상자가 아니라 그 말풍선 바로 아래에 붙는다. 어느
+- 실패 상태는 하단 오류 상자가 아니라 그 말풍선 바로 아래에 붙는다. 어느
   질문이 실패했는지가 함께 보여야 재시도 판단이 선다.
-- 도구 호출 실패의 별도 원인 설명은 `failure_explanation` 말풍선이다. 재시도 시
-  실패 알림과 함께 지우고 대화 이력에는 포함하지 않는다.
+- 오류 원문과 별도 원인 설명 말풍선은 표시하지 않는다. 스트리밍 여부와
+  관계없이 실패 말풍선에 고정 안내를 붙이고 재시도 시 그 말풍선만 교체한다.
+  실패한 질문·답변과 중단된 답변은 다음 모델 이력에서 제외한다.
 - 도구 결과 상태 줄은 배지와 같은 자리에 붙는다. 프런트가 판정한
   `arrived`·`applied`·`failed`가 모델의 확인 답변과 함께 보여, 말과 실제 화면이
   같은 결과를 가리키는지 바로 확인할 수 있다.
@@ -350,7 +364,9 @@ flowchart TD
 | 순수 파서와 그 테스트 | `src/features/chat/parse.ts`, `parse.test.mjs` |
 | 도구 계약 단일 소스 (서버 `backend/src/shared/view-targets.js`와 수동 동기화) | `src/features/portfolio-tools/contract.ts`, `settings.ts`, `view.ts` (`schema.ts`는 호환 re-export) |
 | 도구 결과 상태 줄 문구 | `src/features/chat/constants.ts`, `MessageItem.tsx` |
-| 도구 실패 설명 말풍선과 재시도 | `src/features/chat/api.ts`, `parse.ts`, `ChatProvider.tsx` |
+| 실패 상태 · 로컬 진단 · 재시도 · 대화 이력 | `src/features/chat/chatFailure.ts`, `chatHistory.ts`, `ChatProvider.tsx`, `chatFailure.test.mjs` |
+| 도구 완료 후 최신 브라우저 상태와 최종 답변 요청 | `src/features/chat/toolVerificationRequest.ts`, `ChatProvider.tsx` |
+| 대화 · 입력별 추적 ID 수명과 HTTP LAN UUID | `src/features/chat/chatRequestIdentity.ts`, `chatRequestIdentity.test.mjs`, `types.ts` |
 | 도구 실행기 | `src/features/portfolio-tools/portfolioUiToolExecutor.ts` |
 | 공통 색상 순회 | `src/features/portfolio-tools/accentCycle.ts`, `src/features/chat/ChatProvider.tsx` |
 | WebMCP 등록과 게이트 | `src/features/webmcp/PortfolioWebMcp.tsx`, `PortfolioWebMcpTools.tsx` |

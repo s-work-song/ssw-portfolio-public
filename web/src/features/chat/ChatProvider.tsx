@@ -44,9 +44,19 @@ import {
 } from "./constants";
 import { ChatContext, type ChatContextValue } from "./ChatContext";
 import { ChatWidget } from "./ChatWidget";
+import {
+  chatFailureRetryAfterMs,
+  chatRetryWaitSeconds,
+  failedChatMessage,
+  logChatFailureLocally,
+  messagesForChatRetry,
+  visibleChatMessages,
+} from "./chatFailure";
+import { historyFromMessages } from "./chatHistory";
+import { ChatConversationIdentity, type ChatRequestIds } from "./chatRequestIdentity";
 import { loadMarkdownRenderer } from "./MessageItem";
 import { StreamRenderQueue } from "./streamRenderQueue";
-import { verifiedToolReply } from "./verifiedToolReply";
+import { requestVerifiedToolResponse } from "./toolVerificationRequest";
 import {
   UI_SETTING_CHANGE_STORAGE_KEY,
   appendUiSettingChange,
@@ -97,13 +107,6 @@ import type {
   ToolResult,
 } from "./types";
 
-/**
- * 서버로 보내는 이전 대화의 상한이다.
- * 턴 수와 글자 수를 함께 제한해, 대화가 길어져도 요청 크기와 모델 비용이
- * 무한정 커지지 않게 한다.
- */
-const MAX_HISTORY_ITEMS = 10;
-const MAX_HISTORY_CHARACTERS = 12_000;
 /** 모바일 취급 기준. 좁은 화면이면서 포인터가 손가락일 때만이다. */
 const MOBILE_QUERY = "(max-width: 720px) and (pointer: coarse)";
 /** OS의 모션 줄이기 설정을 읽는 미디어쿼리다. */
@@ -337,44 +340,6 @@ function initialMessages(): ChatMessage[] {
   ];
 }
 
-/**
- * 화면의 말풍선 목록에서 서버로 보낼 대화 기록을 뽑는다.
- *
- * 최신 것부터 거꾸로 훑으며 턴 수와 글자 수 상한에 닿으면 멈춘다. 인사말은
- * 대화가 아니므로 건너뛰고, 완료되지 않은 답변(스트리밍·중단·실패)도 넣지
- * 않는다. 실패한 답변은 짝지어진 질문까지 함께 버린다. 답이 없는 질문만
- * 남으면 모델이 그 질문에 다시 답하려 들기 때문이다.
- */
-function historyFromMessages(messages: ChatMessage[]): ChatHistoryItem[] {
-  const history: ChatHistoryItem[] = [];
-  let characters = 0;
-  let dropPairedUserTurn = false;
-
-  for (let index = messages.length - 1; index >= 0; index -= 1) {
-    const message = messages[index];
-    if (message.kind === "greeting" || message.kind === "failure_explanation") continue;
-    if (
-      message.generationState &&
-      message.generationState !== "complete"
-    ) {
-      // 실패한 답변은 짝지어진 질문까지 함께 버려 짝 없는 사용자 턴을 남기지 않는다.
-      dropPairedUserTurn = message.generationState === "failed";
-      continue;
-    }
-    if (dropPairedUserTurn) {
-      dropPairedUserTurn = false;
-      if (message.role === "user") continue;
-    }
-    if (history.length >= MAX_HISTORY_ITEMS) break;
-    if (characters + message.content.length > MAX_HISTORY_CHARACTERS) break;
-
-    characters += message.content.length;
-    history.unshift({ role: message.role, content: message.content });
-  }
-
-  return history;
-}
-
 /** 저장소에서 읽은 값이 지원하는 말투인지 확인한다. */
 /** 저장소에서 읽은 값이 지원하는 패널 연출인지 확인한다. */
 function isChatAnimation(value: string | null): value is ChatAnimation {
@@ -398,13 +363,12 @@ function isStreamAnimation(
  * 재시도가 "그때 그 요청"과 같아야 하므로 대화 기록까지 스냅숏으로 들고 있다.
  * assistantMessageId는 실패한 답변 말풍선을 재시도 전에 지우는 데 쓴다.
  */
-interface PendingRetry {
+interface PendingRetry extends ChatRequestIds {
   message: string;
   responseMode?: "default" | "explanation";
   history: ChatHistoryItem[];
   audienceOverride?: AudienceChoice;
   assistantMessageId?: string;
-  explanationMessageId?: string;
 }
 
 /**
@@ -467,6 +431,8 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
   const inFlightRef = useRef(false);
   const stopRequestedRef = useRef(false);
   const retryRef = useRef<PendingRetry | null>(null);
+  // 메시지 이력을 새로고침에서 복원하지 않으므로 ID도 브라우저 메모리만 쓴다.
+  const conversationIdentityRef = useRef<ChatConversationIdentity | null>(null);
   const retryWaitTimerRef = useRef<number | null>(null);
   /** 렌더 사이클과 무관하게 최신 대화·포인트 색을 읽기 위한 참조다. */
   const messagesRef = useRef<ChatMessage[]>(messages);
@@ -536,9 +502,9 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
       return;
     }
     const deadline = Date.now() + durationMs;
-    setRetryWaitSeconds(Math.max(1, Math.ceil(durationMs / 1_000)));
+    setRetryWaitSeconds(chatRetryWaitSeconds(deadline, Date.now()));
     retryWaitTimerRef.current = window.setInterval(() => {
-      const remaining = Math.max(0, Math.ceil((deadline - Date.now()) / 1_000));
+      const remaining = chatRetryWaitSeconds(deadline, Date.now());
       setRetryWaitSeconds(remaining);
       if (remaining === 0 && retryWaitTimerRef.current !== null) {
         window.clearInterval(retryWaitTimerRef.current);
@@ -1087,7 +1053,7 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
   const navigateToActionTarget = useCallback(
     (route: string) => {
       if (!SAFE_ROUTE_PATTERN.test(route)) {
-        console.warn("허용되지 않은 이동 경로를 무시했습니다.", route);
+        logChatFailureLocally("navigation", null);
         return;
       }
       if (activeActionNavigationRouteRef.current === route) return;
@@ -1499,8 +1465,8 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
    * 동시에 쏟아지면 어느 쪽도 눈에 들어오지 않기 때문이다.
    *
    * 끝맺음은 세 갈래다. 정상 완료면 말풍선을 완성본으로 교체하고, 사용자가
-   * 중단했으면 그때까지의 글을 남긴 채 중단 표시를 붙이며, 실패하면 사유를
-   * 말풍선에 담고 재시도 재료를 보관한다. 중단·실패와 무관하게 마지막에는
+   * 중단했으면 그때까지의 글을 남긴 채 중단 표시를 붙이며, 실패하면 고정
+   * 상태 안내만 남기고 재시도 재료를 보관한다. 중단·실패와 무관하게 마지막에는
    * 렌더 큐·컨트롤러·진행 플래그를 반드시 정리한다.
    *
    * 이미 요청이 진행 중이면 아무 일도 하지 않는다.
@@ -1517,6 +1483,8 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
       const controller = new AbortController();
       abortRef.current = controller;
       const request: ChatRequest = {
+        conversationId: pending.conversationId,
+        turnId: pending.turnId,
         message: pending.message,
         responseMode: pending.responseMode ?? "default",
         history: pending.history,
@@ -1551,8 +1519,7 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
        * 도구 결과 상태 표시.
        *
        * 정말 도착했는지, 설정이 반영됐는지는 화면만 알 수 있으므로 그 결말을
-       * 여기서 모아 말풍선에 붙인다. 순수 화면 요청은 이 관측 결과로 답변을
-       * 만들고, 설명이 함께 필요한 요청만 같은 대화 문맥에서 모델에 전달한다.
+       * 여기서 모아 말풍선에 붙이고 같은 대화 문맥의 후속 모델 요청에 전달한다.
        */
       const toolResults = new Map<string, ToolResult>();
       // 스트리밍이면 곧 만들 답변 말풍선, 아니면 완료 시점에 만드는 말풍선이다.
@@ -1722,6 +1689,18 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
         if (handledToolCallIds.has(execution.toolCallId)) return;
         handledToolCallIds.add(execution.toolCallId);
         if (requiresBrowserToolVerification(execution)) {
+          if (verificationToolCallIds.size === 0) {
+            // 뒤늦게 도구가 온 경우에도 실행 전 답변·예약된 재생은 폐기한다.
+            renderQueue?.cancel();
+            renderQueue = shouldStream ? new StreamRenderQueue(appendStreamDelta) : null;
+            renderQueueRef.current = renderQueue;
+            if (streamingMessageId) {
+              setMessages((current) => current.map((chatMessage) =>
+                chatMessage.id === streamingMessageId
+                  ? { ...chatMessage, content: "" } : chatMessage,
+              ));
+            }
+          }
           verificationToolCallIds.add(execution.toolCallId);
           verificationExecutions.set(execution.toolCallId, execution);
           toolStartedAt.set(execution.toolCallId, performance.now());
@@ -1809,10 +1788,7 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
               // 요청 취소는 도구 실패가 아니다. 중단 처리는 요청 쪽이 맡는다.
               return;
             }
-            console.warn(
-              `포트폴리오 도구 '${execution.toolName}'을(를) 실행하지 못했습니다.`,
-              toolError,
-            );
+            logChatFailureLocally("tool", toolError);
             if (requiresBrowserToolVerification(execution)) {
               try {
                 await waitForMinimumToolObservation(
@@ -1874,7 +1850,7 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
         ]);
       }
 
-      const renderQueue = shouldStream
+      let renderQueue = shouldStream
         ? new StreamRenderQueue(appendStreamDelta)
         : null;
       renderQueueRef.current?.cancel();
@@ -1924,33 +1900,18 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
           // 결과만 재생한다.
           deferredStreamDeltas.length = 0;
           deferStreamDeltas = false;
-          if (response.uiOnly) {
-            const answer = verifiedToolReply([...toolResults.values()]);
-            response = {
-              ...response,
-              answer,
-              segments: [{ markdown: answer, actions: [] }],
-              actions: [],
-              suggestedQuestions: [],
-              uiToolOutcome: verificationResults.some((result) => result.status === "failed")
-                ? "incomplete" : "called",
-            };
-            renderQueue?.enqueue(answer);
-          } else {
-            const verifiedUiSettings = uiSettingsRef.current ?? request.uiSettings;
-            const verificationRequest: ChatRequest = {
-              ...request,
-              // 원래 대화 문맥을 유지한다. 화면 관측 결과는 같은 요청의 후속 단계다.
-              history: request.history,
-              reasoningEnabled: false,
+          response = await requestVerifiedToolResponse(
+            toolExecutionQueue,
+            request,
+            verificationResults,
+            () => ({
               pageContext: pageContextFromPathname(window.location.pathname),
-              uiSettings: { ...verifiedUiSettings },
+              uiSettings: { ...(uiSettingsRef.current ?? request.uiSettings) },
               uiSettingChanges: [...uiSettingChangesRef.current],
               viewState: readPortfolioViewState(window.location.pathname),
-              toolVerification: { results: verificationResults },
-            };
-            response = shouldStream
-              ? await requestChatStream(
+            }),
+            (verificationRequest) => shouldStream
+              ? requestChatStream(
                   verificationRequest,
                   controller.signal,
                   {
@@ -1964,13 +1925,9 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
                     },
                   },
                 )
-              : await requestChat(verificationRequest, controller.signal);
-            if (response.toolExecutions.length > 0) {
-              throw new ChatApiError(
-                "화면 확인 응답에 예상하지 않은 도구 실행이 포함됐어요.",
-              );
-            }
-          }
+              : requestChat(verificationRequest, controller.signal),
+            controller.signal,
+          );
         } else {
           deferStreamDeltas = false;
           for (const text of deferredStreamDeltas) renderQueue?.enqueue(text);
@@ -2044,13 +2001,8 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
           controller.signal.aborted ||
           (requestError instanceof DOMException &&
             requestError.name === "AbortError");
-        if (!requestWasAborted && deferredStreamDeltas.length > 0) {
-          // 도구를 기다리며 보류한 텍스트는 서버가 이미 보낸 답변이다. 남긴다.
-          deferStreamDeltas = false;
-          for (const text of deferredStreamDeltas) renderQueue?.enqueue(text);
-          deferredStreamDeltas.length = 0;
-          await renderQueue?.drain();
-        }
+        // 실패 시 실행 전/보류 본문을 되살리지 않는다.
+        deferredStreamDeltas.length = 0;
         if (requestWasAborted) {
           if (stopRequestedRef.current) {
             if (streamingMessageId) {
@@ -2068,44 +2020,31 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
           }
           return;
         }
-        const failureMessage =
-          requestError instanceof ChatApiError
-            ? requestError.message
-            : "요청을 처리하지 못했습니다. 다시 시도해 주세요.";
+        logChatFailureLocally("request", requestError);
         if (streamingMessageId) {
           setMessages((current) =>
             current.map((chatMessage) =>
               chatMessage.id === streamingMessageId
-                ? {
-                    ...chatMessage,
-                    generationState: "failed",
-                    errorMessage: failureMessage,
-                  }
+                ? failedChatMessage(chatMessage, deferStreamDeltas)
                 : chatMessage,
             ),
           );
-        }
-        const explanation = requestError instanceof ChatApiError
-          ? requestError.explanation?.trim() : undefined;
-        if (explanation) {
-          const explanationMessageId = nextId("assistant");
-          pending.explanationMessageId = explanationMessageId;
-          setMessages((current) => [...current, {
-            id: explanationMessageId,
+        } else {
+          const failedMessageId = nextId("assistant");
+          pending.assistantMessageId = failedMessageId;
+          toolResultMessageId = failedMessageId;
+          setMessages((current) => [...current, failedChatMessage({
+            id: failedMessageId,
             role: "assistant",
-            content: explanation,
-            kind: "failure_explanation",
-            generationState: "complete",
-          }]);
+            kind: "message",
+            content: "",
+            ...(toolResults.size > 0 ? { toolResults: [...toolResults.values()] } : {}),
+          }, false)]);
         }
         retryRef.current = pending;
-        // 실패 말풍선이 사유와 재시도를 직접 안내하므로 하단 오류 박스는 비운다.
-        setError(streamingMessageId ? null : failureMessage);
-        beginRetryWait(
-          requestError instanceof ChatApiError && requestError.retryAfterMs
-            ? requestError.retryAfterMs
-            : 0,
-        );
+        // 실패 말풍선이 고정 안내와 재시도를 담으므로 하단 오류 박스는 비운다.
+        setError(null);
+        beginRetryWait(chatFailureRetryAfterMs(requestError));
       } finally {
         void toolExecutionQueue.catch(() => undefined);
         renderQueue?.cancel();
@@ -2176,7 +2115,11 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
           kind: "message",
         },
       ]);
-      const pending = { message, history, audienceOverride, responseMode };
+      conversationIdentityRef.current ??= new ChatConversationIdentity();
+      const pending = {
+        ...conversationIdentityRef.current.nextTurnIds(),
+        message, history, audienceOverride, responseMode,
+      };
       retryRef.current = pending;
       await performRequest(pending);
     },
@@ -2195,12 +2138,12 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
       return;
     }
     const pending = retryRef.current;
-    if (pending.assistantMessageId || pending.explanationMessageId) {
+    if (pending.assistantMessageId) {
+      const failedMessageId = pending.assistantMessageId;
       setMessages((current) =>
-        current.filter(({ id }) => id !== pending.assistantMessageId && id !== pending.explanationMessageId),
+        messagesForChatRetry(current, failedMessageId),
       );
       pending.assistantMessageId = undefined;
-      pending.explanationMessageId = undefined;
     }
     await performRequest(pending);
   }, [canRequest, performRequest]);
@@ -2225,6 +2168,8 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
    * 사용자가 원한 것은 "새 대화"이지 "중단 안내"가 아니기 때문이다.
    */
   const resetConversation = useCallback(() => {
+    if (conversationIdentityRef.current) conversationIdentityRef.current.reset();
+    else conversationIdentityRef.current = new ChatConversationIdentity();
     retryRef.current = null;
     setError(null);
     clearRetryWait();
@@ -2439,7 +2384,7 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
       availability,
       error,
       retryWaitSeconds,
-      messages,
+      messages: visibleChatMessages(messages),
       audience,
       tone,
       streamingEnabled,

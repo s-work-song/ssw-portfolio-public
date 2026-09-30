@@ -57,7 +57,7 @@ test('연구 페이지 메인과 연구 여정 탭은 서로 다른 스크롤 �
   assert.equal(ACTION_ROUTES.research_timeline, '/about-me/research#research-timeline-overview');
 });
 
-test('도구 실패 설명은 오류 객체에서 별도 말풍선용으로 보존한다', () => {
+test('구형 서버의 도구 실패 설명은 오류 객체에서만 보존한다', () => {
   const error = new ChatApiError('도구 실행 실패', {
     code: 'tool_call_failed', explanation: '변경은 적용되지 않았습니다.',
   });

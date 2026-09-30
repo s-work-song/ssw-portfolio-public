@@ -370,7 +370,7 @@ export interface ChatMessage {
   segments?: ChatSegment[];
   actions?: ChatAction[];
   suggestedQuestions?: string[];
-  /** 실패한 답변 말풍선 바로 아래에 표시할 사유다. */
+  /** 구형 메시지와의 호환 필드. 오류 원문은 렌더하지 않는다. */
   errorMessage?: string;
   /** 이 답변이 실행한 화면 도구의 실제 결과다. 없으면 표시하지 않는다. */
   toolResults?: ToolResult[];
@@ -397,6 +397,10 @@ export interface ChatSettingChange {
 
 /** 서버로 보내는 질문 요청 본문이다. */
 export interface ChatRequest {
+  /** 선택 추적 ID. 원문 대신 UUID를 쓰며 동일 대화에서 유지한다. */
+  conversationId?: string;
+  /** 같은 사용자 입력의 재시도·도구 후속 확인까지 유지하는 선택 UUID다. */
+  turnId?: string;
   message: string;
   /** 버튼으로 질문한 경우 설명을 요구하며 모델의 화면 변경 도구는 사용하지 않는다. */
   responseMode?: "default" | "explanation";

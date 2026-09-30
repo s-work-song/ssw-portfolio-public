@@ -20,6 +20,7 @@ import {
 import { CHAT_QUICK_START_OPTION_BY_ACTION_ID } from "./constants";
 import { StreamingText } from "./StreamingText";
 import { toolResultText } from "./toolResultPresentation";
+import { CHAT_FAILURE_NOTICE } from "./chatFailure";
 import type {
   ActionId,
   ChatAction,
@@ -393,9 +394,9 @@ export const MessageItem = memo(function MessageItem({
       ) : (
         <p className={styles.messageText}>{message.content}</p>
       )}
-      {hasFailed && (message.errorMessage || canRetry) && (
+      {hasFailed && (
         <div className={styles.messageFailure} role="alert">
-          {message.errorMessage && <p>{message.errorMessage}</p>}
+          <p>{CHAT_FAILURE_NOTICE}</p>
           {canRetry && (
             <button
               type="button"
