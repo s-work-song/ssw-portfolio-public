@@ -33,6 +33,7 @@ import {
 import type ElasticJellyPanel from "../../lib/ElasticJellyPanel";
 import {
   CHAT_QUICK_START_OPTION_BY_ACTION_ID,
+  GUIDED_TOUR_CHAT_GUIDE,
   REASONING_QUICK_TOGGLE_ENABLED,
   TONE_OPTIONS,
 } from "./constants";
@@ -1624,6 +1625,14 @@ export function ChatWidget() {
                         onAskSuggestedQuestion={askSuggestedQuestion}
                         onRetry={handleRetry}
                       />
+                      {message.kind === "greeting" && onboarding.tourIntroVisible && (
+                        <article
+                          className={`${styles.message} ${styles.assistantMessage}`}
+                          aria-label="둘러보기 진행 안내"
+                        >
+                          <p className={styles.messageText}>{GUIDED_TOUR_CHAT_GUIDE}</p>
+                        </article>
+                      )}
                       {message.kind === "greeting" && onboarding.visible && (
                         <ChatOnboarding
                           disabled={onboarding.disabled}

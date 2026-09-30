@@ -2,6 +2,8 @@
 
 import { useEffect, useLayoutEffect, useRef, useState, type KeyboardEvent, type ReactNode } from 'react';
 import { agentExperiments, type AgentExperiment } from '@/data/agentExperiments';
+import { AGENT_EXPERIMENT_CATEGORY_ANCHORS, AGENT_EXPERIMENT_INTRO_ANCHOR, agentExperimentForAnchor } from '@/data/agentExperimentNavigation';
+import { CHAT_ACTION_TARGET_ARRIVED_EVENT } from '@/features/chat/navigation';
 import ProjectMediaCarousel from './ProjectMediaCarousel';
 import styles from './AgentExperimentGallery.module.css';
 
@@ -244,7 +246,7 @@ export default function AgentExperimentGallery() {
       } catch {
         return;
       }
-      const target = visibleExperiments.find((item) => item.id === hash);
+      const target = agentExperimentForAnchor(visibleExperiments, hash);
       if (!target) return;
       setCategory(target.category);
       setSelectedId(target.id);
@@ -252,7 +254,12 @@ export default function AgentExperimentGallery() {
     };
     selectHashExperiment();
     window.addEventListener('hashchange', selectHashExperiment);
-    return () => window.removeEventListener('hashchange', selectHashExperiment);
+    // 수동으로 다른 탭을 연 뒤 같은 '현재 장소'로 돌아와도 분류를 복원한다.
+    window.addEventListener(CHAT_ACTION_TARGET_ARRIVED_EVENT, selectHashExperiment);
+    return () => {
+      window.removeEventListener('hashchange', selectHashExperiment);
+      window.removeEventListener(CHAT_ACTION_TARGET_ARRIVED_EVENT, selectHashExperiment);
+    };
   }, []);
 
   if (!active) return null;
@@ -281,7 +288,7 @@ export default function AgentExperimentGallery() {
         <div>
           <p className={styles.eyebrow}>AI EXPERIMENTS</p>
           <h3 id="agent-experiments-heading">AI 에이전트 성능·활용 실험</h3>
-          <div className={styles.introPanel}>
+          <div id={AGENT_EXPERIMENT_INTRO_ANCHOR} tabIndex={-1} className={styles.introPanel}>
             <p className={styles.intro}>AI 활용과 모델 성능 벤치마킹을 취미로 삼아 다양한 실험을 하고 있습니다. 모델마다 무엇을 어느 수준까지 해낼 수 있는지 직접 확인하고, 새로운 작업에 활용해 보는 과정에서 나온 결과물들을 이곳에 모았습니다. SVG 애니메이션부터 게임, Blender 모델링, 이미지·영상 생성까지 여러 영역을 탐색하고 있습니다.</p>
             <p className={styles.intro}>개발을 중심으로 경험을 쌓아 온 만큼, 디자인과 시각적 표현은 상대적으로 익숙하지 않은 영역이었습니다. 하지만 AI와 함께 작업하면서 혼자서는 구현하기 어려웠던 아이디어를 구체화하고, 부족했던 부분을 보완할 수 있다는 가능성을 느꼈습니다. 그 가능성을 실제 작업으로 연결하려면 모델이 잘하는 일과 한계를 이해하는 것이 중요하다고 생각합니다. 다양한 과제를 직접 시도하며, 작업과 상황에 따라 어떤 맥락을 어떻게 제공해야 원하는 결과에 가까워지는지 알아가고 있습니다.</p>
           </div>
@@ -296,7 +303,7 @@ export default function AgentExperimentGallery() {
             transform: `translate3d(${filterIndicator.x}px, ${filterIndicator.y}px, 0)`,
           }} />}
           {categories.map((value) => (
-            <button key={value} ref={(button) => {
+            <button key={value} id={AGENT_EXPERIMENT_CATEGORY_ANCHORS[value]} ref={(button) => {
               if (button) filterButtonRefs.current.set(value, button);
               else filterButtonRefs.current.delete(value);
             }} type="button" aria-pressed={category === value} onClick={() => {

@@ -295,14 +295,29 @@ export const aboutProjects: AboutProject[] = [
     id: 'project-colab-llm-launcher',
     title: 'SSW Colab LLM Launcher',
     category: 'Open-weight Inference',
-    desc: 'Colab에서 오픈웨이트 모델을 실행하고 Cloudflare Tunnel을 통해 외부 서비스가 접속할 수 있도록 구성한 런처입니다. 엔진과 컨텍스트, 배치 등 실행 옵션을 조절해 여러 모델을 올릴 수 있으며, 현재 포트폴리오와 이커머스 데모의 AI 채팅에 연결되는 모델도 이 런처로 실행합니다.',
+    desc: 'Colab에서 오픈웨이트 모델을 실행하고 Cloudflare Tunnel을 통해 외부 서비스가 접속할 수 있도록 구성한 런처입니다.\n\n엔진과 컨텍스트, 배치 등 실행 옵션을 조절해 여러 모델을 올릴 수 있으며, 현재 포트폴리오와 이커머스 데모의 AI 채팅에 연결되는 모델도 이 런처로 실행합니다.',
     status: 'Colab 기반 개인 실험 환경 운영 중',
     gallery: {
       images: [
         {
-          src: '/images/projects/colab-llm-launcher/ssw-colab-launcher-dashboard.webp',
+          src: '/images/projects/colab-llm-launcher/ssw-colab-launcher-dashboard.png',
           alt: 'Colab 런타임과 모델 프로필 및 추론 옵션을 관리하는 SSW Colab LLM Launcher 화면',
           caption: '런타임 자원과 모델별 실행 옵션을 한 화면에서 조절하는 Colab 런처',
+        },
+        {
+          src: '/images/projects/colab-llm-launcher/portfolio-chat-ui-tools.png',
+          alt: '포트폴리오 AI 챗봇이 도구 호출로 채팅을 오른쪽에 고정하고 글자 크기를 키운 뒤 2024년 연구 경험으로 이동한 화면',
+          caption: '포트폴리오 AI 도구 호출 · 채팅 배치·글자 크기 변경과 연구 연도 이동',
+        },
+        {
+          src: '/images/projects/colab-llm-launcher/opencode-provider-settings.png',
+          alt: 'SWork Colab이 사용자 지정 공급자로 연결된 OpenCode 공급자 설정 화면',
+          caption: 'OpenCode 공급자 설정 · SWork Colab 사용자 지정 공급자 연결',
+        },
+        {
+          src: '/images/projects/colab-llm-launcher/opencode-image-feedback.png',
+          alt: 'OpenCode에서 SWork Colab의 gemma-4-26b-a4b-it 모델에 이미지를 질문하고 응답과 토큰 사용량을 확인하는 화면',
+          caption: 'OpenCode에서 Colab 모델로 이미지 분석 요청 · 응답과 토큰 사용량 확인',
         },
       ],
       placeholder: 'Colab LLM Launcher 운영 화면을 추가할 자리입니다.',

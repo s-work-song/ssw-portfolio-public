@@ -13,7 +13,7 @@ import type { ActionId } from "./types";
  * 단계 구성을 바꿀 때 이 숫자를 올린다. 아래 두 저장 키에 그대로 섞여 들어가므로,
  * 예전 판에서 저장한 진행 상태가 새 단계 목록에 잘못 적용되는 일 없이 버려진다.
  */
-export const GUIDED_TOUR_VERSION = 4;
+export const GUIDED_TOUR_VERSION = 6;
 /** 투어를 안내한 적이 있는지 기억하는 localStorage 키다. 값은 started·completed·dismissed 중 하나다. */
 export const GUIDED_TOUR_VISIT_KEY = `portfolio-guided-tour:v${GUIDED_TOUR_VERSION}:visit`;
 /** 진행 중인 투어 상태를 탭 단위로 이어 붙이는 sessionStorage 키다. 페이지 이동으로 훅이 다시 마운트돼도 단계가 유지된다. */
@@ -55,6 +55,13 @@ export interface GuidedTourStep {
     | "overview"
     | "past-work"
     | "projects"
+    | "agent-experiments"
+    | "experiments-svg"
+    | "experiments-2d-games"
+    | "experiments-3d-games"
+    | "experiments-blender"
+    | "experiments-videos"
+    | "experiments-comfyui"
     | "resume"
     | "cover-letter"
     | "research-timeline"
@@ -115,6 +122,49 @@ export const GUIDED_TOUR_STEPS: readonly GuidedTourStep[] = [
     message:
       "요구사항과 운영 조건에 맞춰 구조를 선택하고, AI 에이전트의 구현 결과를 직접 리뷰하고 검증하며 진행한 공개 프로젝트를 살펴봅니다.",
     actionId: "project_overview",
+  },
+  {
+    id: "agent-experiments",
+    title: "AI 에이전트 성능·활용 실험",
+    message:
+      "AI 활용과 모델 성능을 취미로 실험하며 얻은 결과를 모은 공간입니다. 먼저 실험의 목적과 작업 방식을 읽고, 다음 단계부터 여섯 대분류를 차례로 살펴볼게요.",
+    actionId: "agent_experiments",
+  },
+  {
+    id: "experiments-svg",
+    title: "AI 실험 · SVG 제작",
+    message: "SVG 일러스트와 자전거 타는 펠리컨 애니메이션을 살펴보세요. 같은 프롬프트로 얻은 모델별 결과도 비교할 수 있어요.",
+    actionId: "agent_experiments_svg",
+  },
+  {
+    id: "experiments-2d-games",
+    title: "AI 실험 · 2D 게임 제작",
+    message: "Planet Defense와 물고기 키우기 등 2D 게임 작업물입니다. 코드·이미지·음악에 활용한 모델과 결과를 확인해 보세요.",
+    actionId: "agent_experiments_2d_games",
+  },
+  {
+    id: "experiments-3d-games",
+    title: "AI 실험 · 3D 게임 제작",
+    message: "비행 시뮬레이터와 공성전처럼 공간과 물리 동작을 다룬 3D 게임 작업물입니다. 캡처를 보거나 연결된 게임을 직접 실행해 볼 수 있어요.",
+    actionId: "agent_experiments_3d_games",
+  },
+  {
+    id: "experiments-blender",
+    title: "AI 실험 · Blender",
+    message: "무기·음식과 가전·지하철·도시·사무실 모델링을 모았습니다. 제작 모델과 렌더 이미지를 확인하고, 사무실의 참고 이미지와 구현 결과도 비교해 보세요.",
+    actionId: "agent_experiments_blender",
+  },
+  {
+    id: "experiments-videos",
+    title: "AI 실험 · 영상물",
+    message: "모션그래픽, 우주선 시뮬레이션, 키보드 분해도와 모션 도감입니다. 관심 있는 작업을 선택해 재생하고 제작 모델을 확인해 보세요.",
+    actionId: "agent_experiments_videos",
+  },
+  {
+    id: "experiments-comfyui",
+    title: "AI 실험 · ComfyUI 활용",
+    message: "Qwen Image와 GPT Image로 만든 이미지를 Wan I2V 모델로 5초 영상으로 확장한 사례입니다. 원본 이미지와 생성 영상을 함께 살펴보세요.",
+    actionId: "agent_experiments_comfyui",
   },
   {
     id: "resume",

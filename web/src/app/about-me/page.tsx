@@ -195,7 +195,7 @@ export default function OverviewPage() {
                   projectTitle={project.title}
                 />
               )}
-              <p style={{ margin: 0, color: 'var(--text-dim)', lineHeight: 1.65, wordBreak: 'keep-all', flex: 1 }}>
+              <p style={{ margin: 0, color: 'var(--text-dim)', lineHeight: 1.65, wordBreak: 'keep-all', whiteSpace: 'pre-line', flex: 1 }}>
                 {project.desc}
               </p>
               <span style={{

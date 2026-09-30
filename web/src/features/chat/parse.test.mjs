@@ -16,7 +16,41 @@ import {
   parseToolExecutions,
   retryAfterMsFromHeader,
 } from './parse.ts';
-import { ACTION_LABELS, ACTION_ROUTES, REASONING_QUICK_TOGGLE_ENABLED } from './constants.ts';
+import { ACTION_LABELS, ACTION_ROUTES, GUIDED_TOUR_CHAT_GUIDE, REASONING_QUICK_TOGGLE_ENABLED } from './constants.ts';
+import { AGENT_EXPERIMENT_CATEGORY_ANCHORS } from '../../data/agentExperimentNavigation.ts';
+import {
+  GUIDED_TOUR_SESSION_KEY,
+  GUIDED_TOUR_STEPS,
+  GUIDED_TOUR_VISIT_KEY,
+  currentGuidedTourStep,
+  guidedTourInteractionForStep,
+} from './guidedTour.ts';
+
+test('둘러보기는 설명과 여섯 실험 대분류를 포함한 19단계이며 저장 버전을 갱신한다', () => {
+  assert.deepEqual(GUIDED_TOUR_STEPS.map((step) => step.id), [
+    'overview', 'past-work', 'projects', 'agent-experiments',
+    'experiments-svg', 'experiments-2d-games', 'experiments-3d-games',
+    'experiments-blender', 'experiments-videos', 'experiments-comfyui', 'resume',
+    'cover-letter', 'research-timeline', 'research-optimization', 'research-cpu',
+    'research-memory', 'research-serialization', 'research-tools', 'log',
+  ]);
+  const step = currentGuidedTourStep({ status: 'active', stepIndex: 3, interaction: 'ready' });
+  assert.equal(step.title, 'AI 에이전트 성능·활용 실험');
+  assert.equal(ACTION_ROUTES[step.actionId], '/about-me#agent-experiments-intro');
+  assert.equal(guidedTourInteractionForStep(step), 'ready');
+  assert.deepEqual(parseAction({ id: step.actionId, label: ACTION_LABELS[step.actionId] }), {
+    id: 'agent_experiments', label: 'AI 에이전트 성능·활용 실험 보기',
+  });
+  const categorySteps = GUIDED_TOUR_STEPS.slice(4, 10);
+  assert.deepEqual(categorySteps.map((item) => ACTION_ROUTES[item.actionId]),
+    Object.values(AGENT_EXPERIMENT_CATEGORY_ANCHORS).map((anchor) => `/about-me#${anchor}`));
+  for (const item of categorySteps) {
+    assert.equal(guidedTourInteractionForStep(item), 'ready');
+    assert.ok(parseAction({ id: item.actionId, label: ACTION_LABELS[item.actionId] }));
+  }
+  assert.equal(GUIDED_TOUR_SESSION_KEY, 'portfolio-guided-tour:v6:session');
+  assert.equal(GUIDED_TOUR_VISIT_KEY, 'portfolio-guided-tour:v6:visit');
+});
 
 test('연구 페이지 메인과 연구 여정 탭은 서로 다른 스크롤 목적지를 가진다', () => {
   assert.equal(ACTION_ROUTES.research, '/about-me/research');
@@ -174,10 +208,26 @@ test('채팅 입력창의 사고 모드 버튼을 숨긴다', () => {
 test('안내 카드는 대화 생성 중에도 남고 선택만 비활성화한다', () => {
   for (const isLoading of [false, true]) {
     assert.deepEqual(onboardingPresentation({ availability: 'online', guidedTourStatus: 'idle', isLoading }),
-      { visible: true, disabled: isLoading });
+      { visible: true, disabled: isLoading, tourIntroVisible: false });
   }
   for (const [availability, guidedTourStatus] of [['offline', 'idle'], ['checking', 'idle'], ['online', 'active'], ['online', 'completed']]) {
     assert.equal(onboardingPresentation({ availability, guidedTourStatus, isLoading: false }).visible, false);
+  }
+});
+
+test('둘러보기 진행 안내는 활성 투어에서만 표시하고 이동과 질문 및 종료 방법을 설명한다', () => {
+  for (const isLoading of [false, true]) {
+    const presentation = onboardingPresentation({ availability: 'online', guidedTourStatus: 'active', isLoading });
+    assert.equal(presentation.tourIntroVisible, true);
+    assert.equal(presentation.visible, false);
+  }
+  for (const [availability, guidedTourStatus] of [
+    ['online', 'idle'], ['online', 'completed'], ['offline', 'active'], ['checking', 'active'],
+  ]) {
+    assert.equal(onboardingPresentation({ availability, guidedTourStatus, isLoading: false }).tourIntroVisible, false);
+  }
+  for (const text of ['화면 아래', '다음 장소', '채팅으로 질문', '종료']) {
+    assert.ok(GUIDED_TOUR_CHAT_GUIDE.includes(text), text);
   }
 });
 

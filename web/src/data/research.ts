@@ -131,7 +131,7 @@ export const researchTimelineItems: CareerItem[] = [
   {
     period: '2024년',
     color: '#a855f7',
-    role: '.NET BCL 및 메모리 할당 최적화',
+    role: '.NET BCL 학습 및 메모리 할당 최적화',
     org: '',
     desc: '.NET 8 환경에서 Newtonsoft.Json 기반 코드를 System.Text.Json으로 마이그레이션하고, Span<T>와 ref struct를 활용한 힙 할당 감소 및 스택 메모리 사용 방법을 학습했습니다.',
     tags: ['Span<T>', 'System.Text.Json', 'Pipelines']

@@ -11,5 +11,6 @@ export function onboardingPresentation({
   return {
     visible: availability === "online" && guidedTourStatus === "idle",
     disabled: isLoading,
+    tourIntroVisible: availability === "online" && guidedTourStatus === "active",
   };
 }

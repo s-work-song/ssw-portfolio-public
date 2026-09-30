@@ -10,6 +10,7 @@
  * 확장자 없는 상대 경로를 찾지 못한다.
  */
 import { ACCENTS as ACCENT_PALETTE } from "../../context/accentPalette.ts";
+import { AGENT_EXPERIMENT_CATEGORY_ANCHORS, AGENT_EXPERIMENT_INTRO_ANCHOR } from "../../data/agentExperimentNavigation.ts";
 import type {
   ActionId,
   ApiAudience,
@@ -27,6 +28,10 @@ export { CHAT_STREAM_ANIMATIONS } from "../portfolio-tools/schema.ts";
 /** 채팅을 처음 열었을 때 보여 주는 인사말이다. */
 export const GREETING =
   "안녕하세요. 포트폴리오를 안내하는 AI 챗봇입니다. 관심 있는 주제를 선택하거나 바로 질문해 주세요.";
+
+/** 둘러보기 중 인사말 다음에 표시하는 화면 전용 안내다. 모델 대화 기록에는 넣지 않는다. */
+export const GUIDED_TOUR_CHAT_GUIDE =
+  "둘러보기를 시작했어요. 화면 아래 둘러보기 안내 카드에서 ‘다음 장소’를 누르면 다음 단계로 이동해요.\n\n각 장소를 살펴본 뒤 편한 속도로 진행해 주세요. 궁금한 점은 채팅으로 질문할 수 있고, 둘러보기를 마치려면 안내 카드의 ‘종료’를 누르면 돼요.";
 
 /**
  * 온보딩과 투어 종료 화면에서 보여 주는 설정·WebMCP 안내 답변이다.
@@ -333,6 +338,13 @@ export const ACTION_ROUTES: Readonly<Record<ActionId, string>> = {
   research: "/about-me/research",
   log: "/about-me/log#log-overview",
   project_overview: "/about-me#featured-projects",
+  agent_experiments: `/about-me#${AGENT_EXPERIMENT_INTRO_ANCHOR}`,
+  agent_experiments_svg: `/about-me#${AGENT_EXPERIMENT_CATEGORY_ANCHORS['SVG 제작']}`,
+  agent_experiments_2d_games: `/about-me#${AGENT_EXPERIMENT_CATEGORY_ANCHORS['2D 게임 제작']}`,
+  agent_experiments_3d_games: `/about-me#${AGENT_EXPERIMENT_CATEGORY_ANCHORS['3D 게임 제작']}`,
+  agent_experiments_blender: `/about-me#${AGENT_EXPERIMENT_CATEGORY_ANCHORS['Blender 3D 에셋 제작']}`,
+  agent_experiments_videos: `/about-me#${AGENT_EXPERIMENT_CATEGORY_ANCHORS['영상물']}`,
+  agent_experiments_comfyui: `/about-me#${AGENT_EXPERIMENT_CATEGORY_ANCHORS['ComfyUI 활용']}`,
   past_work_archive: "/about-me#past-work-archive",
   project_common_infrastructure: "/about-me#project-common-infrastructure",
   project_ecommerce_demo: "/about-me#project-ecommerce-demo",
@@ -403,6 +415,13 @@ export const ACTION_LABELS: Readonly<Record<ActionId, string>> = {
   research: "연구·기술 탐구 보기",
   log: "작업 기록 보기",
   project_overview: "공개용 프로젝트 보기",
+  agent_experiments: "AI 에이전트 성능·활용 실험 보기",
+  agent_experiments_svg: "SVG 제작 실험 보기",
+  agent_experiments_2d_games: "2D 게임 제작 실험 보기",
+  agent_experiments_3d_games: "3D 게임 제작 실험 보기",
+  agent_experiments_blender: "Blender 실험 보기",
+  agent_experiments_videos: "영상물 실험 보기",
+  agent_experiments_comfyui: "ComfyUI 활용 실험 보기",
   past_work_archive: "과거 작업 아카이브 보기",
   project_common_infrastructure: "공용 인프라 보기",
   project_ecommerce_demo: "이커머스 데모 보기",
@@ -447,6 +466,13 @@ export const ACTION_IDS: readonly ActionId[] = [
   "research",
   "log",
   "project_overview",
+  "agent_experiments",
+  "agent_experiments_svg",
+  "agent_experiments_2d_games",
+  "agent_experiments_3d_games",
+  "agent_experiments_blender",
+  "agent_experiments_videos",
+  "agent_experiments_comfyui",
   "past_work_archive",
   "project_common_infrastructure",
   "project_ecommerce_demo",
