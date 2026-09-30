@@ -16,7 +16,7 @@ import {
   parseToolExecutions,
   retryAfterMsFromHeader,
 } from './parse.ts';
-import { ACTION_LABELS, ACTION_ROUTES, GUIDED_TOUR_CHAT_GUIDE, REASONING_QUICK_TOGGLE_ENABLED } from './constants.ts';
+import { ACTION_LABELS, ACTION_ROUTES, GUIDED_TOUR_CHAT_GUIDE, REASONING_QUICK_TOGGLE_ENABLED, SETTINGS_WEBMCP_GUIDE } from './constants.ts';
 import { AGENT_EXPERIMENT_CATEGORY_ANCHORS } from '../../data/agentExperimentNavigation.ts';
 import {
   GUIDED_TOUR_SESSION_KEY,
@@ -55,6 +55,12 @@ test('둘러보기는 설명과 여섯 실험 대분류를 포함한 19단계이
 test('연구 페이지 메인과 연구 여정 탭은 서로 다른 스크롤 목적지를 가진다', () => {
   assert.equal(ACTION_ROUTES.research, '/about-me/research');
   assert.equal(ACTION_ROUTES.research_timeline, '/about-me/research#research-timeline-overview');
+});
+
+test('설정 안내는 채팅을 붙이거나 떼는 쉬운 표현을 양쪽 모두 제공한다', () => {
+  assert.match(SETTINGS_WEBMCP_GUIDE, /“채팅을 옆으로 붙여줘”/u);
+  assert.match(SETTINGS_WEBMCP_GUIDE, /“채팅을 옆에서 떼줘”/u);
+  assert.doesNotMatch(SETTINGS_WEBMCP_GUIDE, /도킹/u);
 });
 
 test('구형 서버의 도구 실패 설명은 오류 객체에서만 보존한다', () => {

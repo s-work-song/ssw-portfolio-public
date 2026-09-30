@@ -69,3 +69,22 @@ test('채팅·둘러보기·미디어의 평면 표면은 다크 선택자로 �
   const chat = await readFile(new URL('../src/features/chat/ChatWidget.module.css', import.meta.url), 'utf8');
   assert.match(chat, /:global\(:root\[data-theme='dark'\]\)[^{]*\.composer button[^}]*color: var\(--accent-contrast\)/);
 });
+
+test('둘러보기 본문은 기본 채팅 크기와 본문 대비를 쓰고 종료 후 변형을 남기지 않는다', async () => {
+  const tour = await readFile(new URL('../src/features/chat/GuidedTourCard.module.css', import.meta.url), 'utf8');
+  assert.match(tour, /\.message,\s*\.instruction\s*\{[^}]*color:\s*var\(--chat-text\);[^}]*font-size:\s*14px;[^}]*font-weight:\s*500;/u);
+  for (const name of ['tour-enter', 'tour-panel-reveal']) {
+    assert.match(tour, new RegExp(`animation:\\s*${name}[^;]*\\bbackwards;`, 'u'));
+    const keyframes = tour.slice(tour.indexOf(`@keyframes ${name}`));
+    assert.match(keyframes, /^@keyframes[^]*?to\s*\{[^}]*transform:\s*none;/u);
+  }
+  const chat = await readFile(new URL('../src/features/chat/ChatWidget.module.css', import.meta.url), 'utf8');
+  const dock = chat.match(/\.panelDocked\s*\{([^}]+)\}/u)?.[1];
+  assert.ok(dock);
+  assert.doesNotMatch(dock, /will-change\s*:/u);
+  for (const name of ['desktopDockIn', 'desktopPanelIn']) {
+    assert.match(chat, new RegExp(`animation:\\s*${name}[^;]*\\bbackwards;`, 'u'));
+    const keyframes = chat.slice(chat.indexOf(`@keyframes ${name}`));
+    assert.match(keyframes, /^@keyframes[^]*?to\s*\{[^}]*transform:\s*none;/u);
+  }
+});

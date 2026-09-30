@@ -188,9 +188,9 @@
     height: 100dvh;
     border-width: 0 0 0 1px;
     border-radius: 0;
-    animation: desktopDockIn 220ms cubic-bezier(0.22, 1, 0.36, 1) both;
+    animation: desktopDockIn 220ms cubic-bezier(0.22, 1, 0.36, 1) backwards;
     box-shadow: -22px 0 52px -34px rgba(7, 10, 30, 0.48);
-    will-change: transform;
+    /* 등장 후에는 변형 레이어를 유지하지 않아 안내 글자를 선명하게 그린다. */
   }
 
   .panelDocked .dockResizeHandle {
@@ -1489,7 +1489,7 @@
   }
   to {
     opacity: 1;
-    transform: translate3d(0, 0, 0);
+    transform: none;
   }
 }
 
@@ -1509,7 +1509,7 @@
     transform: translate3d(100%, 0, 0);
   }
   to {
-    transform: translate3d(0, 0, 0);
+    transform: none;
   }
 }
 
@@ -1621,8 +1621,7 @@
  */
 @media (min-width: 721px), (pointer: fine) {
   .panelSlide {
-    animation: desktopPanelIn 220ms cubic-bezier(0.22, 1, 0.36, 1) both;
-    will-change: transform, opacity;
+    animation: desktopPanelIn 220ms cubic-bezier(0.22, 1, 0.36, 1) backwards;
   }
 
   .panelSlide.panelClosing {
