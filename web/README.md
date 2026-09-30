@@ -80,6 +80,42 @@ Radix 적용 전 상태와 비교할 때는 공개 저장소 루트에서
 `experiment/radix-media-dialogs`에 보존되어 있습니다.
 정적 `out/`은 브랜치 변경만으로 바뀌지 않으므로 다시 빌드해야 합니다.
 
+### Zod 기록 API 실험
+
+`experiment/zod-log-api`는 Swiper·Radix를 통합한 로컬 `dev`의 `8813f3d`에서 시작합니다.
+기록 목록(`GET /api/logs`)과 상세(`GET /api/logs/:slug`) 응답만 먼저 검증합니다.
+검색·목차·이동·연관 조회의 응답 검증과 채팅 파서는 이번 범위 밖입니다.
+
+`zod` 4.6.5를 직접 의존성으로 고정하고, 브라우저 코드는 `zod/mini`에서 필요한
+함수만 import합니다. 일반 Zod의 전체 namespace import는 이 Next.js 빌드에서
+추가 압축 JS가 약 89.2 KiB, 개별 함수 import는 약 29.5 KiB였습니다.
+동일한 검증 계약을 유지하는 Mini 진입점은 약 15.3 KiB여서 이번 실험에 선택했습니다.
+
+스키마와 추론 타입은 `src/lib/logResponseSchemas.ts`에서 함께 정의합니다.
+`src/lib/logApi.ts`의 기존 타입 export와 함수 인자는 유지합니다. API 응답을 받은 뒤
+`safeParse`를 한 번 실행하며, 렌더링마다 검증하거나 추가 요청을 보내지 않습니다.
+필수 필드 누락·잘못된 자료형·음수/소수 total은 거부합니다. 날짜 형식·정렬 숫자와
+빈 태그·요약·본문에는 기존 계약을 넘는 제한을 추가하지 않습니다.
+추가 서버 필드는 허용하되 검증 결과에는 선언된 필드만 남깁니다.
+
+HTTP 200이어도 JSON 또는 응답 형식이 잘못되면 기존 `LogApiError`로 변환해
+오류 안내와 다시 불러오기 UI로 처리합니다. Zod 필드 진단은 오류의 `cause`에만
+보관하며 화면에 응답 원문을 표시하지 않습니다. HTTP 오류·연결 오류·`no-store`와
+요청 취소는 유지하고, JSON 본문을 읽는 중의 `AbortError`도 그대로 전달합니다.
+이는 데이터 형식 검증이며 HTML 정화나 서버 접근 제어를 대체하지 않습니다.
+
+2026-09-30 동일한 로컬 프로덕션 빌드의 HTML 직접 참조 JS를 파일별 gzip으로
+합산한 결과, 기록 목록은 243,005 → 258,698 bytes(+15,693), 상세는
+275,478 → 291,153 bytes(+15,675)였습니다. 같은 집계에서 랜딩·소개 JS와 CSS는
+변화가 없었습니다. 실제 HTTP 전송량·브라우저 지연 시간 측정은 아니며,
+채팅·WebMCP의 지연 로딩 청크는 이 HTML 참조 집계와 별도로 봐야 합니다.
+
+`npm run test:log-api`는 스키마, fetch mock 기반 응답·오류·취소 계약과 버전·라이선스를
+검사합니다. 실제 기록 화면과 격리 fixture의 오류·재시도 UI는 별도 브라우저 검증입니다.
+공개 MIT 고지는 `public/licenses/zod-LICENSE.txt`에 포함합니다.
+변경을 커밋한 뒤에는 `git switch dev`로 적용 전 코드와 비교할 수 있습니다.
+미커밋 변경이 있을 때는 브랜치 전환만으로 원복되지 않으며, 정적 export도 다시 빌드해야 합니다.
+
 물고기 키우기는 수조·상점 이미지 슬라이더와 하단 설명 사이에 BGM `The Saltwater Hour` 플레이어를 표시합니다.
 음원은 `media/agent-experiments/aqua-guardian/the-saltwater-hour.mp3`에 두며,
 Gemini를 통해 Lyria 3로 제작한 게임 배경음악입니다. 원본 MP3를 재인코딩 없이 사용합니다.
@@ -355,6 +391,8 @@ npm test           # 순수 로직 테스트 (node --test)
   두 갤러리의 native 이동·접근성·재오픈 계약. 실제 드래그/영상 컨트롤 QA는 별도 수행
 - `src/components/about/mediaDialogPolicy.test.mjs` — Radix 공통 팝업 연결, 바깥 클릭
   보호 경계, iframe 격리와 공개 라이선스 고지
+- `src/lib/logApi.test.mjs` — Zod 목록·상세 스키마, 응답·HTTP 오류·연결 오류·취소와
+  기존 조회 계약, 직접 의존성 버전과 공개 라이선스 고지
 
 타입 검사는 `npx tsc --noEmit`으로 따로 실행합니다.
 
