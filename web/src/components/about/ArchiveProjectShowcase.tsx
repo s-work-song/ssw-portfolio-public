@@ -1,7 +1,6 @@
 'use client';
 
 import {
-  useEffect,
   useMemo,
   useRef,
   useState,
@@ -10,6 +9,7 @@ import {
 import Link from 'next/link';
 import type { AboutArchiveProject } from '@/data/about';
 import ArchiveVideoGallery from './ArchiveVideoGallery';
+import MediaDialog from './MediaDialog';
 import ProjectMediaCarousel from './ProjectMediaCarousel';
 import styles from './ArchiveProjectShowcase.module.css';
 
@@ -30,7 +30,6 @@ export default function ArchiveProjectShowcase({
 
   const closeModal = () => {
     setActiveProjectId(null);
-    window.requestAnimationFrame(() => lastTriggerRef.current?.focus());
   };
 
   const openModal = (
@@ -40,25 +39,6 @@ export default function ArchiveProjectShowcase({
     lastTriggerRef.current = event.currentTarget;
     setActiveProjectId(projectId);
   };
-
-  useEffect(() => {
-    if (!activeProject) return;
-
-    const closeOnEscape = (event: KeyboardEvent) => {
-      if (event.key !== 'Escape') return;
-      event.preventDefault();
-      closeModal();
-    };
-
-    document.body.classList.add(styles.bodyLocked);
-    window.addEventListener('keydown', closeOnEscape);
-    window.requestAnimationFrame(() => closeButtonRef.current?.focus());
-
-    return () => {
-      document.body.classList.remove(styles.bodyLocked);
-      window.removeEventListener('keydown', closeOnEscape);
-    };
-  }, [activeProject]);
 
   return (
     <>
@@ -116,6 +96,7 @@ export default function ArchiveProjectShowcase({
                   <button
                     type="button"
                     className={styles.playButton}
+                    aria-haspopup="dialog"
                     onClick={(event) => openModal(project.id, event)}
                   >
                     <span aria-hidden="true">▶</span>
@@ -138,44 +119,42 @@ export default function ArchiveProjectShowcase({
       </div>
 
       {activeProject?.demo && (
-        <div
-          className={styles.overlay}
-          role="presentation"
-          onClick={closeModal}
+        <MediaDialog
+          open={Boolean(activeProject?.demo)}
+          onOpenChange={(open) => {
+            if (!open) closeModal();
+          }}
+          title={activeProject.title}
+          overlayClassName={styles.overlay}
+          contentClassName={styles.dialog}
+          initialFocusRef={closeButtonRef}
+          returnFocus={() => lastTriggerRef.current}
         >
-          <section
-            className={styles.dialog}
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="archive-game-title"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <header className={styles.dialogHeader}>
-              <div>
-                <span className={styles.dialogEyebrow}>PLAYABLE ARCHIVE</span>
-                <h2 id="archive-game-title">{activeProject.title}</h2>
-                <p>{activeProject.demo.controls}</p>
-              </div>
-              <button
-                ref={closeButtonRef}
-                type="button"
-                className={styles.closeButton}
-                onClick={closeModal}
-                aria-label="게임 닫기"
-              />
-            </header>
-            <div className={styles.gameFrame}>
-              <iframe
-                key={activeProject.id}
-                className={styles.gameIframe}
-                src={`${basePath}${activeProject.demo.src}`}
-                title={activeProject.demo.title}
-                sandbox="allow-scripts allow-modals"
-                referrerPolicy="no-referrer"
-              />
+          <header className={styles.dialogHeader}>
+            <div>
+              <span className={styles.dialogEyebrow}>PLAYABLE ARCHIVE</span>
+              <h2 id="archive-game-title">{activeProject.title}</h2>
+              <p>{activeProject.demo.controls}</p>
             </div>
-          </section>
-        </div>
+            <button
+              ref={closeButtonRef}
+              type="button"
+              className={styles.closeButton}
+              onClick={closeModal}
+              aria-label="게임 닫기"
+            />
+          </header>
+          <div className={styles.gameFrame}>
+            <iframe
+              key={activeProject.id}
+              className={styles.gameIframe}
+              src={`${basePath}${activeProject.demo.src}`}
+              title={activeProject.demo.title}
+              sandbox="allow-scripts allow-modals"
+              referrerPolicy="no-referrer"
+            />
+          </div>
+        </MediaDialog>
       )}
     </>
   );

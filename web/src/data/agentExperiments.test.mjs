@@ -262,7 +262,8 @@ test('음식·가전의 사진별 헤더는 기존 제작 모델 요약을 참�
   assert.match(component, /active\.modelCredits\.map/);
   const carousel = await readFile(new URL('../components/about/ProjectMediaCarousel.tsx', import.meta.url), 'utf8');
   assert.match(carousel, /setActiveIndex\(nextIndex\);\s*onActiveIndexChange\?\.\(nextIndex\)/);
-  assert.match(carousel, /setActiveIndex\(index\);\s*onActiveIndexChange\?\.\(index\)/);
+  assert.match(carousel, /mediaSlideIndex\(swiper\.realIndex, images\.length\)/);
+  assert.match(carousel, /nextIndex === activeIndexRef\.current/);
 });
 
 test('음식·가전에만 세 Blender 원본 다운로드를 제공한다', async () => {

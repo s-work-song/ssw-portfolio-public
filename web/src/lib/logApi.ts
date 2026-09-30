@@ -7,21 +7,12 @@
  * 보여 줄 수 있게 했다.
  */
 
-/** 목록에 그려지는 기록 한 건의 요약이다. */
-export type LogSummary = {
-  slug: string;
-  title: string;
-  date?: string;
-  order?: number;
-  recommendedOrder?: number;
-  tags: string[];
-  summary: string;
-};
+import type { ZodMiniType } from "zod/mini";
+import { logDetailResponseSchema, logListResponseSchema } from "./logResponseSchemas.ts";
+import type { LogDetailResponse, LogListResponse, LogSummary } from "./logResponseSchemas.ts";
 
-/** 본문까지 담은 기록 한 건이다. */
-export type LogPost = LogSummary & {
-  content: string;
-};
+// 호출부 import는 유지하고, 타입의 정의 원본만 검증 스키마로 옮긴다.
+export type { LogDetailResponse, LogListResponse, LogPost, LogSummary } from "./logResponseSchemas.ts";
 
 /** 기록 본문의 소제목 하나다. level은 제목 깊이이고 route는 그 소제목으로 바로 가는 경로다. */
 export type LogSectionSummary = {
@@ -29,19 +20,6 @@ export type LogSectionSummary = {
   title: string;
   level: number;
   route: string;
-};
-
-/** 목록 조회 응답이다. availableTags는 태그 필터 UI가 그대로 쓴다. */
-export type LogListResponse = {
-  posts: LogSummary[];
-  total: number;
-  availableTags: string[];
-};
-
-/** 상세 조회 응답이다. 본문과 함께 이어 읽을 만한 글을 딸려 보낸다. */
-export type LogDetailResponse = {
-  post: LogPost;
-  relatedPosts: LogSummary[];
 };
 
 /** 검색에 걸린 기록 한 건이다. matchedTokens는 실제로 맞은 낱말이라 결과를 좁히는 근거가 된다. */
@@ -96,8 +74,8 @@ export type RelatedLogsResponse = {
  * (AbortError)는 실패가 아니므로 이 타입으로 감싸지 않는다.
  */
 export class LogApiError extends Error {
-  constructor(message: string) {
-    super(message);
+  constructor(message: string, options?: ErrorOptions) {
+    super(message, options);
     this.name = "LogApiError";
   }
 }
@@ -128,10 +106,12 @@ function apiUrl(path: string): URL {
  * 아닐 수 있어서인데, 그 덕에 상태 코드만이라도 문구에 담을 수 있다. 서버가
  * message를 내려 줬으면 그쪽을 우선한다.
  *
- * 응답 형태는 검증하지 않고 T로 단언한다. 계약이 어긋나면 사용하는 쪽에서
- * 드러난다. cache는 no-store라 목록이 갱신돼도 옛 응답이 남지 않는다.
+ * 목록·상세는 전달된 스키마로 한 번 검증한다. 형식 오류는 기존 오류 UI가
+ * 처리할 LogApiError로 바꾸고, 필드별 진단은 cause에만 둔다. 아직 전환하지
+ * 않은 검색·목차·이동·연관 조회는 기존 타입 단언을 유지한다.
+ * cache는 no-store라 목록이 갱신돼도 옛 응답이 남지 않는다.
  */
-async function requestJson<T>(url: URL, signal?: AbortSignal): Promise<T> {
+async function requestJson<T>(url: URL, signal?: AbortSignal, schema?: ZodMiniType<T>): Promise<T> {
   let response: Response;
   try {
     response = await fetch(url, {
@@ -143,15 +123,26 @@ async function requestJson<T>(url: URL, signal?: AbortSignal): Promise<T> {
     if (error instanceof DOMException && error.name === "AbortError") throw error;
     throw new LogApiError("기록 서버에 연결하지 못했습니다.");
   }
-  const payload = await response.json().catch(() => null) as {
-    message?: unknown;
-  } | null;
+  const payload: unknown = await response.json().catch((error: unknown) => {
+    if (error instanceof DOMException && error.name === "AbortError") throw error;
+    return null;
+  });
   if (!response.ok) {
+    const message = typeof payload === "object" && payload !== null && "message" in payload
+      ? payload.message
+      : undefined;
     throw new LogApiError(
-      typeof payload?.message === "string"
-        ? payload.message
+      typeof message === "string"
+        ? message
         : `기록 요청을 처리하지 못했습니다. (${response.status})`,
     );
+  }
+  if (schema) {
+    const result = schema.safeParse(payload);
+    if (!result.success) {
+      throw new LogApiError("기록 서버 응답 형식이 올바르지 않습니다.", { cause: result.error });
+    }
+    return result.data;
   }
   return payload as T;
 }
@@ -184,12 +175,12 @@ export function listPortfolioLogs(
   if (input.query) url.searchParams.set("q", input.query);
   if (input.tag) url.searchParams.set("tag", input.tag);
   if (input.view === "recommended") url.searchParams.set("view", "recommended");
-  return requestJson(url, signal);
+  return requestJson(url, signal, logListResponseSchema);
 }
 
 /** 기록 한 건의 본문과 관련 글을 가져온다. slug는 경로에 들어가므로 인코딩해서 보낸다. */
 export function getPortfolioLog(slug: string, signal?: AbortSignal): Promise<LogDetailResponse> {
-  return requestJson(apiUrl(`/api/logs/${encodeURIComponent(slug)}`), signal);
+  return requestJson(apiUrl(`/api/logs/${encodeURIComponent(slug)}`), signal, logDetailResponseSchema);
 }
 
 /**

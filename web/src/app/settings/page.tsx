@@ -4,8 +4,11 @@
  * 테마·포인트 컬러·플로팅 버튼 모드·배경 효과를 편집하는 설정 화면이다.
  * 영속화와 DOM 반영은 ThemeContext에 위임하고, 이 컴포넌트는 폼 표현과
  * 미리보기 재생 상태만 관리하는 Provider 소비자 역할을 맡는다.
+ * 라디오 그룹의 포커스 이동은 Radix가 맡는다. 선택 변경은 기존 onClick에서
+ * 한 번만 처리하므로 Root는 외부 value만 받고 onValueChange를 중복 연결하지 않는다.
  */
 import React, { useState, useEffect } from "react";
+import { SettingsRadioGroup, SettingsRadioItem } from "./SettingsRadioGroup";
 import Link from "next/link";
 import {
   useTheme,
@@ -423,8 +426,8 @@ export default function SettingsPage() {
           <section style={{ background: "var(--bg-elev)", border: "1px solid var(--border)", borderRadius: "18px", padding: "clamp(20px, 3vw, 28px)" }}>
             <div style={{ fontSize: "16px", fontWeight: 700, marginBottom: "4px" }}>화면 모드</div>
             <div style={{ fontSize: "13.5px", color: "var(--text-mute)", marginBottom: "18px" }}>운영체제 설정을 따르거나 밝은 화면과 어두운 화면을 직접 선택하세요.</div>
-            <div role="radiogroup" aria-label="화면 모드" style={{ display: "flex", gap: "8px", padding: "5px", background: "var(--bg-elev-2)", border: "1px solid var(--border)", borderRadius: "13px", maxWidth: "480px" }}>
-              <button
+            <SettingsRadioGroup value={mode} role="radiogroup" aria-label="화면 모드" style={{ display: "flex", gap: "8px", padding: "5px", background: "var(--bg-elev-2)", border: "1px solid var(--border)", borderRadius: "13px", maxWidth: "480px" }}>
+              <SettingsRadioItem value="system"
                 onClick={() => setMode("system")}
                 role="radio"
                 aria-checked={mode === "system"}
@@ -438,8 +441,8 @@ export default function SettingsPage() {
                   <path d="M8 21h8M12 17v4" />
                 </svg>
                 시스템
-              </button>
-              <button
+              </SettingsRadioItem>
+              <SettingsRadioItem value="light"
                 onClick={() => setMode("light")}
                 role="radio"
                 aria-checked={mode === "light"}
@@ -453,8 +456,8 @@ export default function SettingsPage() {
                   <path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M18.4 5.6L17 7M7 17l-1.4 1.4" />
                 </svg>
                 라이트
-              </button>
-              <button
+              </SettingsRadioItem>
+              <SettingsRadioItem value="dark"
                 onClick={() => setMode("dark")}
                 role="radio"
                 aria-checked={mode === "dark"}
@@ -467,8 +470,8 @@ export default function SettingsPage() {
                   <path d="M20 14.5A8 8 0 0 1 9.5 4 7 7 0 1 0 20 14.5z" />
                 </svg>
                 다크
-              </button>
-            </div>
+              </SettingsRadioItem>
+            </SettingsRadioGroup>
           </section>
 
           {/* 모션 정책 */}
@@ -477,8 +480,8 @@ export default function SettingsPage() {
             <div style={{ fontSize: "13.5px", color: "var(--text-mute)", marginBottom: "18px" }}>
               시스템 접근성 설정을 따르거나 사이트의 움직임을 직접 켜고 끌 수 있습니다.
             </div>
-            <div role="radiogroup" aria-label="모션 애니메이션" style={{ display: "flex", gap: "8px", padding: "5px", background: "var(--bg-elev-2)", border: "1px solid var(--border)", borderRadius: "13px", maxWidth: "480px" }}>
-              <button
+            <SettingsRadioGroup value={motion} role="radiogroup" aria-label="모션 애니메이션" style={{ display: "flex", gap: "8px", padding: "5px", background: "var(--bg-elev-2)", border: "1px solid var(--border)", borderRadius: "13px", maxWidth: "480px" }}>
+              <SettingsRadioItem value="system"
                 type="button"
                 onClick={() => setMotion("system")}
                 role="radio"
@@ -489,8 +492,8 @@ export default function SettingsPage() {
                 style={SEGMENT_BUTTON_STYLE}
               >
                 시스템 따름
-              </button>
-              <button
+              </SettingsRadioItem>
+              <SettingsRadioItem value="on"
                 type="button"
                 onClick={() => setMotion("on")}
                 role="radio"
@@ -501,8 +504,8 @@ export default function SettingsPage() {
                 style={SEGMENT_BUTTON_STYLE}
               >
                 항상 켬
-              </button>
-              <button
+              </SettingsRadioItem>
+              <SettingsRadioItem value="off"
                 type="button"
                 onClick={() => setMotion("off")}
                 role="radio"
@@ -513,8 +516,8 @@ export default function SettingsPage() {
                 style={SEGMENT_BUTTON_STYLE}
               >
                 항상 끔
-              </button>
-            </div>
+              </SettingsRadioItem>
+            </SettingsRadioGroup>
             <div style={{ marginTop: "11px", fontSize: "12.5px", color: "var(--text-mute)", lineHeight: 1.55 }}>
               기본값은 항상 켬입니다. 시스템 따름을 선택하면 운영체제의 모션 줄이기 설정을 존중합니다.
             </div>
@@ -533,7 +536,7 @@ export default function SettingsPage() {
             <div id="page-transition-description" style={{ fontSize: "13.5px", color: "var(--text-mute)", marginBottom: "18px", lineHeight: 1.6 }}>
               소개 페이지의 탭을 이동할 때 본문이 바뀌는 방식을 정합니다. 기본값은 페이드입니다.
             </div>
-            <div
+            <SettingsRadioGroup value={pageTransition}
               role="radiogroup"
               aria-labelledby="page-transition-title"
               aria-describedby="page-transition-description"
@@ -546,7 +549,7 @@ export default function SettingsPage() {
               {PAGE_TRANSITION_OPTIONS.map((option) => {
                 const active = pageTransition === option.value;
                 return (
-                  <button
+                  <SettingsRadioItem value={option.value}
                     key={option.value}
                     type="button"
                     onClick={() => setPageTransition(option.value)}
@@ -577,10 +580,10 @@ export default function SettingsPage() {
                     <span style={{ fontSize: "11.5px", color: "var(--text-mute)", lineHeight: 1.45 }}>
                       {option.description}
                     </span>
-                  </button>
+                  </SettingsRadioItem>
                 );
               })}
-            </div>
+            </SettingsRadioGroup>
             <div style={{ marginTop: "11px", fontSize: "12.5px", color: "var(--text-mute)", lineHeight: 1.55 }}>
               슬라이드는 다음 탭과 이전 탭의 방향을 구분하며, 모션을 끄면 선택값과 관계없이 즉시 전환됩니다.
             </div>
@@ -601,12 +604,12 @@ export default function SettingsPage() {
               </span>
             </div>
             <div style={{ fontSize: "13.5px", color: "var(--text-mute)", marginBottom: "18px" }}>버튼과 강조 요소에 쓰이는 색입니다.</div>
-            <div role="radiogroup" aria-label="포인트 컬러" style={{ display: "flex", gap: "14px", flexWrap: "wrap" }}>
+            <SettingsRadioGroup value={accent} role="radiogroup" aria-label="포인트 컬러" style={{ display: "flex", gap: "14px", flexWrap: "wrap" }}>
               {accentKeys.map((key) => {
                 const meta = ACCENTS[key];
                 const active = accent === key;
                 return (
-                  <button
+                  <SettingsRadioItem value={key}
                     key={key}
                     onClick={() => setAccent(key)}
                     aria-label={meta.label}
@@ -630,10 +633,10 @@ export default function SettingsPage() {
                     <svg className={styles.optCheck} width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" style={{ filter: "drop-shadow(0 1px 2px rgba(0,0,0,.4))" }}>
                       <polyline points="20 6 9 17 4 12" />
                     </svg>
-                  </button>
+                  </SettingsRadioItem>
                 );
               })}
-            </div>
+            </SettingsRadioGroup>
           </section>
 
           {/* Floating button mode */}
@@ -648,11 +651,11 @@ export default function SettingsPage() {
               우하단 버튼을 눌렀을 때 채팅을 바로 열지, 빠른 기능을 먼저 보여줄지 정합니다.
             </div>
             <div style={{ display: "flex", flexWrap: "wrap", gap: "20px", alignItems: "stretch" }}>
-              <div role="radiogroup" aria-label="플로팅 버튼 동작" style={{ flex: "1 1 300px", minWidth: 0, display: "grid", gap: "10px", alignContent: "start" }}>
+              <SettingsRadioGroup value={fabMode} role="radiogroup" aria-label="플로팅 버튼 동작" style={{ flex: "1 1 300px", minWidth: 0, display: "grid", gap: "10px", alignContent: "start" }}>
                 {fabModes.map((option) => {
                   const active = fabMode === option.value;
                   return (
-                    <button
+                    <SettingsRadioItem value={option.value}
                       key={option.value}
                       type="button"
                       onClick={() => setFabMode(option.value)}
@@ -681,10 +684,10 @@ export default function SettingsPage() {
                         </span>
                       </span>
                       <span style={{ fontSize: "12px", color: "var(--text-mute)", lineHeight: 1.45 }}>{option.description}</span>
-                    </button>
+                    </SettingsRadioItem>
                   );
                 })}
-              </div>
+              </SettingsRadioGroup>
 
               <div
                 className={styles.fabPreview}
@@ -807,7 +810,7 @@ export default function SettingsPage() {
                 <div id="fab-animation-description" style={{ fontSize: "12.5px", color: "var(--text-mute)", marginBottom: "14px", lineHeight: 1.55 }}>
                   빠른 기능이 열리고 닫힐 때의 효과예요. 닫을 때는 반대 순서로 재생됩니다.
                 </div>
-                <div
+                <SettingsRadioGroup value={fabAnim}
                   role="radiogroup"
                   aria-labelledby="fab-animation-title"
                   aria-describedby="fab-animation-description"
@@ -820,7 +823,7 @@ export default function SettingsPage() {
                   {FAB_ANIMATION_OPTIONS.map((option) => {
                     const active = fabAnim === option.value;
                     return (
-                      <button
+                      <SettingsRadioItem value={option.value}
                         key={option.value}
                         type="button"
                         onClick={() => setFabAnim(option.value)}
@@ -851,10 +854,10 @@ export default function SettingsPage() {
                         <span style={{ fontSize: "11.5px", color: "var(--text-mute)", lineHeight: 1.45 }}>
                           {option.description}
                         </span>
-                      </button>
+                      </SettingsRadioItem>
                     );
                   })}
-                </div>
+                </SettingsRadioGroup>
             </div>
           </section>
 
@@ -917,7 +920,7 @@ export default function SettingsPage() {
             <div id="chat-layout-description" style={{ fontSize: "13.5px", color: "var(--text-mute)", marginBottom: "18px", lineHeight: 1.6 }}>
               넓은 PC 화면에서 채팅을 콘텐츠 위에 띄울지, IDE처럼 오른쪽 영역을 전용 패널로 사용할지 정합니다.
             </div>
-            <div
+            <SettingsRadioGroup value={chatLayout}
               role="radiogroup"
               aria-labelledby="chat-layout-title"
               aria-describedby="chat-layout-description"
@@ -926,7 +929,7 @@ export default function SettingsPage() {
               {CHAT_LAYOUT_OPTIONS.map((option) => {
                 const active = chatLayout === option.value;
                 return (
-                  <button
+                  <SettingsRadioItem value={option.value}
                     key={option.value}
                     type="button"
                     role="radio"
@@ -953,10 +956,10 @@ export default function SettingsPage() {
                     <span style={{ color: "var(--text-mute)", fontSize: "12px", lineHeight: 1.5 }}>
                       {option.description}
                     </span>
-                  </button>
+                  </SettingsRadioItem>
                 );
               })}
-            </div>
+            </SettingsRadioGroup>
             {/* 오른쪽 고정 패널을 골랐을 때만 보인다. 여닫기는 CSS가 맡는다. */}
             <div
               className={styles.whenChatDock}
@@ -1070,7 +1073,7 @@ export default function SettingsPage() {
               채팅 메시지와 입력창, 추천 질문의 글꼴과 크기를 조절합니다. 코드 블록은 고정폭 글꼴을 유지합니다.
             </div>
 
-            <div
+            <SettingsRadioGroup value={chatFont}
               role="radiogroup"
               aria-label="채팅 글꼴"
               aria-describedby="chat-font-description"
@@ -1079,7 +1082,7 @@ export default function SettingsPage() {
               {CHAT_FONT_OPTIONS.map((option) => {
                 const active = chatFont === option.value;
                 return (
-                  <button
+                  <SettingsRadioItem value={option.value}
                     key={option.value}
                     type="button"
                     role="radio"
@@ -1107,12 +1110,12 @@ export default function SettingsPage() {
                     <span style={{ color: "var(--text-mute)", fontSize: "12px", lineHeight: 1.45 }}>
                       {option.description}
                     </span>
-                  </button>
+                  </SettingsRadioItem>
                 );
               })}
-            </div>
+            </SettingsRadioGroup>
 
-            <div
+            <SettingsRadioGroup value={chatFontSize}
               role="radiogroup"
               aria-label="채팅 글자 크기"
               style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(110px, 1fr))", gap: "8px", marginTop: "12px" }}
@@ -1120,7 +1123,7 @@ export default function SettingsPage() {
               {CHAT_FONT_SIZE_OPTIONS.map((option) => {
                 const active = chatFontSize === option.value;
                 return (
-                  <button
+                  <SettingsRadioItem value={option.value}
                     key={option.value}
                     type="button"
                     role="radio"
@@ -1146,10 +1149,10 @@ export default function SettingsPage() {
                     <span style={{ fontSize: "10px", opacity: 0.72 }}>
                       {option.pixels}px
                     </span>
-                  </button>
+                  </SettingsRadioItem>
                 );
               })}
-            </div>
+            </SettingsRadioGroup>
 
             <div
               style={{
@@ -1244,7 +1247,7 @@ export default function SettingsPage() {
               답변이 생성되며 도착하는 글자에 입히는 효과예요. PC와 모바일 모두에 적용됩니다.
             </div>
             <div>
-              <div
+              <SettingsRadioGroup value={streamAnimation}
                 role="radiogroup"
                 aria-label="응답 텍스트 애니메이션"
                 aria-describedby="stream-animation-description"
@@ -1261,7 +1264,7 @@ export default function SettingsPage() {
                 {CHAT_STREAM_ANIMATION_OPTIONS.map((option) => {
                   const active = streamAnimation === option.value;
                   return (
-                    <button
+                    <SettingsRadioItem value={option.value}
                       key={option.value}
                       type="button"
                       onClick={() => setStreamAnimation(option.value)}
@@ -1290,10 +1293,10 @@ export default function SettingsPage() {
                         </span>
                       </span>
                       <span style={{ fontSize: "12px", color: "var(--text-mute)", lineHeight: 1.45 }}>{option.description}</span>
-                    </button>
+                    </SettingsRadioItem>
                   );
                 })}
-              </div>
+              </SettingsRadioGroup>
               <div
                 style={{
                   marginTop: "16px",
@@ -1343,7 +1346,7 @@ export default function SettingsPage() {
                     다시 재생
                   </button>
                 </div>
-                <div
+                <SettingsRadioGroup value={String(streamPreviewSpeed)}
                   role="radiogroup"
                   aria-label="미리보기 재생 속도"
                   style={{
@@ -1368,7 +1371,7 @@ export default function SettingsPage() {
                   {STREAM_PREVIEW_SPEED_OPTIONS.map((option) => {
                     const active = streamPreviewSpeed === option.value;
                     return (
-                      <button
+                      <SettingsRadioItem value={String(option.value)}
                         key={option.value}
                         type="button"
                         role="radio"
@@ -1395,10 +1398,10 @@ export default function SettingsPage() {
                         title={option.description}
                       >
                         {option.label}
-                      </button>
+                      </SettingsRadioItem>
                     );
                   })}
-                </div>
+                </SettingsRadioGroup>
                 <div style={{ display: "flex", alignItems: "flex-start", gap: "10px" }}>
                   <span aria-hidden="true" style={{ width: "30px", height: "30px", flex: "0 0 30px", borderRadius: "50%", background: "var(--accent, #6366f1)", color: "var(--accent-contrast, #fff)", display: "grid", placeItems: "center", fontSize: "9px", fontWeight: 800 }}>
                     AI
@@ -1475,14 +1478,14 @@ export default function SettingsPage() {
             <div id="chat-animation-description" style={{ fontSize: "13.5px", color: "var(--text-mute)", marginBottom: "18px", lineHeight: 1.6 }}>
               챗봇 창이 열리고 닫힐 때의 효과예요. PC 화면에만 적용되고, 모바일은 기존 화면 전환을 그대로 씁니다.
             </div>
-            <div
+            <SettingsRadioGroup value={chatAnimation}
               role="radiogroup"
               aria-label="채팅창 애니메이션"
               aria-describedby="chat-animation-description"
               style={{ display: "flex", gap: "8px", padding: "5px", background: "var(--bg-elev-2)", border: "1px solid var(--border)", borderRadius: "13px", maxWidth: "480px" }}
             >
               {CHAT_ANIMATION_OPTIONS.map((option) => (
-                <button
+                <SettingsRadioItem value={option.value}
                   key={option.value}
                   type="button"
                   onClick={() => setChatAnimation(option.value)}
@@ -1494,9 +1497,9 @@ export default function SettingsPage() {
                   style={SEGMENT_BUTTON_STYLE}
                 >
                   {option.label}
-                </button>
+                </SettingsRadioItem>
               ))}
-            </div>
+            </SettingsRadioGroup>
             <div style={{ marginTop: "11px", fontSize: "12.5px", color: "var(--text-mute)", lineHeight: 1.55 }}>
               모션을 끄거나 시스템이 모션 줄이기를 요청하면 이 설정과 관계없이 효과 없이 표시됩니다.
             </div>
