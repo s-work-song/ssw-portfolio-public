@@ -1,17 +1,22 @@
 'use client';
 
 import Image from 'next/image';
-import {
-  useEffect,
-  useRef,
-  useState,
-  type PointerEvent as ReactPointerEvent,
-} from 'react';
+import { useCallback, useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
+import { A11y } from 'swiper/modules';
+import { Swiper, SwiperSlide } from 'swiper/react';
+import type { Swiper as SwiperInstance } from 'swiper';
 import type { AboutProjectGallery } from '@/data/about';
+import { mediaSlideIndex } from './mediaSwiperPolicy';
+import { useMediaSwiperSpeed } from './useMediaSwiperMotion';
 import styles from './ProjectMediaCarousel.module.css';
 
 const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? '';
-const dragActivationDistance = 10;
+const swiperModules = [A11y];
+const swiperA11y = {
+  slideLabelMessage: '{{index}} / {{slidesLength}}',
+  scrollOnFocus: false,
+  wrapperLiveRegion: false,
+};
 
 interface ProjectMediaCarouselProps {
   gallery: AboutProjectGallery;
@@ -30,66 +35,147 @@ export default function ProjectMediaCarousel({
   onActiveIndexChange,
 }: ProjectMediaCarouselProps) {
   const [activeIndex, setActiveIndex] = useState(0);
-  const [trackPosition, setTrackPosition] = useState(1);
-  const [dragOffset, setDragOffset] = useState(0);
-  const [isDragging, setIsDragging] = useState(false);
-  const [isTransitioning, setIsTransitioning] = useState(false);
-  const [transitionEnabled, setTransitionEnabled] = useState(true);
   const [isExpanded, setIsExpanded] = useState(false);
-  const dragStartX = useRef<number | null>(null);
-  const dragPointerId = useRef<number | null>(null);
-  const dragMoved = useRef(false);
-  const activeTouchPointers = useRef(new Set<number>());
-  const lastDragFinishedAt = useRef<number | null>(null);
-  const transitionFrame = useRef<number | null>(null);
-  const transitionTimer = useRef<number | null>(null);
+  const isExpandedRef = useRef(false);
+  const activeIndexRef = useRef(0);
+  const inlineSwiperRef = useRef<SwiperInstance | null>(null);
+  const expandedSwiperRef = useRef<SwiperInstance | null>(null);
   const slideButtonRefs = useRef(new Map<number, HTMLButtonElement>());
   const lightboxCloseRef = useRef<HTMLButtonElement | null>(null);
-  const activeIndexRef = useRef(activeIndex);
+  const touchPointers = useRef(new Set<number>());
+  const pinchLocked = useRef(false);
+  const unlockFrame = useRef<number | null>(null);
+  const lastDragFinishedAt = useRef<number | null>(null);
+  const speed = useMediaSwiperSpeed();
   const { images } = gallery;
+  const hasMultipleImages = images.length > 1;
 
-  useEffect(() => {
-    activeIndexRef.current = activeIndex;
-  }, [activeIndex]);
-
-  useEffect(() => {
-    if (!isExpanded) {
-      return;
+  const resetGesture = useCallback(() => {
+    touchPointers.current.clear();
+    pinchLocked.current = false;
+    if (unlockFrame.current !== null) {
+      window.cancelAnimationFrame(unlockFrame.current);
+      unlockFrame.current = null;
     }
+    [inlineSwiperRef.current, expandedSwiperRef.current].forEach((swiper) => {
+      if (!swiper || swiper.destroyed) return;
+      swiper.allowTouchMove = hasMultipleImages;
+      swiper.allowSlideNext = true;
+      swiper.allowSlidePrev = true;
+    });
+  }, [hasMultipleImages]);
+  const closeExpandedView = useCallback(() => {
+    resetGesture();
+    isExpandedRef.current = false;
+    setIsExpanded(false);
+    window.requestAnimationFrame(() => {
+      slideButtonRefs.current.get(activeIndexRef.current)?.focus({ preventScroll: true });
+    });
+  }, [resetGesture]);
 
+  useEffect(() => {
+    if (!isExpanded) return;
     const previousOverflow = document.body.style.overflow;
     const focusFrame = window.requestAnimationFrame(() => {
       lightboxCloseRef.current?.focus({ preventScroll: true });
     });
     const closeOnEscape = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
-        setIsExpanded(false);
-        window.requestAnimationFrame(() => {
-          slideButtonRefs.current
-            .get(activeIndexRef.current)
-            ?.focus({ preventScroll: true });
-        });
+        closeExpandedView();
       }
     };
-
     document.body.style.overflow = 'hidden';
     window.addEventListener('keydown', closeOnEscape);
-
     return () => {
       window.cancelAnimationFrame(focusFrame);
       document.body.style.overflow = previousOverflow;
       window.removeEventListener('keydown', closeOnEscape);
     };
-  }, [isExpanded]);
+  }, [isExpanded, closeExpandedView]);
 
   useEffect(() => () => {
-    if (transitionFrame.current !== null) {
-      window.cancelAnimationFrame(transitionFrame.current);
-    }
-    if (transitionTimer.current !== null) {
-      window.clearTimeout(transitionTimer.current);
-    }
+    if (unlockFrame.current !== null) window.cancelAnimationFrame(unlockFrame.current);
   }, []);
+
+  const liveSwipers = () => [inlineSwiperRef.current, expandedSwiperRef.current]
+    .filter((swiper): swiper is SwiperInstance => Boolean(swiper && !swiper.destroyed));
+
+  // 두 손가락 제스처는 브라우저 확대에 맡긴다. 이동 거리/인덱스 계산은 Swiper가 담당한다.
+  const capturePointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (event.pointerType !== 'touch') return;
+    touchPointers.current.add(event.pointerId);
+    if (touchPointers.current.size < 2) return;
+    if (unlockFrame.current !== null) window.cancelAnimationFrame(unlockFrame.current);
+    pinchLocked.current = true;
+    liveSwipers().forEach((swiper) => {
+      swiper.allowTouchMove = false;
+      swiper.allowSlideNext = false;
+      swiper.allowSlidePrev = false;
+    });
+  };
+  const capturePointerEnd = (event: ReactPointerEvent<HTMLDivElement>) => {
+    touchPointers.current.delete(event.pointerId);
+    if (!pinchLocked.current || touchPointers.current.size > 0) return;
+    lastDragFinishedAt.current = window.performance.now();
+    // Swiper의 document pointerup 처리가 끝난 뒤 잠금을 해제한다.
+    unlockFrame.current = window.requestAnimationFrame(() => {
+      liveSwipers().forEach((swiper) => {
+        swiper.allowTouchMove = hasMultipleImages;
+        swiper.allowSlideNext = true;
+        swiper.allowSlidePrev = true;
+        if (hasMultipleImages) swiper.slideToLoop(activeIndexRef.current, 0, false);
+      });
+      pinchLocked.current = false;
+      unlockFrame.current = null;
+    });
+  };
+  const recordDragEnd = (swiper: SwiperInstance) => {
+    if (!swiper.allowClick || pinchLocked.current) {
+      lastDragFinishedAt.current = window.performance.now();
+    }
+  };
+  const acceptSlide = (swiper: SwiperInstance) => {
+    if (!swiper.initialized || pinchLocked.current) return;
+    // slideToLoop는 RAF 뒤 slideChange를 발생시킨다. 동기화 대상의 echo는 수락하지 않는다.
+    const authoritativeSwiper = isExpandedRef.current ? expandedSwiperRef.current : inlineSwiperRef.current;
+    if (swiper !== authoritativeSwiper) return;
+    const nextIndex = mediaSlideIndex(swiper.realIndex, images.length);
+    if (nextIndex === null || nextIndex === activeIndexRef.current) return;
+    const focusedSlide = slideButtonRefs.current.get(activeIndexRef.current);
+    const transferFocus = document.activeElement === focusedSlide;
+    if (transferFocus) focusedSlide?.blur();
+    activeIndexRef.current = nextIndex;
+    setActiveIndex(nextIndex);
+    onActiveIndexChange?.(nextIndex);
+    liveSwipers().forEach((other) => {
+      if (other !== swiper && other.realIndex !== nextIndex) {
+        other.slideToLoop(nextIndex, 0, false);
+      }
+    });
+    if (transferFocus) {
+      window.requestAnimationFrame(() => {
+        slideButtonRefs.current.get(nextIndex)?.focus({ preventScroll: true });
+      });
+    }
+  };
+  const visibleSwiper = () => isExpanded ? expandedSwiperRef.current : inlineSwiperRef.current;
+  const move = (direction: -1 | 1) => {
+    const swiper = visibleSwiper();
+    if (!hasMultipleImages || !swiper || swiper.destroyed || swiper.animating || pinchLocked.current) return;
+    if (direction === 1) swiper.slideNext();
+    else swiper.slidePrev();
+  };
+  const selectSlide = (index: number) => {
+    const swiper = visibleSwiper();
+    if (!swiper || swiper.destroyed || swiper.animating || pinchLocked.current) return;
+    if (mediaSlideIndex(index, images.length) !== null) swiper.slideToLoop(index);
+  };
+  const openExpandedView = () => {
+    if (pinchLocked.current || (lastDragFinishedAt.current !== null
+      && window.performance.now() - lastDragFinishedAt.current < 250)) return;
+    isExpandedRef.current = true;
+    setIsExpanded(true);
+  };
 
   if (images.length === 0) {
     return (
@@ -105,291 +191,66 @@ export default function ProjectMediaCarousel({
   }
 
   const currentImage = images[activeIndex];
-  const hasMultipleImages = images.length > 1;
-  const renderedTrackPosition = hasMultipleImages ? trackPosition : 0;
-  const loopedImages = hasMultipleImages
-    ? [images[images.length - 1], ...images, images[0]]
-    : images;
-
-  const restoreLoopPosition = (position: number) => {
-    setTransitionEnabled(false);
-    setTrackPosition(position);
-
-    transitionFrame.current = window.requestAnimationFrame(() => {
-      transitionFrame.current = window.requestAnimationFrame(() => {
-        setTransitionEnabled(true);
-        setIsTransitioning(false);
-        transitionFrame.current = null;
-      });
-    });
-  };
-  const scheduleTransitionCompletion = (position: number) => {
-    if (transitionTimer.current !== null) {
-      window.clearTimeout(transitionTimer.current);
-    }
-
-    transitionTimer.current = window.setTimeout(() => {
-      transitionTimer.current = null;
-      if (position === 0) {
-        restoreLoopPosition(images.length);
-      } else if (position === images.length + 1) {
-        restoreLoopPosition(1);
-      } else {
-        setIsTransitioning(false);
-      }
-    }, 420);
-  };
-  const transferSlideFocus = (nextIndex: number) => {
-    const currentSlide = slideButtonRefs.current.get(activeIndex);
-    if (document.activeElement !== currentSlide) {
-      return;
-    }
-
-    currentSlide.blur();
-    window.requestAnimationFrame(() => {
-      slideButtonRefs.current.get(nextIndex)?.focus({ preventScroll: true });
-    });
-  };
-  const move = (direction: -1 | 1) => {
-    if (!hasMultipleImages || isTransitioning) {
-      return;
-    }
-
-    const nextPosition = trackPosition + direction;
-    const nextIndex = (activeIndex + direction + images.length) % images.length;
-    transferSlideFocus(nextIndex);
-    setIsTransitioning(true);
-    setTrackPosition(nextPosition);
-    setActiveIndex(nextIndex);
-    onActiveIndexChange?.(nextIndex);
-    scheduleTransitionCompletion(nextPosition);
-  };
-  const selectSlide = (index: number) => {
-    if (index === activeIndex || isTransitioning) {
-      return;
-    }
-
-    transferSlideFocus(index);
-    setIsTransitioning(true);
-    setActiveIndex(index);
-    onActiveIndexChange?.(index);
-    setTrackPosition(index + 1);
-    scheduleTransitionCompletion(index + 1);
-  };
-  const resetDrag = (target?: HTMLDivElement) => {
-    const pointerId = dragPointerId.current;
-    if (
-      target
-      && pointerId !== null
-      && target.hasPointerCapture(pointerId)
-    ) {
-      target.releasePointerCapture(pointerId);
-    }
-
-    dragStartX.current = null;
-    dragPointerId.current = null;
-    dragMoved.current = false;
-    setDragOffset(0);
-    setIsDragging(false);
-  };
-  const handlePointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
-    if (event.pointerType === 'touch') {
-      activeTouchPointers.current.add(event.pointerId);
-      if (activeTouchPointers.current.size > 1) {
-        resetDrag(event.currentTarget);
-        return;
-      }
-    }
-
-    if (
-      !hasMultipleImages
-      || isTransitioning
-      || (event.pointerType === 'mouse' && event.button !== 0)
-    ) {
-      return;
-    }
-
-    dragStartX.current = event.clientX;
-    dragPointerId.current = event.pointerId;
-    dragMoved.current = false;
-  };
-  const handlePointerMove = (event: ReactPointerEvent<HTMLDivElement>) => {
-    if (
-      dragStartX.current === null
-      || dragPointerId.current !== event.pointerId
-      || (
-        event.pointerType === 'touch'
-        && activeTouchPointers.current.size > 1
-      )
-    ) {
-      return;
-    }
-
-    const nextOffset = event.clientX - dragStartX.current;
-    if (!dragMoved.current && Math.abs(nextOffset) <= dragActivationDistance) {
-      return;
-    }
-    if (!dragMoved.current) {
-      dragMoved.current = true;
-      event.currentTarget.setPointerCapture(event.pointerId);
-      setIsDragging(true);
-    }
-    setDragOffset(nextOffset);
-  };
-  const finishDrag = (
-    event: ReactPointerEvent<HTMLDivElement>,
-    shouldMove: boolean,
-  ) => {
-    const isActiveDragPointer = dragPointerId.current === event.pointerId;
-    if (event.pointerType === 'touch') {
-      activeTouchPointers.current.delete(event.pointerId);
-    }
-
-    if (!isActiveDragPointer || dragStartX.current === null) {
-      return;
-    }
-
-    const distance = event.clientX - dragStartX.current;
-    const threshold = Math.min(72, event.currentTarget.clientWidth * 0.15);
-
-    if (dragMoved.current && shouldMove && distance <= -threshold) {
-      move(1);
-    } else if (dragMoved.current && shouldMove && distance >= threshold) {
-      move(-1);
-    }
-
-    if (dragMoved.current) {
-      lastDragFinishedAt.current = window.performance.now();
-    }
-
-    resetDrag(event.currentTarget);
-  };
-  const openExpandedView = () => {
-    if (
-      lastDragFinishedAt.current !== null
-      && window.performance.now() - lastDragFinishedAt.current < 250
-    ) {
-      return;
-    }
-    setIsExpanded(true);
-  };
-  const closeExpandedView = () => {
-    activeTouchPointers.current.clear();
-    resetDrag();
-    setIsExpanded(false);
-    window.requestAnimationFrame(() => {
-      slideButtonRefs.current
-        .get(activeIndexRef.current)
-        ?.focus({ preventScroll: true });
-    });
+  const swiperProps = {
+    modules: swiperModules,
+    a11y: swiperA11y,
+    slidesPerView: 1,
+    loop: hasMultipleImages,
+    speed,
+    threshold: 10,
+    allowTouchMove: hasMultipleImages,
+    touchStartPreventDefault: false,
+    focusableElements: 'input, select, option, textarea, video, label',
+    preventInteractionOnTransition: true,
+    runCallbacksOnInit: false,
+    onSlideChange: acceptSlide,
+    onTouchEnd: recordDragEnd,
   };
 
   return (
     <>
-      <div
-        className={`${styles.root} ${className ?? ''}`}
-        role="region"
-        aria-roledescription="carousel"
-        aria-label={`${projectTitle} 이미지`}
-      >
-        <div
-          className={`${styles.frame} ${hasMultipleImages ? styles.interactiveFrame : ''} ${isDragging ? styles.dragging : ''}`}
-          onPointerDown={handlePointerDown}
-          onPointerMove={handlePointerMove}
-          onPointerUp={(event) => finishDrag(event, true)}
-          onPointerCancel={(event) => finishDrag(event, false)}
-        >
-          <div
-            className={styles.track}
-            style={{
-              transform: `translate3d(calc(${-renderedTrackPosition * 100}% + ${dragOffset}px), 0, 0)`,
-              transition: isDragging || !transitionEnabled ? 'none' : undefined,
-            }}
-          >
-            {loopedImages.map((image, index) => {
-              const isLeadingClone = hasMultipleImages && index === 0;
-              const isTrailingClone = hasMultipleImages && index === loopedImages.length - 1;
-              const sourceIndex = hasMultipleImages ? index - 1 : index;
-              const isActive = !isLeadingClone
-                && !isTrailingClone
-                && sourceIndex === activeIndex;
-
-              return (
-                <button
-                  key={`${image.src}-${index}`}
+      <div className={`${styles.root} ${className ?? ''}`} role="region"
+        aria-roledescription="carousel" aria-label={`${projectTitle} 이미지`}>
+        <div className={`${styles.frame} ${hasMultipleImages ? styles.interactiveFrame : ''}`}
+          onPointerDownCapture={capturePointerDown} onPointerUpCapture={capturePointerEnd}
+          onPointerCancelCapture={capturePointerEnd}>
+          <Swiper {...swiperProps} className={styles.swiper}
+            onSwiper={(swiper) => { inlineSwiperRef.current = swiper; }}>
+            {images.map((image, index) => (
+              <SwiperSlide key={image.src} className={styles.swiperSlide} inert={index !== activeIndex}>
+                <button type="button" className={styles.slide} onClick={openExpandedView}
                   ref={(node) => {
-                    if (isLeadingClone || isTrailingClone) {
-                      return;
-                    }
-                    if (node) {
-                      slideButtonRefs.current.set(sourceIndex, node);
-                    } else {
-                      slideButtonRefs.current.delete(sourceIndex);
-                    }
+                    if (node) slideButtonRefs.current.set(index, node);
+                    else slideButtonRefs.current.delete(index);
                   }}
-                  type="button"
-                  className={styles.slide}
-                  onClick={openExpandedView}
-                  aria-label={isActive ? `${image.alt} 크게 보기` : undefined}
-                  inert={!isActive}
-                  tabIndex={isActive ? 0 : -1}
-                >
-                  <Image
-                    src={`${basePath}${image.src}`}
-                    alt={isActive ? image.alt : ''}
-                    fill
-                    sizes={imageSizes}
-                    className={styles.image}
-                    draggable={false}
-                  />
+                  aria-label={index === activeIndex ? `${image.alt} 크게 보기` : undefined}
+                  tabIndex={index === activeIndex ? 0 : -1}>
+                  <Image src={`${basePath}${image.src}`} alt={index === activeIndex ? image.alt : ''}
+                    fill sizes={imageSizes} className={styles.image} draggable={false} />
                 </button>
-              );
-            })}
-          </div>
+              </SwiperSlide>
+            ))}
+          </Swiper>
           {hasMultipleImages && (
             <>
-              <button
-                type="button"
-                className={`${styles.navButton} ${styles.previous}`}
-                onClick={() => move(-1)}
-                onPointerDown={(event) => event.stopPropagation()}
-                aria-label="이전 이미지"
-              >
-                ‹
-              </button>
-              <button
-                type="button"
-                className={`${styles.navButton} ${styles.next}`}
-                onClick={() => move(1)}
-                onPointerDown={(event) => event.stopPropagation()}
-                aria-label="다음 이미지"
-              >
-                ›
-              </button>
-              <span className={styles.counter} aria-live="polite">
-                {activeIndex + 1} / {images.length}
-              </span>
+              <button type="button" className={`${styles.navButton} ${styles.previous}`}
+                onClick={() => move(-1)} aria-label="이전 이미지">‹</button>
+              <button type="button" className={`${styles.navButton} ${styles.next}`}
+                onClick={() => move(1)} aria-label="다음 이미지">›</button>
+              <span className={styles.counter} aria-live="polite">{activeIndex + 1} / {images.length}</span>
             </>
           )}
         </div>
         {(currentImage.caption || hasMultipleImages) && (
           <div className={styles.footer}>
-            {currentImage.caption ? (
-              <p className={styles.caption}>{currentImage.caption}</p>
-            ) : (
-              <span />
-            )}
+            {currentImage.caption ? <p className={styles.caption}>{currentImage.caption}</p> : <span />}
             {hasMultipleImages && (
               <div className={styles.dots} aria-label="이미지 선택">
                 {images.map((image, index) => (
-                  <button
-                    key={image.src}
-                    type="button"
+                  <button key={image.src} type="button"
                     className={`${styles.dot} ${index === activeIndex ? styles.dotActive : ''}`}
-                    onClick={() => selectSlide(index)}
-                    aria-label={`${index + 1}번 이미지 보기`}
-                    aria-current={index === activeIndex ? 'true' : undefined}
-                  />
+                    onClick={() => selectSlide(index)} aria-label={`${index + 1}번 이미지 보기`}
+                    aria-current={index === activeIndex ? 'true' : undefined} />
                 ))}
               </div>
             )}
@@ -398,87 +259,35 @@ export default function ProjectMediaCarousel({
       </div>
 
       {isExpanded && (
-        <div
-          className={styles.lightboxOverlay}
-          role="dialog"
-          aria-modal="true"
-          aria-label={`${projectTitle} 크게 보기`}
-          onClick={closeExpandedView}
-        >
+        <div className={styles.lightboxOverlay} role="dialog" aria-modal="true"
+          aria-label={`${projectTitle} 크게 보기`} onClick={closeExpandedView}>
           <div className={styles.lightboxDialog} onClick={(event) => event.stopPropagation()}>
-            <button
-              ref={lightboxCloseRef}
-              type="button"
-              className={styles.lightboxClose}
-              onClick={closeExpandedView}
-              aria-label="크게 보기 닫기"
-            />
-            <div
-              className={`${styles.lightboxFrame} ${hasMultipleImages ? styles.lightboxInteractive : ''} ${isDragging ? styles.dragging : ''}`}
-              onPointerDown={handlePointerDown}
-              onPointerMove={handlePointerMove}
-              onPointerUp={(event) => finishDrag(event, true)}
-              onPointerCancel={(event) => finishDrag(event, false)}
-            >
-              <div
-                className={styles.lightboxTrack}
-                style={{
-                  transform: `translate3d(calc(${-renderedTrackPosition * 100}% + ${dragOffset}px), 0, 0)`,
-                  transition: isDragging || !transitionEnabled ? 'none' : undefined,
-                }}
-              >
-                {loopedImages.map((image, index) => {
-                  const isLeadingClone = hasMultipleImages && index === 0;
-                  const isTrailingClone = hasMultipleImages && index === loopedImages.length - 1;
-                  const sourceIndex = hasMultipleImages ? index - 1 : index;
-                  const isActive = !isLeadingClone
-                    && !isTrailingClone
-                    && sourceIndex === activeIndex;
-
-                  return (
-                    <div
-                      key={`lightbox-${image.src}-${index}`}
-                      className={styles.lightboxSlide}
-                      aria-hidden={!isActive}
-                    >
-                      <Image
-                        src={`${basePath}${image.src}`}
-                        alt={isActive ? image.alt : ''}
-                        fill
-                        sizes="96vw"
-                        className={styles.lightboxImage}
-                        draggable={false}
-                      />
-                    </div>
-                  );
-                })}
-              </div>
+            <button ref={lightboxCloseRef} type="button" className={styles.lightboxClose}
+              onClick={closeExpandedView} aria-label="크게 보기 닫기" />
+            <div className={`${styles.lightboxFrame} ${hasMultipleImages ? styles.lightboxInteractive : ''}`}
+              onPointerDownCapture={capturePointerDown} onPointerUpCapture={capturePointerEnd}
+              onPointerCancelCapture={capturePointerEnd}>
+              <Swiper {...swiperProps} className={styles.swiper} initialSlide={activeIndex}
+                onSwiper={(swiper) => { expandedSwiperRef.current = swiper; }}>
+                {images.map((image, index) => (
+                  <SwiperSlide key={`lightbox-${image.src}`} className={styles.lightboxSlide}
+                    aria-hidden={index !== activeIndex} inert={index !== activeIndex}>
+                    <Image src={`${basePath}${image.src}`} alt={index === activeIndex ? image.alt : ''}
+                      fill sizes="96vw" className={styles.lightboxImage} draggable={false} />
+                  </SwiperSlide>
+                ))}
+              </Swiper>
               {hasMultipleImages && (
                 <>
-                  <button
-                    type="button"
-                    className={`${styles.lightboxNav} ${styles.lightboxPrevious}`}
-                    onClick={() => move(-1)}
-                    onPointerDown={(event) => event.stopPropagation()}
-                    aria-label="이전 이미지"
-                  >
-                    ‹
-                  </button>
-                  <button
-                    type="button"
-                    className={`${styles.lightboxNav} ${styles.lightboxNext}`}
-                    onClick={() => move(1)}
-                    onPointerDown={(event) => event.stopPropagation()}
-                    aria-label="다음 이미지"
-                  >
-                    ›
-                  </button>
+                  <button type="button" className={`${styles.lightboxNav} ${styles.lightboxPrevious}`}
+                    onClick={() => move(-1)} aria-label="이전 이미지">‹</button>
+                  <button type="button" className={`${styles.lightboxNav} ${styles.lightboxNext}`}
+                    onClick={() => move(1)} aria-label="다음 이미지">›</button>
                 </>
               )}
             </div>
             <div className={styles.lightboxFooter}>
-              <p>{currentImage.caption ?? currentImage.alt}</p>
-              <span>{activeIndex + 1} / {images.length}</span>
+              <p>{currentImage.caption ?? currentImage.alt}</p><span>{activeIndex + 1} / {images.length}</span>
             </div>
           </div>
         </div>

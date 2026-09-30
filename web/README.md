@@ -18,6 +18,37 @@
 
 각 분류 안의 실험 선택 카드는 화면 너비에 맞춰 줄바꿈하며, 사진은 기존 좌우 슬라이드로 탐색합니다.
 
+### Swiper 전환 실험
+
+`experiment/swiper-media-galleries` 브랜치에서는 [Swiper React](https://swiperjs.com/react)
+14.3.0으로 두 미디어 컴포넌트의 이동 엔진만 교체합니다. 의존성은 정확한 버전으로 고정하고
+루트 workspace lockfile에 기록합니다. 공개 라이선스 사본은
+`public/licenses/swiper-LICENSE.txt`에 둡니다.
+
+- `ProjectMediaCarousel`: 원본 이미지의 `realIndex`를 제목·제작 모델·캡션에 연결하고,
+  본문과 확대 팝업을 동기화합니다. 여러 장은 순환하며 한 장에는 탐색 UI를 표시하지 않습니다.
+- `ArchiveVideoGallery`: 이미지 다음 영상 순서, 첫·마지막 경계, 첫 오픈 이후 hidden
+  플레이어 보관, 활성 영상 재생과 비활성/닫기 pause, 기본 재생 컨트롤을 유지합니다.
+- 모듈은 `A11y`만 사용합니다. 전역 Keyboard·Navigation·Pagination과 bundle CSS는 넣지
+  않습니다. 사이트 모션 끄기 또는 OS reduced-motion에서는 전환 시간을 0으로 맞춥니다.
+- 카테고리·실험 선택, BGM, HTML iframe 작품은 기존 구현을 유지합니다. 핀치는 브라우저에
+  맡기고 영상 하단 재생 컨트롤에서 시작한 gesture는 슬라이드로 처리하지 않습니다.
+
+Swiper의 짧은 스와이프 판정은 기존 거리 계산과 완전히 같지는 않습니다. 실제 모바일
+다중 터치·핀치는 별도 기기 QA가 필요하며, Node 테스트나 좁은 뷰포트 검사만으로 검증하지 않습니다.
+
+이 실험의 기준점은 공개 `main`의 `97bc782`입니다. 푸시/배포하지 않은 로컬 실험은
+공개 저장소 루트에서 아래처럼 전환합니다. 소스 브랜치를 바꾼 뒤 개발 화면을 새로고침하고,
+정적 `out/`을 제공하고 있었다면 빌드를 다시 해야 합니다.
+
+```bash
+git switch main                              # 기존 커스텀 슬라이드로 복귀
+git switch experiment/swiper-media-galleries # Swiper 실험으로 돌아오기
+```
+
+새 작업으로 변경 사항이 생긴 상태에서는 먼저 그 변경을 보존합니다. 강제 전환이나
+`reset --hard`는 사용하지 않습니다.
+
 물고기 키우기는 수조·상점 이미지 슬라이더와 하단 설명 사이에 BGM `The Saltwater Hour` 플레이어를 표시합니다.
 음원은 `media/agent-experiments/aqua-guardian/the-saltwater-hour.mp3`에 두며,
 Gemini를 통해 Lyria 3로 제작한 게임 배경음악입니다. 원본 MP3를 재인코딩 없이 사용합니다.
@@ -289,6 +320,8 @@ npm test           # 순수 로직 테스트 (node --test)
 - `scripts/theme.test.mjs` — 다크 표면·버튼 대비, 라이트 테마와 저장 팔레트 보존
 - `src/data/agentExperiments.test.mjs` — 실험별 제작 모델·버전·음악 제작 경로와 숨김 상태
 - `src/data/research.test.mjs` — 연구 문구·제목과 측정 수치, 연구 탭·시기 계약
+- `src/components/about/mediaSwiperPolicy.test.mjs` — 모션 정책과 원본 index 경계,
+  두 갤러리의 native 이동·접근성·재오픈 계약. 실제 드래그/영상 컨트롤 QA는 별도 수행
 
 타입 검사는 `npx tsc --noEmit`으로 따로 실행합니다.
 
