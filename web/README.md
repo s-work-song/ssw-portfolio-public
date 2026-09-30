@@ -66,18 +66,52 @@ PNG 원본과 Blender 씬은 공개 폴더에 포함하지 않습니다.
 영상은 아래 경로에 공개용 MP4와 표지 이미지를 두고, 같은 데이터 파일의
 `video` 또는 모델별 `videos`에 경로를 등록합니다. 기본 재생 컨트롤이 있는 플레이어로 보여줍니다.
 원본 영상은 공개 폴더 밖에 보관합니다.
-모션그래픽은 Opus 5.5 영상을 위에, GPT-6 Astra 영상을 아래에 같은 폭으로 배치합니다.
-각 영상 헤더에는 ‘제작 모델’과 모델명만 표시하고, 하단 사용 모델은 위·아래 영상으로 구분합니다.
+모션그래픽은 `모션그래픽 · Opus 5.5`, `모션그래픽 · GPT-6 Astra` 두 항목으로 구분합니다.
+기존 `#motion-graphics` 링크는 Opus 항목을 유지하며, Astra 항목은 `#motion-graphics-astra`로 연결합니다.
+Opus 모션그래픽은 15초를 한 번 재생하면 마지막 화면에서 정지합니다. 다시 재생 버튼을 누를 때만 처음부터 시작합니다.
+두 항목과 우주선 시뮬레이션 모두 제공된 HTML Canvas 작품을 실시간 재생합니다. MP4 플레이어는 표시하지 않습니다.
+HTML 콘텐츠 블록의 헤더에는 `HTML 실시간 재생` 제목을 표시하지 않고 제작 모델만 유지합니다.
 다른 이미지·영상도 제작 단계와 모델 헤더가 있는 공통 미디어 블록으로 감싸며,
 ComfyUI는 이미지와 영상 각각에 해당 모델을 표시합니다. 모델별 SVG 비교 그리드는 기존 카드별 모델명을 유지합니다.
 자동 재생과 사전 영상 다운로드는 하지 않으며, 하나를 재생하면 같은 항목의 다른 영상은 일시정지합니다.
 Astra 영상은 제공된 1080p·60fps H.264/AAC MP4를 재인코딩 없이 사용합니다.
+모션그래픽 두 항목, 우주선, 키보드 분해도에 `MP4 다운로드` 버튼을 표시하되 현재는 네이티브 `disabled` 버튼으로 비활성화합니다.
+파일과 `htmlPreview.download`의 경로·파일명은 보존하며, UI에는 다운로드 링크를 노출하지 않습니다.
+파일 자체를 제거하거나 직접 URL 접근을 차단한 것은 아니며, Blender 다운로드에는 영향을 주지 않습니다.
+영상물 4번 `키보드 분해도 영상`은 GPT-6 Astra로 제작한 WAVE / 108의 34초 최종본입니다.
+조립 → 키캡 웨이브 → 6개 층 수직 전개 → 재결합 순서로 재생하며, HTML에서 회전·확대·속도·단계 이동을 지원합니다.
+사이트용 사본은 자동 재생 없이 시작하고 한 번 재생 후 끝에서 정지합니다. Three.js MIT 고지와 내장 효과음을 보존합니다.
+원본 HTML·MP4는 그대로 두고, 사이트용 HTML에만 격리 정책·높이 전달과 좁은 화면의 조작부 줄바꿈을 적용합니다.
+키보드 음원은 이동 공기음의 고역과 지연 중첩을 완화한 수정본을 사용하며, 34초 영상 스트림과 동작 타이밍은 유지합니다.
+HTML의 장면 설명은 3D 화면 아래 별도 영역에 배치해 층별 부품 라벨과 겹치지 않게 합니다. 3D 화면 비율과 MP4는 유지합니다.
+5번 `모션 도감`은 Opus 5.5 작품을 HTML로만 재생합니다. `htmlPreview.download`는 선택 항목이며,
+지정하지 않은 모션 도감에는 다운로드 버튼이나 MP4 플레이어를 표시하지 않습니다.
+모션 도감의 목록 패널과 스크롤바는 사이트의 다크·라이트 테마를 따릅니다.
+목록 바깥의 작품 화면 또는 사이트 영역을 누르면 재생 위치를 바꾸지 않고 패널만 닫힙니다.
+목록 버튼·L 키로 열고 닫기, Esc 키로 닫기와 항목 선택 후 닫기도 유지합니다.
+HTML은 `sandbox="allow-scripts"` iframe에서 실행하며, 사이트 DOM·저장소에 접근하지 않습니다.
+현재 iframe이 보낸 높이 정보만 검증해 반영하며, 다른 항목으로 이동하면 iframe을 제거해 재생을 종료합니다.
+우주선처럼 화면 전체를 사용하는 작품은 `htmlPreview.layout: 'viewport'`로 지정해 고정 비율 프레임으로 표시합니다.
+이 경우 높이 메시지는 받지 않으며, 좁은 모바일 화면에서는 조작 공간을 위해 4:3 비율로 표시합니다.
+우주선 HTML의 좁은 화면에서는 재생·음소거·전체 화면 버튼과 화질 선택을 두 줄로 배치해 잘림을 방지합니다.
+Astra HTML도 좁은 프레임에서는 조작 버튼을 두 줄로 배치하며, 일반 문서형 프레임 높이는 테두리를 포함해 계산합니다.
+Opus의 외부 Google Fonts 연결은 제거하고 파일에 내장된 Unbounded·Anton·Plex Mono·Noto KR을 사용합니다.
+폰트 라이선스는 `public/fonts/licenses/`의 각 `*-OFL.txt`에 보관합니다.
+Astra의 내장 벡터 글자·UI 폰트·음원과 `asset-credits`의 원본 고지·라이선스는 그대로 보존합니다.
+원본 HTML은 수정하지 않았으며, 공개용 사본에만 격리 실행 정책과 필요한 높이 전달 코드를 추가했습니다.
+작품의 CSP는 외부 연결을 차단하고 인라인 스크립트·스타일과 내장 data 폰트·음원만 허용합니다.
 
 | 영상 항목 | 파일 경로 (`public/` 아래) | 제작 모델 |
 | --- | --- | --- |
-| 모션그래픽 · 위 영상 | `media/agent-experiments/motion-graphics/main.mp4` | Opus 5.5 |
-| 모션그래픽 · 아래 영상 | `media/agent-experiments/motion-graphics/astra.mp4` | GPT-6 Astra |
-| 우주선 시뮬레이션 | `media/agent-experiments/spaceship-simulation/main.mp4` | Opus 5.5 |
+| 모션그래픽 · Opus 5.5 (HTML 재생) | `media/agent-experiments/motion-graphics/opus-5-5.html` | Opus 5.5 |
+| 모션그래픽 · Opus 5.5 (MP4 다운로드) | `media/agent-experiments/motion-graphics/main.mp4` | Opus 5.5 |
+| 모션그래픽 · GPT-6 Astra (HTML 재생) | `media/agent-experiments/motion-graphics/gpt-6-astra.html` | GPT-6 Astra |
+| 모션그래픽 · GPT-6 Astra (MP4 다운로드) | `media/agent-experiments/motion-graphics/astra.mp4` | GPT-6 Astra |
+| 우주선 시뮬레이션 (HTML 재생) | `media/agent-experiments/spaceship-simulation/far-reach.html` | Opus 5.5 |
+| 우주선 시뮬레이션 (MP4 다운로드) | `media/agent-experiments/spaceship-simulation/main.mp4` | Opus 5.5 |
+| 키보드 분해도 (HTML 재생) | `media/agent-experiments/keyboard-exploded-view/main.html` | GPT-6 Astra |
+| 키보드 분해도 (MP4 다운로드 잠금) | `media/agent-experiments/keyboard-exploded-view/main.mp4` | GPT-6 Astra |
+| 모션 도감 (HTML 재생 전용) | `media/agent-experiments/motion-atlas/main.html` | Opus 5.5 |
 
 ComfyUI 활용 첫 사례는 `images/agent-experiments/comfyui/cafe-qwen-image-2512.png`의
 생성 이미지와 `media/agent-experiments/comfyui-qwen-wan/cafe-i2v-5s.mp4`의

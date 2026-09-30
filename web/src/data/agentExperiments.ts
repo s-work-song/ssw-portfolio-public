@@ -1,4 +1,10 @@
-export type AgentExperimentVideo = { src: string; poster?: string; caption?: string };
+export type AgentExperimentVideo = {
+  src: string;
+  poster?: string;
+  caption?: string;
+  /** 지정한 영상에만 같은 MP4 파일을 내려받는 버튼을 표시한다. */
+  downloadName?: string;
+};
 export type AgentExperimentImage = {
   src: string;
   alt: string;
@@ -43,6 +49,8 @@ export type AgentExperiment = {
   downloads?: Array<{ src: string; label: string }>;
   /** 공개 폴더에 실제 파일이 있는 영상만 등록한다. */
   video?: AgentExperimentVideo;
+  /** 사이트와 격리해 실행하는 HTML 작품. MP4는 다운로드로만 연결한다. */
+  htmlPreview?: { src: string; layout?: 'viewport'; download?: { src: string; filename: string } };
   /** 같은 작업의 모델별 영상을 등록 순서대로 한 열에 표시한다. */
   videos?: Array<{ label: string; model: string; video: AgentExperimentVideo }>;
   /** 실제 제작에 사용한 모델. 비교 화면용 models와 구분한다. */
@@ -437,43 +445,74 @@ export const agentExperiments: AgentExperiment[] = [
   {
     id: 'motion-graphics',
     category: '영상물',
-    title: '모션그래픽',
-    description: 'Opus 5.5와 GPT-6 Astra를 활용해 제작한 모션그래픽 영상입니다. 각 영상 위에 제작 모델을 표시했습니다.',
-    focus: ['모션그래픽', '영상 제작'],
-    modelCredits: [
-      { purpose: '위 영상', models: ['Opus 5.5'] },
-      { purpose: '아래 영상', models: ['GPT-6 Astra'] },
-    ],
-    videos: [
-      {
-        label: '위 영상',
-        model: 'Opus 5.5',
-        video: {
-          src: '/media/agent-experiments/motion-graphics/main.mp4',
-          poster: '/media/agent-experiments/motion-graphics/poster.jpg',
-        },
+    title: '모션그래픽 · Opus 5.5',
+    description: 'Opus 5.5로 제작한 모션그래픽을 HTML Canvas로 실시간 재생합니다. 재생·일시정지·속도 조절과 구간 탐색을 지원하며, MP4 다운로드는 현재 비활성화되어 있습니다.',
+    focus: ['모션그래픽', 'HTML Canvas', '실시간 렌더링'],
+    modelCredits: [{ models: ['Opus 5.5'] }],
+    htmlPreview: {
+      src: '/media/agent-experiments/motion-graphics/opus-5-5.html',
+      download: {
+        src: '/media/agent-experiments/motion-graphics/main.mp4',
+        filename: 'motion-graphics-opus-5-5.mp4',
       },
-      {
-        label: '아래 영상',
-        model: 'GPT-6 Astra',
-        video: {
-          src: '/media/agent-experiments/motion-graphics/astra.mp4',
-          poster: '/media/agent-experiments/motion-graphics/astra-poster.jpg',
-        },
+    },
+  },
+  {
+    id: 'motion-graphics-astra',
+    category: '영상물',
+    title: '모션그래픽 · GPT-6 Astra',
+    description: 'GPT-6 Astra로 제작한 FORM / FREQUENCY를 HTML Canvas로 실시간 재생합니다. 재생·일시정지·구간 탐색과 반복 재생을 지원하며, MP4 다운로드는 현재 비활성화되어 있습니다.',
+    focus: ['모션그래픽', 'HTML Canvas', '실시간 렌더링'],
+    modelCredits: [{ models: ['GPT-6 Astra'] }],
+    htmlPreview: {
+      src: '/media/agent-experiments/motion-graphics/gpt-6-astra.html',
+      download: {
+        src: '/media/agent-experiments/motion-graphics/astra.mp4',
+        filename: 'motion-graphics-gpt-6-astra.mp4',
       },
-    ],
+    },
   },
   {
     id: 'spaceship-simulation',
     category: '영상물',
     title: '우주선 시뮬레이션',
-    description: '우주선 콕핏 HUD와 행성 접근 장면을 담은 시뮬레이션 영상입니다.',
+    description: 'Opus 5.5로 제작한 우주선 시뮬레이션을 HTML Canvas로 실시간 재생합니다. 재생·일시정지·구간 탐색과 전체 화면 감상을 지원하며, MP4 다운로드는 현재 비활성화되어 있습니다.',
     focus: ['우주선 시뮬레이션', '콕핏 HUD'],
     modelCredits: [{ models: ['Opus 5.5'] }],
-    video: {
-      src: '/media/agent-experiments/spaceship-simulation/main.mp4',
-      poster: '/media/agent-experiments/spaceship-simulation/poster.jpg',
-      caption: '콕핏 HUD에서 바라보는 행성 접근 장면',
+    htmlPreview: {
+      src: '/media/agent-experiments/spaceship-simulation/far-reach.html',
+      layout: 'viewport',
+      download: {
+        src: '/media/agent-experiments/spaceship-simulation/main.mp4',
+        filename: 'spaceship-simulation-opus-5-5.mp4',
+      },
+    },
+  },
+  {
+    id: 'keyboard-exploded-view',
+    category: '영상물',
+    title: '키보드 분해도 영상',
+    description: 'GPT-6 Astra로 제작한 WAVE / 108 키보드의 34초 3D 분해·조립 애니메이션입니다. 부품을 쌓고 키캡을 웨이브로 조립한 뒤, 배열을 유지한 채 6개 층을 펼쳐 내부 구조를 보여주고 다시 결합합니다. 재생 위치·속도 조절과 드래그 회전·확대를 지원하며, MP4 다운로드는 현재 비활성화되어 있습니다.',
+    focus: ['108키 키보드', '분해·조립', '인터랙티브 3D'],
+    modelCredits: [{ models: ['GPT-6 Astra'] }],
+    htmlPreview: {
+      src: '/media/agent-experiments/keyboard-exploded-view/main.html',
+      download: {
+        src: '/media/agent-experiments/keyboard-exploded-view/main.mp4',
+        filename: 'keyboard-exploded-view-gpt-6-astra.mp4',
+      },
+    },
+  },
+  {
+    id: 'motion-atlas',
+    category: '영상물',
+    title: '모션 도감',
+    description: 'Opus 5.5로 제작한 모션 도감입니다. 다양한 모션 표현을 HTML로 실시간 재생하며, 목록에서 항목을 선택하거나 재생을 멈춰 해당 항목을 반복해서 살펴볼 수 있습니다. 별도의 영상 다운로드는 제공하지 않습니다.',
+    focus: ['모션 도감', 'HTML 실시간 재생', '항목별 탐색'],
+    modelCredits: [{ models: ['Opus 5.5'] }],
+    htmlPreview: {
+      src: '/media/agent-experiments/motion-atlas/main.html',
+      layout: 'viewport',
     },
   },
   {

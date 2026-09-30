@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFile, stat } from 'node:fs/promises';
 import test from 'node:test';
+import { Script } from 'node:vm';
 import { agentExperiments } from './agentExperiments.ts';
 
 const visible = agentExperiments.filter((item) => !item.hidden);
@@ -91,8 +92,11 @@ test('제작 모델이 확인된 공개 실험에 모델과 버전을 표시한�
     'blender-subway': ['GPT-6 Astra'],
     'blender-city': ['GPT-6 Astra'],
     'blender-office': ['GPT-6 Astra', 'GPT Image 2.5', 'GPT-6 Astra'],
-    'motion-graphics': ['Opus 5.5', 'GPT-6 Astra'],
+    'motion-graphics': ['Opus 5.5'],
+    'motion-graphics-astra': ['GPT-6 Astra'],
     'spaceship-simulation': ['Opus 5.5'],
+    'keyboard-exploded-view': ['GPT-6 Astra'],
+    'motion-atlas': ['Opus 5.5'],
     'comfyui-qwen-wan': ['GPT-6 Sol', 'Qwen Image 2512 FP8 E4M3FN', 'Wan 2.2 I2V 14B FP8'],
     'comfyui-gpt-image2-wan': ['GPT Image 2', 'Wan 2.2 I2V 14B FP8'],
   });
@@ -266,18 +270,25 @@ test('이미지와 영상은 제작 단계 및 모델 헤더가 있는 미디어
   assert.match(css, /\.mediaCredits\s*\{[^}]*flex-wrap:\s*wrap/);
 });
 
-test('모션그래픽은 Opus 위·Astra 아래 순서로 제작 모델 헤더가 있는 개별 플레이어를 연결한다', async () => {
+test('모션그래픽은 Opus와 Astra HTML을 별도 항목으로 나누고 기존 앵커를 유지한다', async () => {
   const items = visible.filter((item) => item.category === '영상물');
-  assert.deepEqual(items.map((item) => item.id), ['motion-graphics', 'spaceship-simulation']);
-  const [motion, spaceship] = items;
-  assert.equal(motion.video, undefined);
-  assert.deepEqual(motion.videos.map(({ label, model }) => ({ label, model })), [
-    { label: '위 영상', model: 'Opus 5.5' },
-    { label: '아래 영상', model: 'GPT-6 Astra' },
+  assert.deepEqual(items.map((item) => item.id), ['motion-graphics', 'motion-graphics-astra', 'spaceship-simulation', 'keyboard-exploded-view', 'motion-atlas']);
+  const [opus, astra, spaceship] = items;
+  assert.deepEqual(items.map((item) => item.title), [
+    '모션그래픽 · Opus 5.5', '모션그래픽 · GPT-6 Astra', '우주선 시뮬레이션',
+    '키보드 분해도 영상', '모션 도감',
   ]);
-  assert.deepEqual(motion.modelCredits, motion.videos.map(({ label, model }) => ({ purpose: label, models: [model] })));
+  assert.equal(opus.video, undefined);
+  assert.equal(opus.videos, undefined);
+  assert.equal(astra.video, undefined);
+  assert.equal(astra.videos, undefined);
+  assert.equal(spaceship.video, undefined);
+  assert.equal(spaceship.videos, undefined);
+  assert.equal(spaceship.htmlPreview.layout, 'viewport');
+  assert.deepEqual(opus.modelCredits, [{ models: ['Opus 5.5'] }]);
+  assert.deepEqual(astra.modelCredits, [{ models: ['GPT-6 Astra'] }]);
   assert.deepEqual(spaceship.modelCredits, [{ models: ['Opus 5.5'] }]);
-  const videos = [...motion.videos.map((entry) => entry.video), spaceship.video];
+  const videos = [opus.htmlPreview.download, astra.htmlPreview.download, spaceship.htmlPreview.download];
   assert.deepEqual(videos.map((video) => video.src), [
     '/media/agent-experiments/motion-graphics/main.mp4',
     '/media/agent-experiments/motion-graphics/astra.mp4',
@@ -285,24 +296,213 @@ test('모션그래픽은 Opus 위·Astra 아래 순서로 제작 모델 헤더�
   ]);
   for (const video of videos) {
     const videoPath = new URL(`../../public${video.src}`, import.meta.url);
-    const posterPath = new URL(`../../public${video.poster}`, import.meta.url);
     const videoBytes = await readFile(videoPath);
-    const posterBytes = await readFile(posterPath);
     assert.equal(videoBytes.toString('ascii', 4, 8), 'ftyp');
     assert.ok((await stat(videoPath)).size < 20_000_000);
-    assert.deepEqual([...posterBytes.subarray(0, 3)], [255, 216, 255]);
+    if (video.poster) {
+      const posterBytes = await readFile(new URL(`../../public${video.poster}`, import.meta.url));
+      assert.deepEqual([...posterBytes.subarray(0, 3)], [255, 216, 255]);
+    }
   }
   const component = await readFile(new URL('../components/about/AgentExperimentGallery.tsx', import.meta.url), 'utf8');
-  const css = await readFile(new URL('../components/about/AgentExperimentGallery.module.css', import.meta.url), 'utf8');
-  assert.match(component, /active\.videos\.map/);
-  const videoBlocks = component.slice(component.indexOf('active.videos.map'), component.indexOf('active.imageGroups?.length'));
-  assert.match(videoBlocks, /ExperimentMediaBlock[^>]*title=\{entry\.model\}/);
-  assert.match(videoBlocks, /eyebrow="제작 모델"/);
-  assert.doesNotMatch(videoBlocks, /entry\.label|위 영상|아래 영상/);
+  assert.match(component, /active\.htmlPreview \? \([\s\S]*?<ExperimentHtmlPreview/);
+  assert.match(component, /<article key=\{active\.id\}/);
   assert.match(component, /otherVideo !== currentVideo.*otherVideo\.pause\(\)/);
   assert.match(component, /preload="none"/);
   assert.doesNotMatch(component, /\bautoPlay\b/);
-  assert.match(css, /\.videoStack\s*\{[^}]*flex-direction:\s*column/);
+});
+
+test('모션그래픽과 우주선은 MP4 정보를 보존하고 다운로드 버튼만 비활성화한다', async () => {
+  const opus = visible.find((item) => item.id === 'motion-graphics');
+  const astra = visible.find((item) => item.id === 'motion-graphics-astra');
+  const spaceship = visible.find((item) => item.id === 'spaceship-simulation');
+  assert.deepEqual([opus.htmlPreview.download.filename, astra.htmlPreview.download.filename, spaceship.htmlPreview.download.filename], [
+    'motion-graphics-opus-5-5.mp4', 'motion-graphics-gpt-6-astra.mp4', 'spaceship-simulation-opus-5-5.mp4',
+  ]);
+  assert.ok(visible.filter((item) => ![opus.id, astra.id, spaceship.id, 'keyboard-exploded-view'].includes(item.id)).every((item) => (
+    !item.htmlPreview?.download && !item.video?.downloadName && !item.videos?.some((entry) => entry.video.downloadName)
+  )));
+  const component = await readFile(new URL('../components/about/AgentExperimentGallery.tsx', import.meta.url), 'utf8');
+  assert.match(component, /video\.downloadName &&/);
+  const downloadComponent = component.match(/function ExperimentDownload\([\s\S]*?\n\}/)?.[0];
+  assert.ok(downloadComponent);
+  assert.match(downloadComponent, /<button type="button" className=\{styles\.videoDownload\} disabled/);
+  assert.match(downloadComponent, /className=\{styles\.videoActions\}/);
+  assert.doesNotMatch(downloadComponent, /<a\b|\bhref=|\bonClick=/);
+  assert.match(downloadComponent, /className=\{styles\.downloadLocked\}>잠김<\/span>/);
+  const css = await readFile(new URL('../components/about/AgentExperimentGallery.module.css', import.meta.url), 'utf8');
+  assert.match(css, /\.videoDownload:disabled \{[^}]*opacity: 1[^}]*border-style: dashed[^}]*repeating-linear-gradient/);
+  assert.match(component, /<ExperimentDownload title=\{title\} \/>/);
+  assert.match(component, /preview\.download && \(/);
+  assert.match(component, /<video[\s\S]*?controls[\s\S]*?preload="none"/);
+  assert.match(component, /<source src=\{`\$\{basePath\}\$\{video\.src\}`\} type="video\/mp4"/);
+});
+
+test('HTML 콘텐츠 헤더는 재생 제목을 빼고 제작 모델만 유지한다', async () => {
+  const component = await readFile(new URL('../components/about/AgentExperimentGallery.tsx', import.meta.url), 'utf8');
+  assert.match(component, /<ExperimentMediaBlock title=\{active\.title\} hideTitle credits=\{active\.modelCredits\}>/);
+  assert.match(component, /\{!hideTitle && <h4>\{title\}<\/h4>\}/);
+  assert.doesNotMatch(component, /title="HTML 실시간 재생"/);
+  assert.match(component, /credit\.purpose \?\? '제작 모델'/);
+});
+
+test('Opus 모션그래픽은 끝에서 정지하고 명시적 재생만 처음부터 다시 시작한다', async () => {
+  const html = await readFile(new URL('../../public/media/agent-experiments/motion-graphics/opus-5-5.html', import.meta.url), 'utf8');
+  const setPlaying = html.match(/function setPlaying\(p\) \{[\s\S]*?\n  \}/)?.[0];
+  const frame = html.match(/function frame\(now\) \{[\s\S]*?\n  \}/)?.[0];
+  assert.ok(setPlaying && frame);
+  assert.doesNotMatch(frame, /t -= DUR|startAudio\(\)/);
+  for (const sample of [{ clock: null, speed: 1 }, { clock: null, speed: 0.25 }, { clock: 15.1, speed: 1 }]) {
+    const labels = {};
+    const audioStates = [];
+    let renders = 0;
+    const state = {
+      t: 14.99, DUR: 15, playing: true, started: true, speed: sample.speed,
+      last: 0, dirty: false, dragging: false, actx: null,
+      performance: { now: () => 100 },
+      audioClock: () => sample.clock,
+      $: (id) => ({ toggleAttribute() {}, setAttribute(name, value) { labels[`${id}:${name}`] = value; } }),
+      syncAudio: () => audioStates.push(state.playing),
+      meter() {}, render: () => { renders++; }, ui() {}, requestAnimationFrame() {},
+    };
+    const script = new Script(`${setPlaying}\n${frame}\nframe(100);`);
+    script.runInNewContext(state, { timeout: 1000 });
+    assert.equal(state.t, 15);
+    assert.equal(state.playing, false);
+    assert.equal(labels['play:aria-label'], '재생');
+    assert.deepEqual(audioStates, [false]);
+    new Script('frame(500);').runInNewContext(state, { timeout: 1000 });
+    assert.equal(state.t, 15);
+    assert.equal(renders, 1);
+    new Script('setPlaying(true);').runInNewContext(state, { timeout: 1000 });
+    assert.equal(state.t, 0);
+    assert.equal(state.playing, true);
+    assert.equal(labels['play:aria-label'], '일시정지');
+  }
+});
+
+test('HTML 작품은 외부 요청 없이 격리 재생하고 현재 프레임의 크기만 수신한다', async () => {
+  const previews = visible.filter((item) => item.htmlPreview);
+  assert.deepEqual(previews.map((item) => item.htmlPreview.src), [
+    '/media/agent-experiments/motion-graphics/opus-5-5.html',
+    '/media/agent-experiments/motion-graphics/gpt-6-astra.html',
+    '/media/agent-experiments/spaceship-simulation/far-reach.html',
+    '/media/agent-experiments/keyboard-exploded-view/main.html',
+    '/media/agent-experiments/motion-atlas/main.html',
+  ]);
+  for (const item of previews) {
+    const htmlPath = new URL(`../../public${item.htmlPreview.src}`, import.meta.url);
+    const html = await readFile(htmlPath, 'utf8');
+    assert.ok((await stat(htmlPath)).size < (item.id === 'motion-atlas' ? 10_000_000 : 4_500_000));
+    if (item.id === 'motion-atlas') {
+      assert.match(html, /id="app"/);
+      assert.match(html, /Motion Atlas/);
+    } else {
+      assert.match(html, /<canvas id="(?:reel|art|c|scene)"/);
+    }
+    assert.match(html, /playing\s*[=:]\s*false/);
+    assert.doesNotMatch(html, /fonts\.googleapis\.com|fonts\.gstatic\.com|<video\b/);
+    assert.match(html, /Content-Security-Policy[^>]*connect-src 'none'/);
+    if (item.htmlPreview.layout !== 'viewport') {
+      assert.match(html, /window\.parent\.postMessage\(\{ type: 'ssw:html-preview:size', height \}/);
+    }
+    for (const [index, script] of [...html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/g)].entries()) {
+      if (script[1].includes('application/json')) {
+        assert.doesNotThrow(() => JSON.parse(script[2]));
+      } else if (script[1].includes('application/octet-stream')) {
+        assert.match(script[2].trim(), /^[A-Za-z0-9+/=]+$/);
+      } else {
+        assert.doesNotThrow(() => new Script(script[2], { filename: `${item.id}-${index}.js` }));
+      }
+    }
+    if (item.id === 'motion-graphics') {
+      assert.match(html, /const AUDIO_B64 = /);
+      assert.equal([...html.matchAll(/@font-face/g)].length, 4);
+    } else if (item.id === 'motion-graphics-astra') {
+      assert.match(html, /data:audio\/wav;base64,/);
+      assert.match(html, /html\[data-portfolio-embed\] \.shell\{min-height:0\}/);
+      assert.match(html, /id="asset-credits"/);
+      assert.match(html, /interface_font_notice/);
+    } else if (item.id === 'spaceship-simulation') {
+      assert.match(html, /id="engage"/);
+      assert.match(html, /id="aud" type="application\/octet-stream"/);
+      assert.match(html, /visibilitychange/);
+    }
+  }
+  for (const font of ['unbounded', 'anton', 'ibmplexmono', 'noto-sans-kr']) {
+    const license = await readFile(new URL(`../../public/fonts/licenses/${font}-OFL.txt`, import.meta.url), 'utf8');
+    assert.match(license, /SIL OPEN FONT LICENSE Version 1.1/);
+  }
+  const component = await readFile(new URL('../components/about/AgentExperimentGallery.tsx', import.meta.url), 'utf8');
+  assert.match(component, /sandbox="allow-scripts"/);
+  assert.doesNotMatch(component, /allow-same-origin|dangerouslySetInnerHTML/);
+  assert.match(component, /event\.source !== frameRef\.current\?\.contentWindow/);
+  assert.match(component, /event\.origin !== 'null'/);
+  assert.match(component, /Number\.isFinite\(data\.height\)/);
+  assert.match(component, /Math\.min\(2200, Math\.max\(240/);
+  assert.match(component, /style=\{preview\.layout === 'viewport' \? undefined : \{ height \}\}/);
+  const css = await readFile(new URL('../components/about/AgentExperimentGallery.module.css', import.meta.url), 'utf8');
+  assert.match(css, /\.htmlViewportPlayer \{ height: auto; aspect-ratio: 16 \/ 9; \}/);
+});
+
+test('영상물 4번은 Astra 키보드 분해도이고 5번 모션 도감은 HTML만 제공한다', async () => {
+  const items = visible.filter((item) => item.category === '영상물');
+  const keyboard = items[3];
+  const atlas = items[4];
+  assert.equal(keyboard.id, 'keyboard-exploded-view');
+  assert.equal(keyboard.video, undefined);
+  assert.equal(keyboard.htmlPreview.src, '/media/agent-experiments/keyboard-exploded-view/main.html');
+  assert.deepEqual(keyboard.htmlPreview.download, {
+    src: '/media/agent-experiments/keyboard-exploded-view/main.mp4',
+    filename: 'keyboard-exploded-view-gpt-6-astra.mp4',
+  });
+  assert.equal(keyboard.downloads, undefined);
+  assert.deepEqual(keyboard.modelCredits, [{ models: ['GPT-6 Astra'] }]);
+  const html = await readFile(new URL(`../../public${keyboard.htmlPreview.src}`, import.meta.url), 'utf8');
+  assert.match(html, /"duration":34/);
+  assert.match(html, /34 SEC/);
+  assert.match(html, /id="scrub"[^>]*max="34"/);
+  assert.match(html, /playing:false/);
+  assert.match(html, /setPlaying\(false\);\s*window\.__WAVE_READY__/);
+  assert.match(html, /if\(next>=DURATION\)setPlaying\(false\)/);
+  assert.match(html, /07 레이어 전개/);
+  assert.match(html, /08 재결합/);
+  assert.match(html, /09 마무리/);
+  assert.match(html, /MIT License/);
+  assert.match(html, /data:audio\/mp4;base64,/);
+  assert.match(html, /<div class="scene-caption" aria-label="현재 장면 설명">[\s\S]*?id="annotationValue"/);
+  const filmMarkup = html.split('<div class="film"')[1]?.split('<div class="scene-caption"')[0];
+  assert.ok(filmMarkup);
+  assert.match(filmMarkup, /id="layerLabels"/);
+  assert.doesNotMatch(filmMarkup, /id="annotationValue"|id="chapterKo"/);
+  assert.match(html, /\.scene-caption \.annotation\{position:static/);
+  const mp4 = await readFile(new URL(`../../public${keyboard.htmlPreview.download.src}`, import.meta.url));
+  assert.equal(mp4.toString('ascii', 4, 8), 'ftyp');
+  assert.ok(mp4.length < 20_000_000);
+  assert.equal(atlas.id, 'motion-atlas');
+  assert.deepEqual(atlas.modelCredits, [{ models: ['Opus 5.5'] }]);
+  assert.equal(atlas.htmlPreview.layout, 'viewport');
+  assert.equal(atlas.htmlPreview.download, undefined);
+  assert.equal(atlas.video, undefined);
+  assert.equal(atlas.downloads, undefined);
+});
+
+test('모션 도감 목록은 테마에 맞는 스크롤바와 위치 이동 없는 바깥 클릭 닫기를 지원한다', async () => {
+  const html = await readFile(new URL('../../public/media/agent-experiments/motion-atlas/main.html', import.meta.url), 'utf8');
+  assert.match(html, /scrollbar-color: var\(--list-thumb\) var\(--list-bg\)/);
+  assert.match(html, /@media\(prefers-color-scheme:dark\)/);
+  assert.match(html, /color-scheme: light/);
+  assert.match(html, /color-scheme: dark/);
+  assert.match(html, /if \(!list\.contains\(event\.target\) && !bList\.contains\(event\.target\)\) setListOpen\(false\)/);
+  assert.match(html, /event\.source !== window\.parent \|\| event\.data\?\.type !== 'ssw:html-preview:dismiss-panels'/);
+  assert.match(html, /bList\.setAttribute\('aria-expanded', String\(open\)\)/);
+  assert.match(html, /e\.code === 'Escape'\) setListOpen\(false\)/);
+  const closePanel = html.match(/function setListOpen\(open\) \{([\s\S]*?)\n    \}/)?.[1];
+  assert.ok(closePanel);
+  assert.doesNotMatch(closePanel, /seek\(|\bT\s*=/);
+  const component = await readFile(new URL('../components/about/AgentExperimentGallery.tsx', import.meta.url), 'utf8');
+  assert.match(component, /postMessage\(\{ type: 'ssw:html-preview:dismiss-panels' \}, '\*'\)/);
+  assert.match(component, /document\.removeEventListener\('pointerdown', dismissPanels\)/);
 });
 
 test('ComfyUI 활용 첫 사례는 이미지와 5초 영상을 함께 표시하고 제작 단계를 구분한다', async () => {

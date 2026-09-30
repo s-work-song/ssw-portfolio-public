@@ -62,8 +62,18 @@
 .experimentCarousel { padding: 0 14px 14px; }
 .mediaBlock > .capture { aspect-ratio: 16 / 9; }
 .videoFrame { padding: 0 14px 14px; }
+.htmlPreview { padding: 0 14px 14px; }
+.htmlPlayer { display: block; width: 100%; border: 1px solid var(--border); border-radius: 12px; background: var(--bg-elev-2); }
+.htmlViewportPlayer { height: auto; aspect-ratio: 16 / 9; }
 .videoPlayer { display: block; width: 100%; aspect-ratio: 16 / 9; border: 1px solid var(--border); border-radius: 12px; background: #000; object-fit: contain; }
 .videoCaption { margin: 10px 0 0; color: var(--text-mute); font-size: .85rem; }
+.videoActions { display: flex; justify-content: flex-end; margin-top: 12px; }
+.videoDownload { display: inline-flex; align-items: center; gap: 10px; min-height: 42px; padding: 8px 14px; border: 1px solid color-mix(in srgb, var(--accent, #6366f1) 36%, transparent); border-radius: 8px; background: color-mix(in srgb, var(--accent, #6366f1) 9%, var(--bg-elev)); color: var(--accent, #6366f1); font-size: .85rem; font-weight: 600; text-decoration: none; }
+.videoDownload:not(:disabled):hover { background: color-mix(in srgb, var(--accent, #6366f1) 16%, var(--bg-elev)); }
+.videoDownload:disabled { opacity: 1; cursor: not-allowed; font-family: inherit; color: var(--text-mute); border-color: var(--border-strong); border-style: dashed; background: repeating-linear-gradient(135deg, transparent 0 6px, color-mix(in srgb, var(--text-mute) 8%, transparent) 6px 12px), var(--bg-elev-2); }
+.videoDownload > svg { flex: none; }
+.downloadLocked { padding: 2px 6px; border: 1px solid var(--border-strong); border-radius: 4px; background: var(--bg-elev); color: var(--text-dim); font-size: .65rem; line-height: 1.4; }
+.mediaCredits:first-child { margin-top: 0; }
 .audioPanel { display: grid; grid-template-columns: minmax(0, 1fr) minmax(220px, 380px); gap: 20px; align-items: center; padding: 20px 26px; border-top: 1px solid var(--border); background: var(--bg-elev-2); }
 .audioInfo { min-width: 0; }
 .audioInfo h4 { margin: 0 0 6px; font-size: 1.05rem; line-height: 1.4; overflow-wrap: anywhere; }
@@ -145,7 +155,8 @@
   .mediaHeader { padding: 12px; }
   .mediaCredits { gap: 10px 16px; }
   .experimentCarousel { padding: 0 10px 12px; }
-  .videoFrame { padding: 0 10px 12px; }
+  .videoFrame, .htmlPreview { padding: 0 10px 12px; }
+  .htmlViewportPlayer { aspect-ratio: 4 / 3; }
   .mediaStack, .videoStack { padding: 16px 10px; }
   .filmstrip button { flex-basis: 235px; }
 }

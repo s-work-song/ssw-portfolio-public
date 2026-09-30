@@ -32,6 +32,21 @@ function CapturePlaceholder({ label, kind = 'capture' }: { label: string; kind?:
   );
 }
 
+function ExperimentDownload({ title }: { title: string }) {
+  return (
+    <div className={styles.videoActions}>
+      <button type="button" className={styles.videoDownload} disabled title="영상 다운로드는 현재 비활성화되어 있습니다." aria-label={`${title} MP4 다운로드`}>
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+          <rect x="5" y="10" width="14" height="11" rx="2" />
+          <path d="M8 10V7a4 4 0 0 1 8 0v3" />
+          <path d="M12 14v3" />
+        </svg>
+        MP4 다운로드 <span className={styles.downloadLocked}>잠김</span>
+      </button>
+    </div>
+  );
+}
+
 function ExperimentVideo({ title, video }: { title: string; video: NonNullable<AgentExperiment['video']> }) {
   return (
     <div className={styles.videoFrame}>
@@ -53,12 +68,65 @@ function ExperimentVideo({ title, video }: { title: string; video: NonNullable<A
         브라우저에서 MP4 영상을 재생할 수 없습니다.
       </video>
       {video.caption && <p className={styles.videoCaption}>{video.caption}</p>}
+      {video.downloadName && (
+        <ExperimentDownload title={title} />
+      )}
     </div>
   );
 }
 
-function ExperimentMediaBlock({ title, eyebrow, description, credits, children }: {
+function ExperimentHtmlPreview({ title, preview }: { title: string; preview: NonNullable<AgentExperiment['htmlPreview']> }) {
+  const frameRef = useRef<HTMLIFrameElement | null>(null);
+  const [height, setHeight] = useState(800);
+
+  useEffect(() => {
+    // iframe 바깥의 사이트 클릭도 작품 내부의 열린 패널에 전달한다.
+    const dismissPanels = () => frameRef.current?.contentWindow?.postMessage({ type: 'ssw:html-preview:dismiss-panels' }, '*');
+    document.addEventListener('pointerdown', dismissPanels);
+    return () => document.removeEventListener('pointerdown', dismissPanels);
+  }, []);
+
+  useEffect(() => {
+    if (preview.layout === 'viewport') return;
+    const resize = (event: MessageEvent) => {
+      // sandbox의 불투명 출처와 현재 프레임에서 보낸 크기 정보만 수신한다.
+      if (event.source !== frameRef.current?.contentWindow || event.origin !== 'null') return;
+      const data = event.data;
+      if (!data || data.type !== 'ssw:html-preview:size' || typeof data.height !== 'number' || !Number.isFinite(data.height)) return;
+      // iframe의 위아래 1px 테두리까지 포함해 내부 스크롤바를 방지한다.
+      setHeight(Math.min(2200, Math.max(240, Math.ceil(data.height) + 2)));
+    };
+    window.addEventListener('message', resize);
+    return () => window.removeEventListener('message', resize);
+  }, [preview.layout]);
+
+  return (
+    <div className={styles.htmlPreview}>
+      <iframe
+        ref={frameRef}
+        className={`${styles.htmlPlayer} ${preview.layout === 'viewport' ? styles.htmlViewportPlayer : ''}`}
+        src={`${basePath}${preview.src}`}
+        title={`${title} HTML 재생`}
+        style={preview.layout === 'viewport' ? undefined : { height }}
+        sandbox="allow-scripts"
+        allow="fullscreen"
+        allowFullScreen
+        referrerPolicy="no-referrer"
+        loading="lazy"
+        onLoad={() => {
+          if (preview.layout !== 'viewport') frameRef.current?.contentWindow?.postMessage({ type: 'ssw:html-preview:measure' }, '*');
+        }}
+      />
+      {preview.download && (
+        <ExperimentDownload title={title} />
+      )}
+    </div>
+  );
+}
+
+function ExperimentMediaBlock({ title, hideTitle = false, eyebrow, description, credits, children }: {
   title: string;
+  hideTitle?: boolean;
   eyebrow?: string;
   description?: string;
   credits?: AgentExperiment['modelCredits'];
@@ -68,7 +136,7 @@ function ExperimentMediaBlock({ title, eyebrow, description, credits, children }
     <section className={styles.mediaBlock} aria-label={title}>
       <header className={styles.mediaHeader}>
         {eyebrow && <p className={styles.mediaEyebrow}>{eyebrow}</p>}
-        <h4>{title}</h4>
+        {!hideTitle && <h4>{title}</h4>}
         {description && <p>{description}</p>}
         {credits?.length ? (
           <dl className={styles.mediaCredits} aria-label={`${title} 제작 모델`}>
@@ -288,6 +356,12 @@ export default function AgentExperimentGallery() {
                   </div>
                 </div>
               ))}
+            </div>
+          ) : active.htmlPreview ? (
+            <div className={styles.mediaStack}>
+              <ExperimentMediaBlock title={active.title} hideTitle credits={active.modelCredits}>
+                <ExperimentHtmlPreview title={active.title} preview={active.htmlPreview} />
+              </ExperimentMediaBlock>
             </div>
           ) : active.videos?.length ? (
             <div className={styles.videoStack} aria-label={`${active.title} 모델별 영상`}>
