@@ -9,12 +9,16 @@ import {
   useRef,
   useState,
   type MouseEvent as ReactMouseEvent,
-  type TouchEvent as ReactTouchEvent,
+  type PointerEvent as ReactPointerEvent,
 } from 'react';
+import type { Swiper as SwiperInstance } from 'swiper';
+import { A11y } from 'swiper/modules';
+import { Swiper, SwiperSlide } from 'swiper/react';
 import type {
   AboutArchiveProjectVideo,
   AboutProjectImage,
 } from '@/data/about';
+import { useMediaSwiperSpeed } from './useMediaSwiperMotion';
 import styles from './ArchiveVideoGallery.module.css';
 
 const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? '';
@@ -39,17 +43,21 @@ export default function ArchiveVideoGallery({
   const [activeIndex, setActiveIndex] = useState(0);
   const [isOpen, setIsOpen] = useState(false);
   const [hasOpened, setHasOpened] = useState(false);
-  const [dragOffset, setDragOffset] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
-  const dragStartX = useRef<number | null>(null);
+  const swiperRef = useRef<SwiperInstance | null>(null);
+  const activeIndexRef = useRef(0);
+  const isOpenRef = useRef(false);
   const dragMoved = useRef(false);
-  const dragViewportWidth = useRef(0);
+  const activeTouchPointers = useRef(new Set<number>());
   const pinchActive = useRef(false);
   const suppressOverlayClose = useRef(false);
+  const suppressOverlayCloseTimer = useRef<number | null>(null);
+  const pinchReleaseFrame = useRef<number | null>(null);
   const videoElements = useRef(new Map<string, HTMLVideoElement>());
   const lastTriggerRef = useRef<HTMLButtonElement | null>(null);
   const closeButtonRef = useRef<HTMLButtonElement | null>(null);
   const titleId = useId();
+  const speed = useMediaSwiperSpeed();
   const mediaItems = useMemo<ArchiveMediaItem[]>(() => [
     ...images.map((image) => ({ kind: 'image' as const, ...image })),
     ...videos.map((video) => ({ kind: 'video' as const, ...video })),
@@ -60,181 +68,163 @@ export default function ArchiveVideoGallery({
     (_, index) => mediaItems[index] ?? null,
   );
 
-  const resetDrag = useCallback(() => {
-    dragStartX.current = null;
-    dragViewportWidth.current = 0;
-    dragMoved.current = false;
-    setDragOffset(0);
-    setIsDragging(false);
+  const blockAccidentalClicks = useCallback(() => {
+    if (suppressOverlayCloseTimer.current !== null) {
+      window.clearTimeout(suppressOverlayCloseTimer.current);
+      suppressOverlayCloseTimer.current = null;
+    }
+    suppressOverlayClose.current = true;
   }, []);
 
-  const suppressOverlayCloseBriefly = () => {
-    suppressOverlayClose.current = true;
-    window.setTimeout(() => {
+  const suppressOverlayCloseBriefly = useCallback(() => {
+    blockAccidentalClicks();
+    suppressOverlayCloseTimer.current = window.setTimeout(() => {
       suppressOverlayClose.current = false;
+      suppressOverlayCloseTimer.current = null;
     }, 500);
-  };
+  }, [blockAccidentalClicks]);
 
   const closeViewer = useCallback(() => {
+    isOpenRef.current = false;
     setIsOpen(false);
-    resetDrag();
+    dragMoved.current = false;
+    setIsDragging(false);
+    activeTouchPointers.current.clear();
     pinchActive.current = false;
     suppressOverlayClose.current = false;
+    if (suppressOverlayCloseTimer.current !== null) {
+      window.clearTimeout(suppressOverlayCloseTimer.current);
+      suppressOverlayCloseTimer.current = null;
+    }
+    if (pinchReleaseFrame.current !== null) {
+      window.cancelAnimationFrame(pinchReleaseFrame.current);
+      pinchReleaseFrame.current = null;
+    }
+    const swiper = swiperRef.current;
+    if (swiper && !swiper.destroyed) {
+      swiper.allowTouchMove = false;
+      swiper.allowSlideNext = true;
+      swiper.allowSlidePrev = true;
+    }
     window.requestAnimationFrame(() => lastTriggerRef.current?.focus());
-  }, [resetDrag]);
+  }, []);
 
   const openViewer = (
     index: number,
     event: ReactMouseEvent<HTMLButtonElement>,
   ) => {
     lastTriggerRef.current = event.currentTarget;
+    activeIndexRef.current = index;
+    isOpenRef.current = true;
     setActiveIndex(index);
     setHasOpened(true);
     setIsOpen(true);
   };
 
   const moveViewer = (direction: -1 | 1) => {
-    const nextIndex = Math.min(
-      mediaItems.length - 1,
-      Math.max(0, activeIndex + direction),
-    );
-    if (nextIndex === activeIndex) return;
-
-    setDragOffset(0);
-    setActiveIndex(nextIndex);
+    const swiper = swiperRef.current;
+    if (!swiper || swiper.destroyed || pinchActive.current) return;
+    if (direction === -1) swiper.slidePrev();
+    else swiper.slideNext();
   };
 
-  const startDrag = (
-    clientX: number,
-    clientY: number,
-    target: EventTarget,
-    viewportWidth: number,
-  ) => {
-    const targetElement = target as HTMLElement;
-    const targetVideo = typeof targetElement.closest === 'function'
-      ? targetElement.closest('video')
-      : null;
-    const isVideoControlArea = targetVideo
-      ? clientY >= targetVideo.getBoundingClientRect().bottom - videoControlExclusionHeight
-      : false;
-
-    if (
-      !isOpen
-      || (typeof targetElement.closest === 'function' && targetElement.closest('button'))
-      || isVideoControlArea
-    ) {
-      return;
-    }
-
-    dragStartX.current = clientX;
-    dragViewportWidth.current = viewportWidth;
-    dragMoved.current = false;
-  };
-
-  const updateDrag = (clientX: number) => {
-    if (dragStartX.current === null) return false;
-
-    const nextOffset = clientX - dragStartX.current;
-    if (!dragMoved.current && Math.abs(nextOffset) <= dragActivationDistance) {
-      return false;
-    }
-    if (!dragMoved.current) {
-      dragMoved.current = true;
-      setIsDragging(true);
-    }
-    setDragOffset(nextOffset);
-    return true;
-  };
-
-  const finishDrag = (
-    clientX: number,
-    shouldMove: boolean,
-  ) => {
-    if (dragStartX.current === null) return;
-
-    const distance = clientX - dragStartX.current;
-    const threshold = Math.min(72, dragViewportWidth.current * 0.15);
-    const didDrag = dragMoved.current;
-    if (dragMoved.current && shouldMove && distance <= -threshold) {
-      moveViewer(1);
-    } else if (dragMoved.current && shouldMove && distance >= threshold) {
-      moveViewer(-1);
-    }
-
-    resetDrag();
-    if (didDrag) {
-      suppressOverlayCloseBriefly();
-    }
-  };
-
-  const handleMouseDown = (event: ReactMouseEvent<HTMLDivElement>) => {
-    if (event.button !== 0) return;
-    startDrag(
-      event.clientX,
-      event.clientY,
-      event.target,
-      event.currentTarget.clientWidth,
-    );
-  };
-
-  const handleMouseMove = (event: ReactMouseEvent<HTMLDivElement>) => {
-    if (updateDrag(event.clientX)) event.preventDefault();
-  };
-
-  const handleTouchStart = (event: ReactTouchEvent<HTMLDivElement>) => {
-    if (event.touches.length > 1) {
-      pinchActive.current = true;
-      resetDrag();
-      suppressOverlayClose.current = true;
-      return;
-    }
-    if (pinchActive.current) return;
-
-    const touch = event.touches[0];
-    if (!touch) return;
-    startDrag(
-      touch.clientX,
-      touch.clientY,
-      event.target,
-      event.currentTarget.clientWidth,
-    );
-  };
-
-  const handleTouchMove = (event: ReactTouchEvent<HTMLDivElement>) => {
-    if (event.touches.length > 1 || pinchActive.current) {
-      pinchActive.current = true;
-      resetDrag();
-      return;
-    }
-
-    const touch = event.touches[0];
-    if (touch && updateDrag(touch.clientX)) event.preventDefault();
-  };
-
-  const handleTouchEnd = (
-    event: ReactTouchEvent<HTMLDivElement>,
-    shouldMove: boolean,
-  ) => {
-    if (pinchActive.current) {
-      resetDrag();
-      if (event.touches.length === 0) {
-        pinchActive.current = false;
-        suppressOverlayCloseBriefly();
+  const handlePointerDownCapture = (event: ReactPointerEvent<HTMLDivElement>) => {
+    const target = event.target instanceof Element ? event.target : null;
+    const video = target?.closest('video');
+    if (video) {
+      const isVideoControlArea = event.clientY
+        >= video.getBoundingClientRect().bottom - videoControlExclusionHeight;
+      // Swiper의 gesture/click 차단을 재생 컨트롤에 적용하지 않는다.
+      // 영상 본문에서 시작한 다음 드래그는 이 표식을 제거해 정상 처리한다.
+      video.toggleAttribute('data-swiper-native-controls', isVideoControlArea);
+      if (isVideoControlArea && swiperRef.current) {
+        swiperRef.current.allowTouchMove = false;
       }
-      return;
     }
+    if (event.pointerType !== 'touch') return;
+    activeTouchPointers.current.add(event.pointerId);
+    if (activeTouchPointers.current.size > 1) {
+      pinchActive.current = true;
+      dragMoved.current = false;
+      setIsDragging(false);
+      blockAccidentalClicks();
+      const swiper = swiperRef.current;
+      if (swiper && !swiper.destroyed) {
+        // 이미 시작된 스와이프도 핀치 종료 시 다른 슬라이드로 넘어가지 않게 한다.
+        swiper.allowTouchMove = false;
+        swiper.allowSlideNext = false;
+        swiper.allowSlidePrev = false;
+      }
+    }
+  };
 
-    const touch = event.changedTouches[0];
-    finishDrag(
-      touch?.clientX ?? dragStartX.current ?? 0,
-      shouldMove,
-    );
+  const handlePointerEndCapture = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (event.pointerType !== 'touch') return;
+    activeTouchPointers.current.delete(event.pointerId);
+    if (activeTouchPointers.current.size === 0 && pinchActive.current) {
+      suppressOverlayCloseBriefly();
+      if (pinchReleaseFrame.current !== null) {
+        window.cancelAnimationFrame(pinchReleaseFrame.current);
+      }
+      // Swiper가 현재 pointerup을 처리한 다음 이동 잠금을 해제한다.
+      pinchReleaseFrame.current = window.requestAnimationFrame(() => {
+        pinchReleaseFrame.current = null;
+        pinchActive.current = false;
+        const swiper = swiperRef.current;
+        if (!swiper || swiper.destroyed) return;
+        swiper.allowSlideNext = true;
+        swiper.allowSlidePrev = true;
+        swiper.slideTo(activeIndexRef.current, 0);
+        swiper.allowTouchMove = isOpenRef.current && mediaItems.length > 1;
+      });
+    }
+  };
+
+  const handleSwiperTouchStart = (
+    swiper: SwiperInstance,
+    event: PointerEvent | MouseEvent | TouchEvent,
+  ) => {
+    const target = event.target instanceof Element ? event.target : null;
+    const video = target?.closest('video');
+    const clientY = 'clientY' in event ? event.clientY : event.touches[0]?.clientY;
+    const isVideoControlArea = video && clientY !== undefined
+      ? clientY >= video.getBoundingClientRect().bottom - videoControlExclusionHeight
+      : false;
+    dragMoved.current = false;
+    swiper.allowTouchMove = isOpenRef.current
+      && mediaItems.length > 1
+      && !pinchActive.current
+      && !target?.closest('button')
+      && !isVideoControlArea;
   };
 
   const handleOverlayClick = () => {
     if (suppressOverlayClose.current) return;
     closeViewer();
   };
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const frame = window.requestAnimationFrame(() => {
+      const swiper = swiperRef.current;
+      if (!swiper || swiper.destroyed) return;
+      // 첫 오픈 뒤 숨겨서 보관한 Swiper도 재오픈한 실제 크기로 갱신한다.
+      const requestedIndex = activeIndexRef.current;
+      swiper.update();
+      swiper.slideTo(requestedIndex, 0);
+      swiper.allowTouchMove = mediaItems.length > 1;
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [isOpen, mediaItems.length]);
+
+  useEffect(() => () => {
+    if (suppressOverlayCloseTimer.current !== null) {
+      window.clearTimeout(suppressOverlayCloseTimer.current);
+    }
+    if (pinchReleaseFrame.current !== null) {
+      window.cancelAnimationFrame(pinchReleaseFrame.current);
+    }
+  }, []);
 
   useEffect(() => {
     mediaItems.forEach((media, index) => {
@@ -314,12 +304,8 @@ export default function ArchiveVideoGallery({
           role="presentation"
           hidden={!isOpen}
           onClick={handleOverlayClick}
-          onMouseMove={handleMouseMove}
-          onMouseUp={(event) => finishDrag(event.clientX, true)}
-          onMouseLeave={(event) => finishDrag(event.clientX, true)}
-          onTouchMove={handleTouchMove}
-          onTouchEnd={(event) => handleTouchEnd(event, true)}
-          onTouchCancel={(event) => handleTouchEnd(event, false)}
+          onPointerUpCapture={handlePointerEndCapture}
+          onPointerCancelCapture={handlePointerEndCapture}
         >
           <section
             className={styles.dialog}
@@ -348,22 +334,60 @@ export default function ArchiveVideoGallery({
             </header>
             <div
               className={`${styles.mediaViewport} ${isDragging ? styles.dragging : ''} ${activeMedia.kind === 'video' ? styles.videoViewport : ''}`}
-              onMouseDown={handleMouseDown}
-              onTouchStart={handleTouchStart}
+              onPointerDownCapture={handlePointerDownCapture}
               onDragStart={(event) => event.preventDefault()}
             >
-              <div
-                className={styles.mediaTrack}
-                style={{
-                  transform: `translate3d(calc(${-activeIndex * 100}% + ${dragOffset}px), 0, 0)`,
-                  transition: isDragging ? 'none' : undefined,
+              <Swiper
+                className={styles.mediaSwiper}
+                modules={[A11y]}
+                slidesPerView={1}
+                loop={false}
+                rewind={false}
+                initialSlide={activeIndex}
+                speed={speed}
+                threshold={dragActivationDistance}
+                longSwipesRatio={0.15}
+                allowTouchMove={isOpen && mediaItems.length > 1}
+                touchStartPreventDefault={false}
+                focusableElements="input, select, option, textarea, button, label"
+                noSwipingSelector="button, [data-swiper-native-controls]"
+                a11y={{
+                  wrapperLiveRegion: false,
+                  scrollOnFocus: false,
+                  slideLabelMessage: '{{index}} / {{slidesLength}}',
+                }}
+                role="region"
+                aria-roledescription="carousel"
+                aria-label={`${projectTitle} 미디어`}
+                onSwiper={(swiper) => { swiperRef.current = swiper; }}
+                onSlideChange={(swiper) => {
+                  if (pinchActive.current) return;
+                  activeIndexRef.current = swiper.realIndex;
+                  setActiveIndex(swiper.realIndex);
+                }}
+                onTouchStart={handleSwiperTouchStart}
+                onSliderFirstMove={(swiper) => {
+                  if (!swiper.allowTouchMove || pinchActive.current) return;
+                  dragMoved.current = true;
+                  blockAccidentalClicks();
+                  setIsDragging(true);
+                }}
+                onTouchEnd={(swiper) => {
+                  if (pinchActive.current) swiper.slideTo(activeIndexRef.current, 0);
+                  if (dragMoved.current) suppressOverlayCloseBriefly();
+                  dragMoved.current = false;
+                  setIsDragging(false);
+                }}
+                onBeforeDestroy={(swiper) => {
+                  if (swiperRef.current === swiper) swiperRef.current = null;
                 }}
               >
                 {mediaItems.map((media, index) => (
-                  <div
+                  <SwiperSlide
                     key={`viewer-${media.kind}-${media.src}`}
                     className={`${styles.mediaSlide} ${media.kind === 'video' ? styles.videoSlide : styles.imageSlide}`}
                     aria-hidden={index !== activeIndex}
+                    inert={index !== activeIndex}
                   >
                     {media.kind === 'video' ? (
                       <video
@@ -396,9 +420,9 @@ export default function ArchiveVideoGallery({
                         className={styles.expandedImage}
                       />
                     )}
-                  </div>
+                  </SwiperSlide>
                 ))}
-              </div>
+              </Swiper>
               {mediaItems.length > 1 && (
                 <>
                   <button
