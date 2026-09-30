@@ -1,7 +1,3 @@
-.bodyLocked {
-  overflow: hidden;
-}
-
 :global(:root[data-theme='dark']) .preview {
   background: var(--bg-elev);
 }

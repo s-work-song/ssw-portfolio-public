@@ -8,6 +8,8 @@ import type { Swiper as SwiperInstance } from 'swiper';
 import type { AboutProjectGallery } from '@/data/about';
 import { mediaSlideIndex } from './mediaSwiperPolicy';
 import { useMediaSwiperSpeed } from './useMediaSwiperMotion';
+import MediaDialog from './MediaDialog';
+import { mediaDialogOutsideCloseAllowed } from './mediaDialogPolicy';
 import styles from './ProjectMediaCarousel.module.css';
 
 const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? '';
@@ -68,30 +70,7 @@ export default function ProjectMediaCarousel({
     resetGesture();
     isExpandedRef.current = false;
     setIsExpanded(false);
-    window.requestAnimationFrame(() => {
-      slideButtonRefs.current.get(activeIndexRef.current)?.focus({ preventScroll: true });
-    });
   }, [resetGesture]);
-
-  useEffect(() => {
-    if (!isExpanded) return;
-    const previousOverflow = document.body.style.overflow;
-    const focusFrame = window.requestAnimationFrame(() => {
-      lightboxCloseRef.current?.focus({ preventScroll: true });
-    });
-    const closeOnEscape = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        closeExpandedView();
-      }
-    };
-    document.body.style.overflow = 'hidden';
-    window.addEventListener('keydown', closeOnEscape);
-    return () => {
-      window.cancelAnimationFrame(focusFrame);
-      document.body.style.overflow = previousOverflow;
-      window.removeEventListener('keydown', closeOnEscape);
-    };
-  }, [isExpanded, closeExpandedView]);
 
   useEffect(() => () => {
     if (unlockFrame.current !== null) window.cancelAnimationFrame(unlockFrame.current);
@@ -219,6 +198,7 @@ export default function ProjectMediaCarousel({
             {images.map((image, index) => (
               <SwiperSlide key={image.src} className={styles.swiperSlide} inert={index !== activeIndex}>
                 <button type="button" className={styles.slide} onClick={openExpandedView}
+                  aria-haspopup="dialog"
                   ref={(node) => {
                     if (node) slideButtonRefs.current.set(index, node);
                     else slideButtonRefs.current.delete(index);
@@ -259,9 +239,16 @@ export default function ProjectMediaCarousel({
       </div>
 
       {isExpanded && (
-        <div className={styles.lightboxOverlay} role="dialog" aria-modal="true"
-          aria-label={`${projectTitle} 크게 보기`} onClick={closeExpandedView}>
-          <div className={styles.lightboxDialog} onClick={(event) => event.stopPropagation()}>
+        <MediaDialog open={isExpanded}
+          onOpenChange={(open) => { if (!open) closeExpandedView(); }}
+          title={`${projectTitle} 크게 보기`}
+          overlayClassName={styles.lightboxOverlay}
+          contentClassName={styles.lightboxDialog}
+          initialFocusRef={lightboxCloseRef}
+          returnFocus={() => slideButtonRefs.current.get(activeIndexRef.current)}
+          canCloseFromOutside={() => mediaDialogOutsideCloseAllowed(
+            pinchLocked.current, lastDragFinishedAt.current, window.performance.now(),
+          )}>
             <button ref={lightboxCloseRef} type="button" className={styles.lightboxClose}
               onClick={closeExpandedView} aria-label="크게 보기 닫기" />
             <div className={`${styles.lightboxFrame} ${hasMultipleImages ? styles.lightboxInteractive : ''}`}
@@ -289,8 +276,7 @@ export default function ProjectMediaCarousel({
             <div className={styles.lightboxFooter}>
               <p>{currentImage.caption ?? currentImage.alt}</p><span>{activeIndex + 1} / {images.length}</span>
             </div>
-          </div>
-        </div>
+        </MediaDialog>
       )}
     </>
   );

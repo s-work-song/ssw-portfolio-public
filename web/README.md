@@ -49,6 +49,37 @@ git switch experiment/swiper-media-galleries # Swiper 실험으로 돌아오기
 새 작업으로 변경 사항이 생긴 상태에서는 먼저 그 변경을 보존합니다. 강제 전환이나
 `reset --hard`는 사용하지 않습니다.
 
+### Radix 팝업 실험
+
+`05a1ccf`는 Swiper 실험을 포함하는 기준점 머지 커밋입니다.
+`experiment/radix-media-dialogs`는 이 기준점에서 만든 1차 Radix 실험 브랜치이며,
+실험 결과는 현재 로컬 `dev`에도 머지되어 있습니다.
+공개 `main`이나 운영 배포로 승격한 것은 아닙니다.
+
+`@radix-ui/react-dialog` 1.1.23을 고정하고, 게임 실행과 이미지 확대를 공유
+`MediaDialog`로 연결합니다. 디자인 CSS, Swiper의 현재 이미지·제목·제작 모델 연동,
+게임 iframe 경로와 sandbox는 유지합니다. Radix에는 Portal, Escape·바깥 클릭 닫기,
+모달 안의 Tab/Shift+Tab 순환과 스크롤 잠금을 맡깁니다. 시작/복귀 포커스 대상과
+이미지 드래그 후 250ms·핀치 중 바깥 클릭 억제는 호출부 정책으로 전달합니다.
+
+영상 뷰어는 이번 1차 적용에서 제외합니다. 기존 뷰어는 첫 오픈 후 닫아도 hidden
+DOM을 보관합니다. 이 정책을 Dialog의 `forceMount`로 그대로 옮기면 닫힌 Content의
+배경 접근성 숨김과 Overlay의 스크롤 잠금이 남을 수 있어, 별도의 수명 설계가 필요합니다.
+연구 탭·설정 RadioGroup·채팅 UI도 이번 범위에 포함하지 않습니다.
+
+Radix와 새 런타임 종속성의 라이선스 고지는
+`public/licenses/radix-dialog-LICENSES.txt`에 포함합니다.
+`npm run test:dialogs`는 바깥 클릭 정책·연결 계약을 검사하며, 실제 포커스·iframe 키 입력과
+개발/정적 export 화면 검증은 별도로 수행합니다. iframe 내부 Escape는 부모 문서로
+전파되지 않으므로 게임 닫기 버튼도 유지합니다.
+
+Radix 적용 전 상태와 비교할 때는 공개 저장소 루트에서
+`git switch experiment/swiper-media-galleries`로 전환합니다. 이 상태에도 Swiper는 남습니다.
+`git switch main`은 기존 커스텀 슬라이드 구현이며, 현재 통합 상태로 돌아오려면
+`git switch dev`로 전환합니다. 원래 Radix 실험 구현은
+`experiment/radix-media-dialogs`에 보존되어 있습니다.
+정적 `out/`은 브랜치 변경만으로 바뀌지 않으므로 다시 빌드해야 합니다.
+
 물고기 키우기는 수조·상점 이미지 슬라이더와 하단 설명 사이에 BGM `The Saltwater Hour` 플레이어를 표시합니다.
 음원은 `media/agent-experiments/aqua-guardian/the-saltwater-hour.mp3`에 두며,
 Gemini를 통해 Lyria 3로 제작한 게임 배경음악입니다. 원본 MP3를 재인코딩 없이 사용합니다.
@@ -322,6 +353,8 @@ npm test           # 순수 로직 테스트 (node --test)
 - `src/data/research.test.mjs` — 연구 문구·제목과 측정 수치, 연구 탭·시기 계약
 - `src/components/about/mediaSwiperPolicy.test.mjs` — 모션 정책과 원본 index 경계,
   두 갤러리의 native 이동·접근성·재오픈 계약. 실제 드래그/영상 컨트롤 QA는 별도 수행
+- `src/components/about/mediaDialogPolicy.test.mjs` — Radix 공통 팝업 연결, 바깥 클릭
+  보호 경계, iframe 격리와 공개 라이선스 고지
 
 타입 검사는 `npx tsc --noEmit`으로 따로 실행합니다.
 
