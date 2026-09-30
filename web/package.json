@@ -21,11 +21,14 @@
     "test:media": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --test src/components/about/mediaSwiperPolicy.test.mjs",
     "test:dialogs": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --test src/components/about/mediaDialogPolicy.test.mjs",
     "test:log-api": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --test src/lib/logApi.test.mjs",
+    "test:radix-controls": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --test src/components/research/researchTabSelectionPolicy.test.mjs src/app/settings/radixSettings.test.mjs",
     "test:theme": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --test scripts/theme.test.mjs",
-    "test": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --test src/features/webmcp/logViewContract.test.mjs src/features/chat/parse.test.mjs src/features/chat/chatFailure.test.mjs src/features/chat/chatRequestIdentity.test.mjs src/features/chat/modelHistory.test.mjs scripts/local-fonts.test.mjs scripts/theme.test.mjs src/data/agentExperiments.test.mjs src/data/research.test.mjs src/components/about/mediaSwiperPolicy.test.mjs src/components/about/mediaDialogPolicy.test.mjs src/lib/logApi.test.mjs"
+    "test": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --test src/features/webmcp/logViewContract.test.mjs src/features/chat/parse.test.mjs src/features/chat/chatFailure.test.mjs src/features/chat/chatRequestIdentity.test.mjs src/features/chat/modelHistory.test.mjs scripts/local-fonts.test.mjs scripts/theme.test.mjs src/data/agentExperiments.test.mjs src/data/research.test.mjs src/components/about/mediaSwiperPolicy.test.mjs src/components/about/mediaDialogPolicy.test.mjs src/lib/logApi.test.mjs src/components/research/researchTabSelectionPolicy.test.mjs src/app/settings/radixSettings.test.mjs"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "1.1.23",
+    "@radix-ui/react-radio-group": "1.4.7",
+    "@radix-ui/react-tabs": "1.1.21",
     "next": "16.2.9",
     "next-themes": "^0.4.6",
     "react": "19.2.4",

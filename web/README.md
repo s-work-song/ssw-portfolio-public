@@ -118,6 +118,50 @@ Zod 적용 전 코드와 비교할 때는 `git switch experiment/radix-media-dia
 이 상태에는 Swiper와 Radix 팝업이 남습니다. 현재 통합 상태로 돌아올 때는 `git switch dev`입니다.
 미커밋 변경이 있을 때는 브랜치 전환만으로 원복되지 않으며, 정적 export도 다시 빌드해야 합니다.
 
+### Radix 연구 탭·설정 실험
+
+`experiment/radix-tabs-settings`는 Zod까지 통합한 로컬 `dev`의 `11f6ca8`에서 시작합니다.
+이번 변경은 아직 `dev`나 공개 `main`에 머지하지 않은 실험입니다.
+`@radix-ui/react-tabs` 1.1.21과 `@radix-ui/react-radio-group` 1.4.7을 고정하고,
+연구 대분류·성능 세부 탭과 설정의 단일 선택 12개 그룹에 적용합니다.
+기존 CSS·표시 순서·설정 setter·저장 방식과 자동 제어 `data-*` 표식은 유지합니다.
+스위치 두 개, 고정 패널 너비 슬라이더, 초기화 버튼과 영상 뷰어는 변경하지 않습니다.
+
+연구 탭은 controlled `activationMode="manual"`입니다. Tab으로 그룹에 들어가면
+선택된 탭으로 진입하며, 방향키·Home/End는 포커스만 옮깁니다. Enter/Space 또는
+클릭으로 내용을 바꿉니다. 기존 URL hash·탭/패널 ID·전환 애니메이션·상세 상태는
+기존 viewer가 계속 소유하며, Radix Content로 패널의 마운트 정책을 바꾸지 않습니다.
+mousedown/keydown과 뒤따르는 click의 동일 선택 요청은 한 번으로 합칩니다.
+
+설정 RadioGroup은 Tab으로 선택 항목에 진입하고 다음 Tab은 다음 그룹으로 나갑니다.
+방향키는 이동한 항목을 선택하고 Space도 선택합니다. Enter는 라디오 선택을 하지 않으며,
+Home/End는 포커스만 옮깁니다. 선택은 기존 typed Item `onClick` 한 경로에서 처리합니다.
+빠른 keyup이 Radix의 0ms 포커스 이동보다 먼저 처리되면 내부 선택 클릭이 누락될 수 있어,
+작은 그룹 래퍼가 해당 입력의 누락 클릭만 보완합니다. 정상 클릭을 먼저 관찰하면
+보완하지 않으며, 포인터·다른 키·그룹 밖 이동·unmount에서 대기 요청을 정리합니다.
+포커스 계산은 Radix에 맡기고 새 전역 키보드 리스너나 별도의 DOM 래퍼는 넣지 않습니다.
+SSR의 숨김 radio input은 레이아웃에 참여하지 않으며, 현재 form 없는 화면에서는
+하이드레이션 후 제거됩니다. 모바일 폭 QA는 실제 기기·터치 성능 검증과 구분합니다.
+
+2026-09-30 동일한 로컬 프로덕션 빌드의 HTML 직접 참조 JS를 파일별 gzip으로 합산하면
+연구 화면은 263,944 → 273,012 bytes(+9,068, 약 8.9 KiB), 설정 화면은
+244,754 → 255,755 bytes(+11,001, 약 10.7 KiB)입니다. 다른 확인 화면의 JS 변화는
+랜딩·기록 목록·기록 상세 각각 +125 bytes, 소개 +549 bytes이며 CSS는 모두 같습니다.
+실제 HTTP 전송량·클릭 지연·메모리 측정은 아니며 지연 로딩 청크도 별도입니다.
+
+`npm run test:radix-controls`는 탭 요청 중복 정책, 라디오 빠른 keyup 보완·취소 정책,
+controlled 값·기존 클릭/ARIA/스타일/제어 표식·버전·라이선스 계약을 검사합니다.
+키보드·마우스·새로고침과 좁은 화면 검증은 별도로 수행합니다. 이번 LAN 개발 URL에서는
+WebMCP 도구가 노출되지 않았지만, localhost 정적 화면에서는 등록 도구의 실제 연구 탭
+이동·설정 반영을 확인했습니다. 공통 실행기·스키마의 CPU mock 검증도 별도로 수행하며,
+브라우저 지원 범위를 일반화하거나 실제 모델 추론까지 검증한 것으로 보지 않습니다.
+추가 런타임 패키지의 MIT 고지는 `public/licenses/radix-controls-LICENSES.txt`에 둡니다.
+
+적용 전 통합 상태와 비교하려면 공개 저장소 루트에서 `git switch dev`로 전환합니다.
+Zod·Swiper·Radix 팝업은 그대로 남습니다. 실험으로 돌아올 때는
+`git switch experiment/radix-tabs-settings`를 사용합니다. 새 변경이 있으면 먼저 보존하고,
+정적 `out/`은 브랜치 변경 뒤 다시 빌드합니다. 원격 푸시·배포는 별도 승인 대상입니다.
+
 물고기 키우기는 수조·상점 이미지 슬라이더와 하단 설명 사이에 BGM `The Saltwater Hour` 플레이어를 표시합니다.
 음원은 `media/agent-experiments/aqua-guardian/the-saltwater-hour.mp3`에 두며,
 Gemini를 통해 Lyria 3로 제작한 게임 배경음악입니다. 원본 MP3를 재인코딩 없이 사용합니다.
