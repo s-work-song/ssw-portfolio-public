@@ -268,7 +268,7 @@ export default function ResearchViewer() {
         <p style={{ color: 'var(--text-dim)', marginBottom: '24px', fontSize: '0.975rem', lineHeight: 1.6, maxWidth: '650px', margin: '0 auto 24px' }}>
           개발 과정에서 검토한 내용과 프로젝트 회고는 기록(Log) 페이지에서 확인할 수 있습니다.
         </p>
-        <Link href="/about-me/log" className="hover-btn-primary" style={{
+        <Link href="/about-me/log" className="hover-btn-primary hover-btn-inverse" style={{
           display: 'inline-block',
           padding: '12px 28px',
           background: 'var(--text)',

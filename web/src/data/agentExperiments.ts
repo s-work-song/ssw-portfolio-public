@@ -83,7 +83,7 @@ export const agentExperiments: AgentExperiment[] = [
     id: 'claude-pelican-svg-animation',
     category: 'SVG 제작',
     title: '자전거 타는 펠리컨 애니메이션',
-    description: 'Claude 3종과 GPT-6 3종, Grok 4.7, Gemini 3.8 Flash에 동일한 프롬프트를 각각 단 한 번 입력해 얻은 펠리컨 SVG 애니메이션 결과를 비교합니다.',
+    description: '여러 모델에 동일한 프롬프트를 각각 단 한 번 입력해 얻은 펠리컨 SVG 애니메이션 결과를 비교합니다.',
     focus: ['SVG 애니메이션', '모델별 비교', '펠리컨'],
     modelCredits: [
       { purpose: 'Claude', models: ['Fable 5.1', 'Opus 5.5', 'Sonnet 5.5'] },
@@ -122,8 +122,8 @@ export const agentExperiments: AgentExperiment[] = [
     id: 'planet-defense',
     category: '2D 게임 제작',
     title: 'Planet Defense',
-    description: 'GPT로 제작한 이미지 리소스를 활용하고, 자동 요격과 액티브 스킬, 웨이브 사이의 방어망 정비를 결합한 행성 방어 게임입니다.',
-    focus: ['전투 시스템', '성장·강화', 'GPT 이미지'],
+    description: 'AI로 제작한 이미지 리소스를 활용하고, 자동 요격과 액티브 스킬, 웨이브 사이의 방어망 정비를 결합한 행성 방어 게임입니다.',
+    focus: ['전투 시스템', '성장·강화', 'AI 이미지'],
     modelCredits: [
       { purpose: '코드', models: ['GPT-5.6 Sol'] },
       { purpose: '2D 에셋', models: ['GPT Image 2'] },
@@ -146,8 +146,8 @@ export const agentExperiments: AgentExperiment[] = [
     id: 'aqua-guardian',
     category: '2D 게임 제작',
     title: '물고기 키우기',
-    description: 'GPT로 제작한 이미지 리소스를 활용해 물고기 육성과 재화 수집, 침입자 방어를 결합한 수족관 게임입니다. 배경음악은 Gemini를 통해 Lyria 3로 제작했습니다.',
-    focus: ['육성·경제', 'GPT 이미지', 'Lyria 3 BGM'],
+    description: 'AI로 제작한 이미지 리소스를 활용해 물고기 육성과 재화 수집, 침입자 방어를 결합한 수족관 게임입니다.',
+    focus: ['육성·경제', 'AI 이미지', '배경음악'],
     modelCredits: [
       { purpose: '코드', models: ['GPT-5.6 Sol'] },
       { purpose: '2D 에셋', models: ['GPT Image 2'] },
@@ -392,7 +392,7 @@ export const agentExperiments: AgentExperiment[] = [
     id: 'blender-office',
     category: 'Blender 3D 에셋 제작',
     title: '사무실',
-    description: 'GPT-6 Astra로 프롬프트를 작성해 GPT Image 2.5로 사무실 이미지를 먼저 생성하고, 이를 바탕으로 GPT-6 Astra가 공간 배치·가구·재질을 Blender로 모델링했습니다. 참고 이미지와 실제 Blender 구현 결과를 별도 블록으로 나누어 보여줍니다.',
+    description: 'AI로 프롬프트를 작성해 사무실 이미지를 먼저 생성하고, 이를 바탕으로 공간 배치·가구·재질을 Blender로 모델링했습니다. 참고 이미지와 실제 Blender 구현 결과를 별도 블록으로 나누어 보여줍니다.',
     focus: ['이미지 기반 모델링', '사무실', 'Blender 3D'],
     modelCredits: [
       { purpose: '프롬프트', models: ['GPT-6 Astra'] },
@@ -446,7 +446,7 @@ export const agentExperiments: AgentExperiment[] = [
     id: 'motion-graphics',
     category: '영상물',
     title: '모션그래픽 · Opus 5.5',
-    description: 'Opus 5.5로 제작한 모션그래픽을 HTML Canvas로 실시간 재생합니다. 재생·일시정지·속도 조절과 구간 탐색을 지원하며, MP4 다운로드는 현재 비활성화되어 있습니다.',
+    description: '모션그래픽을 HTML Canvas로 실시간 재생합니다. 재생·일시정지·속도 조절과 구간 탐색을 지원하며, MP4 다운로드는 현재 비활성화되어 있습니다.',
     focus: ['모션그래픽', 'HTML Canvas', '실시간 렌더링'],
     modelCredits: [{ models: ['Opus 5.5'] }],
     htmlPreview: {
@@ -461,7 +461,7 @@ export const agentExperiments: AgentExperiment[] = [
     id: 'motion-graphics-astra',
     category: '영상물',
     title: '모션그래픽 · GPT-6 Astra',
-    description: 'GPT-6 Astra로 제작한 FORM / FREQUENCY를 HTML Canvas로 실시간 재생합니다. 재생·일시정지·구간 탐색과 반복 재생을 지원하며, MP4 다운로드는 현재 비활성화되어 있습니다.',
+    description: 'FORM / FREQUENCY를 HTML Canvas로 실시간 재생합니다. 재생·일시정지·구간 탐색과 반복 재생을 지원하며, MP4 다운로드는 현재 비활성화되어 있습니다.',
     focus: ['모션그래픽', 'HTML Canvas', '실시간 렌더링'],
     modelCredits: [{ models: ['GPT-6 Astra'] }],
     htmlPreview: {
@@ -476,7 +476,7 @@ export const agentExperiments: AgentExperiment[] = [
     id: 'spaceship-simulation',
     category: '영상물',
     title: '우주선 시뮬레이션',
-    description: 'Opus 5.5로 제작한 우주선 시뮬레이션을 HTML Canvas로 실시간 재생합니다. 재생·일시정지·구간 탐색과 전체 화면 감상을 지원하며, MP4 다운로드는 현재 비활성화되어 있습니다.',
+    description: '우주선 시뮬레이션을 HTML Canvas로 실시간 재생합니다. 재생·일시정지·구간 탐색과 전체 화면 감상을 지원하며, MP4 다운로드는 현재 비활성화되어 있습니다.',
     focus: ['우주선 시뮬레이션', '콕핏 HUD'],
     modelCredits: [{ models: ['Opus 5.5'] }],
     htmlPreview: {
@@ -492,7 +492,7 @@ export const agentExperiments: AgentExperiment[] = [
     id: 'keyboard-exploded-view',
     category: '영상물',
     title: '키보드 분해도 영상',
-    description: 'GPT-6 Astra로 제작한 WAVE / 108 키보드의 34초 3D 분해·조립 애니메이션입니다. 부품을 쌓고 키캡을 웨이브로 조립한 뒤, 배열을 유지한 채 6개 층을 펼쳐 내부 구조를 보여주고 다시 결합합니다. 재생 위치·속도 조절과 드래그 회전·확대를 지원하며, MP4 다운로드는 현재 비활성화되어 있습니다.',
+    description: 'WAVE / 108 키보드의 34초 3D 분해·조립 애니메이션입니다. 부품을 쌓고 키캡을 웨이브로 조립한 뒤, 배열을 유지한 채 6개 층을 펼쳐 내부 구조를 보여주고 다시 결합합니다. 재생 위치·속도 조절과 드래그 회전·확대를 지원하며, MP4 다운로드는 현재 비활성화되어 있습니다.',
     focus: ['108키 키보드', '분해·조립', '인터랙티브 3D'],
     modelCredits: [{ models: ['GPT-6 Astra'] }],
     htmlPreview: {
@@ -507,7 +507,7 @@ export const agentExperiments: AgentExperiment[] = [
     id: 'motion-atlas',
     category: '영상물',
     title: '모션 도감',
-    description: 'Opus 5.5로 제작한 모션 도감입니다. 다양한 모션 표현을 HTML로 실시간 재생하며, 목록에서 항목을 선택하거나 재생을 멈춰 해당 항목을 반복해서 살펴볼 수 있습니다. 별도의 영상 다운로드는 제공하지 않습니다.',
+    description: '다양한 모션 표현을 HTML로 실시간 재생하며, 목록에서 항목을 선택하거나 재생을 멈춰 해당 항목을 반복해서 살펴볼 수 있습니다. 별도의 영상 다운로드는 제공하지 않습니다.',
     focus: ['모션 도감', 'HTML 실시간 재생', '항목별 탐색'],
     modelCredits: [{ models: ['Opus 5.5'] }],
     htmlPreview: {
@@ -519,7 +519,7 @@ export const agentExperiments: AgentExperiment[] = [
     id: 'comfyui-qwen-wan',
     category: 'ComfyUI 활용',
     title: 'ComfyUI 이미지 → 5초 영상',
-    description: 'GPT-6 Sol이 ComfyUI 워크플로우와 프롬프트를 구성하고, Qwen Image 2512 FP8 E4M3FN으로 이미지를 생성한 뒤 Wan 2.2 I2V 14B FP8로 5초 영상을 제작했습니다.',
+    description: 'AI와 함께 ComfyUI 워크플로우와 프롬프트를 구성해 이미지를 생성하고, 이를 바탕으로 5초 영상을 제작했습니다.',
     focus: ['ComfyUI', '이미지 생성', '이미지→영상'],
     modelCredits: [
       { purpose: '워크플로우와 프롬프트', models: ['GPT-6 Sol'] },
@@ -530,21 +530,21 @@ export const agentExperiments: AgentExperiment[] = [
       {
         src: '/images/agent-experiments/comfyui/cafe-qwen-image-2512.png',
         alt: '비 오는 저녁 거리의 S-WORK COFFEE 카페 이미지',
-        caption: 'Qwen Image 2512로 생성한 카페 이미지',
+        caption: '비 오는 저녁 거리의 카페 이미지',
       },
     ],
     video: {
       src: '/media/agent-experiments/comfyui-qwen-wan/cafe-i2v-5s.mp4',
       poster: '/images/agent-experiments/comfyui/cafe-qwen-image-2512.png',
-      caption: 'Wan 2.2 I2V로 이미지에서 생성한 5초 영상',
+      caption: '이미지에서 생성한 5초 영상',
     },
   },
   {
     id: 'comfyui-gpt-image2-wan',
     category: 'ComfyUI 활용',
-    title: 'GPT Image 2 → 5초 영상',
-    description: 'GPT Image 2로 생성한 행성 탐사 이미지를 ComfyUI에서 Wan 2.2 I2V 14B FP8로 5초 영상으로 확장했습니다.',
-    focus: ['GPT Image 2', 'ComfyUI', '이미지→영상'],
+    title: '행성 탐사 이미지 → 5초 영상',
+    description: '생성한 행성 탐사 이미지를 ComfyUI에서 5초 영상으로 확장했습니다.',
+    focus: ['행성 탐사 이미지', 'ComfyUI', '이미지→영상'],
     modelCredits: [
       { purpose: '이미지', models: ['GPT Image 2'] },
       { purpose: '영상', models: ['Wan 2.2 I2V 14B FP8'] },
@@ -553,13 +553,13 @@ export const agentExperiments: AgentExperiment[] = [
       {
         src: '/images/agent-experiments/comfyui/astronaut-gpt-image-2.png',
         alt: '우주비행사가 외계 행성의 암석 지형에서 우주선과 고리 행성을 바라보는 이미지',
-        caption: 'GPT Image 2로 생성한 행성 탐사 이미지',
+        caption: '외계 행성을 탐사하는 우주비행사 이미지',
       },
     ],
     video: {
       src: '/media/agent-experiments/comfyui-gpt-image2-wan/astronaut-i2v-5s.mp4',
       poster: '/images/agent-experiments/comfyui/astronaut-gpt-image-2.png',
-      caption: 'Wan 2.2 I2V로 이미지에서 생성한 5초 영상',
+      caption: '이미지에서 생성한 5초 영상',
     },
   },
   {

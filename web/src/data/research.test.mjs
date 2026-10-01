@@ -11,7 +11,11 @@ import {
 
 test('연구 카드와 주요 탭은 대상과 수행 내용을 설명하는 문구를 사용한다', () => {
   const card = aboutDestinations.find((item) => item.href === '/about-me/research');
-  assert.equal(card.desc, 'CPU 오버클럭·RAID 0 구성, SIMD·AVX2·CUDA 기반 성능 최적화, AI 에이전트 오케스트레이션의 실험 과정과 결과를 정리한 기록입니다.');
+  assert.equal(card.desc, '하드웨어 구성과 소프트웨어 최적화, 두 영역을 함께 고려한 SIMD·AVX2 활용 경험을 정리했습니다. AI 에이전트 오케스트레이션의 실험 과정과 결과도 담았습니다.');
+  assert.doesNotMatch(card.desc, /CPU 오버클럭/);
+  const topics = ['하드웨어 구성', '소프트웨어 최적화', 'SIMD·AVX2', 'AI 에이전트 오케스트레이션'];
+  const positions = topics.map((topic) => card.desc.indexOf(topic));
+  assert.ok(positions.every((position, index) => position >= 0 && (!index || position > positions[index - 1])));
   assert.deepEqual(researchPrimaryTabs.map((item) => item.label), [
     '연구·실험 이력 (Timeline)', '성능 최적화', '개발 도구 및 AI 활용',
   ]);

@@ -75,28 +75,28 @@ export const aboutDestinations: AboutDestination[] = [
   {
     title: '이력서 (Resume)',
     href: '/about-me/resume',
-    desc: '송상운의 직무 전문성, 실무 경력(라이트소프트, 큐브에이, 너울정보 등) 및 핵심 기술 스택을 정리한 공식 이력서입니다.',
+    desc: '실무 경력과 핵심 기술, 주요 업무에서 맡은 역할을 정리했습니다. 웹·앱 개발과 시스템 운영 경험을 바탕으로 쌓아 온 역량을 확인할 수 있습니다.',
     emoji: '📄',
     linkText: '이력서 확인하기 →',
   },
   {
     title: '자기소개서 (Cover Letter)',
     href: '/about-me/cover-letter',
-    desc: '문제를 발견하고 집요하게 끝까지 해결해 나가는 엔지니어링 철학과 인생의 터닝포인트, 저만의 가치관이 담겨 있습니다.',
+    desc: '문제를 발견하고 해결해 온 과정과, 엔지니어로서의 가치관을 형성한 경험을 담았습니다.',
     emoji: '✍️',
     linkText: '자기소개서 읽기 →',
   },
   {
     title: '연구 경험 (Research)',
     href: '/about-me/research',
-    desc: 'CPU 오버클럭·RAID 0 구성, SIMD·AVX2·CUDA 기반 성능 최적화, AI 에이전트 오케스트레이션의 실험 과정과 결과를 정리한 기록입니다.',
+    desc: '하드웨어 구성과 소프트웨어 최적화, 두 영역을 함께 고려한 SIMD·AVX2 활용 경험을 정리했습니다. AI 에이전트 오케스트레이션의 실험 과정과 결과도 담았습니다.',
     emoji: '🔬',
     linkText: '연구 경험 보러 가기 →',
   },
   {
     title: '기록 (Log)',
     href: '/about-me/log',
-    desc: '개발 및 일상 속에서 얻은 기술적 깨달음과 고민, 프로젝트를 되돌아보는 사후 회고를 기록하는 로그 블로그입니다.',
+    desc: '개발과 일상에서 얻은 기술적 배움, 문제 해결 과정의 고민, 프로젝트 회고를 기록합니다.',
     emoji: '📝',
     linkText: '로그 게시글 읽기 →',
   },
@@ -107,7 +107,7 @@ export const aboutArchiveProjects: AboutArchiveProject[] = [
     id: 'archive-canvas-dodge-game',
     title: 'Canvas 피하기 게임',
     category: 'Canvas Game',
-    desc: 'HTML Canvas와 JavaScript로 캐릭터를 조작해 장애물을 피하고 생존 시간을 기록하는 작은 브라우저 게임입니다. 당시의 단일 HTML 구현을 그대로 실행할 수 있습니다.',
+    desc: 'HTML Canvas와 JavaScript로 만든 브라우저 게임입니다. 방향키로 캐릭터를 움직여 장애물을 피하며 생존 시간을 기록합니다. 당시 작성한 단일 HTML 파일을 그대로 실행할 수 있습니다.',
     status: '단일 HTML 원본 실행',
     tags: ['HTML', 'Canvas', 'JavaScript'],
     preview: {
@@ -136,7 +136,7 @@ export const aboutArchiveProjects: AboutArchiveProject[] = [
     id: 'archive-wpf-excel-row-mapper',
     title: '엑셀 행 매핑 WPF 앱',
     category: 'WPF Desktop App',
-    desc: '반복적인 엑셀 작업의 생산성을 높이기 위해 행 데이터를 작업 모델에 자동 매핑하는 WinForms 프로토타입을 만든 뒤, WPF MVVM 구조로 마이그레이션해 실제 작업에 사용한 데스크톱 앱입니다.',
+    desc: '반복적인 엑셀 작업의 생산성을 높이기 위해 만든 데스크톱 앱입니다. 정부24에서 조회한 토지대장 정보를 주소·지번 기준으로 원본 엑셀 행에 매핑해 누락 정보를 채우는 WinForms 프로토타입을 만든 뒤, WPF 기반의 MVVM 구조로 전환해 실제 작업에 사용했습니다.',
     status: '실사용 화면 보관',
     tags: ['C#', 'WPF', 'MVVM', 'Excel'],
     preview: {
@@ -160,7 +160,7 @@ export const aboutArchiveProjects: AboutArchiveProject[] = [
     id: 'archive-android-ar-campfire',
     title: 'Android AR 캠프파이어 앱',
     category: 'Android AR',
-    desc: 'VR 게임 학원 수강 중 현실 공간 위에 캠프파이어 장면을 증강현실로 표시하도록 제작한 Android 앱입니다. 대표 시연 영상과 설치·점화·전경 장면을 함께 보관했습니다.',
+    desc: 'VR 게임 학원 수강 중 제작한 Android AR 앱입니다. 현실 공간에 가상의 캠프파이어를 배치하고 점화하는 과정을 시연 영상과 이미지로 담았습니다.',
     status: 'VR 게임 학원 제작 · 시연 영상·화면 보관',
     tags: ['Android', 'AR', 'Mobile'],
     wide: true,
@@ -207,8 +207,8 @@ export const aboutProjects: AboutProject[] = [
     id: 'project-common-infrastructure',
     title: '공용 인프라 프로젝트군',
     category: 'Shared Infrastructure',
-    desc: '인증·채팅·파일·미디어·알림·분석과 게이트웨이·설정·스케줄링·관측 기능을 여러 프로젝트에서 재사용할 수 있도록 분리한 프로젝트군입니다.',
-    status: '공개 저장소 운영 중',
+    desc: '여러 프로젝트에서 반복해서 필요한 인증·채팅·파일·미디어·알림·분석 기능을 공용 구성 요소로 분리했습니다. 게이트웨이·설정·스케줄링·관측 기능도 함께 구성했습니다.',
+    status: '설계 문서 공개',
     gallery: {
       images: [
         {
@@ -231,7 +231,7 @@ export const aboutProjects: AboutProject[] = [
     },
     links: [
       {
-        label: 'GitHub 저장소',
+        label: '공개 설계 문서',
         href: 'https://github.com/s-work-agency/ssw-infra-public',
         kind: 'repository',
       },
@@ -241,8 +241,8 @@ export const aboutProjects: AboutProject[] = [
     id: 'project-ecommerce-demo',
     title: '이커머스 데모',
     category: 'Commerce Demo',
-    desc: '상품 조회, 장바구니, 주문과 관리자 흐름을 갖춘 데모입니다. 실제 결제는 포함하지 않으며 배너와 상품 이미지는 AI 도구로 제작했습니다.',
-    status: '공개 데모 운영 중',
+    desc: '상품 조회, 장바구니, 주문, 관리자 기능을 구현한 이커머스 데모입니다. 실제 결제 기능은 포함하지 않았으며, 배너와 상품 이미지는 AI 도구로 제작했습니다.',
+    status: '데모·설계 문서 공개',
     gallery: {
       images: [
         {
@@ -275,7 +275,7 @@ export const aboutProjects: AboutProject[] = [
     },
     links: [
       {
-        label: 'GitHub 저장소',
+        label: '공개 설계 문서',
         href: 'https://github.com/s-work-agency/ssw-e-commerce-demo-public',
         kind: 'repository',
       },
@@ -295,8 +295,8 @@ export const aboutProjects: AboutProject[] = [
     id: 'project-colab-llm-launcher',
     title: 'SSW Colab LLM Launcher',
     category: 'Open-weight Inference',
-    desc: 'Colab에서 오픈웨이트 모델을 실행하고 Cloudflare Tunnel을 통해 외부 서비스가 접속할 수 있도록 구성한 런처입니다.\n\n엔진과 컨텍스트, 배치 등 실행 옵션을 조절해 여러 모델을 올릴 수 있으며, 현재 포트폴리오와 이커머스 데모의 AI 채팅에 연결되는 모델도 이 런처로 실행합니다.',
-    status: 'Colab 기반 개인 실험 환경 운영 중',
+    desc: 'Colab에서 오픈웨이트 모델을 실행하고, Cloudflare Tunnel을 통해 외부 서비스와 연결하는 런처입니다. 엔진·컨텍스트·배치 등 실행 옵션을 조절할 수 있습니다.',
+    status: '실행 화면 공개',
     gallery: {
       images: [
         {
@@ -327,8 +327,8 @@ export const aboutProjects: AboutProject[] = [
     id: 'project-code-archive',
     title: '코드 아카이브',
     category: 'Verified Code Archive',
-    desc: 'AI로 구현한 코드를 테스트와 검증을 거쳐 고정 항목으로 등록하고, 주제·언어·식별 규칙에 따라 같은 검증 코드를 조회해 재사용하는 프로젝트입니다.',
-    status: '공개 문서 저장소 운영 중',
+    desc: 'AI로 구현한 코드를 테스트·검증한 뒤, 검증한 버전을 항목별로 보관하는 프로젝트입니다. 주제·언어·식별 정보를 기준으로 원하는 코드를 찾아 재사용할 수 있습니다.',
+    status: '문서·코드 스냅샷 공개',
     gallery: {
       images: [
         {

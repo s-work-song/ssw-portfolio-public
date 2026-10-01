@@ -587,9 +587,14 @@ input, select, textarea, button {
   box-shadow: 0 12px 24px -8px var(--accent) !important;
 }
 
-/* 다크 표면은 빛 번짐 대신 테두리와 면 색상으로 상태를 구분한다. */
-:root[data-theme='dark'] .hover-btn-primary {
+/* 다크 표면은 빛 번짐 대신 테두리와 면 색상으로 상태를 구분한다.
+   반전 버튼은 강조색 배경이 아니므로 기존 var(--bg) 글자색을 보존한다. */
+:root[data-theme='dark'] .hover-btn-primary:not(.hover-btn-inverse) {
   color: var(--accent-contrast) !important;
+}
+
+:root[data-theme='dark'] .hover-btn-inverse {
+  background: color-mix(in srgb, var(--accent) 14%, var(--text)) !important;
 }
 
 :root[data-theme='dark'] .hover-btn-primary:hover {
