@@ -187,7 +187,7 @@ export default function CoverLetterPage() {
         <p style={{ color: 'var(--text-dim)', marginBottom: '24px' }}>
           CPU 명령 수준 최적화부터 AI 에이전트 코딩 연구에 이르기까지, 다양한 실험과 도전 결과를 정리해 두었습니다.
         </p>
-        <Link href="/about-me/research" className="hover-btn-primary" style={{
+        <Link href="/about-me/research" className="hover-btn-primary hover-btn-inverse" style={{
           display: 'inline-block',
           padding: '12px 24px',
           background: 'var(--text)',

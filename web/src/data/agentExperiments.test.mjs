@@ -259,7 +259,8 @@ test('음식·가전의 사진별 헤더는 기존 제작 모델 요약을 참�
   assert.match(component, /credit\.purpose === currentImage\.modelCreditPurpose/);
   assert.match(component, /onActiveIndexChange=\{setImageIndex\}/);
   assert.match(component, /<article key=\{active\.id\}/);
-  assert.match(component, /active\.modelCredits\.map/);
+  assert.doesNotMatch(component, /<dl aria-label="사용 모델">/);
+  assert.match(component, /imageWithoutRepeatedCaption\(currentImage, credits\)/);
   const carousel = await readFile(new URL('../components/about/ProjectMediaCarousel.tsx', import.meta.url), 'utf8');
   assert.match(carousel, /setActiveIndex\(nextIndex\);\s*onActiveIndexChange\?\.\(nextIndex\)/);
   assert.match(carousel, /mediaSlideIndex\(swiper\.realIndex, images\.length\)/);
@@ -291,9 +292,10 @@ test('이미지와 영상은 제작 단계 및 모델 헤더가 있는 미디어
   assert.match(component, /function ExperimentMediaBlock/);
   assert.match(component, /<header className=\{styles\.mediaHeader\}/);
   assert.match(component, /credit\.purpose \?\? '제작 모델'/);
-  assert.match(component, /active\.imageGroups\.map[\s\S]*credits=\{group\.modelCredits\}/);
-  assert.match(component, /title="생성 이미지"[^\n]*credit\.purpose === '이미지'/);
-  assert.match(component, /title="5초 생성 영상"[^\n]*credit\.purpose === '영상'/);
+  assert.match(component, /mergeModelCredits\(active\.imageGroups\.flatMap\(\(group\) => group\.modelCredits\)\)/);
+  assert.match(component, /title="생성 이미지"/);
+  assert.match(component, /title="5초 생성 영상"/);
+  assert.match(component, /credits=\{mergeModelCredits\(active\.modelCredits\)\}/);
   assert.doesNotMatch(component, /SCREEN \/ VIDEO|IMAGE \/ VIDEO|styles\.previewLabel/);
   assert.match(css, /\.mediaBlock\s*\{[^}]*min-width:\s*0[^}]*border:/);
   assert.match(css, /\.mediaCredits\s*\{[^}]*flex-wrap:\s*wrap/);
@@ -369,7 +371,7 @@ test('모션그래픽과 우주선은 MP4 정보를 보존하고 다운로드 �
 
 test('HTML 콘텐츠 헤더는 재생 제목을 빼고 제작 모델만 유지한다', async () => {
   const component = await readFile(new URL('../components/about/AgentExperimentGallery.tsx', import.meta.url), 'utf8');
-  assert.match(component, /<ExperimentMediaBlock title=\{active\.title\} hideTitle credits=\{active\.modelCredits\}>/);
+  assert.match(component, /<ExperimentMediaBlock title=\{active\.title\} hideTitle credits=\{creditsWithoutTitleRepeat\(active\.title, active\.modelCredits\)\}>/);
   assert.match(component, /\{!hideTitle && <h4>\{title\}<\/h4>\}/);
   assert.doesNotMatch(component, /title="HTML 실시간 재생"/);
   assert.match(component, /credit\.purpose \?\? '제작 모델'/);
@@ -649,5 +651,6 @@ test('제작 모델 정보가 기존 모델 비교 화면을 활성화하지 않
 test('하단의 실험 기록과 미확인 제작 안내 대신 실제 모델 정보를 사용한다', async () => {
   const source = await readFile(new URL('../components/about/AgentExperimentGallery.tsx', import.meta.url), 'utf8');
   assert.doesNotMatch(source, /<dt>실험 기록<\/dt>|모델별 제작 기록 정리 예정|제작 기록 확인 후 추가|요구사항·개입 과정·결과 정리 예정/);
-  assert.match(source, /active\.modelCredits\.map/);
+  assert.match(source, /function ExperimentModelCredits/);
+  assert.doesNotMatch(source, /<dl aria-label="사용 모델">/);
 });

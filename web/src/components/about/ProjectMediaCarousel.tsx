@@ -25,6 +25,8 @@ interface ProjectMediaCarouselProps {
   projectTitle: string;
   className?: string;
   imageSizes?: string;
+  /** 헤더와 같은 인라인 캡션만 숨기며 확대 보기의 원본 캡션은 유지한다. */
+  hideInlineCaption?: boolean;
   /** 전환이 수락되면 원본 이미지의 0 기반 인덱스를 알린다. 초기 인덱스는 0이다. */
   onActiveIndexChange?: (index: number) => void;
 }
@@ -34,6 +36,7 @@ export default function ProjectMediaCarousel({
   projectTitle,
   className,
   imageSizes = '(max-width: 720px) 100vw, 520px',
+  hideInlineCaption = false,
   onActiveIndexChange,
 }: ProjectMediaCarouselProps) {
   const [activeIndex, setActiveIndex] = useState(0);
@@ -170,6 +173,7 @@ export default function ProjectMediaCarousel({
   }
 
   const currentImage = images[activeIndex];
+  const inlineCaption = hideInlineCaption ? undefined : currentImage.caption;
   const swiperProps = {
     modules: swiperModules,
     a11y: swiperA11y,
@@ -221,9 +225,9 @@ export default function ProjectMediaCarousel({
             </>
           )}
         </div>
-        {(currentImage.caption || hasMultipleImages) && (
+        {(inlineCaption || hasMultipleImages) && (
           <div className={styles.footer}>
-            {currentImage.caption ? <p className={styles.caption}>{currentImage.caption}</p> : <span />}
+            {inlineCaption ? <p className={styles.caption}>{inlineCaption}</p> : <span />}
             {hasMultipleImages && (
               <div className={styles.dots} aria-label="이미지 선택">
                 {images.map((image, index) => (

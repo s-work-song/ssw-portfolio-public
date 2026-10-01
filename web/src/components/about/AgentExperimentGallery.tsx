@@ -5,6 +5,7 @@ import { agentExperiments, type AgentExperiment } from '@/data/agentExperiments'
 import { AGENT_EXPERIMENT_CATEGORY_ANCHORS, AGENT_EXPERIMENT_INTRO_ANCHOR, agentExperimentForAnchor } from '@/data/agentExperimentNavigation';
 import { CHAT_ACTION_TARGET_ARRIVED_EVENT } from '@/features/chat/navigation';
 import ProjectMediaCarousel from './ProjectMediaCarousel';
+import { creditsWithoutTitleRepeat, imageWithoutRepeatedCaption, mergeModelCredits, type DisplayModelCredit } from './experimentPresentation';
 import styles from './AgentExperimentGallery.module.css';
 
 // 탭, 슬라이드, 직접 링크 모두 동일한 노출 목록을 사용한다.
@@ -126,31 +127,36 @@ function ExperimentHtmlPreview({ title, preview }: { title: string; preview: Non
   );
 }
 
+function ExperimentModelCredits({ title, credits }: { title: string; credits?: DisplayModelCredit[] }) {
+  if (!credits?.length) return null;
+  return (
+    <dl className={styles.mediaCredits} aria-label={`${title} 제작 모델`}>
+      {credits.map((credit) => (
+        <div key={`${credit.purpose ?? 'models'}-${credit.models.join('|')}-${credit.via ?? ''}`}>
+          <dt>{credit.purpose ?? '제작 모델'}</dt>
+          <dd>{credit.models.join(' · ')}{credit.via && <small>{credit.via}를 통해 제작</small>}</dd>
+        </div>
+      ))}
+    </dl>
+  );
+}
+
 function ExperimentMediaBlock({ title, hideTitle = false, eyebrow, description, credits, children }: {
   title: string;
   hideTitle?: boolean;
   eyebrow?: string;
   description?: string;
-  credits?: AgentExperiment['modelCredits'];
+  credits?: DisplayModelCredit[];
   children: ReactNode;
 }) {
   return (
     <section className={styles.mediaBlock} aria-label={title}>
-      <header className={styles.mediaHeader}>
+      {(!hideTitle || eyebrow || description || credits?.length) ? <header className={styles.mediaHeader}>
         {eyebrow && <p className={styles.mediaEyebrow}>{eyebrow}</p>}
         {!hideTitle && <h4>{title}</h4>}
         {description && <p>{description}</p>}
-        {credits?.length ? (
-          <dl className={styles.mediaCredits} aria-label={`${title} 제작 모델`}>
-            {credits.map((credit) => (
-              <div key={credit.purpose ?? 'models'}>
-                <dt>{credit.purpose ?? '제작 모델'}</dt>
-                <dd>{credit.models.join(' · ')}{credit.via && <small>{credit.via}를 통해 제작</small>}</dd>
-              </div>
-            ))}
-          </dl>
-        ) : null}
-      </header>
+        <ExperimentModelCredits title={title} credits={credits} />
+      </header> : null}
       {children}
     </section>
   );
@@ -200,6 +206,7 @@ function ExperimentImageBlock({ title, mediaTitle, images, credits }: {
       <ProjectMediaCarousel
         className={styles.experimentCarousel}
         gallery={{ images, placeholder: `${title} 화면을 추가할 자리입니다.` }}
+        hideInlineCaption={Boolean(currentImage && imageWithoutRepeatedCaption(currentImage, credits).caption === undefined)}
         projectTitle={title}
         imageSizes="(max-width: 900px) calc(100vw - 72px), 900px"
         onActiveIndexChange={setImageIndex}
@@ -287,10 +294,11 @@ export default function AgentExperimentGallery() {
       <header className={styles.heading}>
         <div>
           <p className={styles.eyebrow}>AI EXPERIMENTS</p>
-          <h3 id="agent-experiments-heading">AI 에이전트 성능·활용 실험</h3>
+          <h3 id="agent-experiments-heading">AI 활용 실험</h3>
           <div id={AGENT_EXPERIMENT_INTRO_ANCHOR} tabIndex={-1} className={styles.introPanel}>
-            <p className={styles.intro}>AI 활용과 모델 성능 벤치마킹을 취미로 삼아 다양한 실험을 하고 있습니다. 모델마다 무엇을 어느 수준까지 해낼 수 있는지 직접 확인하고, 새로운 작업에 활용해 보는 과정에서 나온 결과물들을 이곳에 모았습니다. SVG 애니메이션부터 게임, Blender 모델링, 이미지·영상 생성까지 여러 영역을 탐색하고 있습니다.</p>
-            <p className={styles.intro}>개발을 중심으로 경험을 쌓아 온 만큼, 디자인과 시각적 표현은 상대적으로 익숙하지 않은 영역이었습니다. 하지만 AI와 함께 작업하면서 혼자서는 구현하기 어려웠던 아이디어를 구체화하고, 부족했던 부분을 보완할 수 있다는 가능성을 느꼈습니다. 그 가능성을 실제 작업으로 연결하려면 모델이 잘하는 일과 한계를 이해하는 것이 중요하다고 생각합니다. 다양한 과제를 직접 시도하며, 작업과 상황에 따라 어떤 맥락을 어떻게 제공해야 원하는 결과에 가까워지는지 알아가고 있습니다.</p>
+            <p className={styles.intro}>AI 모델이 어떤 작업을 어느 수준까지 수행할 수 있는지 직접 실험하고 있습니다.</p>
+            <p className={styles.intro}>개발을 중심으로 경험을 쌓아 온 만큼, 디자인과 시각적 표현은 상대적으로 익숙하지 않은 영역이었습니다. 하지만 AI와 함께 작업하면서 혼자서는 구현하기 어려웠던 아이디어를 구체화하고, 부족했던 부분을 보완할 수 있다는 가능성을 느꼈습니다.</p>
+            <p className={styles.intro}>그 가능성을 실제 작업으로 연결하려면 모델이 잘하는 일과 한계를 이해하는 것이 중요하다고 생각합니다. 다양한 과제를 직접 시도하며, 작업과 상황에 따라 어떤 맥락을 어떻게 제공해야 원하는 결과에 가까워지는지 알아가고 있습니다.</p>
           </div>
         </div>
       </header>
@@ -366,7 +374,7 @@ export default function AgentExperimentGallery() {
             </div>
           ) : active.htmlPreview ? (
             <div className={styles.mediaStack}>
-              <ExperimentMediaBlock title={active.title} hideTitle credits={active.modelCredits}>
+              <ExperimentMediaBlock title={active.title} hideTitle credits={creditsWithoutTitleRepeat(active.title, active.modelCredits)}>
                 <ExperimentHtmlPreview title={active.title} preview={active.htmlPreview} />
               </ExperimentMediaBlock>
             </div>
@@ -380,8 +388,11 @@ export default function AgentExperimentGallery() {
             </div>
           ) : active.imageGroups?.length ? (
             <div className={styles.mediaStack}>
+              <div className={styles.sharedCredits}>
+                <ExperimentModelCredits title={active.title} credits={mergeModelCredits(active.imageGroups.flatMap((group) => group.modelCredits))} />
+              </div>
               {active.imageGroups.map((group) => (
-                <ExperimentMediaBlock key={group.title} title={group.title} description={group.description} credits={group.modelCredits}>
+                <ExperimentMediaBlock key={group.title} title={group.title} description={group.description}>
                   <ProjectMediaCarousel
                     className={styles.experimentCarousel}
                     gallery={{ images: group.images, placeholder: `${group.title} 이미지 준비 중` }}
@@ -414,19 +425,24 @@ export default function AgentExperimentGallery() {
               <p className={styles.conditions}>비교 조건 · 공통 요구사항, 작업 시간·예산, 수정 지시와 리소스 사용 범위는 실험 후 정리할 예정입니다.</p>
             </div>
           ) : active.video && active.images?.length ? (
-            <div className={styles.mediaPair}>
-              <ExperimentMediaBlock title="생성 이미지" credits={active.modelCredits?.filter((credit) => credit.purpose === '이미지' || credit.purpose === '워크플로우와 프롬프트')}>
-                <ProjectMediaCarousel
-                  className={styles.experimentCarousel}
-                  gallery={{ images: active.images, placeholder: `${active.title} 이미지 준비 중` }}
-                  projectTitle={active.title}
-                  imageSizes="(max-width: 900px) calc(100vw - 72px), 450px"
-                />
-              </ExperimentMediaBlock>
-              <ExperimentMediaBlock title="5초 생성 영상" credits={active.modelCredits?.filter((credit) => credit.purpose === '영상' || credit.purpose === '워크플로우와 프롬프트')}>
-                <ExperimentVideo title={active.title} video={active.video} />
-              </ExperimentMediaBlock>
-            </div>
+            <>
+              <div className={styles.sharedCredits}>
+                <ExperimentModelCredits title={active.title} credits={mergeModelCredits(active.modelCredits)} />
+              </div>
+              <div className={styles.mediaPair}>
+                <ExperimentMediaBlock title="생성 이미지">
+                  <ProjectMediaCarousel
+                    className={styles.experimentCarousel}
+                    gallery={{ images: active.images, placeholder: `${active.title} 이미지 준비 중` }}
+                    projectTitle={active.title}
+                    imageSizes="(max-width: 900px) calc(100vw - 72px), 450px"
+                  />
+                </ExperimentMediaBlock>
+                <ExperimentMediaBlock title="5초 생성 영상">
+                  <ExperimentVideo title={active.title} video={active.video} />
+                </ExperimentMediaBlock>
+              </div>
+            </>
           ) : (
             <div className={styles.mediaStack}>
               {active.video ? (
@@ -451,24 +467,10 @@ export default function AgentExperimentGallery() {
           <div className={styles.caption}>
             <div className={styles.description}>
               <p className={styles.eyebrow}>{active.category}</p>
-              <h4>{active.title}</h4>
               <p>{active.description}</p>
               <ul className={styles.tags}>{active.focus.map((focus) => <li key={focus}>{focus}</li>)}</ul>
             </div>
             <div className={styles.details}>
-              {active.modelCredits?.length ? (
-                <dl aria-label="사용 모델">
-                  {active.modelCredits.map((credit) => (
-                    <div key={credit.purpose ?? 'models'}>
-                      <dt>{credit.purpose ?? '사용 모델'}</dt>
-                      <dd>
-                        {credit.models.join(' · ')}
-                        {credit.via && <small className={styles.modelVia}>{credit.via}를 통해 제작</small>}
-                      </dd>
-                    </div>
-                  ))}
-                </dl>
-              ) : null}
               {active.downloads?.length ? (
                 <div className={styles.downloads} aria-label="Blender 파일 다운로드">
                   <p>Blender 파일 다운로드</p>

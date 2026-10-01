@@ -61,7 +61,7 @@ export default function LogPage() {
         <p style={{ color: 'var(--text-dim)', marginBottom: '24px' }}>
           저의 전체 프로필 및 각 영역의 자세한 요약을 다시 확인하시려면 아래 버튼을 눌러주세요.
         </p>
-        <Link href="/about-me" className="hover-btn-primary" style={{
+        <Link href="/about-me" className="hover-btn-primary hover-btn-inverse" style={{
           display: 'inline-block',
           padding: '12px 24px',
           background: 'var(--text)',

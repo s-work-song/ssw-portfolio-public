@@ -46,9 +46,7 @@ export default function OverviewPage() {
             maxWidth: '850px',
             wordBreak: 'keep-all'
           }}>
-            저는 하드웨어 성능의 한계를 벤치마킹하는 취미에서 시작해, 전체 컴퓨팅 스택의 원리를 탐구하고 
-            AI 에이전트와 긴밀하게 협업하여 생산성을 최대로 끌어올리는 소프트웨어 엔지니어입니다. 
-            아래 네 개의 섹션에서 저의 경험, 철학, 그리고 탐구 기록을 확인해 보세요.
+            하드웨어의 성능과 한계를 직접 측정하는 취미에서 출발해, 컴퓨팅 시스템 전반의 동작 원리를 탐구해 왔습니다. 소프트웨어 개발에서는 객체지향과 설계 원칙, 디자인 패턴을 실제 문제 해결에 효과적으로 활용하는 방법을 고민해 왔습니다. 지금은 AI 에이전트와 협업하며 개발 과정의 생산성을 높이는 소프트웨어 엔지니어입니다.
           </p>
         </div>
       </AboutPanel>
@@ -56,7 +54,7 @@ export default function OverviewPage() {
       {/* Grid of Sections */}
       <div style={{
         display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))',
         gap: '24px'
       }}>
         {aboutDestinations.map((section) => (
@@ -130,7 +128,7 @@ export default function OverviewPage() {
             과거 작업 아카이브
           </h3>
           <p style={{ margin: '10px 0 0', color: 'var(--text-dim)', lineHeight: 1.7, wordBreak: 'keep-all' }}>
-            에이전틱 코딩을 본격적으로 활용하기 전에 직접 손 코딩으로 만들고 사용했던 작은 작업과 실험을 실행 화면과 함께 정리합니다.
+            AI 에이전트를 본격적으로 활용하기 전에 직접 구현하고 사용했던 작업과 실험을 실행 화면과 함께 정리했습니다.
           </p>
         </div>
         <ArchiveProjectShowcase projects={aboutArchiveProjects} />
@@ -156,10 +154,10 @@ export default function OverviewPage() {
             Projects
           </p>
           <h3 style={{ margin: 0, color: 'var(--text)', fontSize: 'clamp(1.35rem, 3vw, 1.75rem)' }}>
-            AI 에이전트들과 협업한 프로젝트
+            AI 협업 프로젝트
           </h3>
           <p style={{ margin: '10px 0 0', color: 'var(--text-dim)', lineHeight: 1.7, wordBreak: 'keep-all' }}>
-            요구사항과 운영 조건에 맞춰 구조와 기술을 선택하고, AI 에이전트의 구현 결과를 리뷰·테스트하며 진행한 프로젝트입니다.
+            요구사항과 운영 환경에 맞춰 구조와 기술을 선택하고, AI 에이전트의 구현 결과를 검토·테스트하며 진행한 프로젝트입니다.
           </p>
         </div>
         <div style={{
@@ -270,12 +268,9 @@ export default function OverviewPage() {
         boxShadow: 'var(--shadow)'
       }}>
         <h3 style={{ fontSize: '1.4rem', fontWeight: 700, marginBottom: '12px', color: 'var(--text)' }}>
-          첫걸음으로 상세 이력서를 확인해 보세요
+          상세 이력서를 확인해 보세요
         </h3>
-        <p style={{ color: 'var(--text-dim)', marginBottom: '24px', fontSize: '0.975rem', lineHeight: 1.6, maxWidth: '650px', margin: '0 auto 24px' }}>
-          저의 주요 업무 역량과 백엔드, 프론트엔드 및 시스템 연동 실무 경력이 일목요연하게 요약되어 있습니다.
-        </p>
-        <Link href="/about-me/resume" className="hover-btn-primary" style={{
+        <Link href="/about-me/resume" className="hover-btn-primary hover-btn-inverse" style={{
           display: 'inline-block',
           padding: '12px 28px',
           background: 'var(--text)',
