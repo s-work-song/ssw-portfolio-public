@@ -1,0 +1,778 @@
+
+<!doctype html>
+<html lang="ko">
+
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Canvas 피하기 게임</title>
+	<style>
+		*{box-sizing:border-box}
+		html,body{margin:0;min-height:100%;background:#fff;color:#111;font-family:system-ui,sans-serif;overflow-x:hidden}
+		.game-cont{padding: 12px; text-align: center;}
+		.game-cont canvas{max-width:100%;width:auto;height:min(350px,52vh)}
+		.game-cont .game-keypad{ width: 300px; max-width:100%; margin: 0 auto; -webkit-touch-callout:none;-webkit-user-select:none;-khtml-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none;-webkit-tap-highlight-color:rgba(0,0,0,0) }
+		.game-cont .game-keypad > div{margin:3px !important}
+		.game-cont .game-keypad .btn-keypad{border: 1px solid black; width: 30%; height: 36px; font-size: 20px;}
+		.game-cont .game-keypad .btn-keypad:active{background-color: white;}
+	</style>
+</head>
+
+<body>
+
+	<div id="wrap" class="games">
+		<div class="game-cont">		
+			<div>
+				<div>
+					<span>Time Score : </span>
+					<span id="gameScore"></span>
+					<span>초</span>
+				</div>
+				<div>
+					
+				</div>
+			</div>
+			<canvas id="dodgeGame" width="300" height="350" style="border: 1px solid black;">
+	
+			</canvas>
+			
+			<div id="keypad" class="game-keypad" oncontextmenu="return false">				
+
+				<div style="margin: 5px;">
+				<!--	<button type="button" id="keypadUp"  data-key-code="38" class="btn-keypad btn-up">▲</button>-->
+					<button type="button" id="keypadUp"  data-key-code="38" class="btn-keypad btn-up">▲</button>
+				</div>
+				<div>
+					<button type="button" id="keypadLeft"  data-key-code="37" class="btn-keypad btn-left">◀</button>
+					<button type="button" id="keypadRight" data-key-code="39"  class="btn-keypad btn-right">▶</button>
+				</div>
+				<div style="margin: 5px;">
+					<button type="button" id="keypadDown"  data-key-code="40" class="btn-keypad btn-down">▼</button>
+				</div>
+                
+				<div style="margin: 5px;">
+                    <button type="button" id="keypadStart" data-key-code=""  class="btn-keypad">시작</button>
+					<button type="button" id="keypadRestart" data-key-code=""  class="btn-keypad" style="width: auto; padding-left:15px; padding-right:15px; display: none; margin: 0 auto;">다시하기</button>
+				</div>
+			</div>
+		</div>
+		
+	</div>
+
+	
+	<script type="text/javascript">
+		"use strict";
+	
+		const STATE = {
+				POSE : {
+					WAIT : "POSE_WAIT",
+					MOVE : "POSE_MOVE",
+					SIT	 : "POSE_SIT",
+				},
+				DIRECTION : {
+						LEFT	: "DIRECTION_LEFT",
+						RIGHT	: "DIRECTION_RIGHT",
+						getByKey : function(keyCode) {
+							switch (keyCode.toString()) {
+							case "37": return STATE.DIRECTION.LEFT;
+							case "39": return STATE.DIRECTION.RIGHT;
+							default : return null;
+							}	
+						}
+				}
+		}
+
+		function DodgeGame(canvasContext, isStart = false) {  
+			this.ctx = canvasContext;
+			this.player = null;
+			this.obstacle = null;
+			this.startFrameTime = null;
+			this.score = 0;
+			
+			this.obstacles = [];
+			
+			this.config = {
+					isPlay : false,
+					
+					gravity : 1,
+					gravityAcceleration : 1,
+					gravityMaxSpeed : 20,
+					
+			}
+			this.data = {
+					getGravityAcceleration : ()=>{ 
+						var acc = (this.config.gravityAcceleration * 0.05) + 1;
+						return (acc < 1) ? 1 : acc; 
+					},
+					getGravityMaxSpeed : ()=>{ return this.config.gravity * this.config.gravityMaxSpeed },
+			}
+			
+			this.setPlayer = function(player) {
+				if(player.constructor !== Player){
+					return;
+				}
+				player.gameContext = this;
+				this.player = player;
+				this.player.init();
+			}
+			
+			this.setObstacle = function(obstacle) {
+				if(obstacle.constructor !== Obstacle){
+					return;
+				}
+				this.obstacle = obstacle;
+			}
+			
+			this.setAddObstacleInterval = function() {
+				
+				var gameContext = this;
+				var originObstacle = this.obstacle;
+				var obstacles = this.obstacles;
+				var removePoint = this.ctx.canvas.height + (this.obstacle.size * 2)
+				
+				var addObstacleInterval = setInterval(function() {
+					if(gameContext.config.isPlay == false){
+						clearInterval(addObstacleInterval);
+					}
+					if(obstacles.length != 0 && obstacles[obstacles.length-1].location.y == originObstacle.location.y){
+						return;
+					}
+					obstacles.push(originObstacle.create());
+				},300)
+				
+				var removeObstacleInterval = setInterval(function() {
+					if(gameContext.config.isPlay == false){
+						clearInterval(addObstacleInterval);
+					}
+					
+					obstacles.forEach(function(obstacle, idx) {
+						if(removePoint <= obstacle.location.y){
+							obstacles.shift();
+						}
+					})
+				},3000)
+			}
+			
+			this.draw = function(){
+				this.ctx.clearRect(0, 0, canvas.width, canvas.height)
+				this.player.draw();
+				this.obstacles.forEach(function(obstacle, idx) {
+					obstacle.draw();
+				})
+			}
+			
+			// https://riptutorial.com/ko/html5-canvas/topic/5017/%EC%B6%A9%EB%8F%8C-%EB%B0%8F-%EA%B5%90%EC%B0%A8%EC%A0%90
+			this.circlesColliding = function(c1, c2) {
+			    var dx=c2.location.x - c1.location.x;
+			    var dy=c2.location.y - c1.location.y;
+			    var rSum=c1.factor.size + c2.factor.size;
+			    return(dx*dx+dy*dy<=rSum*rSum);
+			}
+
+			this.rectCircleColliding = function(originRect, originCircle){
+				var rect = {
+						x : originRect.data.getLeft(),
+						y : originRect.location.y,
+						width : originRect.data.getWidth(),
+						height : originRect.data.getHeight(),
+				}
+				var circle = {
+						x : originCircle.location.x,
+						y : originCircle.location.y,
+						radius : originCircle.size,
+				}
+				
+			    var dx=Math.abs(circle.x-(rect.x+rect.width/2));
+			    var dy=Math.abs(circle.y-(rect.y+rect.height/2));
+
+			    if( dx > circle.radius+rect.width/2 ){ return(false); }
+			    if( dy > circle.radius+rect.height/2 ){ return(false); }
+
+			    if( dx <= rect.width ){ return(true); }
+			    if( dy <= rect.height ){ return(true); }
+
+			    var dx=dx-rect.width;
+			    var dy=dy-rect.height
+			    return(dx*dx+dy*dy<=circle.radius*circle.radius);
+			}
+			
+			this.collisionHandler = function() {
+				if(this.config.isPlay == false){
+					return;
+				}
+				this.exit();
+				this.postGameOut();
+			}
+			
+			this.postGameOut = function() {
+				
+			},
+			
+			this.collisionCheck = function() {
+				var gameContext = this;
+				var playerContext = this.player;
+				
+				this.obstacles.forEach(function(obstacle) {
+					if(gameContext.circlesColliding(playerContext, obstacle)){
+					//	alert("머리 충돌");
+						gameContext.collisionHandler();
+					};
+					if(gameContext.rectCircleColliding(playerContext, obstacle)){
+					//	alert("몸통 충돌")
+						gameContext.collisionHandler();
+					}
+				})
+			}
+			
+			this.keyPress = function(keyCode) {
+				
+				switch (keyCode.toString()) {
+				case "37":
+				case "39": this.player.move(keyCode); break;
+				case "38": this.player.jump(); break;
+				case "40": this.player.sit(); break;
+				default : return;
+				}
+			}
+			
+			this.keyUp = function(keyCode) {
+				
+				switch (keyCode.toString()) {
+				case "37":
+				case "39": this.player.moveWait(keyCode); break;
+				case "40": this.player.getUp(); break;
+				default : return;
+				}
+			}
+			
+			this.preFrame = function(time) {
+				
+			}
+		
+
+            this.frame = function(timestamp) {
+
+                
+				var gameContext = window.gameInstance;
+
+					if(gameContext.config.isPlay == false){
+						return;
+					}
+				
+					if(gameContext.startFrameTime== null){
+						gameContext.startFrameTime = timestamp;
+					}
+				
+					var time = timestamp - gameContext.startFrameTime
+					
+					gameContext.collisionCheck();
+					gameContext.draw();
+					gameContext.score = time;
+					gameContext.preFrame(time);
+					requestAnimationFrame(gameContext.frame)	
+				
+			}
+			
+			this.start = function() {
+				if(this.config.isPlay == true){
+					return;
+				}
+				
+				this.init();
+				this.config.isPlay = true;
+				this.obstacles = [];
+				this.score = 0;
+				this.startFrameTime = null;
+				this.setAddObstacleInterval();
+                
+                window.gameInstance = this;
+				requestAnimationFrame(this.frame);
+			}
+			
+			this.exit = function() {
+				this.config.isPlay = false;
+			}
+			
+			this.isExit = function() {
+				return this.config.isPlay == false;
+			}
+			
+			this.init = function() {
+				this.setPlayer(new Player(this,10,200,7));
+				this.setObstacle(new Obstacle(this));
+			}
+			
+			this.init();
+
+			if(isStart == true){
+				this.start();
+			}
+		}
+		
+		
+		
+		// 장애물
+		function Obstacle(gameContext) {
+			this.gameContext = gameContext,
+			this.size = 5;
+
+			this.location = {x : this.size, y : -this.size}
+			this.factor = {
+					size : this.size,
+			}
+			
+			this.createRandomX = function() {
+				var widthRange = this.gameContext.ctx.canvas.width - (this.size*2);
+				return (Math.random() * widthRange) + this.size;
+			}
+			
+			this.draw = function() {
+				this.location.y += 1;
+				var ctx = gameContext.ctx;
+				
+				ctx.beginPath();
+				ctx.arc(this.location.x, this.location.y, this.size, 0, (Math.PI / 180) * 360);
+				ctx.fill();
+			}
+			this.create = function() {
+				return new Obstacle(this.gameContext).init();
+			}
+			this.init = function() {
+				this.location.x = this.createRandomX();
+				return this;
+			}
+		}
+		
+
+		
+		// 플레이어
+	    function Player(gameContext, x, y, size) {
+			this.gameContext = gameContext,
+			
+			this.location = {x : x, y : y}
+			
+			this.factor = {
+					size : size,
+					height : 3,
+					bodyWidth : 1,
+					bodyHeight : 1,
+					
+					armPosition : 1,
+					armLength : 1,
+					armThickness : 1, 
+					armMotionAngle : 25,
+					armMotionLevelDefault : 1,
+					armMotionLevel : 1,
+					armMotionSpeed : 2,
+					
+					legPosition : 1,
+					legLength : 1,
+					legThickness : 1, 
+					legMotionAngle : 20,
+					legMotionLevelDefault : 2,
+					legMotionLevel : 2,
+					legMotionSpeed : 3,
+					
+					moveSpeed : 1,
+					jumpPower : 1,
+					
+					sitPrev : {},
+			}
+			
+			this.data = {
+					getHeadSize : ()=>{ return this.factor.size * 2 },
+					
+					getBodyWidth : ()=>{ return this.factor.size * this.factor.bodyWidth * 0.5},
+					getBodyHeight : ()=>{ return this.factor.size * this.factor.bodyHeight * 3},
+					
+					getArmPosition : ()=>{ return this.location.y + (this.factor.size * 1.1) + (this.factor.armPosition - 1)},
+					getArmLength : ()=>{ return (this.factor.size * 2) * this.factor.armLength},
+					getArmThickness : ()=>{ return (this.factor.size / 2) * this.factor.armThickness},
+					getArmMotion : ()=>{ return (-this.factor.armMotionAngle + (this.factor.armMotionLevel * this.factor.armMotionSpeed))},
+					
+					getLegPosition : ()=>{ return this.location.y + this.data.getBodyHeight() + (this.factor.legPosition - 1) },
+					getLegLength : ()=>{ return (this.factor.size * 2.5) * this.factor.legLength},
+					getLegThickness : ()=>{ return (this.factor.size / 2) * this.factor.legThickness},
+					getLegMotion : ()=>{ return (-this.factor.legMotionAngle + (this.factor.legMotionLevel * this.factor.legMotionSpeed))},
+					
+					getWidth : ()=>{ return this.factor.size * 2 },
+					getHeight : ()=>{ return this.factor.size + this.data.getBodyHeight() + this.data.getLegLength()},
+					getHeightBottomFromCenter : ()=>{ return this.data.getHeight() - this.factor.size },
+					
+					getLeft : ()=>{ return this.location.x - this.factor.size },
+					getRight : ()=>{ return this.data.getLeft() + this.data.getWidth(); },
+					getTop : ()=>{ return this.location.y - this.factor.size },
+					getBottom : ()=>{ return this.data.getTop() + this.data.getHeight(); },
+					
+					getMoveSpeed : ()=>{ return this.factor.moveSpeed * 1.5 },
+					getJumpPower : ()=>{ return this.factor.jumpPower * this.factor.size + 5},
+					getJumpSpeed : ()=>{ return this.factor.jumpPower * (this.factor.size * 0.05) + 0.2},
+			}
+			
+			this.animation = {
+					gravityInterval : null,
+					isActiveGravity : false,
+					
+					moveInterval : null,
+			}
+			this.state = {
+					pose : STATE.POSE.WAIT,
+					direction	: STATE.DIRECTION.RIGHT,
+					jump : false,
+			}
+			
+			this.getMaxLeft = function(){
+				return 0 + this.factor.size;
+			}			
+			this.getMaxRight = function(){
+				return this.gameContext.ctx.canvas.width - this.factor.size;
+			}
+			
+			this.drawDebug = function(ctx) {
+				ctx.beginPath();
+				ctx.moveTo(this.data.getLeft(), this.data.getTop());
+				
+				ctx.lineTo(this.data.getRight(), this.data.getTop());
+				ctx.lineTo(this.data.getRight(), this.data.getBottom());
+				ctx.lineTo(this.data.getLeft(), this.data.getBottom());
+				ctx.lineTo(this.data.getLeft(), this.data.getTop());
+				
+				ctx.stroke();
+				ctx.closePath()
+			}
+			
+			this.setGravity = function(isActive) {
+				if(typeof isActive != "boolean"){
+					return;
+				}
+
+				this.animation.isActiveGravity = isActive;
+				
+		
+				if(isActive == false || this.gravityInterval != null){
+					return;
+				}
+				
+				var playerContext = this;
+				var gravity = this.gameContext.config.gravity;
+				var gravityAcc = this.gameContext.data.getGravityAcceleration();
+				var gravityMaxSpeed = this.gameContext.data.getGravityMaxSpeed();
+				
+				var land = this.gameContext.ctx.canvas.height;
+	
+				this.animation.gravityInterval = setInterval(function() {
+					if(playerContext.animation.isActiveGravity == false){
+						clearInterval(playerContext.animation.gravityInterval);
+						playerContext.gravityInterval = null;
+						return;
+					}
+
+					gravity = (gravity >= gravityMaxSpeed) ? gravityMaxSpeed : (gravity * gravityAcc);
+
+					if((land - playerContext.data.getHeightBottomFromCenter()) == playerContext.location.y){
+						return;
+					}
+					
+					if(((land - playerContext.data.getHeightBottomFromCenter()) - gravity) > playerContext.location.y){
+						playerContext.location.y += gravity;	
+					}else{
+						playerContext.location.y = (land - playerContext.data.getHeightBottomFromCenter());
+					}
+				}, 10)
+			}
+			
+			this.drawHead = function(ctx) {
+				ctx.beginPath();
+				ctx.fillStyle = "#000000";
+				ctx.arc(this.location.x, this.location.y, this.factor.size, 0, 2 * Math.PI);
+				ctx.fill();
+
+				ctx.beginPath();
+				ctx.fillStyle = "#FFFFFF";
+				
+				var faceDirection;
+				
+				switch (this.state.direction) {
+				case STATE.DIRECTION.LEFT	:
+					faceDirection = this.location.x - (this.factor.size/2); break;
+				case STATE.DIRECTION.RIGHT	: 
+					faceDirection = this.location.x + (this.factor.size/2); break;
+				default: 
+					faceDirection = this.location.x + (this.factor.size/2); break;
+				}
+
+				ctx.arc(faceDirection, this.location.y - (this.factor.size/5),this.factor.size/5, 0, 2 * Math.PI);	
+				ctx.fill()
+
+				ctx.fillStyle = "#000000";
+			}
+			this.drawBody = function(ctx) {
+				var bodyWidth = this.data.getBodyWidth();
+				ctx.fillRect(this.location.x - (bodyWidth/2), this.location.y, bodyWidth, this.data.getBodyHeight());
+			}
+			this.drawArm = function(ctx) {
+				var armLength = this.data.getArmLength();
+				var armThickness = this.data.getArmThickness();
+				ctx.save();
+				
+				ctx.translate(this.location.x, this.data.getArmPosition());
+				ctx.save();
+				
+				ctx.rotate((Math.PI / 180) * (-this.data.getArmMotion()));
+				ctx.fillRect((-armThickness/2), 0, armThickness, armLength);
+				ctx.restore();
+				
+				ctx.rotate((Math.PI / 180) * this.data.getArmMotion());
+				ctx.fillRect((-armThickness/2), 0, armThickness, armLength);
+				ctx.restore();
+				
+				ctx.restore();
+			}			
+			this.drawLeg = function(ctx) {
+				var legLength = this.data.getLegLength();
+				var legThickness = this.data.getLegThickness();
+				
+				ctx.save();
+				
+				ctx.translate(this.location.x, this.data.getLegPosition());
+				ctx.save();
+
+				ctx.rotate((Math.PI / 180) * (-this.data.getLegMotion()));
+				ctx.fillRect(-legThickness/2, 0, legThickness, legLength);
+				ctx.restore();
+
+				ctx.rotate((Math.PI / 180) * this.data.getLegMotion());
+				ctx.fillRect(-legThickness/2, 0, legThickness, legLength);
+				ctx.restore();
+				
+				ctx.restore();
+			}
+			this.draw = function() {
+				var ctx = this.gameContext.ctx;
+				ctx.beginPath();
+				this.drawHead(ctx);
+				this.drawBody(ctx);
+				this.drawArm(ctx);
+				this.drawLeg(ctx);
+				
+			//	this.drawDebug(ctx);
+				ctx.beginPath();
+			}
+			this.moveAction = function() {
+				this.factor.armMotionLevel += 1;
+				if(this.factor.armMotionAngle < this.data.getArmMotion()){
+					this.factor.armMotionLevel = 0;
+				}
+				this.factor.legMotionLevel += 1;
+				if(this.factor.legMotionLevel < this.data.getLegMotion()){
+					this.factor.legMotionLevel = 0;
+				}
+			}
+			this.moveLeft = function() {
+				this.state.move = STATE.DIRECTION.LEFT;
+				if(this.getMaxLeft() < this.location.x){
+					this.location.x -= this.data.getMoveSpeed();
+				}else{
+					this.location.x = this.getMaxLeft();
+				}
+				this.moveAction();
+			}
+			this.moveRight = function() {
+				this.state.move = STATE.DIRECTION.RIGHT;
+				if(this.getMaxRight() > this.location.x){
+					this.location.x += this.data.getMoveSpeed();
+				}else{
+					this.location.x = this.getMaxRight();
+				}
+				this.moveAction();
+			}
+			this.setMoveInterval = function() {
+				if(this.animation.moveInterval != null){
+					return;
+				}
+				
+				var playerContext = this;	
+				this.animation.moveInterval = setInterval(function() {
+					if(playerContext.state.pose == STATE.POSE.WAIT){
+						clearInterval(playerContext.animation.moveInterval)
+						playerContext.animation.moveInterval = null;
+						return;
+					}
+
+					if(playerContext.state.pose == STATE.POSE.MOVE){
+						switch (playerContext.state.direction) {
+						case STATE.DIRECTION.LEFT: playerContext.moveLeft(); break;
+						case STATE.DIRECTION.RIGHT: playerContext.moveRight(); break;
+						}
+					}
+				}, 10)
+			}
+			this.moveWait = function(keyCode) {
+				if(this.state.pose == STATE.POSE.SIT){
+					return;
+				}
+				if(this.state.direction != STATE.DIRECTION.getByKey(keyCode)){
+					return;
+				}
+				this.state.pose = STATE.POSE.WAIT;
+				this.factor.armMotionLevel = this.factor.armMotionLevelDefault;
+				this.factor.legMotionLevel = this.factor.legMotionLevelDefault;
+			}
+			this.move = function(keyCode) {
+				if(this.state.pose == STATE.POSE.SIT){
+					return;
+				}
+				
+				var keyDirection = STATE.DIRECTION.getByKey(keyCode);
+				
+				if(keyDirection == null){
+					return;
+				}
+				
+				this.state.pose = STATE.POSE.MOVE;
+				this.state.direction = 	keyDirection;
+				this.setMoveInterval();
+			}
+			this.jump = function() {
+				if(this.state.pose == STATE.POSE.SIT){
+					return;
+				}
+				if(this.state.jump == true){
+					return;
+				}
+				this.state.jump = true;
+				
+				var playerContext = this;
+				var jumpPower = this.data.getJumpPower();
+				var jumpSpeed = this.data.getJumpSpeed();
+				var currentJump = jumpPower;
+				
+				this.setGravity(false);
+				
+				var jumpInterval = setInterval(function() {
+					currentJump -= jumpSpeed
+					if(currentJump <= -jumpPower){
+						clearInterval(jumpInterval);
+						playerContext.state.jump = false;
+						playerContext.setGravity(true);
+						return;
+					}
+					playerContext.location.y -= currentJump;
+				}, 15);
+			}
+			this.sit = function() {
+				if(this.state.pose == STATE.POSE.SIT){
+					return;
+				}
+				
+				var normalHeight = this.data.getHeight();
+				
+				this.factor.sitPrev.bodyHeight = this.factor.bodyHeight;
+				this.factor.sitPrev.legLength = this.factor.legLength;
+				this.factor.sitPrev.armPosition = this.factor.armPosition;
+				
+				this.state.pose = STATE.POSE.SIT;
+				this.factor.bodyHeight = 0.5;
+				this.factor.legLength = 0.7;
+				this.factor.armPosition = 5;
+				
+				this.factor.armMotionLevel = 85;
+				this.factor.legMotionLevel = 3;
+				
+				var sitHeight = this.data.getHeight();
+				
+				this.location.y = this.location.y + (normalHeight - sitHeight);
+			}
+			this.getUp = function() {
+				this.factor.bodyHeight = this.factor.sitPrev.bodyHeight;
+				this.factor.legLength = this.factor.sitPrev.legLength;
+				this.factor.armPosition  = this.factor.sitPrev.armPosition;
+				this.factor.armMotionLevel = this.factor.armMotionLevelDefault;
+				this.factor.legMotionLevel = this.factor.legMotionLevelDefault;
+				this.state.pose = STATE.POSE.WAIT;
+			}
+			this.init = function() {
+				this.setGravity(true);
+			}
+			
+			if(typeof gameContext == DodgeGame){
+				this.init();	
+			}
+		}
+	</script>
+	
+	<script type="text/javascript">
+		var isPressKeypad = 0;
+
+		document.addEventListener('touchmove', function (event) {
+			if (isPressKeypad > 0) { 
+			  event.preventDefault(); 
+			}
+		}, { passive: false });
+	
+		var canvas = document.getElementById("dodgeGame");
+		var ctx = canvas.getContext("2d");
+
+        var dodgeGame = new DodgeGame(ctx);
+        var scoreEl = document.getElementById("gameScore");
+        var btnStart = document.getElementById("keypadStart");
+
+        btnStart.addEventListener('click', ()=>{
+            dodgeGame.start();
+            btnStart.style.display = "none";
+        })
+
+        dodgeGame.postGameOut = function() {
+            document.getElementById("keypadRestart").style.display = "block";
+            console.log(this.score);
+
+            setTimeout(function() {
+			    alert("게임아웃");
+			}, 100)
+        }
+        
+        dodgeGame.preFrame = function(time) {
+            var viewTime = (time/1000).toFixed(2);
+            scoreEl.innerHTML = viewTime;
+        }
+        
+        document.getElementById("keypadRestart").addEventListener("click" ,function(e) {
+            document.getElementById("keypadRestart").style.display = "none";
+            dodgeGame.start();
+        });
+        
+        window.addEventListener("keydown", function(e) {
+            dodgeGame.keyPress(e.keyCode);
+        });
+        
+        window.addEventListener("keyup", function(e) {
+            dodgeGame.keyUp(e.keyCode);
+        });
+        
+        const keypads = document.querySelectorAll(".btn-keypad");
+        keypads.forEach(function(keypadEl) {
+            ["mousedown", "touchstart"].map(function(typeName) {
+                keypadEl.addEventListener(typeName, function(e) {
+                    dodgeGame.keyPress(keypadEl.dataset.keyCode);
+                        
+                    isPressKeypad++;
+                    if(dodgeGame.config.isPlay == false){
+                        isPressKeypad = 0;
+                    }
+                });
+            });
+        });
+        
+        keypads.forEach(function(keypadEl) {
+            ["mouseup", "touchend"].map(function(typeName) {
+                keypadEl.addEventListener(typeName, function(e) {
+                    dodgeGame.keyUp(keypadEl.dataset.keyCode);
+                    
+                    isPressKeypad--;
+                });
+            });
+        })		
+
+	</script>
+</body>
+</html>
