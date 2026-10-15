@@ -1,0 +1,9 @@
+.figure { margin: 0; min-width: 0; }
+.caption { margin: 0 0 18px; color: var(--text); font-size: .88rem; font-weight: 600; }
+.viewport { min-width: 0; max-width: 100%; overflow-x: clip; padding: 8px 2px; border-radius: 8px; }
+.viewport:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.svg { display: flex; justify-content: center; width: 100%; min-width: 0; }
+.svg:empty { display: none; }
+.svg :global(svg) { display: block; flex: 0 1 auto; width: 100%; height: auto; max-width: 100%; }
+.placeholder { margin: 0; padding: 30px 12px; color: var(--text-dim); font-size: var(--font-size-description); line-height: 1.7; }
+.description { display: grid; gap: 6px; margin: 16px 0 0; padding-left: 18px; color: var(--text-dim); font-size: var(--font-size-description); line-height: 1.8; word-break: keep-all; overflow-wrap: anywhere; }
