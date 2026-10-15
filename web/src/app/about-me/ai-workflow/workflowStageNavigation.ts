@@ -5,6 +5,8 @@ export function workflowStageFromHash(hash: string): AiWorkflowStageId {
     if ([`#workflow-${stage.id}`, `#workflow-header-${stage.id}`, `#example-${stage.id}`].includes(hash)) return stage.id;
   }
   if (hash === '#workflow-tools-gallery-title') return 'tools';
+  if (hash === '#workflow-tool-group-mcp' || hash === '#workflow-tool-group-cli') return 'tools';
+  if (/^#story-orchestration(?:-(?:sessions|pre-notice|coordination))?$/u.test(hash)) return 'orchestration';
   return 'chat';
 }
 

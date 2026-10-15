@@ -514,12 +514,14 @@ read-only가 아닌 도구는 화면을 실제로 바꾸거나 이동시킵니�
 `backend/src/shared/view-targets.js`)과는 저장소가 갈라져 있어 **수동으로**
 맞춥니다. 목적지를 더할 때는 양쪽을 함께 고쳐야 합니다.
 
-`control_portfolio_view`의 이동 목적지는 32개입니다.
+`control_portfolio_view`의 이동·상세 제어 목적지는 41개입니다.
 
 | 묶음 | action |
 | --- | --- |
 | 페이지 | `main`, `overview`, `resume`, `cover-letter`, `research`, `log` |
-| 개발·배포 환경 | `architecture`(기본 개발 탭), `development-environment`, `deployment-overview`, `migration-memory-history` |
+| 개발·배포 환경 | `architecture`(기본 개발 탭), `development-environment`, `deployment-overview`, `infrastructure-optimization`, `migration-memory-history` |
+| SI 활용 단계 | `si-levels`, `si-level-chat`, `si-level-read-only`, `si-level-implementation`, `si-level-tools`, `si-level-orchestration` |
+| SI 실제 사례 | `si-tools-ffmpeg`, `si-session-messaging` |
 | 연구 탭·연도 | `research-timeline`, `research-optimization`, `research-tools`, `research-2011`(학창 시절), `research-2022`~`research-2026` |
 | 연구 상세 제어 | `expand-research-details`, `collapse-research-details`, `expand-research-year-details`, `collapse-research-year-details` |
 | 소개 페이지 섹션 | `past-work-archive`, `ai-collaboration-projects` |
@@ -528,6 +530,10 @@ read-only가 아닌 도구는 화면을 실제로 바꾸거나 이동시킵니�
 
 개발·배포 환경 이동은 해당 탭을 먼저 열고 앵커 도착을 확인합니다. 화면 조회의
 `page: "architecture"`와 `anchor`는 실제 마운트된 본문을 기준으로 보고합니다.
+SI 화면은 API `pageContext: "ai_workflow"`, 화면 상태 `page: "ai-workflow"`를 사용합니다.
+사례 해시는 해당 단계 슬라이드를 먼저 열며, URL에만 맞는 비활성 슬라이드는
+상태·도착으로 인정하지 않습니다. 원문 이력·네이티브 도구 ID와 브라우저 확인 경로는 유지합니다.
+백엔드 v44를 먼저 반영한 뒤 프런트를 반영해야 새 문맥·목적지를 사용할 수 있습니다.
 
 학창 시절 연구 경험의 내부 탐색 연도는 `2011`입니다. 페이지의 시기 표시는
 `학창 시절`로 유지하며, `research-2011`은 `#research-year-2011`로 이동합니다.

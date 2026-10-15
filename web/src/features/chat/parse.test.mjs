@@ -5,6 +5,71 @@ import test from 'node:test';
 import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import * as chatParse from './parse.ts';
+import { portfolioViewControlInput } from '../portfolio-tools/view.ts';
+import { readPortfolioViewState, resolvePortfolioViewTarget } from '../webmcp/portfolioView.ts';
+import { isPortfolioTargetReady } from '../portfolio-tools/viewTargetVisibility.ts';
+import { workflowStageFromHash } from '../../app/about-me/ai-workflow/workflowStageNavigation.ts';
+import { pageContextFromPathname } from './constants.ts';
+
+test('SI 단계·실제 사례와 인프라 최적화의 도구 목적지·해시는 유효하다', () => {
+  const cases = [
+    ['si-levels', 'ai-workflow-intro', 'chat'],
+    ['si-level-chat', 'workflow-header-chat', 'chat'],
+    ['si-level-read-only', 'workflow-header-read-only', 'read-only'],
+    ['si-level-implementation', 'workflow-header-implementation', 'implementation'],
+    ['si-level-tools', 'workflow-header-tools', 'tools'],
+    ['si-level-orchestration', 'workflow-header-orchestration', 'orchestration'],
+    ['si-tools-ffmpeg', 'example-tools', 'tools'],
+    ['si-session-messaging', 'story-orchestration', 'orchestration'],
+  ];
+  for (const [action, anchor, stage] of cases) {
+    assert.ok(PORTFOLIO_VIEW_ACTIONS.includes(action));
+    assert.deepEqual(portfolioViewControlInput.parse({ action }), { action });
+    assert.throws(() => portfolioViewControlInput.parse({ action, year: '2026' }));
+    assert.equal(resolvePortfolioViewTarget(action).route, `/about-me/ai-workflow#${anchor}`);
+    assert.equal(workflowStageFromHash(`#${anchor}`), stage);
+    assert.ok(parseToolExecution({ type: 'control_portfolio_view', toolName: 'control_portfolio_view',
+      action, toolCallId: `call-${action}` }));
+  }
+  assert.equal(resolvePortfolioViewTarget('infrastructure-optimization').route,
+    '/about-me/architecture#infrastructure-migration');
+  for (const hash of ['#story-orchestration-sessions', '#story-orchestration-pre-notice', '#story-orchestration-coordination']) {
+    assert.equal(workflowStageFromHash(hash), 'orchestration');
+  }
+  assert.equal(workflowStageFromHash('#workflow-tool-group-cli'), 'tools');
+  assert.equal(pageContextFromPathname('/ssw-portfolio-public/about-me/ai-workflow/'), 'ai_workflow');
+});
+
+test('SI 화면 조회는 URL의 비활성 슬라이드 대신 실제 활성 패널을 보고한다', t => {
+  const previousWindow = globalThis.window;
+  const previousDocument = globalThis.document;
+  t.after(() => { globalThis.window = previousWindow; globalThis.document = previousDocument; });
+  const active = { id: 'workflow-tools', contains: target => target?.id === 'example-tools' };
+  const elements = { 'workflow-header-orchestration': { id: 'workflow-header-orchestration' },
+    'example-tools': { id: 'example-tools' }, 'ai-workflow-intro': { id: 'ai-workflow-intro' } };
+  globalThis.document = { querySelector: () => active, getElementById: id => elements[id] ?? null };
+  globalThis.window = { location: { hash: '#workflow-header-orchestration' } };
+  const read = () => readPortfolioViewState('/about-me/ai-workflow/');
+  assert.equal(read().page, 'ai-workflow');
+  assert.equal(read().anchor, 'workflow-tools');
+  globalThis.window.location.hash = '#example-tools';
+  assert.equal(read().anchor, 'example-tools');
+  globalThis.window.location.hash = '#ai-workflow-intro';
+  assert.equal(read().anchor, 'ai-workflow-intro');
+  assert.equal(parsePortfolioViewState(read()).page, 'ai-workflow');
+});
+
+test('숨겨진 슬라이드와 이동 중인 본문은 도착 확인에서 제외한다', t => {
+  const previousWindow = globalThis.window;
+  t.after(() => { globalThis.window = previousWindow; });
+  globalThis.window = { getComputedStyle: () => ({ display: 'block', visibility: 'visible' }) };
+  const ready = { closest: () => null, getClientRects: () => [{}] };
+  assert.equal(isPortfolioTargetReady(ready), true);
+  assert.equal(isPortfolioTargetReady({ ...ready, closest: selector => selector.includes('[inert]') ? {} : null }), false);
+  assert.equal(isPortfolioTargetReady({ ...ready, getClientRects: () => [] }), false);
+  assert.equal(isPortfolioTargetReady({ ...ready, closest: selector => selector === '.swiper-wrapper'
+    ? { getAnimations: () => [{ playState: 'running' }] } : null }), false);
+});
 
 import {
   ChatApiError,
@@ -678,7 +743,7 @@ test('도구: 화면 제어는 연도 인자 규칙까지 확인한다', () => {
 test('도구: 소개 페이지 안의 이동 목적지도 허용 목록에 들어 있다', () => {
   // 서버 목록(비공개 backend/src/shared/view-targets.js)과 수동으로 맞추는
   // 값이라, 개수가 달라지면 한쪽만 고친 것이다.
-  assert.equal(PORTFOLIO_VIEW_ACTIONS.length, 32);
+  assert.equal(PORTFOLIO_VIEW_ACTIONS.length, 41);
   assert.equal(
     parseToolExecution(
       execution('control_portfolio_view', 'control_portfolio_view', {

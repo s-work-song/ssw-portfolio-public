@@ -340,6 +340,7 @@ export const ACTION_ROUTES: Readonly<Record<ActionId, string>> = {
   development_environment: "/about-me/architecture#development-environment",
   deployment_overview: "/about-me/architecture#deployment-overview",
   migration_memory_history: "/about-me/architecture#migration-memory-history",
+  infrastructure_optimization: "/about-me/architecture#infrastructure-migration",
   settings: "/settings",
   resume: "/about-me/resume#resume-overview",
   cover_letter: "/about-me/cover-letter#cover-letter-overview",
@@ -379,6 +380,8 @@ export const ACTION_ROUTES: Readonly<Record<ActionId, string>> = {
   si_level_implementation: "/about-me/ai-workflow#workflow-header-implementation",
   si_level_tools: "/about-me/ai-workflow#workflow-header-tools",
   si_level_orchestration: "/about-me/ai-workflow#workflow-header-orchestration",
+  si_tools_ffmpeg: "/about-me/ai-workflow#example-tools",
+  si_session_messaging: "/about-me/ai-workflow#story-orchestration",
   log_ambiguous_support:
     "/about-me/log#log-card-ambiguous-support-leaves-negative-experiences",
   log_ai_implementation_options:
@@ -436,6 +439,7 @@ export const ACTION_LABELS: Readonly<Record<ActionId, string>> = {
   development_environment: "개발 환경 보기",
   deployment_overview: "배포 구성 보기",
   migration_memory_history: "Rust 전환 메모리 비교 보기",
+  infrastructure_optimization: "인프라 최적화 보기",
   settings: "설정 페이지 보기",
   resume: "경력·기술 보기",
   cover_letter: "자기소개서 보기",
@@ -475,6 +479,8 @@ export const ACTION_LABELS: Readonly<Record<ActionId, string>> = {
   si_level_implementation: "SI 활용 03단계 보기",
   si_level_tools: "SI 활용 04단계 보기",
   si_level_orchestration: "SI 활용 05단계 보기",
+  si_tools_ffmpeg: "FFmpeg·컨택트 시트 사례 보기",
+  si_session_messaging: "대표 세션 메시지 협업 보기",
   log_ambiguous_support: "AI 지원 조건 기록 보기",
   log_ai_implementation_options: "AI 구현 선택지 기록 보기",
   log_canvas_dodge: "Canvas 피하기 게임 기록 보기",
@@ -506,6 +512,7 @@ export const ACTION_IDS: readonly ActionId[] = [
   "development_environment",
   "deployment_overview",
   "migration_memory_history",
+  "infrastructure_optimization",
   "settings",
   "resume",
   "cover_letter",
@@ -545,6 +552,8 @@ export const ACTION_IDS: readonly ActionId[] = [
   "si_level_implementation",
   "si_level_tools",
   "si_level_orchestration",
+  "si_tools_ffmpeg",
+  "si_session_messaging",
   "log_ambiguous_support",
   "log_ai_implementation_options",
   "log_canvas_dodge",
@@ -596,6 +605,7 @@ export function pageContextFromPathname(pathname: string): PageContext {
   if (/\/about-me\/cover-letter$/u.test(path)) return "cover_letter";
   if (/\/about-me\/research$/u.test(path)) return "research";
   if (/\/about-me\/architecture$/u.test(path)) return "architecture";
+  if (/\/about-me\/ai-workflow$/u.test(path)) return "ai_workflow";
   if (/\/about-me\/log(?:\/.*)?$/u.test(path)) return "log";
   if (/\/about-me$/u.test(path)) return "overview";
   return "default";

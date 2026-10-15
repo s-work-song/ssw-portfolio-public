@@ -1,5 +1,7 @@
 "use client";
 
+import { isPortfolioTargetReady } from '../portfolio-tools/viewTargetVisibility';
+
 import {
   useCallback,
   useEffect,
@@ -929,6 +931,10 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
 
     const startedAt = window.performance.now();
     const completeTargetArrival = (target: HTMLElement) => {
+      if (!isPortfolioTargetReady(target)) {
+        actionScrollTimerRef.current = window.setTimeout(scroll, 50);
+        return;
+      }
       pendingActionAnchorRef.current = null;
       pendingActionPathRef.current = null;
       activeActionNavigationRouteRef.current = null;
@@ -964,7 +970,7 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
     const scroll = () => {
       if (pendingActionAnchorRef.current !== anchor) return;
       const target = document.getElementById(anchor);
-      if (!target) {
+      if (!target || !isPortfolioTargetReady(target)) {
         if (
           window.performance.now() - startedAt <
           ACTION_TARGET_WAIT_TIMEOUT_MS

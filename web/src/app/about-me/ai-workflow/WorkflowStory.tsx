@@ -6,7 +6,7 @@ export default function WorkflowStory({ stageId, story }: { stageId: string; sto
   return (
     <section className={styles.example} aria-labelledby={`story-${stageId}`}>
       <p className={styles.eyebrow}>IN PRACTICE</p>
-      <h4 id={`story-${stageId}`}>{story.title}</h4>
+      <h4 id={`story-${stageId}`} tabIndex={-1}>{story.title}</h4>
       <p className={styles.exampleSummary}>{story.summary}</p>
       <dl className={styles.environment} aria-label="예제 사용 환경">
         <div><dt>사용 환경</dt><dd>{story.environment.tool}</dd></div>

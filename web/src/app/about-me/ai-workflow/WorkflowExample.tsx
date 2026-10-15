@@ -12,7 +12,7 @@ export default function WorkflowExample({ stageId, example }: WorkflowExamplePro
   return (
     <section className={styles.example} aria-labelledby={`example-${stageId}`}>
       <p className={styles.eyebrow}>IN PRACTICE</p>
-      <h4 id={`example-${stageId}`}>{example.title}</h4>
+      <h4 id={`example-${stageId}`} tabIndex={-1}>{example.title}</h4>
       <p className={styles.exampleSummary}>{example.summary}</p>
       <dl className={styles.environment} aria-label="예제 사용 환경">
         <div><dt>사용 환경</dt><dd>{example.environment.tool}</dd></div>

@@ -13,6 +13,9 @@ export const PORTFOLIO_VIEW_ACTIONS = [
   'research-optimization', 'research-tools', 'research-2011', 'research-2022', 'research-2023',
   'research-2024', 'research-2025', 'research-2026', 'log',
   'architecture', 'development-environment', 'deployment-overview', 'migration-memory-history',
+  'infrastructure-optimization', 'si-levels', 'si-level-chat', 'si-level-read-only',
+  'si-level-implementation', 'si-level-tools', 'si-level-orchestration',
+  'si-tools-ffmpeg', 'si-session-messaging',
   'expand-research-details', 'collapse-research-details',
   'expand-research-year-details', 'collapse-research-year-details',
   'past-work-archive', 'ai-collaboration-projects', 'archive-canvas-dodge-game',
@@ -29,7 +32,7 @@ export const YEAR_DETAIL_ACTIONS = [
 ] as const;
 export const PORTFOLIO_PAGE_IDS = [
   'landing', 'main', 'overview', 'resume', 'cover-letter', 'research', 'log',
-  'architecture', 'settings', 'unknown',
+  'architecture', 'ai-workflow', 'settings', 'unknown',
 ] as const;
 
 export type PortfolioViewActionId = (typeof PORTFOLIO_VIEW_ACTIONS)[number];
@@ -50,7 +53,7 @@ export const portfolioViewControlInput: InputDefinition<PortfolioViewControlInpu
   schema: enumObjectSchema({
     action: {
       values: PORTFOLIO_VIEW_ACTIONS,
-      description: '화면 이동 또는 연구 상세 제어. architecture는 개발·배포 환경 페이지, development-environment는 개발 환경, deployment-overview는 배포 구성, migration-memory-history는 Rust 전환 메모리 비교. research-2011은 학창 시절 연구 경험',
+      description: '화면 이동 또는 연구 상세 제어. architecture는 개발·배포 환경, development-environment는 개발 환경, deployment-overview는 배포 구성, infrastructure-optimization은 인프라 최적화, migration-memory-history는 Rust 메모리 비교. si-levels는 SI 소개, si-level-*은 단계, si-tools-ffmpeg는 컨택트 시트, si-session-messaging은 대표 세션 협업 사례. research-2011은 학창 시절 연구 경험',
     },
     year: {
       values: PORTFOLIO_RESEARCH_YEARS,

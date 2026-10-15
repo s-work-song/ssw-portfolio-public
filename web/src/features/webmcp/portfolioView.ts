@@ -212,6 +212,42 @@ const VIEW_TARGETS: Readonly<Record<PortfolioViewAction, PortfolioViewTarget>> =
     message: '공용 인프라의 Rust 전환 메모리 비교로 이동을 시작했습니다.',
     label: '공용 인프라의 Rust 전환 메모리 비교',
   },
+  'infrastructure-optimization': {
+    action: 'infrastructure-optimization', route: ACTION_ROUTES.infrastructure_optimization,
+    label: '인프라 최적화 탭', message: '인프라 최적화 탭으로 이동을 시작했습니다.',
+  },
+  'si-levels': {
+    action: 'si-levels', route: ACTION_ROUTES.si_levels,
+    label: 'SI 활용 단계 소개', message: 'SI 활용 단계 소개로 이동을 시작했습니다.',
+  },
+  'si-level-chat': {
+    action: 'si-level-chat', route: ACTION_ROUTES.si_level_chat,
+    label: 'SI 활용 01단계 · 챗봇과 대화', message: 'SI 활용 01단계 · 챗봇과 대화로 이동을 시작했습니다.',
+  },
+  'si-level-read-only': {
+    action: 'si-level-read-only', route: ACTION_ROUTES.si_level_read_only,
+    label: 'SI 활용 02단계 · 조회·분석 위임', message: 'SI 활용 02단계 · 조회·분석 위임으로 이동을 시작했습니다.',
+  },
+  'si-level-implementation': {
+    action: 'si-level-implementation', route: ACTION_ROUTES.si_level_implementation,
+    label: 'SI 활용 03단계 · 구현 위임', message: 'SI 활용 03단계 · 구현 위임으로 이동을 시작했습니다.',
+  },
+  'si-level-tools': {
+    action: 'si-level-tools', route: ACTION_ROUTES.si_level_tools,
+    label: 'SI 활용 04단계 · MCP·CLI 도구 활용', message: 'SI 활용 04단계 · MCP·CLI 도구 활용으로 이동을 시작했습니다.',
+  },
+  'si-level-orchestration': {
+    action: 'si-level-orchestration', route: ACTION_ROUTES.si_level_orchestration,
+    label: 'SI 활용 05단계 · 여러 에이전트 협업 조율', message: 'SI 활용 05단계 · 여러 에이전트 협업 조율로 이동을 시작했습니다.',
+  },
+  'si-tools-ffmpeg': {
+    action: 'si-tools-ffmpeg', route: ACTION_ROUTES.si_tools_ffmpeg,
+    label: 'FFmpeg·컨택트 시트 활용 사례', message: 'FFmpeg·컨택트 시트 활용 사례로 이동을 시작했습니다.',
+  },
+  'si-session-messaging': {
+    action: 'si-session-messaging', route: ACTION_ROUTES.si_session_messaging,
+    label: '대표 세션 간 메시지 협업 사례', message: '대표 세션 간 메시지 협업 사례로 이동을 시작했습니다.',
+  },
   'expand-research-details': {
     action: 'expand-research-details',
     route: ACTION_ROUTES.research_timeline,
@@ -432,6 +468,7 @@ function portfolioPageFromPathname(
   if (path.startsWith('/about-me/cover-letter')) return 'cover-letter';
   if (path.startsWith('/about-me/research')) return 'research';
   if (path === '/about-me/architecture' || path.startsWith('/about-me/architecture/')) return 'architecture';
+  if (path === '/about-me/ai-workflow' || path.startsWith('/about-me/ai-workflow/')) return 'ai-workflow';
   if (path.startsWith('/about-me/log')) return 'log';
   if (path.startsWith('/settings')) return 'settings';
   return 'unknown';
@@ -531,6 +568,14 @@ export function readPortfolioViewState(pathname: string): ChatPortfolioViewState
       ?? document.getElementById('development-environment');
     const target = anchor ? document.getElementById(anchor) : null;
     anchor = panel && target && panel.contains(target) ? anchor : panel?.id ?? null;
+  }
+
+  if (page === 'ai-workflow') {
+    // 모든 슬라이드는 DOM에 있으므로 URL보다 실제 활성 패널을 우선한다.
+    const panel = document.querySelector<HTMLElement>('[id^="workflow-"][role="tabpanel"][aria-hidden="false"]');
+    const target = anchor ? document.getElementById(anchor) : null;
+    const insidePanel = panel && target && panel.contains(target);
+    anchor = insidePanel ? anchor : target?.id === 'ai-workflow-intro' ? target.id : panel?.id ?? null;
   }
 
   if (page === 'research') {

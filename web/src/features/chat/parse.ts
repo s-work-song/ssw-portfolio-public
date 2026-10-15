@@ -151,6 +151,7 @@ const PAGE_CONTEXTS: readonly PageContext[] = [
   "cover_letter",
   "research",
   "architecture",
+  "ai_workflow",
   "log",
 ];
 

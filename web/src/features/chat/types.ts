@@ -60,6 +60,7 @@ export type PageContext =
   | "cover_letter"
   | "research"
   | "architecture"
+  | "ai_workflow"
   | "log";
 
 /** 매 요청에 함께 실어 보내는 현재 UI 설정이다. */
@@ -95,6 +96,7 @@ export type ActionId =
   | "development_environment"
   | "deployment_overview"
   | "migration_memory_history"
+  | "infrastructure_optimization"
   | "settings"
   | "resume"
   | "cover_letter"
@@ -134,6 +136,8 @@ export type ActionId =
   | "si_level_implementation"
   | "si_level_tools"
   | "si_level_orchestration"
+  | "si_tools_ffmpeg"
+  | "si_session_messaging"
   | "log_ambiguous_support"
   | "log_ai_implementation_options"
   | "log_canvas_dodge"

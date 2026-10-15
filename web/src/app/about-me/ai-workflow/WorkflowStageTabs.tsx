@@ -64,7 +64,7 @@ export default function WorkflowStageTabs({ panels }: { panels: readonly ReactNo
 
   useEffect(() => {
     if (buttonHashRef.current === hash) { buttonHashRef.current = null; return; }
-    if (!hash.startsWith('#workflow-') && !hash.startsWith('#example-')) return;
+    if (!hash.startsWith('#workflow-') && !hash.startsWith('#example-') && !hash.startsWith('#story-')) return;
     // 직접 링크와 뒤로/앞으로 이동은 패널이 제자리에 온 뒤 앵커 위치를 복원합니다.
     const timer = window.setTimeout(() => {
       const target = hash === `#workflow-${activeId}` ? navRef.current : document.getElementById(hash.slice(1));
