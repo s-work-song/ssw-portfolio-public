@@ -105,7 +105,8 @@ const UI_TOOL_PRESENTATION: Readonly<
   'control_portfolio_view': {
     title: '포트폴리오 화면 이동 및 연구 상세 제어',
     description:
-      '개발·배포 환경 페이지는 architecture, 개발 환경·접속 경로는 development-environment, 배포 구성은 deployment-overview, Rust 전환 메모리 비교는 migration-memory-history로 이동합니다. ' +
+      '개발·배포 환경 페이지는 architecture, 개발 환경·접속 경로는 development-environment, 배포 구성은 deployment-overview, 인프라 최적화는 infrastructure-optimization, Rust 전환 메모리 비교는 migration-memory-history로 이동합니다. ' +
+      'SI 소개는 si-levels, 01~05단계는 si-level-chat/read-only/implementation/tools/orchestration, FFmpeg·컨택트 시트는 si-tools-ffmpeg, 대표 세션 협업 사례는 si-session-messaging으로 이동합니다. ' +
       '메인·홈 요청은 소개 Overview로 이동하고, 이력서, 자기소개서, 연구 경험의 연구 여정·성능 최적화·도구 & AI 접목 탭, 연구 연도, 기록 화면으로 이동합니다. 학창 시절 연구 경험은 research-2011로 이동하며 페이지에는 연도 대신 학창 시절로 표시됩니다. 소개 페이지 안에서는 과거 작업 아카이브, AI 에이전트 협업 프로젝트와 AI 활용 실험 섹션의 개별 항목(Canvas 피하기 게임, 엑셀 행 매핑 WPF 앱, Android AR 캠프파이어 앱, 공용 인프라 프로젝트군, 이커머스 데모, 게임 모음 플랫폼, 코드 아카이브) 위치로도 이동합니다. 연구 여정의 전체 상세 또는 지정한 연도의 상세만 펼치거나 접을 수도 있습니다. 사용자가 화면 이동이나 연구 상세 제어를 명시적으로 요청했을 때 사용하세요.',
   },
   'open_portfolio_settings': {

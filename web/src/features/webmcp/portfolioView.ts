@@ -252,14 +252,14 @@ const VIEW_TARGETS: Readonly<Record<PortfolioViewAction, PortfolioViewTarget>> =
     action: 'expand-research-details',
     route: ACTION_ROUTES.research_timeline,
     message: '연구 여정으로 이동해 모든 상세 내용을 펼쳤습니다.',
-    label: '연구 여정 전체 상세 펼치기',
+    label: '연구 여정의 모든 상세 내용 펼치기',
     researchDetails: 'expand',
   },
   'collapse-research-details': {
     action: 'collapse-research-details',
     route: ACTION_ROUTES.research_timeline,
     message: '연구 여정으로 이동해 모든 상세 내용을 접었습니다.',
-    label: '연구 여정 전체 상세 접기',
+    label: '연구 여정의 모든 상세 내용 접기',
     researchDetails: 'collapse',
   },
   'expand-research-year-details': {
@@ -322,8 +322,8 @@ const VIEW_TARGETS: Readonly<Record<PortfolioViewAction, PortfolioViewTarget>> =
   'project-game-collection-platform': {
     action: 'project-game-collection-platform',
     route: ACTION_ROUTES.project_game_collection,
-    message: 'AI 활용 실험 · 게임 모음 플랫폼으로 이동을 시작했습니다.',
-    label: 'AI 활용 실험 · 게임 모음 플랫폼',
+    message: 'AI 협업 프로젝트 · 게임 모음 플랫폼으로 이동을 시작했습니다.',
+    label: 'AI 협업 프로젝트 · 게임 모음 플랫폼',
   },
   'project-code-archive': {
     action: 'project-code-archive',

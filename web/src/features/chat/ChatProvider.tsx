@@ -1,6 +1,9 @@
 "use client";
 
-import { isPortfolioTargetReady } from '../portfolio-tools/viewTargetVisibility';
+import {
+  isPortfolioTargetAligned,
+  isPortfolioTargetReady,
+} from '../portfolio-tools/viewTargetVisibility';
 
 import {
   useCallback,
@@ -710,7 +713,7 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
       const distance = targetTop - startTop;
 
       if (motionSuppressed || Math.abs(distance) <= 1) {
-        scroller.scrollTop = targetTop;
+        scroller.scrollTo({ top: targetTop, behavior: "instant" });
         setFrame(null);
         onComplete();
         return;
@@ -724,10 +727,13 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
           easing === "ease-out"
             ? easeOutCubic(progress)
             : easeInOutCubic(progress);
-        scroller.scrollTop = startTop + distance * easedProgress;
+        scroller.scrollTo({
+          top: startTop + distance * easedProgress,
+          behavior: "instant",
+        });
 
         if (progress >= 1) {
-          scroller.scrollTop = targetTop;
+          scroller.scrollTo({ top: targetTop, behavior: "instant" });
           setFrame(null);
           onComplete();
           return;
@@ -930,9 +936,46 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
     }
 
     const startedAt = window.performance.now();
-    const completeTargetArrival = (target: HTMLElement) => {
-      if (!isPortfolioTargetReady(target)) {
+    const abandonPendingAction = () => {
+      pendingActionAnchorRef.current = null;
+      pendingActionPathRef.current = null;
+      activeActionNavigationRouteRef.current = null;
+      actionScrollTimerRef.current = null;
+      restoreChatInputAfterNavigation();
+    };
+    const retryOrAbandon = () => {
+      if (
+        window.performance.now() - startedAt <
+        ACTION_TARGET_WAIT_TIMEOUT_MS
+      ) {
         actionScrollTimerRef.current = window.setTimeout(scroll, 50);
+      } else {
+        abandonPendingAction();
+      }
+    };
+    const completeTargetArrival = (target: HTMLElement) => {
+      const scroller = document.scrollingElement;
+      const scrollTop = scroller?.scrollTop ?? window.scrollY;
+      const maximumScrollTop = Math.max(
+        0,
+        (scroller?.scrollHeight ?? document.documentElement.scrollHeight) -
+          window.innerHeight,
+      );
+      const targetStyle = window.getComputedStyle(target);
+      const rootStyle = window.getComputedStyle(document.documentElement);
+      const expectedTop =
+        (Number.parseFloat(targetStyle.scrollMarginTop) || 0) +
+        (Number.parseFloat(rootStyle.scrollPaddingTop) || 0);
+      if (
+        !isPortfolioTargetReady(target) ||
+        !isPortfolioTargetAligned(
+          target,
+          expectedTop,
+          scrollTop,
+          maximumScrollTop,
+        )
+      ) {
+        retryOrAbandon();
         return;
       }
       pendingActionAnchorRef.current = null;
@@ -971,18 +1014,7 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
       if (pendingActionAnchorRef.current !== anchor) return;
       const target = document.getElementById(anchor);
       if (!target || !isPortfolioTargetReady(target)) {
-        if (
-          window.performance.now() - startedAt <
-          ACTION_TARGET_WAIT_TIMEOUT_MS
-        ) {
-          actionScrollTimerRef.current = window.setTimeout(scroll, 50);
-        } else {
-          pendingActionAnchorRef.current = null;
-          pendingActionPathRef.current = null;
-          activeActionNavigationRouteRef.current = null;
-          actionScrollTimerRef.current = null;
-          restoreChatInputAfterNavigation();
-        }
+        retryOrAbandon();
         return;
       }
 

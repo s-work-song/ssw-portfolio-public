@@ -7,7 +7,7 @@ import { createRequire } from 'node:module';
 import * as chatParse from './parse.ts';
 import { portfolioViewControlInput } from '../portfolio-tools/view.ts';
 import { readPortfolioViewState, resolvePortfolioViewTarget } from '../webmcp/portfolioView.ts';
-import { isPortfolioTargetReady } from '../portfolio-tools/viewTargetVisibility.ts';
+import { isPortfolioTargetAligned, isPortfolioTargetReady } from '../portfolio-tools/viewTargetVisibility.ts';
 import { workflowStageFromHash } from '../../app/about-me/ai-workflow/workflowStageNavigation.ts';
 import { pageContextFromPathname } from './constants.ts';
 
@@ -40,6 +40,17 @@ test('SI 단계·실제 사례와 인프라 최적화의 도구 목적지·해�
   assert.equal(pageContextFromPathname('/ssw-portfolio-public/about-me/ai-workflow/'), 'ai_workflow');
 });
 
+test('화면 제어 목적지 라벨은 백엔드 정본의 기존 상세·프로젝트 문구와 일치한다', () => {
+  const labels = {
+    'expand-research-details': '연구 여정의 모든 상세 내용 펼치기',
+    'collapse-research-details': '연구 여정의 모든 상세 내용 접기',
+    'project-game-collection-platform': 'AI 협업 프로젝트 · 게임 모음 플랫폼',
+  };
+  for (const [action, label] of Object.entries(labels)) {
+    assert.equal(resolvePortfolioViewTarget(action).label, label);
+  }
+});
+
 test('SI 화면 조회는 URL의 비활성 슬라이드 대신 실제 활성 패널을 보고한다', t => {
   const previousWindow = globalThis.window;
   const previousDocument = globalThis.document;
@@ -69,6 +80,23 @@ test('숨겨진 슬라이드와 이동 중인 본문은 도착 확인에서 제�
   assert.equal(isPortfolioTargetReady({ ...ready, getClientRects: () => [] }), false);
   assert.equal(isPortfolioTargetReady({ ...ready, closest: selector => selector === '.swiper-wrapper'
     ? { getAnimations: () => [{ playState: 'running' }] } : null }), false);
+});
+
+test('화면 이동은 목표 상단 위치에 정렬된 뒤에만 도착으로 판정한다', () => {
+  const target = (top, bottom) => ({ getBoundingClientRect: () => ({ top, bottom }) });
+  assert.equal(isPortfolioTargetAligned(target(84.3, 120), 84, 900, 2_000, 720), true);
+  assert.equal(isPortfolioTargetAligned(target(107.8, 240), 108, 900, 2_000, 720), true);
+  assert.equal(isPortfolioTargetAligned(target(-518, -489), 84, 1_482, 2_000, 720), false);
+  assert.equal(isPortfolioTargetAligned(target(710, 842), 108, 900, 2_000, 720), false);
+  assert.equal(isPortfolioTargetAligned(target(650, 760), 108, 2_000, 2_000, 720), true);
+  assert.equal(isPortfolioTargetAligned(target(721, 760), 108, 2_000, 2_000, 720), false);
+
+  const provider = readFileSync(new URL('./ChatProvider.tsx', import.meta.url), 'utf8');
+  const scrollStart = provider.indexOf('const animateDocumentScroll = useCallback(');
+  const scrollEnd = provider.indexOf('\n  /** 패널 연출.', scrollStart);
+  const scrollImplementation = provider.slice(scrollStart, scrollEnd);
+  assert.doesNotMatch(scrollImplementation, /scroller\.scrollTop\s*=/u);
+  assert.equal((scrollImplementation.match(/behavior: "instant"/gu) ?? []).length, 3);
 });
 
 import {

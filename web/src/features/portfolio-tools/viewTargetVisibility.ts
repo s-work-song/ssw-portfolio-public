@@ -8,3 +8,17 @@ export function isPortfolioTargetReady(target: HTMLElement): boolean {
   if (wrapper?.getAnimations().some(animation => animation.playState === 'running')) return false;
   return true;
 }
+
+/** 스크롤 완료를 보고하기 전에 목적지가 의도한 상단 위치에 정렬됐는지 확인한다. */
+export function isPortfolioTargetAligned(
+  target: Pick<HTMLElement, 'getBoundingClientRect'>,
+  expectedTop: number,
+  scrollTop: number,
+  maximumScrollTop: number,
+  viewportHeight = window.innerHeight,
+): boolean {
+  const rect = target.getBoundingClientRect();
+  if (Math.abs(rect.top - expectedTop) <= 2) return true;
+  const reachedDocumentEnd = Math.abs(scrollTop - maximumScrollTop) <= 1;
+  return reachedDocumentEnd && rect.bottom > 0 && rect.top < viewportHeight;
+}
