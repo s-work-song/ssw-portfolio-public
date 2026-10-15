@@ -166,7 +166,7 @@ export default function OverviewPage() {
             Projects
           </p>
           <h3 style={{ margin: 0, color: 'var(--text)', fontSize: 'clamp(1.35rem, 3vw, 1.75rem)' }}>
-            SI 협업 프로젝트
+            SI(Super Intelligence, 초지능) 협업 프로젝트
           </h3>
           <p style={{ margin: '10px 0 0', color: 'var(--text-dim)', lineHeight: 1.7, wordBreak: 'keep-all' }}>
             요구사항과 운영 환경에 맞춰 구조와 기술을 선택하고, SI 에이전트의 구현 결과를 검토·테스트하며 진행한 프로젝트입니다.

@@ -141,7 +141,7 @@ test('과거 작업을 SI 협업 프로젝트보다 먼저 배치하고 마지�
   const anchors = ['id="portfolio-overview"', 'aboutDestinations.map', 'id="past-work-archive"', 'id="featured-projects"', '<AgentExperimentGallery />', '상세 이력서를 확인해 보세요'];
   const positions = anchors.map((anchor) => page.indexOf(anchor));
   assert.ok(positions.every((position, index) => position >= 0 && (!index || position > positions[index - 1])));
-  assert.match(page, />\s*SI 협업 프로젝트\s*<\/h3>/);
+  assert.match(page, />\s*SI\(Super Intelligence, 초지능\) 협업 프로젝트\s*<\/h3>/);
   assert.doesNotMatch(page, />\s*주요 프로젝트\s*<\/h3>/);
   for (const anchor of ['id="past-work-archive"', 'id="featured-projects"']) {
     assert.equal(page.split(anchor).length - 1, 1);
