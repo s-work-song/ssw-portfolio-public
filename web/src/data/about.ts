@@ -327,7 +327,7 @@ export const aboutProjects: AboutProject[] = [
     id: 'project-code-archive',
     title: '코드 아카이브',
     category: 'Verified Code Archive',
-    desc: 'SI로 구현한 코드를 테스트·검증한 뒤, 검증한 버전을 항목별로 보관하는 프로젝트입니다. 주제·언어·식별 정보를 기준으로 원하는 코드를 찾아 재사용할 수 있습니다.',
+    desc: 'SI 에이전트로 구현한 코드를 테스트·검증한 뒤, 검증한 버전을 항목별로 보관하는 프로젝트입니다. 주제·언어·식별 정보를 기준으로 원하는 코드를 찾아 재사용할 수 있습니다.',
     status: '문서·코드 스냅샷 공개',
     gallery: {
       images: [
@@ -410,7 +410,7 @@ export const aboutProjects: AboutProject[] = [
     id: 'project-sprite-toolkit',
     title: 'SSW Sprite Toolkit',
     category: 'Sprite Editing & Validation',
-    desc: 'SI로 생성한 스프라이트 시트를 게임용 이미지와 애니메이션으로 다듬는 브라우저 도구입니다. 격자와 재생 순서를 확인하고 배경·색상·프레임 위치를 보정한 뒤 PNG·GIF·APNG로 내보낼 수 있습니다. WebMCP로 SI 에이전트의 편집 작업을 연결하고, 변경 전후 미리보기와 실제 출력 파일 검사로 결과를 확인합니다.',
+    desc: 'SI 에이전트로 생성한 스프라이트 시트를 게임용 이미지와 애니메이션으로 다듬는 브라우저 도구입니다. 격자와 재생 순서를 확인하고 배경·색상·프레임 위치를 보정한 뒤 PNG·GIF·APNG로 내보낼 수 있습니다. WebMCP로 SI 에이전트의 편집 작업을 연결하고, 변경 전후 미리보기와 실제 출력 파일 검사로 결과를 확인합니다.',
     status: '실행 화면 공개',
     gallery: {
       images: [

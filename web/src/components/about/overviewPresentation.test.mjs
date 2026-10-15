@@ -233,25 +233,25 @@ test('SI 실험 안내는 오픈웨이트 모델과 프론티어 SI로 표현하
   assert.ok(intro);
   assert.deepEqual([...intro.matchAll(/<p className=\{styles\.intro\}>(.*?)<\/p>/g)].map((match) => match[1]), [
     '오픈웨이트 모델부터 프론티어 SI까지, 다양한 모델이 어떤 작업을 어느 수준까지 수행할 수 있는지 직접 실험하고 있습니다.',
-    '개발을 중심으로 경험을 쌓아 온 만큼, 디자인과 시각적 표현은 상대적으로 익숙하지 않은 영역이었습니다. 하지만 SI와 함께 작업하면서 혼자서는 구현하기 어려웠던 아이디어를 구체화하고, 부족했던 부분을 보완할 수 있다는 가능성을 느꼈습니다.',
+    '개발을 중심으로 경험을 쌓아 온 만큼, 디자인과 시각적 표현은 상대적으로 익숙하지 않은 영역이었습니다. 하지만 SI 에이전트와 함께 작업하면서 혼자서는 구현하기 어려웠던 아이디어를 구체화하고, 부족했던 부분을 보완할 수 있다는 가능성을 느꼈습니다.',
     '그 가능성을 실제 작업으로 연결하려면 모델이 잘하는 일과 한계를 이해하는 것이 중요하다고 생각합니다. 다양한 과제를 직접 시도하며, 작업과 상황에 따라 어떤 맥락을 어떻게 제공해야 원하는 결과에 가까워지는지 알아가고 있습니다.',
   ]);
   assert.doesNotMatch(source, /오픈웨이트\s+(?:AI|SI)/u);
   assert.doesNotMatch(aboutProjects.find(({ id }) => id === 'project-colab-llm-launcher').desc, /오픈웨이트\s+(?:AI|SI)/u);
 });
 
-test('소개 설명은 SI로 통일하되 실제 UI명과 기존 모델 크레딧은 보존한다', () => {
+test('소개 설명은 SI 에이전트로 통일하되 실제 UI명과 기존 모델 크레딧은 보존한다', () => {
   const archive = aboutProjects.find(({ id }) => id === 'project-code-archive');
   const sprite = aboutProjects.find(({ id }) => id === 'project-sprite-toolkit');
   const asset = aboutProjects.find(({ id }) => id === 'project-asset-library');
-  assert.match(archive.desc, /^SI로 구현한 코드/u);
-  assert.match(sprite.desc, /^SI로 생성한 스프라이트.*WebMCP로 SI 에이전트/u);
+  assert.match(archive.desc, /^SI 에이전트로 구현한 코드/u);
+  assert.match(sprite.desc, /^SI 에이전트로 생성한 스프라이트.*WebMCP로 SI 에이전트/u);
   assert.match(asset.desc, /MCP를 통해 SI 에이전트/u);
   const office = agentExperiments.find(({ id }) => id === 'blender-office');
-  assert.match(office.description, /^SI로 프롬프트/u);
+  assert.match(office.description, /^SI 에이전트로 프롬프트/u);
   assert.ok(office.modelCredits.some(({ models }) => models.includes('GPT-6 Astra')));
   const comfy = agentExperiments.find(({ id }) => id === 'comfyui-qwen-wan');
-  assert.match(comfy.description, /^SI와 함께 ComfyUI/u);
+  assert.match(comfy.description, /^SI 에이전트와 함께 ComfyUI/u);
   assert.ok(comfy.modelCredits.some(({ models }) => models.includes('GPT-6 Sol')));
   assert.match(aboutProjects.find(({ id }) => id === 'project-receipt-ocr').gallery.images[1].caption, /AI 설정.*OpenAI/u);
   assert.match(aboutProjects.find(({ id }) => id === 'project-colab-llm-launcher').gallery.images[1].caption, /포트폴리오 AI/u);

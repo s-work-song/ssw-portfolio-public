@@ -297,7 +297,7 @@ export default function AgentExperimentGallery() {
           <h3 id="agent-experiments-heading">SI 활용 실험</h3>
           <div id={AGENT_EXPERIMENT_INTRO_ANCHOR} tabIndex={-1} className={styles.introPanel}>
             <p className={styles.intro}>오픈웨이트 모델부터 프론티어 SI까지, 다양한 모델이 어떤 작업을 어느 수준까지 수행할 수 있는지 직접 실험하고 있습니다.</p>
-            <p className={styles.intro}>개발을 중심으로 경험을 쌓아 온 만큼, 디자인과 시각적 표현은 상대적으로 익숙하지 않은 영역이었습니다. 하지만 SI와 함께 작업하면서 혼자서는 구현하기 어려웠던 아이디어를 구체화하고, 부족했던 부분을 보완할 수 있다는 가능성을 느꼈습니다.</p>
+            <p className={styles.intro}>개발을 중심으로 경험을 쌓아 온 만큼, 디자인과 시각적 표현은 상대적으로 익숙하지 않은 영역이었습니다. 하지만 SI 에이전트와 함께 작업하면서 혼자서는 구현하기 어려웠던 아이디어를 구체화하고, 부족했던 부분을 보완할 수 있다는 가능성을 느꼈습니다.</p>
             <p className={styles.intro}>그 가능성을 실제 작업으로 연결하려면 모델이 잘하는 일과 한계를 이해하는 것이 중요하다고 생각합니다. 다양한 과제를 직접 시도하며, 작업과 상황에 따라 어떤 맥락을 어떻게 제공해야 원하는 결과에 가까워지는지 알아가고 있습니다.</p>
           </div>
         </div>

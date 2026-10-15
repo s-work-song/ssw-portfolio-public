@@ -125,7 +125,7 @@ export const agentExperiments: AgentExperiment[] = [
     id: 'planet-defense',
     category: '2D 게임 실험',
     title: 'Planet Defense',
-    description: 'SI로 제작한 이미지 리소스를 활용하고, 자동 요격과 액티브 스킬, 웨이브 사이의 방어망 정비를 결합한 행성 방어 게임입니다.',
+    description: 'SI 에이전트로 제작한 이미지 리소스를 활용하고, 자동 요격과 액티브 스킬, 웨이브 사이의 방어망 정비를 결합한 행성 방어 게임입니다.',
     focus: ['전투 시스템', '성장·강화', 'SI 이미지'],
     modelCredits: [
       { purpose: '코드', models: ['GPT-5.6 Sol'] },
@@ -149,7 +149,7 @@ export const agentExperiments: AgentExperiment[] = [
     id: 'aqua-guardian',
     category: '2D 게임 실험',
     title: '물고기 키우기',
-    description: 'SI로 제작한 이미지 리소스를 활용해 물고기 육성과 재화 수집, 침입자 방어를 결합한 수족관 게임입니다.',
+    description: 'SI 에이전트로 제작한 이미지 리소스를 활용해 물고기 육성과 재화 수집, 침입자 방어를 결합한 수족관 게임입니다.',
     focus: ['육성·경제', 'SI 이미지', '배경음악'],
     modelCredits: [
       { purpose: '코드', models: ['GPT-5.6 Sol'] },
@@ -463,7 +463,7 @@ export const agentExperiments: AgentExperiment[] = [
     id: 'blender-office',
     category: 'Blender 3D 에셋 제작',
     title: '사무실',
-    description: 'SI로 프롬프트를 작성해 사무실 이미지를 먼저 생성하고, 이를 바탕으로 공간 배치·가구·재질을 Blender로 모델링했습니다. 참고 이미지와 실제 Blender 구현 결과를 별도 블록으로 나누어 보여줍니다.',
+    description: 'SI 에이전트로 프롬프트를 작성해 사무실 이미지를 먼저 생성하고, 이를 바탕으로 공간 배치·가구·재질을 Blender로 모델링했습니다. 참고 이미지와 실제 Blender 구현 결과를 별도 블록으로 나누어 보여줍니다.',
     focus: ['이미지 기반 모델링', '사무실', 'Blender 3D'],
     modelCredits: [
       { purpose: '프롬프트', models: ['GPT-6 Astra'] },
@@ -590,7 +590,7 @@ export const agentExperiments: AgentExperiment[] = [
     id: 'comfyui-qwen-wan',
     category: 'ComfyUI 활용',
     title: 'ComfyUI 이미지 → 5초 영상',
-    description: 'SI와 함께 ComfyUI 워크플로우와 프롬프트를 구성해 이미지를 생성하고, 이를 바탕으로 5초 영상을 제작했습니다.',
+    description: 'SI 에이전트와 함께 ComfyUI 워크플로우와 프롬프트를 구성해 이미지를 생성하고, 이를 바탕으로 5초 영상을 제작했습니다.',
     focus: ['ComfyUI', '이미지 생성', '이미지→영상'],
     modelCredits: [
       { purpose: '워크플로우와 프롬프트', models: ['GPT-6 Sol'] },

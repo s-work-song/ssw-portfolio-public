@@ -24,7 +24,7 @@ export default function WorkflowStageContent({ stage }: { stage: (typeof aiWorkf
         <ol className={styles.flow} aria-label={`${stage.title}의 역할 흐름`}>
           {stage.flowSteps.map((step, index) => (
             <li key={step.title} className={step.actor === 'ai' ? styles.aiNode : styles.humanNode}>
-              <span className={styles.actor}>{step.actor === 'ai' ? 'SI' : '사람'}</span>
+              <span className={styles.actor}>{step.actor === 'ai' ? (stage.id === 'chat' ? 'SI 챗봇' : 'SI 에이전트') : '사람'}</span>
               <strong>{step.title}</strong>
               <span className={styles.flowDetail}>{step.detail}</span>
               {index < stage.flowSteps.length - 1 && <span className={styles.connector} aria-hidden="true">→</span>}
@@ -34,7 +34,7 @@ export default function WorkflowStageContent({ stage }: { stage: (typeof aiWorkf
       </figure>
 
       <dl className={styles.roles}>
-        <div><dt><span className={styles.aiDot} aria-hidden="true" />SI가 맡는 일</dt><dd>{stage.aiRole}</dd></div>
+        <div><dt><span className={styles.aiDot} aria-hidden="true" />{stage.id === 'chat' ? 'SI 챗봇이' : 'SI 에이전트가'} 맡는 일</dt><dd>{stage.aiRole}</dd></div>
         <div><dt><span className={styles.humanDot} aria-hidden="true" />사람이 맡는 일</dt><dd>{stage.humanRole}</dd></div>
       </dl>
       <p className={styles.change}><span>달라지는 점</span>{stage.change}</p>

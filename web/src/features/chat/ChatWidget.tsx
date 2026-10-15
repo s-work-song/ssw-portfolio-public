@@ -1525,7 +1525,7 @@ export function ChatWidget() {
             <div className={contentWrapperClassName}>
               <header className={styles.header}>
                 <div>
-                  <span className={styles.eyebrow}>PORTFOLIO AI</span>
+                  <span className={styles.eyebrow}>PORTFOLIO LLM</span>
                   <h2 id="portfolio-chat-title">포트폴리오 챗봇</h2>
                 </div>
                 <div className={styles.headerControls}>
