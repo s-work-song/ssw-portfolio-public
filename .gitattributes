@@ -1,0 +1,5 @@
+# Keep vendored font bytes and text hashes identical on Windows and Linux.
+web/src/assets/fonts/**/*.woff2 binary
+web/src/assets/fonts/*.css text eol=lf
+# Preserve the upstream license text, including its original trailing spaces.
+web/public/fonts/licenses/*.txt text eol=lf whitespace=-blank-at-eol

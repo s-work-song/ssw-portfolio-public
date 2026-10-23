@@ -1,0 +1,14 @@
+.diagram { color: var(--text); font-family: Pretendard, 'Noto Sans KR', system-ui, sans-serif; }
+.diagram text { fill: var(--text); text-anchor: middle; dominant-baseline: middle; }
+.connections path { fill: none; stroke: var(--text-dim); stroke-width: 1.5; stroke-linejoin: round; }
+.arrow { fill: var(--text-dim); }
+.node rect { fill: var(--panel-card-bg); stroke: var(--accent); stroke-width: 1.2; }
+.node text, .label text { font-size: 18px; }
+.title { font-weight: 600; }
+.label rect { fill: var(--panel-bg); }
+.diagram.mobile { display: none; }
+@media (max-width: 760px) {
+  .diagram.desktop { display: none; }
+  .diagram.mobile { display: block; }
+  .node text, .label text { font-size: 20px; }
+}

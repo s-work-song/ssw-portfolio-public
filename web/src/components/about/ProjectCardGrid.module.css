@@ -1,0 +1,206 @@
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+  gap: 16px;
+}
+
+.grid > article {
+  min-width: 0;
+}
+
+.experimentCard {
+  grid-column: 1 / -1;
+}
+
+.experimentMedia {
+  width: 100%;
+  max-width: 560px;
+}
+
+.learningContext,
+.experiment {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: clamp(16px, 3vw, 22px);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--bg-elev);
+  color: var(--text-dim);
+  line-height: 1.7;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+
+.learningContext h5,
+.experiment h5 {
+  margin: 0;
+  color: var(--text);
+  font-size: 1rem;
+}
+
+.learningContext p,
+.experiment p {
+  margin: 0;
+}
+
+.learningContextLink {
+  align-self: flex-start;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 100%;
+  min-height: 44px;
+  padding: 9px 12px;
+  border: 1px solid var(--border-strong);
+  border-radius: 9px;
+  background: var(--bg-elev-2);
+  color: var(--text);
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.5;
+  text-decoration: none;
+}
+
+.learningContextLink:focus-visible {
+  outline: 2px solid var(--accent, #6366f1);
+  outline-offset: 3px;
+}
+
+.comparison {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.comparison p {
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: var(--bg-elev-2);
+}
+
+.result {
+  color: var(--accent, #6366f1);
+  font-size: clamp(1.05rem, 2.5vw, 1.3rem);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.limitation {
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+  font-size: 0.875rem;
+}
+
+.training {
+  min-width: 0;
+  padding: clamp(12px, 2vw, 22px);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--bg-elev);
+  color: var(--text-dim);
+  line-height: 1.65;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+
+.training h5,
+.trainingExample h6 {
+  margin: 0;
+  color: var(--text);
+  font-size: 1rem;
+}
+
+.trainingDescription {
+  margin: 10px 0 16px;
+  font-size: 0.9rem;
+}
+
+.trainingGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
+  gap: 12px;
+}
+
+.trainingExample {
+  min-width: 0;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--bg-elev-2);
+}
+
+.trainingExample dl {
+  margin: 14px 0 0;
+}
+
+.trainingExample dt {
+  margin-top: 14px;
+  color: var(--text);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.trainingExample dd {
+  margin: 6px 0 0;
+  font-size: 0.9rem;
+}
+
+.trainingExample h6 {
+  min-block-size: 1.65em;
+}
+
+/* 요청과 코드의 줄 수가 달라도 다음 항목은 같은 높이에서 시작한다. */
+.trainingRequest {
+  block-size: 3.3em;
+  overflow: auto;
+}
+
+.trainingOutput {
+  block-size: 15rem;
+}
+
+.trainingIntent {
+  block-size: 6.6em;
+  overflow: auto;
+}
+
+.trainingExample pre {
+  box-sizing: border-box;
+  block-size: 100%;
+  max-inline-size: 100%;
+  margin: 0;
+  padding: 12px 8px;
+  border-radius: 8px;
+  background: var(--bg-elev);
+  /* 좁은 카드에서도 JSON 전체를 읽도록 원래 개행과 자동 줄바꿈을 함께 유지한다. */
+  white-space: pre-wrap !important;
+  word-break: normal;
+  overflow-wrap: anywhere;
+  font-size: 0.85rem !important;
+  line-height: 1.6;
+  overflow: auto;
+}
+
+.trainingExample code {
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: inherit !important;
+}
+
+@media (max-width: 640px) {
+  .comparison {
+    grid-template-columns: 1fr;
+  }
+
+  .trainingExample {
+    padding: 12px;
+  }
+}
+
+@media (max-width: 360px) {
+  .trainingOutput {
+    block-size: 20rem;
+  }
+}
