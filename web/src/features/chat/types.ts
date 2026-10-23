@@ -14,6 +14,8 @@ import type {
   PORTFOLIO_PAGE_IDS,
   PORTFOLIO_RESEARCH_TABS,
   PORTFOLIO_RESEARCH_YEARS,
+  PORTFOLIO_RESEARCH_DETAILS_ACTIONS,
+  PORTFOLIO_RESEARCH_DETAILS_TARGETS,
   PORTFOLIO_VIEW_ACTIONS,
   THEMES,
   THEME_MODES,
@@ -279,13 +281,22 @@ export type ChatPortfolioResearchTab =
 export type ChatPortfolioResearchYear =
   (typeof PORTFOLIO_RESEARCH_YEARS)[number];
 
-/** 화면 이동·연구 상세 제어 지시다. 연도별 제어에만 year가 붙는다. */
+/** 화면 이동 전용 지시다. */
 export interface ChatPortfolioViewToolExecution {
   type: "control_portfolio_view";
   toolCallId: string;
   toolName: "control_portfolio_view";
   action: ChatPortfolioViewAction;
-  year?: ChatPortfolioResearchYear;
+}
+
+export type ChatResearchDetailsAction = (typeof PORTFOLIO_RESEARCH_DETAILS_ACTIONS)[number];
+export type ChatResearchDetailsTarget = (typeof PORTFOLIO_RESEARCH_DETAILS_TARGETS)[number];
+export interface ChatResearchDetailsToolExecution {
+  type: "control_portfolio_research_details";
+  toolCallId: string;
+  toolName: "control_portfolio_research_details";
+  action: ChatResearchDetailsAction;
+  target: ChatResearchDetailsTarget;
 }
 
 /** 현재 화면 상태를 읽었다는 보고다. 화면을 바꾸지 않는다. */
@@ -298,7 +309,7 @@ export interface ChatPortfolioViewStateReportToolExecution {
 }
 
 /** 서버 모델이 실행한 화면 도구 하나다. type이 판별자다. */
-export type ChatToolExecution =
+export type ChatToolExecution = (
   | ChatLogSearchToolExecution
   | ChatThemeToolExecution
   | ChatAccentToolExecution
@@ -310,7 +321,58 @@ export type ChatToolExecution =
   | ChatUiSettingsReportToolExecution
   | ChatSettingsNavigationToolExecution
   | ChatPortfolioViewToolExecution
-  | ChatPortfolioViewStateReportToolExecution;
+  | ChatResearchDetailsToolExecution
+  | ChatPortfolioViewStateReportToolExecution
+) & { toolTask?: ChatToolTaskDirective };
+
+/** 요청 식별자는 인증 정보가 아니라 현재 브라우저 작업과의 동등성 확인용이다. */
+export interface ChatToolTaskRequest {
+  schemaVersion: "portfolio-tool-task-v1";
+  taskId: string;
+  generation: number;
+  /** 후속 확인에만 붙는 불변 발행 목록이다. */
+  steps?: ChatToolTaskStep[];
+  dispatchComplete?: boolean;
+}
+
+export interface ChatToolTaskScope {
+  schemaVersion: "portfolio-tool-task-v1";
+  conversationId: string;
+  turnId: string;
+  taskId: string;
+  generation: number;
+}
+
+export interface ChatToolTaskStep {
+  stepIndex: number;
+  toolCallId: string;
+  toolName: ChatToolExecution["toolName"];
+  source: "native" | "auxiliary";
+  /** 발행 시점의 기록이다. 브라우저 적용·도착 결과와 섞지 않는다. */
+  dispatchStatus: "accepted" | "reported";
+}
+
+export interface ChatToolTaskDirective extends ChatToolTaskScope {
+  stepIndex: number;
+  source: ChatToolTaskStep["source"];
+  dispatchStatus: ChatToolTaskStep["dispatchStatus"];
+}
+
+export interface ChatToolTaskResponse extends ChatToolTaskScope {
+  status: "awaiting_browser" | "completed" | "not_required" | "failed";
+  steps: ChatToolTaskStep[];
+  dispatchComplete: boolean;
+}
+
+/** 현재 UI에서 실제로 확인한 작업 진행 상태이며 모델의 자체 평가가 아니다. */
+export interface ChatToolTaskProgress {
+  scope: ChatToolTaskScope;
+  status: "running" | "awaiting_verification" | "completed" | "failed" | "cancelled";
+  dispatchComplete: boolean;
+  steps: Array<ChatToolTaskStep & {
+    state: "accepted" | "running" | "reported" | "arrived" | "applied" | "failed" | "cancelled";
+  }>;
+}
 
 /**
  * 이번 턴에 UI 도구가 실제로 실행됐는지에 대한 서버의 보고다.
@@ -341,6 +403,7 @@ export interface ToolResult {
   callId: string;
   tool: string;
   action?: string;
+  target?: ChatResearchDetailsTarget;
   label: string;
   status: ChatToolResultStatus;
   /** 실패했을 때의 사유다. 성공 상태에는 붙지 않는다. */
@@ -350,6 +413,8 @@ export interface ToolResult {
 /** 브라우저가 UI 도구 실행 뒤 실제 상태를 다시 읽어 만든 확인 결과다. */
 export interface ChatToolVerificationResult {
   toolCallId: string;
+  /** v1 작업에서는 getter를 포함한 원래 발행 순서의 인덱스를 보존한다. */
+  stepIndex?: number;
   toolName:
     | "set_portfolio_theme"
     | "set_portfolio_accent"
@@ -359,9 +424,11 @@ export interface ChatToolVerificationResult {
     | "set_portfolio_chat_font_size"
     | "set_portfolio_stream_animation"
     | "control_portfolio_view"
+    | "control_portfolio_research_details"
     | "open_portfolio_settings";
   status: "arrived" | "applied" | "failed";
-  action?: ChatPortfolioViewAction;
+  action?: ChatPortfolioViewAction | ChatResearchDetailsAction;
+  target?: ChatResearchDetailsTarget;
   /** 실행을 시작한 뒤 결과를 관측하기까지 걸린 시간이다. */
   elapsedMs: number;
 }
@@ -404,6 +471,7 @@ export interface ChatToolVerification {
 
 /** 검증을 마친 챗봇 응답 본문이다. */
 export interface ChatResponse {
+  toolTask?: ChatToolTaskResponse;
   /** 현재 턴의 공개 모델 이력. 사용자 질문은 프런트에서 별도로 보존한다. */
   modelHistory?: ChatHistoryItem[];
   mode: "model" | "retrieval_fallback" | "tool_status";
@@ -430,6 +498,9 @@ export interface ChatResponse {
 
 /** 화면에 그려지는 말풍선 하나다. */
 export interface ChatMessage {
+  toolTaskProgress?: ChatToolTaskProgress;
+  /** 부분 실행·취소 작업은 원래 실행 요청을 재전송할 수 없다. */
+  retryAllowed?: boolean;
   /** 완료된 응답의 재전송용 이력. 세션 메모리에만 두고 화면/저장소에는 쓰지 않는다. */
   modelHistory?: ChatHistoryItem[];
   id: string;
@@ -469,6 +540,7 @@ export interface ChatSettingChange {
 
 /** 서버로 보내는 질문 요청 본문이다. */
 export interface ChatRequest {
+  toolTask?: ChatToolTaskRequest;
   /** 선택 추적 ID. 원문 대신 UUID를 쓰며 동일 대화에서 유지한다. */
   conversationId?: string;
   /** 같은 사용자 입력의 재시도·도구 후속 확인까지 유지하는 선택 UUID다. */

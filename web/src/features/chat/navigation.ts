@@ -40,6 +40,12 @@ export interface ChatActionTargetArrivedDetail {
   anchor: string;
 }
 
+/** 상세 변경처럼 DOM 커밋을 기다려야 하는 이동만 추가 준비 조건·취소를 전달한다. */
+export interface ChatActionNavigationOptions {
+  signal?: AbortSignal;
+  isTargetReady?: () => boolean;
+}
+
 /**
  * 경로 끝의 슬래시를 떼어 비교 가능한 형태로 맞춘다.
  *

@@ -162,6 +162,38 @@ test('다중 변경 호출은 모든 브라우저 관측이 있을 때만 native
   assert.deepEqual(JSON.parse(verified[2].content), { ...sizeResult, ...browser });
 });
 
+test('이동·상세 혼합 체인은 순서와 raw 인수를 보존하고 상세 action,target 실제 관측을 전달한다', async () => {
+  const navigation = batch('nav-1', 'control_portfolio_view', '{"action":"research-2026"}');
+  const fold = batch('fold-1', 'control_portfolio_research_details', ' { "action":"collapse", "target":"2026" } ');
+  const native = [...navigation, ...fold];
+  const results = [
+    { toolCallId: 'nav-1', toolName: 'control_portfolio_view', action: 'research-2026', status: 'arrived', elapsedMs: 700 },
+    { toolCallId: 'fold-1', toolName: 'control_portfolio_research_details', action: 'collapse', target: '2026', status: 'applied', elapsedMs: 1200 },
+  ];
+  const latest = { ...browser, pageContext: 'research', viewState: { page: 'research', researchTab: 'timeline',
+    researchYear: '2026', researchDetails: { expanded: 1, total: 3, expandedYears: ['2025'] } } };
+  const verified = verifiedToolHistory(native, results, latest);
+  assert.equal(verified[0], navigation[0]);
+  assert.equal(verified[2], fold[0]);
+  assert.deepEqual(JSON.parse(verified[3].content), { ...results[1], ...latest });
+  assert.equal(Object.hasOwn(JSON.parse(verified[3].content), 'year'), false);
+  assert.equal(verifiedToolHistory(native, results.slice(0, 1), latest), undefined);
+  let release;
+  let sent = false;
+  const completion = new Promise(resolve => { release = resolve; });
+  const pending = requestVerifiedToolResponse(completion, request(), results, () => latest, async payload => {
+    sent = true;
+    assert.deepEqual(payload.toolVerification.results, results);
+    assert.deepEqual(payload.toolHistory, verified);
+    return response();
+  }, new AbortController().signal, native);
+  await Promise.resolve();
+  assert.equal(sent, false);
+  release();
+  await pending;
+  assert.equal(sent, true);
+});
+
 test('verification과 재시도는 원래 bare question과 이전 completed history를 바꾸지 않는다', async () => {
   const original = request();
   let retryRequest;

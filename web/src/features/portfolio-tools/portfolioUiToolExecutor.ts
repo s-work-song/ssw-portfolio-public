@@ -29,22 +29,25 @@ import {
   PORTFOLIO_UI_TOOL_NAMES,
   assertInputObject,
   type PortfolioUiToolName,
-} from './schema';
+} from './schema.ts';
 import {
   readPortfolioViewState,
   runPortfolioViewAction,
-} from '@/features/webmcp/portfolioView';
+} from '../webmcp/portfolioView.ts';
+import { runPortfolioResearchDetailsControl } from './researchDetailsControl.ts';
+import type { ChatActionNavigationOptions } from '../chat/navigation.ts';
 
 export { PORTFOLIO_UI_TOOL_NAMES };
 export type { PortfolioUiToolName };
 
-/** 색상 순회는 취소 가능한 비동기 도구라 ChatProvider의 전용 경로에서 실행한다. */
-type SynchronousUiToolName = Exclude<PortfolioUiToolName, 'cycle_portfolio_accent'>;
+/** 색상 순회는 ChatProvider의 전용 경로로 보내고 나머지는 이 실행기에서 처리한다. */
+type DirectUiToolName = Exclude<PortfolioUiToolName, 'cycle_portfolio_accent'>;
 
 /** 실행기가 받는 도구 호출 하나다. 입력은 아직 검증되지 않은 원본이다. */
 export interface PortfolioUiToolCommand {
-  name: SynchronousUiToolName;
+  name: DirectUiToolName;
   input: Record<string, unknown>;
+  signal?: AbortSignal;
 }
 
 /** 도구 실행 결과다. WebMCP는 이 객체를 그대로 JSON으로 돌려준다. */
@@ -53,7 +56,7 @@ export type PortfolioUiToolResult = Record<string, unknown>;
 /** 명령 하나를 실행하는 함수 타입이다. 컨텍스트가 이 형태로 노출한다. */
 export type PortfolioUiToolExecutor = (
   command: PortfolioUiToolCommand,
-) => PortfolioUiToolResult;
+) => PortfolioUiToolResult | Promise<PortfolioUiToolResult>;
 
 /**
  * 도구가 화면을 바꾸기 위해 필요한 최소 능력 집합이다.
@@ -68,7 +71,7 @@ export interface PortfolioUiToolRuntime {
   setChatFont: (font: ChatFont) => void;
   setChatFontSize: (size: ChatFontSize) => void;
   setStreamAnimation: (animation: ChatStreamAnimation) => void;
-  navigateRoute: (route: string) => void;
+  navigateRoute: (route: string, options?: ChatActionNavigationOptions) => void;
 }
 
 /**
@@ -79,13 +82,14 @@ export interface PortfolioUiToolRuntime {
  * ChatProvider의 도구 큐)이 그 실패를 오류 응답이나 경고로 감싼다.
  *
  * 반환 객체의 `message`는 모델에게 결과를 설명하는 문장이라 사람이 읽는
- * 안내 문구와 같은 톤을 유지한다. 부작용(테마 변경·라우팅)은 런타임을 통해
- * 일어나며 이 함수는 그 결과를 기다리지 않는다.
+ * 안내 문구와 같은 톤을 유지한다. 상세 제어는 실제 DOM 관측이 끝날 때까지
+ * Promise로 기다린다. 다른 동기 도구의 완료 관측은 호출자의 도구 큐가 맡는다.
  */
 export function executePortfolioUiTool(
   command: PortfolioUiToolCommand,
   runtime: PortfolioUiToolRuntime,
-): PortfolioUiToolResult {
+): PortfolioUiToolResult | Promise<PortfolioUiToolResult> {
+  if (command.signal?.aborted) throw new DOMException('The operation was aborted.', 'AbortError');
   assertInputObject(command.input);
   const { input } = command;
 
@@ -140,21 +144,26 @@ export function executePortfolioUiTool(
       };
     }
     case 'control_portfolio_view': {
-      const { action, year } =
+      const { action } =
         PORTFOLIO_UI_TOOLS['control_portfolio_view'].parse(input);
-      const target = runPortfolioViewAction(action, runtime.navigateRoute, year);
+      const target = runPortfolioViewAction(action, route => runtime.navigateRoute(
+        route, command.signal ? { signal: command.signal } : undefined,
+      ));
       return {
         ok: true,
         action: target.action,
         route: target.route,
         label: target.label,
         message: target.message,
-        ...(target.researchYear ? { year: target.researchYear } : {}),
       };
+    }
+    case 'control_portfolio_research_details': {
+      const details = PORTFOLIO_UI_TOOLS.control_portfolio_research_details.parse(input);
+      return runPortfolioResearchDetailsControl(details, runtime.navigateRoute, command.signal);
     }
     case 'open_portfolio_settings': {
       PORTFOLIO_UI_TOOLS['open_portfolio_settings'].parse(input);
-      runtime.navigateRoute('/settings');
+      runtime.navigateRoute('/settings', command.signal ? { signal: command.signal } : undefined);
       return {
         ok: true,
         route: '/settings',
@@ -197,9 +206,10 @@ export function portfolioUiCommandFromChatExecution(
         name: execution.toolName,
         input: {
           action: execution.action,
-          ...(execution.year ? { year: execution.year } : {}),
         },
       };
+    case 'control_portfolio_research_details':
+      return { name: execution.toolName, input: { action: execution.action, target: execution.target } };
     case 'open_portfolio_settings':
       return { name: execution.toolName, input: {} };
     default:

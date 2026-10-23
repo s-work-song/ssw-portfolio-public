@@ -19,7 +19,8 @@ import {
 } from "react";
 import { CHAT_QUICK_START_OPTION_BY_ACTION_ID } from "./constants";
 import { StreamingText } from "./StreamingText";
-import { toolResultText } from "./toolResultPresentation";
+import { toolResultDisplayStatus, toolResultText } from "./toolResultPresentation";
+import { toolTaskSummary, toolTaskStepText } from "./toolTaskPresentation.ts";
 import { CHAT_FAILURE_NOTICE } from "./chatFailure";
 import type {
   ActionId,
@@ -313,6 +314,17 @@ export const MessageItem = memo(function MessageItem({
           응답 생성을 완료하지 못했습니다
         </strong>
       )}
+      {message.toolTaskProgress && message.toolTaskProgress.steps.length > 0 && (
+        <details className={styles.toolTaskProgress} data-task-status={message.toolTaskProgress.status}>
+          <summary>{toolTaskSummary(message.toolTaskProgress)}</summary>
+          <p>도구 전담 실행 결과를 브라우저에서 확인한 뒤 메인 답변에 전달합니다.</p>
+          <ol aria-label="도구 작업 단계">
+            {message.toolTaskProgress.steps.map((step) => (
+              <li key={step.toolCallId} data-step-status={step.state}>{toolTaskStepText(step)}</li>
+            ))}
+          </ol>
+        </details>
+      )}
       {message.toolResults && message.toolResults.length > 0 && (
         <div
           className={styles.toolResults}
@@ -324,9 +336,9 @@ export const MessageItem = memo(function MessageItem({
             <span
               key={result.callId}
               className={styles.toolResult}
-              data-tool-status={result.status}
+              data-tool-status={toolResultDisplayStatus(result, message.generationState)}
             >
-              {toolResultText(result)}
+              {toolResultText(result, message.generationState)}
             </span>
           ))}
         </div>
@@ -398,7 +410,9 @@ export const MessageItem = memo(function MessageItem({
       )}
       {hasFailed && (
         <div className={styles.messageFailure} role="alert">
-          <p>{CHAT_FAILURE_NOTICE}</p>
+          <p>{message.retryAllowed === false
+            ? "작업을 완료하지 못했어요. 이미 반영된 결과는 유지됩니다. 필요한 작업을 새 질문으로 요청해 주세요."
+            : CHAT_FAILURE_NOTICE}</p>
           {canRetry && (
             <button
               type="button"

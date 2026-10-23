@@ -13,6 +13,7 @@ import {
   PORTFOLIO_RESEARCH_YEARS,
   PORTFOLIO_VIEW_ACTIONS,
   YEAR_DETAIL_ACTIONS,
+  LEGACY_RESEARCH_DETAIL_ACTIONS,
   isAllowed,
 } from '../portfolio-tools/schema.ts';
 import type {
@@ -53,7 +54,8 @@ const RESEARCH_TAB_BY_ANCHOR: Readonly<Record<string, ChatPortfolioResearchTab>>
   'research-panel-meta': 'tools',
 };
 
-export type PortfolioViewAction = ChatPortfolioViewAction;
+/** 내부 레거시 UI 어댑터만 예전 상세 액션을 해석한다. 공개 스키마와 분리한다. */
+export type PortfolioViewAction = ChatPortfolioViewAction | (typeof LEGACY_RESEARCH_DETAIL_ACTIONS)[number];
 export type PortfolioResearchYear = ChatPortfolioResearchYear;
 /** 연구 상세를 펼칠지 접을지다. */
 export type PortfolioResearchDetailsMode = 'expand' | 'collapse';
@@ -252,14 +254,14 @@ const VIEW_TARGETS: Readonly<Record<PortfolioViewAction, PortfolioViewTarget>> =
     action: 'expand-research-details',
     route: ACTION_ROUTES.research_timeline,
     message: '연구 여정으로 이동해 모든 상세 내용을 펼쳤습니다.',
-    label: '연구 여정의 모든 상세 내용 펼치기',
+    label: '연구 여정 전체 상세 펼치기',
     researchDetails: 'expand',
   },
   'collapse-research-details': {
     action: 'collapse-research-details',
     route: ACTION_ROUTES.research_timeline,
     message: '연구 여정으로 이동해 모든 상세 내용을 접었습니다.',
-    label: '연구 여정의 모든 상세 내용 접기',
+    label: '연구 여정 전체 상세 접기',
     researchDetails: 'collapse',
   },
   'expand-research-year-details': {

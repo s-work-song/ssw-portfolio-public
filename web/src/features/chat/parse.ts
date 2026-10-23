@@ -28,24 +28,28 @@ import {
   PORTFOLIO_VIEW_ACTIONS,
   THEMES,
   THEME_MODES,
-  YEAR_DETAIL_ACTIONS,
+  PORTFOLIO_UI_TOOLS,
   isAllowed,
   isRecord,
   isString,
   normalizePortfolioToolName,
 } from "../portfolio-tools/schema.ts";
+import {
+  expectedToolTaskScope, MAX_TOOL_TASK_STEPS, parseTaskToolExecution,
+  parseToolTaskResponse, ToolTaskProtocolError,
+} from "./toolTaskRuntime.ts";
 import type {
   ActionId,
   ApiAudience,
   ChatAction,
   ChatPortfolioViewAction,
   ChatPortfolioViewState,
+  ChatRequest,
   ChatResponse,
   ChatSegment,
   ChatToolFollowup,
   ChatToolFollowupAspect,
   ChatToolExecution,
-  ChatToolVerification,
   ChatUiToolOutcome,
   PageContext,
 } from "./types";
@@ -357,24 +361,26 @@ export function parseToolExecution(value: unknown): ChatToolExecution | null {
     }
     case "control_portfolio_view": {
       if (toolName !== "control_portfolio_view") return null;
-      if (!isAllowed(value.action, PORTFOLIO_VIEW_ACTIONS)) return null;
+      if (!isAllowed(value.action, PORTFOLIO_VIEW_ACTIONS)
+        || Object.keys(value).some(key => !["type", "toolName", "toolCallId", "action"].includes(key))) return null;
       const action = value.action as ChatPortfolioViewAction;
-      const requiresYear = (YEAR_DETAIL_ACTIONS as readonly string[]).includes(
-        action,
-      );
-      const year = isAllowed(value.year, PORTFOLIO_RESEARCH_YEARS)
-        ? value.year
-        : undefined;
-      if ((requiresYear && !year) || (!requiresYear && value.year !== undefined)) {
-        return null;
-      }
       return {
         type: "control_portfolio_view",
         toolCallId,
         toolName: "control_portfolio_view",
         action,
-        ...(year ? { year } : {}),
       };
+    }
+    case "control_portfolio_research_details": {
+      if (toolName !== "control_portfolio_research_details"
+        || Object.keys(value).some(key => !["type", "toolName", "toolCallId", "action", "target"].includes(key))) return null;
+      try {
+        const input = PORTFOLIO_UI_TOOLS.control_portfolio_research_details.parse({
+          action: value.action, target: value.target,
+        });
+        return { type: "control_portfolio_research_details", toolCallId,
+          toolName: "control_portfolio_research_details", ...input };
+      } catch { return null; }
     }
     case "open_portfolio_settings": {
       if (toolName !== "open_portfolio_settings") return null;
@@ -553,7 +559,7 @@ export function parseToolExecutions(value: unknown): ChatToolExecution[] {
  */
 export function parseChatResponse(
   value: unknown,
-  context: { toolVerification?: ChatToolVerification } = {},
+  context: Pick<ChatRequest, "toolTask" | "conversationId" | "turnId" | "toolVerification"> = {},
 ): ChatResponse {
   if (!isRecord(value)) {
     throw new ChatApiError("서버 응답 형식을 확인할 수 없습니다.");
@@ -610,7 +616,15 @@ export function parseChatResponse(
   const parsedSegments = segments
     .map(parseSegment)
     .filter((segment): segment is ChatSegment => segment !== null);
-  const parsedToolExecutions = parseToolExecutions(toolExecutions);
+  const taskScope = expectedToolTaskScope(context);
+  if (taskScope && (!Array.isArray(toolExecutions) || toolExecutions.length > MAX_TOOL_TASK_STEPS)) {
+    throw new ToolTaskProtocolError();
+  }
+  const parsedToolExecutions = taskScope
+    ? (toolExecutions as unknown[]).map((execution) => parseTaskToolExecution(execution, taskScope, parseToolExecution))
+    : parseToolExecutions(toolExecutions);
+  const parsedToolTask = taskScope ? parseToolTaskResponse(value.toolTask, context, parsedToolExecutions,
+    validMode === "retrieval_fallback" && validStatus === "upstream_offline") : undefined;
   const awaitingBrowser = parsedToolExecutions.some((execution) =>
     execution.type !== "report_portfolio_ui_settings" && execution.type !== "report_portfolio_view_state");
   // 칩만 남기는 확인 응답은 실제 도구 체인으로 끝나며 합성 assistant가 없다.
@@ -626,6 +640,7 @@ export function parseChatResponse(
   }
 
   return {
+    ...(parsedToolTask ? { toolTask: parsedToolTask } : {}),
     ...(modelHistory ? { modelHistory } : {}),
     mode: validMode,
     status: validStatus,

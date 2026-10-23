@@ -793,6 +793,7 @@
 
 .stoppedBadge,
 .failedBadge,
+.toolResult[data-tool-status="stopped"],
 .toolResult[data-tool-status="failed"] {
   border-color: rgba(190, 55, 55, 0.45);
   background: rgba(190, 55, 55, 0.08);
@@ -806,6 +807,32 @@
   flex-wrap: wrap;
   gap: 6px;
   margin-bottom: 8px;
+}
+
+.toolTaskProgress {
+  margin: 0 0 0.65rem;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid var(--chat-border);
+  border-radius: 0.6rem;
+  font-size: 0.78rem;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+}
+
+.toolTaskProgress summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.toolTaskProgress p {
+  margin: 0.5rem 0;
+  opacity: 0.75;
+}
+
+.toolTaskProgress ol {
+  margin: 0.35rem 0 0;
+  padding: 0;
+  list-style: none;
 }
 
 .toolResult {

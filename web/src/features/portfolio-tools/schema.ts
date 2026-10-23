@@ -27,6 +27,9 @@ import {
   PORTFOLIO_PAGE_IDS,
   PORTFOLIO_RESEARCH_TABS,
   PORTFOLIO_RESEARCH_YEARS,
+  PORTFOLIO_RESEARCH_DETAILS_ACTIONS,
+  PORTFOLIO_RESEARCH_DETAILS_TARGETS,
+  LEGACY_RESEARCH_DETAIL_ACTIONS,
   PORTFOLIO_VIEW_ACTIONS,
   PORTFOLIO_VIEW_TOOL_DEFINITIONS,
   YEAR_DETAIL_ACTIONS,
@@ -37,6 +40,7 @@ import {
   type PortfolioResearchYearId,
   type PortfolioViewActionId,
   type PortfolioViewControlInput,
+  type PortfolioResearchDetailsControlInput,
 } from './view.ts';
 
 export {
@@ -48,6 +52,9 @@ export {
   PORTFOLIO_PAGE_IDS,
   PORTFOLIO_RESEARCH_TABS,
   PORTFOLIO_RESEARCH_YEARS,
+  PORTFOLIO_RESEARCH_DETAILS_ACTIONS,
+  PORTFOLIO_RESEARCH_DETAILS_TARGETS,
+  LEGACY_RESEARCH_DETAIL_ACTIONS,
   PORTFOLIO_VIEW_ACTIONS,
   THEMES,
   THEME_MODES,
@@ -67,6 +74,7 @@ export type {
   PortfolioThemeMode,
   PortfolioViewActionId,
   PortfolioViewControlInput,
+  PortfolioResearchDetailsControlInput,
 };
 export {
   assertInputObject,

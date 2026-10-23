@@ -572,7 +572,7 @@ export function ChatWidget() {
   const retryTargetMessageId = useMemo(() => {
     const latestMessage = messages[messages.length - 1];
     return latestMessage?.role === "assistant" &&
-      latestMessage.generationState === "failed"
+      latestMessage.generationState === "failed" && latestMessage.retryAllowed !== false
       ? latestMessage.id
       : null;
   }, [messages]);

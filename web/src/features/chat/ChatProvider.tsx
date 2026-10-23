@@ -23,6 +23,7 @@ import { chatSettingsDataset } from "../../context/settingsDataset";
 import {
   requestChat,
   requestChatStream,
+  requestToolTaskEvents,
   ChatApiError,
 } from "./api";
 import {
@@ -57,7 +58,12 @@ import {
   visibleChatMessages,
 } from "./chatFailure";
 import { historyFromMessages } from "./chatHistory";
-import { ChatConversationIdentity, type ChatRequestIds } from "./chatRequestIdentity";
+import { navigationPathMatches, observeToolNavigation } from "./toolNavigationObservation";
+import {
+  ChatConversationIdentity, createChatToolTask, nextChatToolTaskGeneration, type ChatRequestIds,
+} from "./chatRequestIdentity";
+import { expectedToolTaskScope, stepFromExecution, ToolTaskProtocolError, ToolTaskRuntime } from "./toolTaskRuntime";
+import { BrowserToolTaskTelemetry } from "./toolTaskTelemetry";
 import { loadMarkdownRenderer } from "./MessageItem";
 import { StreamRenderQueue } from "./streamRenderQueue";
 import {
@@ -94,6 +100,7 @@ import {
   aboutTabPathFromPath,
   normalizeNavigationPath,
   pathWithoutHash,
+  type ChatActionNavigationOptions,
   type ChatActionNavigateDetail,
   type ChatActionPageEnteredDetail,
   type ChatActionTargetArrivedDetail,
@@ -109,7 +116,8 @@ import type {
   ChatStreamAnimation,
   ChatToolVerificationResult,
   ChatToolExecution,
-  ChatToolResultStatus,
+  ChatToolTaskProgress,
+  ChatToolTaskResponse,
   ChatUiSettings,
   Tone,
   ToolResult,
@@ -169,17 +177,11 @@ function requiresBrowserToolVerification(
     execution.type === "set_portfolio_chat_font_size" ||
     execution.type === "set_portfolio_stream_animation" ||
     execution.type === "control_portfolio_view" ||
+    execution.type === "control_portfolio_research_details" ||
     execution.type === "open_portfolio_settings"
   );
 }
 
-/** basePath 배포를 포함해 현재 브라우저 경로가 도구 목적지와 같은지 본다. */
-function browserPathMatchesRoute(route: string): boolean {
-  const routePath = pathWithoutHash(route);
-  const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
-  const expected = normalizeNavigationPath(`${basePath}${routePath}`);
-  return normalizeNavigationPath(window.location.pathname) === expected;
-}
 /**
  * 액션 이동 시 문서 스크롤 연출의 길이 범위와 거리 환산 계수다.
  * 짧은 이동은 최소 시간을 보장해 뚝 끊기지 않게 하고, 먼 이동은 최대 시간에서
@@ -239,6 +241,7 @@ function waitForSettingApplied(
  */
 function fallbackToolResultLabel(execution: ChatToolExecution): string {
   if (execution.type === "control_portfolio_view") return "화면 이동";
+  if (execution.type === "control_portfolio_research_details") return "연구 상세 제어";
   if (execution.type === "open_portfolio_settings") return "포트폴리오 설정 페이지";
   return settingToolResultLabel(execution) ?? execution.toolName;
 }
@@ -370,6 +373,9 @@ function isStreamAnimation(
  * assistantMessageId는 실패한 답변 말풍선을 재시도 전에 지우는 데 쓴다.
  */
 interface PendingRetry extends ChatRequestIds {
+  toolTask: NonNullable<ChatRequest["toolTask"]>;
+  toolTaskProgress?: ChatToolTaskProgress;
+  toolTaskTelemetry?: BrowserToolTaskTelemetry;
   message: string;
   responseMode?: "default" | "explanation";
   history: ChatHistoryItem[];
@@ -445,7 +451,7 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
   const messagesRef = useRef<ChatMessage[]>(messages);
   const accentCycleInProgressRef = useRef(false);
   const mobileHistoryEntryRef = useRef(false);
-  const pendingActionRouteRef = useRef<string | null>(null);
+  const pendingActionRouteRef = useRef<{ route: string; options?: ChatActionNavigationOptions } | null>(null);
   const pendingActionAnchorRef = useRef<string | null>(null);
   const closeTimerRef = useRef<number | null>(null);
   const actionScrollFrameRef = useRef<number | null>(null);
@@ -458,9 +464,12 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
   const pendingActionPathRef = useRef<string | null>(null);
   const pendingActionAwaitingPageEntryRef = useRef(false);
   const activeActionNavigationRouteRef = useRef<string | null>(null);
+  const activeActionNavigationOptionsRef = useRef<ChatActionNavigationOptions | undefined>(undefined);
+  const actionNavigationAbortCleanupRef = useRef<(() => void) | null>(null);
   const actionNavigationTokenRef = useRef(0);
+  const actionScrollTokenRef = useRef(0);
   const pendingChatNavigationFocusRef = useRef(false);
-  const navigateRouteRef = useRef<(route: string) => void>(() => undefined);
+  const navigateRouteRef = useRef<(route: string, options?: ChatActionNavigationOptions) => void>(() => undefined);
   /** 설정 도구가 "요청값 = 실제값"을 확인할 때 읽는 최신 UI 설정이다. */
   const uiSettingsRef = useRef<ChatUiSettings | null>(null);
   /** 이 브라우저에서 실제 반영이 확인된 최근 설정 도구 변경이다. */
@@ -651,6 +660,7 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
     return () => {
       mountedRef.current = false;
       renderQueueRef.current?.cancel();
+      actionNavigationAbortCleanupRef.current?.();
       abortRef.current?.abort();
       if (closeTimerRef.current !== null) {
         window.clearTimeout(closeTimerRef.current);
@@ -699,7 +709,9 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
       setFrame: (frame: number | null) => void,
       onComplete: () => void,
       easing: "ease-in-out" | "ease-out" = "ease-in-out",
+      canContinue: () => boolean = () => true,
     ) => {
+      if (!canContinue()) return;
       const scroller = document.scrollingElement;
       if (!scroller) {
         setFrame(null);
@@ -722,6 +734,7 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
       const duration = scrollDurationForDistance(distance);
       const startedAt = window.performance.now();
       const step = (timestamp: number) => {
+        if (!canContinue()) return;
         const progress = Math.min(1, (timestamp - startedAt) / duration);
         const easedProgress =
           easing === "ease-out"
@@ -799,7 +812,7 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
       setChatFont,
       setChatFontSize,
       setStreamAnimation,
-      navigateRoute: (route) => navigateRouteRef.current(route),
+      navigateRoute: (route, options) => navigateRouteRef.current(route, options),
     };
   }, [
     accent,
@@ -899,6 +912,26 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
     }, 220);
   }, []);
 
+  /** 끝난 이동의 타이머·프레임·취소 구독만 정리한다. 오래된 콜백은 토큰으로 걸러낸다. */
+  const clearActionNavigation = useCallback(() => {
+    actionScrollTokenRef.current += 1;
+    if (actionScrollFrameRef.current !== null) window.cancelAnimationFrame(actionScrollFrameRef.current);
+    if (actionTopScrollFrameRef.current !== null) window.cancelAnimationFrame(actionTopScrollFrameRef.current);
+    if (actionScrollTimerRef.current !== null) window.clearTimeout(actionScrollTimerRef.current);
+    if (actionPageEntryTimerRef.current !== null) window.clearTimeout(actionPageEntryTimerRef.current);
+    actionScrollFrameRef.current = null;
+    actionTopScrollFrameRef.current = null;
+    actionScrollTimerRef.current = null;
+    actionPageEntryTimerRef.current = null;
+    pendingActionAnchorRef.current = null;
+    pendingActionPathRef.current = null;
+    pendingActionAwaitingPageEntryRef.current = false;
+    activeActionNavigationRouteRef.current = null;
+    activeActionNavigationOptionsRef.current = undefined;
+    actionNavigationAbortCleanupRef.current?.();
+    actionNavigationAbortCleanupRef.current = null;
+  }, []);
+
   /**
    * 예약해 둔 앵커로 문서를 스크롤하고 도착 지점을 잠시 강조한다.
    *
@@ -913,6 +946,12 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
   const scrollToPendingActionAnchor = useCallback(() => {
     const anchor = pendingActionAnchorRef.current;
     if (!anchor) return;
+    const navigationToken = actionNavigationTokenRef.current;
+    const scrollToken = ++actionScrollTokenRef.current;
+    const options = activeActionNavigationOptionsRef.current;
+    const targetPath = pendingActionPathRef.current;
+    const isCurrent = () => actionNavigationTokenRef.current === navigationToken
+      && actionScrollTokenRef.current === scrollToken && pendingActionAnchorRef.current === anchor;
     if (actionScrollFrameRef.current !== null) {
       window.cancelAnimationFrame(actionScrollFrameRef.current);
     }
@@ -935,15 +974,23 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
       );
     }
 
+    const canContinue = () => {
+      if (!isCurrent()) return false;
+      if (options?.signal?.aborted || window.location.hash !== targetHash
+        || !targetPath || !navigationPathMatches(targetPath, window.location.pathname, process.env.NEXT_PUBLIC_BASE_PATH ?? "")) {
+        clearActionNavigation();
+        return false;
+      }
+      return true;
+    };
     const startedAt = window.performance.now();
     const abandonPendingAction = () => {
-      pendingActionAnchorRef.current = null;
-      pendingActionPathRef.current = null;
-      activeActionNavigationRouteRef.current = null;
-      actionScrollTimerRef.current = null;
+      if (!isCurrent()) return;
+      clearActionNavigation();
       restoreChatInputAfterNavigation();
     };
     const retryOrAbandon = () => {
+      if (!canContinue()) return;
       if (
         window.performance.now() - startedAt <
         ACTION_TARGET_WAIT_TIMEOUT_MS
@@ -954,6 +1001,7 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
       }
     };
     const completeTargetArrival = (target: HTMLElement) => {
+      if (!canContinue()) return;
       const scroller = document.scrollingElement;
       const scrollTop = scroller?.scrollTop ?? window.scrollY;
       const maximumScrollTop = Math.max(
@@ -967,6 +1015,7 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
         (Number.parseFloat(targetStyle.scrollMarginTop) || 0) +
         (Number.parseFloat(rootStyle.scrollPaddingTop) || 0);
       if (
+        options?.isTargetReady?.() === false ||
         !isPortfolioTargetReady(target) ||
         !isPortfolioTargetAligned(
           target,
@@ -978,11 +1027,7 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
         retryOrAbandon();
         return;
       }
-      pendingActionAnchorRef.current = null;
-      pendingActionPathRef.current = null;
-      activeActionNavigationRouteRef.current = null;
-      actionScrollFrameRef.current = null;
-      actionScrollTimerRef.current = null;
+      clearActionNavigation();
       target.focus({ preventScroll: true });
       window.dispatchEvent(
         new CustomEvent<ChatActionTargetArrivedDetail>(
@@ -1011,9 +1056,9 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
     };
 
     const scroll = () => {
-      if (pendingActionAnchorRef.current !== anchor) return;
+      if (!canContinue()) return;
       const target = document.getElementById(anchor);
-      if (!target || !isPortfolioTargetReady(target)) {
+      if (!target || options?.isTargetReady?.() === false || !isPortfolioTargetReady(target)) {
         retryOrAbandon();
         return;
       }
@@ -1039,7 +1084,7 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
         void Promise.allSettled(
           runningAnimations.map((animation) => animation.finished),
         ).then(() => {
-          if (pendingActionAnchorRef.current === anchor) scroll();
+          if (canContinue()) scroll();
         });
         return;
       }
@@ -1061,19 +1106,20 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
       animateDocumentScroll(
         targetTop,
         (frame) => {
-          actionScrollFrameRef.current = frame;
+          if (isCurrent()) actionScrollFrameRef.current = frame;
         },
         () => {
-          if (pendingActionAnchorRef.current === anchor) {
-            completeTargetArrival(target);
-          }
+          if (canContinue()) completeTargetArrival(target);
         },
+        "ease-in-out",
+        canContinue,
       );
     };
     actionScrollFrameRef.current = window.requestAnimationFrame(() => {
+      if (!canContinue()) return;
       actionScrollFrameRef.current = window.requestAnimationFrame(scroll);
     });
-  }, [animateDocumentScroll, motionSuppressed, restoreChatInputAfterNavigation]);
+  }, [animateDocumentScroll, clearActionNavigation, motionSuppressed, restoreChatInputAfterNavigation]);
 
   /**
    * 액션·도구가 지시한 경로로 이동한다. 이 포트폴리오의 이동 경로는 모두 여기를 지난다.
@@ -1090,22 +1136,29 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
    * 이동마다 토큰을 하나 올려, 늦게 도착한 콜백이 이미 지난 이동을 되살리지 못하게 한다.
    */
   const navigateToActionTarget = useCallback(
-    (route: string) => {
+    (route: string, options?: ChatActionNavigationOptions) => {
+      if (options?.signal?.aborted) return;
       if (!SAFE_ROUTE_PATTERN.test(route)) {
         logChatFailureLocally("navigation", null);
         return;
       }
-      if (activeActionNavigationRouteRef.current === route) return;
+      // 새 DOM 준비 조건이 있는 요청은 같은 경로라도 별도 작업이다. 옛 도착을 재사용하지 않는다.
+      if (activeActionNavigationRouteRef.current === route && !options) return;
+      clearActionNavigation();
       activeActionNavigationRouteRef.current = route;
+      activeActionNavigationOptionsRef.current = options;
       actionNavigationTokenRef.current += 1;
       const navigationToken = actionNavigationTokenRef.current;
-      if (actionTopScrollFrameRef.current !== null) {
-        window.cancelAnimationFrame(actionTopScrollFrameRef.current);
-        actionTopScrollFrameRef.current = null;
-      }
-      if (actionPageEntryTimerRef.current !== null) {
-        window.clearTimeout(actionPageEntryTimerRef.current);
-        actionPageEntryTimerRef.current = null;
+      const isCurrent = () => actionNavigationTokenRef.current === navigationToken
+        && !options?.signal?.aborted;
+      if (options?.signal) {
+        const cancel = () => {
+          if (actionNavigationTokenRef.current !== navigationToken) return;
+          actionNavigationTokenRef.current += 1;
+          clearActionNavigation();
+        };
+        options.signal.addEventListener("abort", cancel, { once: true });
+        actionNavigationAbortCleanupRef.current = () => options.signal?.removeEventListener("abort", cancel);
       }
 
       const hashIndex = route.indexOf("#");
@@ -1117,10 +1170,7 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
       const routePath = pathWithoutHash(route);
       pendingActionPathRef.current = routePath;
       if (!actionAnchor) {
-        pendingActionAnchorRef.current = null;
-        pendingActionPathRef.current = null;
-        pendingActionAwaitingPageEntryRef.current = false;
-        activeActionNavigationRouteRef.current = null;
+        clearActionNavigation();
         router.prefetch(routePath);
         if (routePath === normalizeNavigationPath(pathname)) {
           window.scrollTo({ top: 0, behavior: "auto" });
@@ -1152,7 +1202,7 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
       router.prefetch(routePath);
 
       const dispatchNavigation = () => {
-        if (actionNavigationTokenRef.current !== navigationToken) return;
+        if (!isCurrent()) return;
         const event = new CustomEvent<ChatActionNavigateDetail>(
           CHAT_ACTION_NAVIGATE_EVENT,
           {
@@ -1185,18 +1235,18 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
       animateDocumentScroll(
         0,
         (frame) => {
-          actionTopScrollFrameRef.current = frame;
+          if (isCurrent()) actionTopScrollFrameRef.current = frame;
         },
         () => {
-          if (actionNavigationTokenRef.current === navigationToken) {
-            dispatchNavigation();
-          }
+          if (isCurrent()) dispatchNavigation();
         },
         "ease-out",
+        isCurrent,
       );
     },
     [
       animateDocumentScroll,
+      clearActionNavigation,
       motionSuppressed,
       pageTransition,
       pathname,
@@ -1224,7 +1274,9 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
     if (actionPageEntryTimerRef.current !== null) {
       window.clearTimeout(actionPageEntryTimerRef.current);
     }
+    const navigationToken = actionNavigationTokenRef.current;
     actionPageEntryTimerRef.current = window.setTimeout(() => {
+      if (actionNavigationTokenRef.current !== navigationToken) return;
       actionPageEntryTimerRef.current = null;
       pendingActionAwaitingPageEntryRef.current = false;
       scrollToPendingActionAnchor();
@@ -1335,7 +1387,7 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
 
     const pendingRoute = pendingActionRouteRef.current;
     pendingActionRouteRef.current = null;
-    if (pendingRoute) navigateToActionTarget(pendingRoute);
+    if (pendingRoute) navigateToActionTarget(pendingRoute.route, pendingRoute.options);
   }, [navigateToActionTarget]);
 
   /**
@@ -1425,7 +1477,7 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
         pendingActionRouteRef.current = null;
         if (pendingRoute) {
           window.requestAnimationFrame(() =>
-            navigateToActionTarget(pendingRoute),
+            navigateToActionTarget(pendingRoute.route, pendingRoute.options),
           );
         }
         return;
@@ -1470,7 +1522,10 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
 
       const controller = new AbortController();
       abortRef.current = controller;
+      const isRequestActive = () => mountedRef.current && !controller.signal.aborted
+        && abortRef.current === controller;
       const request: ChatRequest = {
+        toolTask: pending.toolTask,
         conversationId: pending.conversationId,
         turnId: pending.turnId,
         message: pending.message,
@@ -1495,6 +1550,13 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
         uiSettingChanges: [...uiSettingChangesRef.current],
         viewState: readPortfolioViewState(pathname),
       };
+      const taskScope = expectedToolTaskScope(request)!;
+      const taskTelemetry = pending.toolTaskTelemetry ?? new BrowserToolTaskTelemetry(taskScope, requestToolTaskEvents);
+      pending.toolTaskTelemetry = taskTelemetry;
+      const taskRuntime = pending.toolVerification ? undefined : new ToolTaskRuntime(taskScope, isRequestActive);
+      const taskProgress: ChatToolTaskProgress | undefined = pending.toolTaskProgress;
+      let sealedTask: ChatToolTaskResponse | undefined;
+      const taskSnapshot = () => taskRuntime?.snapshot() ?? taskProgress;
       const shouldStream = streamingEnabled;
       let streamingMessageId: string | undefined;
       const handledToolCallIds = new Set<string>();
@@ -1519,18 +1581,36 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
       // 스트리밍이면 곧 만들 답변 말풍선, 아니면 완료 시점에 만드는 말풍선이다.
       let toolResultMessageId: string | undefined;
       const publishToolResults = () => {
-        if (!mountedRef.current || !toolResultMessageId) return;
+        if (!mountedRef.current || abortRef.current !== controller) return;
         const snapshot = [...toolResults.values()];
+        const toolTaskProgress = taskSnapshot();
+        if (!toolResultMessageId) {
+          if (!toolTaskProgress?.steps.length) return;
+          streamingMessageId = nextId("assistant");
+          toolResultMessageId = streamingMessageId;
+          pending.assistantMessageId = streamingMessageId;
+          setMessages((current) => [...current, {
+            id: streamingMessageId!, role: "assistant", content: "", kind: "message",
+            generationState: "streaming", toolResults: snapshot, toolTaskProgress,
+          }]);
+          return;
+        }
         setMessages((current) =>
           current.map((chatMessage) =>
             chatMessage.id === toolResultMessageId
-              ? { ...chatMessage, toolResults: snapshot }
+              ? { ...chatMessage, toolResults: snapshot, toolTaskProgress }
               : chatMessage,
           ),
         );
       };
       /** 같은 callId면 덮어쓴다. started → arrived 같은 승격이 이 경로다. */
       const recordToolResult = (result: ToolResult) => {
+        if (!isRequestActive()) return;
+        taskRuntime?.observe(result);
+        if (result.status !== "started") {
+          const step = taskRuntime?.steps.find((item) => item.toolCallId === result.callId);
+          if (step) taskTelemetry.tool(step, result.status);
+        }
         toolResults.set(result.callId, result);
         publishToolResults();
       };
@@ -1548,10 +1628,14 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
         const startedAt = toolStartedAt.get(toolCallId) ?? performance.now();
         return {
           toolCallId,
+          ...(execution?.toolTask ? { stepIndex: execution.toolTask.stepIndex } : {}),
           toolName: execution?.toolName as ChatToolVerificationResult["toolName"],
           status,
           ...(execution?.type === "control_portfolio_view"
             ? { action: execution.action }
+            : {}),
+          ...(execution?.type === "control_portfolio_research_details"
+            ? { action: execution.action, target: execution.target }
             : {}),
           elapsedMs: Math.min(
             30_000,
@@ -1567,7 +1651,7 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
        * 이동 도구가 정말 목적지에 닿았는지 지켜본다.
        *
        * 앵커가 있는 경로는 도착 이벤트를 기다린다. 앵커가 없는 경로(설정
-       * 페이지)는 경로 전환이 이동의 전부라 최소 대기 뒤 현재 경로를 확인한다.
+       * 페이지)도 경로와 설정 본문이 실제로 준비될 때까지 기다린다.
        * 상한을 넘기면 실패로 적는다 — 앵커를 찾지 못해 조용히 포기한
        * 경우에도 사용자는 결과를 알아야 한다.
        */
@@ -1581,77 +1665,47 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
           hashIndex >= 0
             ? decodeURIComponent(route.slice(hashIndex + 1))
             : null;
-        return new Promise((resolve, reject) => {
-          let settled = false;
-          let timer: number | null = null;
-          const dispose = () => {
-            if (timer !== null) window.clearTimeout(timer);
-            timer = null;
-            window.removeEventListener(
-              CHAT_ACTION_TARGET_ARRIVED_EVENT,
-              handleArrived,
-            );
-            controller.signal.removeEventListener("abort", handleAbort);
-            toolResultWatchersRef.current.delete(dispose);
-          };
-          const settle = async (
-            status: ChatToolResultStatus,
-            detail?: string,
-          ) => {
-            if (settled) return;
-            settled = true;
-            dispose();
-            try {
-              await waitForMinimumToolObservation(
-                startedAt,
-                controller.signal,
-              );
-              const routeReached =
-                status !== "arrived" || browserPathMatchesRoute(route);
-              recordToolResult({
-                ...started,
-                status: routeReached ? status : "failed",
-                ...(routeReached
-                  ? detail
-                    ? { detail }
-                    : {}
-                  : { detail: "목적지 경로를 확인하지 못했어요" }),
-              });
-              resolve();
-            } catch (error) {
-              reject(error);
-            }
-          };
-          function handleArrived(rawEvent: Event) {
-            const arrived = (
-              rawEvent as CustomEvent<ChatActionTargetArrivedDetail>
-            ).detail;
-            if (arrived?.anchor !== anchor) return;
-            void settle("arrived");
-          }
-          function handleAbort() {
-            if (settled) return;
-            settled = true;
-            dispose();
-            reject(new DOMException("The operation was aborted.", "AbortError"));
-          }
-
-          if (!anchor) {
-            void settle("arrived");
-            return;
-          }
-          window.addEventListener(
-            CHAT_ACTION_TARGET_ARRIVED_EVENT,
-            handleArrived,
-          );
-          controller.signal.addEventListener("abort", handleAbort, {
-            once: true,
-          });
-          timer = window.setTimeout(() => {
-            void settle("failed", "목적지에 도착하지 못했어요");
-          }, TOOL_ARRIVAL_TIMEOUT_MS);
-          toolResultWatchersRef.current.add(dispose);
+        const observation = observeToolNavigation({
+          route,
+          basePath: process.env.NEXT_PUBLIC_BASE_PATH ?? "",
+          startedAt,
+          minimumDelayMs: TOOL_VERIFICATION_MIN_DELAY_MS,
+          timeoutMs: TOOL_ARRIVAL_TIMEOUT_MS,
+          signal: controller.signal,
+          now: () => performance.now(),
+          schedule: (callback, delay) => {
+            const timer = window.setTimeout(callback, delay);
+            return () => window.clearTimeout(timer);
+          },
+          read: () => {
+            // URL이 먼저 바뀌어도 이전 페이지의 main을 도착으로 보지 않는다.
+            const target = anchor
+              ? document.getElementById(anchor)
+              : pathWithoutHash(route) === "/about-me/research"
+                ? document.getElementById("research-experiments")?.closest("main")
+                : document.querySelector<HTMLElement>('[data-option="theme-mode"]')?.closest("main");
+            return {
+              pathname: window.location.pathname,
+              targetReady: !!target && isPortfolioTargetReady(target),
+            };
+          },
+          subscribe: (arrived) => {
+            const handleArrived = (event: Event) => {
+              const detail = (event as CustomEvent<ChatActionTargetArrivedDetail>).detail;
+              if (detail?.anchor) arrived(detail.anchor);
+            };
+            window.addEventListener(CHAT_ACTION_TARGET_ARRIVED_EVENT, handleArrived);
+            return () => window.removeEventListener(CHAT_ACTION_TARGET_ARRIVED_EVENT, handleArrived);
+          },
         });
+        toolResultWatchersRef.current.add(observation.cancel);
+        return observation.completion.then((status) => {
+          recordToolResult({
+            ...started,
+            status,
+            ...(status === "failed" ? { detail: "목적지에 도착하지 못했어요" } : {}),
+          });
+        }).finally(() => toolResultWatchersRef.current.delete(observation.cancel));
       };
 
       /**
@@ -1665,6 +1719,7 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
         startedAt: number,
         before: string | null,
       ) => {
+        if (!isRequestActive()) return;
         const label = settingToolResultLabel(execution);
         const expected = requestedSettingValue(execution);
         if (!label || !expected) return;
@@ -1676,6 +1731,7 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
           expected,
         );
         await waitForMinimumToolObservation(startedAt, controller.signal);
+        if (!isRequestActive()) return;
         recordToolResult({
           callId: execution.toolCallId,
           tool: execution.toolName,
@@ -1708,11 +1764,14 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
       };
 
       const handleToolExecution = (execution: ChatToolExecution) => {
+        if (!isRequestActive()) return;
         if (pending.toolVerification) {
           throw new ChatApiError("화면 확인 응답이 새 도구를 호출해 중단했어요.");
         }
+        if (taskRuntime && !taskRuntime.accept(execution)) return;
         if (handledToolCallIds.has(execution.toolCallId)) return;
         handledToolCallIds.add(execution.toolCallId);
+        publishToolResults();
         if (requiresBrowserToolVerification(execution)) {
           if (verificationToolCallIds.size === 0) {
             // 뒤늦게 도구가 온 경우에도 실행 전 답변·예약된 재생은 폐기한다.
@@ -1728,15 +1787,19 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
           }
           verificationToolCallIds.add(execution.toolCallId);
           verificationExecutions.set(execution.toolCallId, execution);
-          toolStartedAt.set(execution.toolCallId, performance.now());
           // 첫 응답은 실제 브라우저 반영 전의 임시 답변이다. 확인된 최종
           // 답변을 만들 때까지 사용자에게 흘리지 않는다.
           deferStreamDeltas = true;
         }
         // 도구 하나가 실패해도 답변 전체를 실패로 만들지 않는다.
         toolExecutionQueue = toolExecutionQueue.then(async () => {
-          const executionStartedAt =
-            toolStartedAt.get(execution.toolCallId) ?? performance.now();
+          // 앞선 이동 대기 중 취소·새 요청이 시작됐다면 뒤의 설정을 실행하지 않는다.
+          if (!isRequestActive()) return;
+          if (taskRuntime && !taskRuntime.start(execution.toolCallId)) return;
+          if (execution.toolTask?.dispatchStatus === "accepted") taskTelemetry.tool(stepFromExecution(execution), "started");
+          publishToolResults();
+          const executionStartedAt = performance.now();
+          if (requiresBrowserToolVerification(execution)) toolStartedAt.set(execution.toolCallId, executionStartedAt);
           const settingBefore = uiSettingsRef.current
             ? appliedSettingValue(execution, uiSettingsRef.current)
             : null;
@@ -1760,7 +1823,23 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
               if (execution.type === "control_portfolio_view") {
                 pendingChatNavigationFocusRef.current = true;
               }
-              const output = executePortfolioUiTool(uiCommand);
+              const detailsControl = execution.type === "control_portfolio_research_details";
+              if (detailsControl) {
+                recordToolResult({ callId: execution.toolCallId, tool: execution.toolName,
+                  action: execution.action, target: execution.target,
+                  label: fallbackToolResultLabel(execution), status: "started" });
+              }
+              const output = await executePortfolioUiTool({ ...uiCommand, signal: controller.signal });
+              if (detailsControl) {
+                await waitForMinimumToolObservation(executionStartedAt, controller.signal);
+                recordToolResult({ callId: execution.toolCallId, tool: execution.toolName,
+                  action: execution.action, target: execution.target,
+                  label: typeof output.label === "string" ? output.label : fallbackToolResultLabel(execution),
+                  status: output.ok === true && output.status === "applied" ? "applied" : "failed",
+                  ...(output.ok === true ? {} : { detail: "연구 상세 변경이 화면에 반영되지 않았어요" }),
+                });
+                return;
+              }
               if (!navigating) {
                 await recordSettingToolResult(execution, executionStartedAt, settingBefore);
                 return;
@@ -1806,13 +1885,9 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
               return;
             }
           } catch (toolError) {
-            if (
-              toolError instanceof DOMException &&
-              toolError.name === "AbortError"
-            ) {
-              // 요청 취소는 도구 실패가 아니다. 중단 처리는 요청 쪽이 맡는다.
-              return;
-            }
+            if (!isRequestActive()) return;
+            // 요청 취소는 위의 활성 검사에서 끝난다. 요청이 살아 있는데 도구만
+            // AbortError를 내면 완료 미확인으로 기록해 다음 단계에 running을 남기지 않는다.
             logChatFailureLocally("tool", toolError);
             if (requiresBrowserToolVerification(execution)) {
               try {
@@ -1829,6 +1904,9 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
               tool: execution.toolName,
               ...(execution.type === "control_portfolio_view"
                 ? { action: execution.action }
+                : {}),
+              ...(execution.type === "control_portfolio_research_details"
+                ? { action: execution.action, target: execution.target }
                 : {}),
               label: fallbackToolResultLabel(execution),
               status: "failed",
@@ -1871,6 +1949,7 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
             content: "",
             kind: "message",
             generationState: "streaming",
+            ...(taskSnapshot() ? { toolTaskProgress: taskSnapshot() } : {}),
             // 확인 설명의 재시도에서도 이미 완료한 도구 칩을 즉시 보존한다.
             ...(toolResults.size > 0 ? { toolResults: [...toolResults.values()] } : {}),
           },
@@ -1894,17 +1973,28 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
             })
           : await requestChat(request, controller.signal);
         response.toolExecutions.forEach(handleToolExecution);
+        if (response.toolTask && taskRuntime) {
+          taskRuntime.seal(response.toolTask);
+          sealedTask = response.toolTask;
+          publishToolResults();
+        }
         await toolExecutionQueue;
 
         if (verificationToolCallIds.size > 0) {
+          if (!isRequestActive() || !sealedTask) throw new DOMException("The operation was aborted.", "AbortError");
           const verificationResults = collectVerificationResults();
+          const browserStatus = verificationResults.some((result) => result.status === "failed") ? "failed" : "completed";
+          taskRuntime?.finish(browserStatus);
+          taskTelemetry.task(browserStatus);
+          publishToolResults();
           // 첫 응답은 브라우저 확인 전의 내부 중간 결과다. 화면에는 확인된
           // 결과만 재생한다.
           deferredStreamDeltas.length = 0;
           deferStreamDeltas = false;
           response = await requestVerifiedToolResponse(
             toolExecutionQueue,
-            request,
+            { ...request, toolTask: { ...pending.toolTask, steps: sealedTask.steps,
+              dispatchComplete: sealedTask.dispatchComplete } },
             verificationResults,
             () => ({
               pageContext: pageContextFromPathname(window.location.pathname),
@@ -1916,6 +2006,8 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
               // 확인 요청만 실패했을 때 도구를 다시 실행하지 않고 같은 원질문과
               // 관측된 체인으로 재시도한다. 이전 완료 이력은 변경하지 않는다.
               pending.toolVerification = verificationRequest.toolVerification;
+              pending.toolTask = verificationRequest.toolTask!;
+              pending.toolTaskProgress = taskSnapshot();
               pending.toolHistory = verificationRequest.toolHistory;
               pending.toolResults = [...toolResults.values()];
               return shouldStream ? requestChatStream(
@@ -1939,6 +2031,8 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
             toolFollowupForVerification(response),
           );
         } else {
+          // 일반 답변·이력 조회·getter 보고는 브라우저 변경 성공 이벤트를 만들지 않는다.
+          if (taskRuntime && response.toolTask) taskRuntime.finish(response.toolTask.status === "failed" ? "failed" : "completed");
           deferStreamDeltas = false;
           for (const text of deferredStreamDeltas) renderQueue?.enqueue(text);
           deferredStreamDeltas.length = 0;
@@ -1958,7 +2052,7 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
         } else {
           await renderQueue?.drain();
         }
-        if (controller.signal.aborted) {
+        if (!isRequestActive()) {
           throw new DOMException("The operation was aborted.", "AbortError");
         }
         if (!mountedRef.current) return;
@@ -1979,6 +2073,7 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
           );
         }
         const completedMessage: ChatMessage = {
+          ...(taskSnapshot() ? { toolTaskProgress: taskSnapshot() } : {}),
           ...(response.modelHistory ? { modelHistory: response.modelHistory } : {}),
           id: streamingMessageId ?? nextId("assistant"),
           role: "assistant",
@@ -2015,44 +2110,49 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
         retryRef.current = null;
         clearRetryWait();
       } catch (requestError) {
-        if (!mountedRef.current) return;
-        // tool 이벤트 뒤 스트림이 먼저 닫힐 수 있다. 사용자 중단 여부와 재시도
-        // 재료를 확정하기 전에 이미 시작한 도구의 관측 큐부터 끝낸다.
-        if (verificationToolCallIds.size > 0) await toolExecutionQueue;
+        if (!mountedRef.current || abortRef.current !== controller) return;
         const requestWasAborted =
           controller.signal.aborted ||
           (requestError instanceof DOMException &&
             requestError.name === "AbortError");
+        const protocolFailure = requestError instanceof ToolTaskProtocolError;
+        // 계약 위반이나 미완결 발행은 아직 대기 중인 단계까지 실행하지 않는다.
+        // 이 내부 abort를 사용자 중단으로 오인하지 않도록 앞에서 사유를 보존한다.
+        if (protocolFailure || (!pending.toolVerification && !taskRuntime?.dispatchComplete)) controller.abort();
+        if (verificationToolCallIds.size > 0) await toolExecutionQueue.catch(() => undefined);
         // 실패 시 실행 전/보류 본문을 되살리지 않는다.
         deferredStreamDeltas.length = 0;
         if (requestWasAborted) {
+          taskRuntime?.terminate("cancelled");
+          if (verificationToolCallIds.size > 0) taskTelemetry.task("cancelled");
           if (stopRequestedRef.current) {
+            retryRef.current = null;
+            publishToolResults();
             if (streamingMessageId) {
               setMessages((current) =>
                 current.map((chatMessage) =>
                   chatMessage.id === streamingMessageId
-                    ? { ...chatMessage, generationState: "stopped" }
+                    ? { ...chatMessage, generationState: "stopped", retryAllowed: false,
+                      toolTaskProgress: taskSnapshot() }
                     : chatMessage,
                 ),
               );
             }
-            setError(
-              "응답 생성이 중단되었습니다. 원하면 다시 시도할 수 있어요.",
-            );
+            setError(null);
           }
           return;
         }
-        if (!pending.toolVerification && verificationToolCallIds.size > 0) {
-          // SSE가 tool 뒤 done 전에 끊겨도 이미 반영한 도구를 다시 실행하지 않는다.
-          // 다음 재시도는 확정된 확인 결과 보고만 보낸다.
-          pending.toolVerification = {
-            results: collectVerificationResults(),
-            // done 전에는 UI-only/혼합 요청을 알 수 없어 설명을 임의 생성하지 않는다.
-            explanationRequested: false,
-          };
-          pending.toolHistory = undefined;
-          pending.toolResults = [...toolResults.values()];
-        }
+        taskRuntime?.terminate("failed");
+        if (verificationToolCallIds.size > 0) taskTelemetry.task("failed");
+        const retryAllowed = !protocolFailure && (
+          Boolean(pending.toolVerification && pending.toolTask.dispatchComplete)
+          || Boolean(taskRuntime && taskRuntime.mutationDispatchCount === 0 && taskRuntime.steps.length === 0)
+        );
+        // done 없는 prefix는 완료된 manifest가 아니다. 실제 관측만 보존하고
+        // 부분 결과를 완료라고 보고하거나 원래 실행 요청을 재전송하지 않는다.
+        pending.toolResults = [...toolResults.values()];
+        pending.toolTaskProgress = taskSnapshot();
+        publishToolResults();
         logChatFailureLocally("request", requestError);
         const failureAvailability = chatFailureAvailability(requestError);
         if (failureAvailability) reportAvailability(failureAvailability);
@@ -2060,7 +2160,8 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
           setMessages((current) =>
             current.map((chatMessage) =>
               chatMessage.id === streamingMessageId
-                ? failedChatMessage(chatMessage, deferStreamDeltas)
+                ? failedChatMessage({ ...chatMessage, retryAllowed,
+                  toolTaskProgress: taskSnapshot() }, deferStreamDeltas || protocolFailure)
                 : chatMessage,
             ),
           );
@@ -2073,14 +2174,19 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
             role: "assistant",
             kind: "message",
             content: "",
+            retryAllowed,
+            toolTaskProgress: taskSnapshot(),
             ...(toolResults.size > 0 ? { toolResults: [...toolResults.values()] } : {}),
           }, false)]);
         }
-        retryRef.current = pending;
+        retryRef.current = retryAllowed ? pending : null;
         // 실패 말풍선이 고정 안내와 재시도를 담으므로 하단 오류 박스는 비운다.
         setError(null);
-        beginRetryWait(chatFailureRetryAfterMs(requestError));
+        if (retryAllowed) beginRetryWait(chatFailureRetryAfterMs(requestError));
+        else clearRetryWait();
       } finally {
+        // 응답 실패로 큐를 끝까지 기다리지 못한 경우에도 남은 이동·도구를 중단한다.
+        controller.abort();
         void toolExecutionQueue.catch(() => undefined);
         renderQueue?.cancel();
         if (renderQueueRef.current === renderQueue) renderQueueRef.current = null;
@@ -2153,6 +2259,7 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
       conversationIdentityRef.current ??= new ChatConversationIdentity();
       const pending = {
         ...conversationIdentityRef.current.nextTurnIds(),
+        toolTask: createChatToolTask(),
         message, history, audienceOverride, responseMode,
       };
       retryRef.current = pending;
@@ -2173,6 +2280,11 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
       return;
     }
     const pending = retryRef.current;
+    if (!pending.toolVerification) {
+      pending.toolTask = nextChatToolTaskGeneration(pending.toolTask);
+      pending.toolTaskProgress = undefined;
+      pending.toolTaskTelemetry = undefined;
+    }
     if (pending.assistantMessageId) {
       const failedMessageId = pending.assistantMessageId;
       setMessages((current) =>
@@ -2271,19 +2383,20 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
    * 때문이다. 그 밖에는 곧바로 이동한다.
    */
   const navigateRoute = useCallback(
-    (route: string) => {
+    (route: string, options?: ChatActionNavigationOptions) => {
+      if (options?.signal?.aborted) return;
       if (
         window.matchMedia(MOBILE_QUERY).matches &&
         isOpenRef.current
       ) {
-        pendingActionRouteRef.current = route;
+        pendingActionRouteRef.current = { route, options };
         beginMobileClose(
           mobileHistoryEntryRef.current &&
             window.history.state?.[MOBILE_HISTORY_MARKER] === true,
         );
         return;
       }
-      navigateToActionTarget(route);
+      navigateToActionTarget(route, options);
     },
     [beginMobileClose, navigateToActionTarget],
   );
@@ -2298,7 +2411,7 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
    * WebMCP 도구 등록이 마운트당 한 번만 일어나게 하는 것이 목적이다.
    */
   const stableNavigateRoute = useCallback(
-    (route: string) => navigateRouteRef.current(route),
+    (route: string, options?: ChatActionNavigationOptions) => navigateRouteRef.current(route, options),
     [],
   );
 

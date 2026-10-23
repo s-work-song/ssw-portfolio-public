@@ -6,6 +6,11 @@ export function isPortfolioTargetReady(target: HTMLElement): boolean {
   if (style.display === 'none' || style.visibility === 'hidden') return false;
   const wrapper = target.closest<HTMLElement>('.swiper-wrapper');
   if (wrapper?.getAnimations().some(animation => animation.playState === 'running')) return false;
+  // 앞선 연도의 카드 높이도 현재 앵커를 움직인다. 카드 클래스만 바뀐 순간은 도착이 아니다.
+  const timeline = target.closest<HTMLElement>('#research-timeline');
+  if (timeline?.getAnimations({ subtree: true }).some(animation =>
+    animation.playState === 'running'
+      && (animation as CSSTransition).transitionProperty === 'grid-template-rows')) return false;
   return true;
 }
 

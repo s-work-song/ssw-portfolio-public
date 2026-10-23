@@ -15,7 +15,7 @@ import {
 import { historyFromMessages } from './chatHistory.ts';
 import { ChatApiError } from './parse.ts';
 import { requestVerifiedToolResponse } from './toolVerificationRequest.ts';
-import { toolResultText } from './toolResultPresentation.ts';
+import { toolResultDisplayStatus, toolResultText } from './toolResultPresentation.ts';
 import { CHAT_QUICK_START_OPTION_BY_ACTION_ID } from './constants.ts';
 
 const message = (id, role, content, extra = {}) => ({
@@ -42,7 +42,8 @@ test('실패 표시에는 고정 안내만 쓰고 오류 원문·별도 설명�
 
   // 표현 컴포넌트의 실제 DOM 경로가 안전한 상수를 사용하는지 함께 확인한다.
   const item = readFileSync(new URL('./MessageItem.tsx', import.meta.url), 'utf8');
-  assert.ok(item.includes('<p>{CHAT_FAILURE_NOTICE}</p>'));
+  assert.ok(item.includes(': CHAT_FAILURE_NOTICE}</p>'));
+  assert.ok(item.includes('message.retryAllowed === false'));
   assert.equal(item.includes('{message.errorMessage}'), false);
   const provider = readFileSync(new URL('./ChatProvider.tsx', import.meta.url), 'utf8');
   assert.equal(provider.includes('requestError.message'), false);
@@ -62,25 +63,38 @@ test('실패 시 실행 전 본문은 버리고 도구의 성공·실패 상태�
   assert.equal(toolResults[1].status, 'failed');
 });
 
-test('tool 이벤트 뒤 스트림이 실패하면 큐 관측을 마치고 결과 보고로만 재시도한다', () => {
+test('중단 메시지의 started 도구만 중단으로 표시하고 실제 완료·실패 결과와 원본은 보존한다', () => {
+  for (const status of ['started', 'arrived', 'applied', 'failed']) {
+    const result = Object.freeze({ callId: status, tool: 'control_portfolio_view', label: '연구 2025년', status });
+    assert.equal(toolResultText(result, 'stopped'), status === 'started'
+      ? '도구 호출 중단 · 연구 2025년' : toolResultText(result));
+    assert.equal(toolResultDisplayStatus(result, 'stopped'), status === 'started' ? 'stopped' : status);
+    assert.equal(result.status, status);
+  }
+  const started = { status: 'started', label: '연구 2025년' };
+  assert.equal(toolResultText(started, 'streaming'), '도구 호출 중…');
+  assert.equal(toolResultText(started), '도구 호출 중…');
+});
+
+test('tool 뒤 done 없는 스트림 실패는 대기 실행을 중단하고 부분 관측을 재실행 요청으로 바꾸지 않는다', () => {
   const provider = readFileSync(new URL('./ChatProvider.tsx', import.meta.url), 'utf8');
   const failure = provider.slice(
     provider.indexOf('} catch (requestError) {'),
     provider.indexOf('logChatFailureLocally("request", requestError)'),
   );
   const queueWait = failure.indexOf('await toolExecutionQueue');
-  const verificationRetry = failure.indexOf('pending.toolVerification = {');
-  assert.ok(queueWait >= 0 && queueWait < verificationRetry);
-  assert.ok(failure.includes('results: collectVerificationResults()'));
-  assert.ok(failure.includes('explanationRequested: false'));
-  assert.ok(failure.includes('pending.toolHistory = undefined'));
+  const cancelIncomplete = failure.indexOf('!taskRuntime?.dispatchComplete)) controller.abort()');
+  assert.ok(cancelIncomplete >= 0 && cancelIncomplete < queueWait);
+  assert.equal(failure.includes('pending.toolVerification = {'), false);
+  assert.ok(failure.includes('Boolean(pending.toolVerification && pending.toolTask.dispatchComplete)'));
+  assert.ok(failure.includes('taskRuntime.mutationDispatchCount === 0 && taskRuntime.steps.length === 0'));
   assert.ok(failure.includes('pending.toolResults = [...toolResults.values()]'));
 });
 
 test('상태 전용 완료는 실제 결과 칩만 남기고 설명 요청일 때만 verification-only 재시도에 진입한다', async () => {
   const provider = readFileSync(new URL('./ChatProvider.tsx', import.meta.url), 'utf8');
   const guard = provider.slice(provider.indexOf('if (response.mode === "tool_status")'),
-    provider.indexOf('if (controller.signal.aborted)', provider.indexOf('if (response.mode === "tool_status")')));
+    provider.indexOf('if (!isRequestActive())', provider.indexOf('if (response.mode === "tool_status")')));
   assert.ok(guard.includes('!pending.toolVerification?.results.length || toolResults.size === 0'));
   assert.ok(guard.includes('pending.toolVerification.explanationRequested === true'));
   assert.ok(guard.includes('renderQueue?.cancel()'));
@@ -134,7 +148,7 @@ test('실제 MessageItem 렌더: 상태 전용 완료에는 칩만 있고 빈 Ma
       default: new Proxy({}, { get: (_, key) => String(key) }) };
     if (name === './constants') return { CHAT_QUICK_START_OPTION_BY_ACTION_ID: new Map() };
     if (name === './StreamingText') return { StreamingText: ({ text }) => text };
-    if (name === './toolResultPresentation') return { toolResultText };
+    if (name === './toolResultPresentation') return { toolResultDisplayStatus, toolResultText };
     if (name === './chatFailure') return { CHAT_FAILURE_NOTICE };
     return require(name);
   };
@@ -165,6 +179,19 @@ test('실제 MessageItem 렌더: 상태 전용 완료에는 칩만 있고 빈 Ma
   assert.ok(failed.includes('data-tool-status="applied"'));
   assert.ok(failed.includes(CHAT_FAILURE_NOTICE));
   assert.ok(failed.includes('다시 시도'));
+  const mixedResults = Object.freeze(['started', 'arrived', 'applied', 'failed'].map(status =>
+    Object.freeze({ callId: status, tool: 'control_portfolio_view', label: `${status} 작업`, status })));
+  const stopped = renderToStaticMarkup(React.createElement(componentModule.exports.MessageItem, {
+    ...props, suggestedQuestions: [], message: message('stopped', 'assistant', '', {
+      generationState: 'stopped', toolResults: mixedResults,
+    }),
+  }));
+  assert.ok(stopped.includes('응답 생성이 중단되었습니다'));
+  assert.ok(stopped.includes('data-tool-status="stopped">도구 호출 중단 · started 작업'));
+  assert.equal(stopped.includes('도구 호출 중…'), false);
+  assert.equal(stopped.includes('data-tool-status="started"'), false);
+  for (const status of ['arrived', 'applied', 'failed']) assert.ok(stopped.includes(`data-tool-status="${status}"`));
+  assert.deepEqual(mixedResults.map(result => result.status), ['started', 'arrived', 'applied', 'failed']);
 });
 
 test('추천 생략 말풍선은 문단·하단·빠른 시작 보완·후속 질문만 숨기고 모델 본문·결과 칩은 보존한다', () => {
@@ -182,7 +209,7 @@ test('추천 생략 말풍선은 문단·하단·빠른 시작 보완·후속 �
       default: new Proxy({}, { get: (_, key) => String(key) }) };
     if (name === './constants') return { CHAT_QUICK_START_OPTION_BY_ACTION_ID };
     if (name === './StreamingText') return { StreamingText: ({ text }) => text };
-    if (name === './toolResultPresentation') return { toolResultText };
+    if (name === './toolResultPresentation') return { toolResultDisplayStatus, toolResultText };
     if (name === './chatFailure') return { CHAT_FAILURE_NOTICE };
     return require(name);
   };

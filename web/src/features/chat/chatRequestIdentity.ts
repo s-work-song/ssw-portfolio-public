@@ -1,3 +1,4 @@
+import type { ChatToolTaskRequest } from "./types";
 type IdCrypto = Pick<Crypto, "getRandomValues"> & Partial<Pick<Crypto, "randomUUID">>;
 
 export interface ChatRequestIds {
@@ -14,6 +15,18 @@ export function createChatRequestId(cryptoSource: IdCrypto | undefined = globalT
   bytes[8] = (bytes[8] & 0x3f) | 0x80;
   const hex = Array.from(bytes, (value) => value.toString(16).padStart(2, "0"));
   return `${hex.slice(0, 4).join("")}-${hex.slice(4, 6).join("")}-${hex.slice(6, 8).join("")}-${hex.slice(8, 10).join("")}-${hex.slice(10).join("")}`;
+}
+
+/** 사용자 턴마다 독립 작업을 만들고 실행 재시도만 같은 task의 세대를 올린다. */
+export function createChatToolTask(createId: () => string = createChatRequestId): ChatToolTaskRequest {
+  return { schemaVersion: "portfolio-tool-task-v1", taskId: createId(), generation: 1 };
+}
+
+export function nextChatToolTaskGeneration(task: ChatToolTaskRequest): ChatToolTaskRequest {
+  if (!Number.isSafeInteger(task.generation) || task.generation < 1 || task.generation >= 2_147_483_647) {
+    throw new Error("작업을 다시 시작할 수 없습니다. 새 질문으로 요청해 주세요.");
+  }
+  return { schemaVersion: task.schemaVersion, taskId: task.taskId, generation: task.generation + 1 };
 }
 
 /** 메시지와 같이 메모리에서만 살아 있는 대화 ID 수명이다. */

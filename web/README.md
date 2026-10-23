@@ -527,7 +527,7 @@ SI 단계별 제목과 설명은 본문 데이터를 재사용하며, 이전·�
 
 ### WebMCP 도구
 
-WebMCP에는 채팅 모델과 이름이 같은 **UI 도구 11개**만 등록합니다. 기록 목차 조회·열기
+WebMCP에는 채팅 모델과 이름이 같은 **UI 도구 12개**만 등록합니다. 기록 목차 조회·열기
 도구는 등록하지 않으며, 기록 페이지의 직접 검색·상세 이동 API와 기본 RAG는 유지합니다.
 색상 순회는 한 번의 도구 호출 안에서 다섯 색을 차례로 보여 주고 시작 색으로 돌아옵니다.
 채팅과 WebMCP가 같은 중단·원복 로직을 씁니다. 브라우저가 공유하는 도구 실행 경로는
@@ -551,7 +551,8 @@ URL·앵커·action 식별자와 글꼴 값 등은 이 이름 변경의 대상�
 | `set_portfolio_chat_font` | ❌ | 채팅 글꼴을 바꿉니다. |
 | `set_portfolio_chat_font_size` | ❌ | 채팅 글자 크기를 바꿉니다. |
 | `set_portfolio_stream_animation` | ❌ | 답변 스트리밍 연출을 바꿉니다. |
-| `control_portfolio_view` | ❌ | 페이지·연구 탭·연구 연도·소개 페이지 안의 섹션과 개별 항목으로 이동하고 연구 상세를 펼치거나 접습니다. |
+| `control_portfolio_view` | ❌ | `action` 하나로 페이지·연구 탭·연구 연도·소개 페이지 안의 섹션과 개별 항목으로 이동합니다. |
+| `control_portfolio_research_details` | ❌ | `action: expand\|collapse`, `target: all\|2011\|2022\|2023\|2024\|2025\|2026`으로 모든 대상 카드의 상세를 지정 상태로 만듭니다. |
 | `open_portfolio_settings` | ❌ | 설정 페이지로 이동합니다. |
 
 read-only가 아닌 도구는 화면을 실제로 바꾸거나 이동시킵니다. 허용값과 입력
@@ -561,7 +562,8 @@ read-only가 아닌 도구는 화면을 실제로 바꾸거나 이동시킵니�
 `backend/src/shared/view-targets.js`)과는 저장소가 갈라져 있어 **수동으로**
 맞춥니다. 목적지를 더할 때는 양쪽을 함께 고쳐야 합니다.
 
-`control_portfolio_view`의 이동·상세 제어 목적지는 40개입니다.
+`control_portfolio_view`의 이동 목적지는 36개입니다. 이동은 `action`만 받으며 `year`와 `target`은 받지 않습니다.
+연구 상세 펼침·접기는 별도 `control_portfolio_research_details` 도구가 `action`과 `target`을 모두 받아 처리합니다.
 
 | 묶음 | action |
 | --- | --- |
@@ -570,7 +572,6 @@ read-only가 아닌 도구는 화면을 실제로 바꾸거나 이동시킵니�
 | SI 활용 단계 | `si-levels`, `si-level-chat`, `si-level-read-only`, `si-level-implementation`, `si-level-tools`, `si-level-orchestration` |
 | SI 실제 사례 | `si-tools-ffmpeg`, `si-session-messaging` |
 | 연구 탭·연도 | `research-timeline`, `research-optimization`, `research-tools`, `research-2011`(학창 시절), `research-2022`~`research-2026` |
-| 연구 상세 제어 | `expand-research-details`, `collapse-research-details`, `expand-research-year-details`, `collapse-research-year-details` |
 | 소개 페이지 섹션 | `past-work-archive`, `ai-collaboration-projects` |
 | 과거 작업 항목 | `archive-canvas-dodge-game`, `archive-wpf-excel-row-mapper`, `archive-android-ar-campfire` |
 | SI 협업 프로젝트 항목 | `project-common-infrastructure`, `project-ecommerce-demo`, `project-code-archive` |
@@ -580,7 +581,7 @@ read-only가 아닌 도구는 화면을 실제로 바꾸거나 이동시킵니�
 SI 화면은 API `pageContext: "ai_workflow"`, 화면 상태 `page: "ai-workflow"`를 사용합니다.
 사례 해시는 해당 단계 슬라이드를 먼저 열며, URL에만 맞는 비활성 슬라이드는
 상태·도착으로 인정하지 않습니다. 원문 이력·네이티브 도구 ID와 브라우저 확인 경로는 유지합니다.
-백엔드 v45를 먼저 반영한 뒤 프런트를 반영해야 새 문맥·목적지를 사용할 수 있습니다.
+백엔드 v48 계약과 프런트를 함께 맞춰 반영해야 분리된 상세 도구와 새 문맥을 사용할 수 있습니다.
 앵커 이동은 비활성·숨김·전환 상태를 거부하고, 실제 위치가 해당 요소의
 `scroll-margin-top`과 문서의 `scroll-padding-top`에 맞았을 때 도착을 알립니다.
 Swiper 높이가 바뀌어 좌표가 달라지면 기존 제한 시간 안에서 다시 계산합니다.
@@ -588,7 +589,15 @@ Swiper 높이가 바뀌어 좌표가 달라지면 기존 제한 시간 안에서
 
 학창 시절 연구 경험의 내부 탐색 연도는 `2011`입니다. 페이지의 시기 표시는
 `학창 시절`로 유지하며, `research-2011`은 `#research-year-2011`로 이동합니다.
-연도별 연구 상세 제어의 `year: "2011"`도 같은 두 카드를 대상으로 합니다.
+연도별 연구 상세 제어의 `target: "2011"`도 같은 두 카드를 대상으로 합니다.
+
+이동 완료는 URL 변경만으로 보고하지 않습니다. 실제 경로·활성 DOM을 확인하고,
+앵커가 있으면 스크롤 정렬 후 발행되는 도착 신호도 기다립니다. 해시 없는 연구·설정
+이동도 각각 해당 페이지 본문이 준비돼야 완료됩니다. 상세 제어는 이동 발행 전에
+도착 신호를 구독하며, 목표 앵커의 도착·현재 정렬과 대상 카드 전부의 지정된
+펼침·접힘 상태를 함께 확인한 뒤 `applied` 또는 `failed`를 반환합니다.
+따라서 카드가 먼저 바뀌어도 스크롤 중인 다른 연도를 후속 최종 관측으로 보내지 않습니다.
+이 관측은 사용자 명령 뒤 로컬 DOM만 최대 8초 확인하며 추론 서버 상태를 폴링하지 않습니다.
 
 ### 지연 로딩
 

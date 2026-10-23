@@ -24,6 +24,11 @@ import type {
   ChatStatusResponse,
   ChatToolExecution,
 } from "./types";
+import {
+  assertToolTaskMeta, expectedToolTaskScope, parseTaskToolExecution,
+  ToolTaskProtocolError, ToolTaskRuntime,
+} from "./toolTaskRuntime.ts";
+import { isSafeBrowserToolTaskEvents, type BrowserToolTaskEvents } from "./toolTaskTelemetry.ts";
 
 export { ChatApiError };
 export type { ChatApiErrorOptions } from "./parse";
@@ -50,6 +55,23 @@ function apiUrl(path = "/api/chat"): string {
     );
   }
   return `${baseUrl.replace(/\/+$/u, "")}${path}`;
+}
+
+/** 기본 비활성화다. 자체 API만 쓰며 사용자 stop 신호와 수명을 공유하지 않는다. */
+export async function requestToolTaskEvents(events: BrowserToolTaskEvents): Promise<void> {
+  if (process.env.NEXT_PUBLIC_TOOL_TASK_TELEMETRY_ENABLED !== "true") return;
+  try {
+    if (!isSafeBrowserToolTaskEvents(events)) return;
+    const body = JSON.stringify(events);
+    if (events.events.length < 1 || events.events.length > 32
+      || new TextEncoder().encode(body).byteLength > 16 * 1_024) return;
+    await fetch(apiUrl("/api/chat/tool-events"), {
+      method: "POST", headers: { "content-type": "application/json" }, body,
+      signal: AbortSignal.timeout(2_500), keepalive: true,
+    });
+  } catch {
+    // 구형 서버의 미지원·네트워크·timeout 모두 본 채팅 결과에 영향을 주지 않는다.
+  }
 }
 
 /**
@@ -162,7 +184,7 @@ export async function requestChat(
     });
   }
 
-  return parseChatResponse(payload, { toolVerification: request.toolVerification });
+  return parseChatResponse(payload, request);
 }
 
 /** 스트리밍 도중 화면에 알려야 하는 사건들이다. */
@@ -334,6 +356,10 @@ export async function requestChatStream(
 ): Promise<ChatResponse> {
   const endpoint = apiUrl("/api/chat/stream");
   const deadline = createStreamDeadline(signal);
+  const taskScope = expectedToolTaskScope(request);
+  const taskStream = taskScope && !request.toolVerification
+    ? new ToolTaskRuntime(taskScope, () => !signal.aborted) : undefined;
+  let receivedTaskMeta = false;
 
   try {
     let response: Response;
@@ -380,10 +406,15 @@ export async function requestChatStream(
               "스트리밍 메타데이터 형식을 확인할 수 없습니다.",
             );
           }
+          if (taskScope) {
+            assertToolTaskMeta(payload.toolTask, taskScope);
+            receivedTaskMeta = true;
+          }
           handlers.onMeta?.(payload);
           return;
         }
         if (event === "delta") {
+          if (taskScope && !receivedTaskMeta) throw new ToolTaskProtocolError();
           if (!isRecord(payload) || !isString(payload.text)) {
             throw new ChatApiError("스트리밍 본문 형식을 확인할 수 없습니다.");
           }
@@ -392,11 +423,13 @@ export async function requestChatStream(
           return;
         }
         if (event === "tool") {
-          const execution = parseToolExecution(payload);
+          if (taskScope && (!receivedTaskMeta || request.toolVerification)) throw new ToolTaskProtocolError();
+          const execution = taskScope ? parseTaskToolExecution(payload, taskScope, parseToolExecution)
+            : parseToolExecution(payload);
           if (!execution) {
             throw new ChatApiError("모델 도구 실행 형식을 확인할 수 없습니다.");
           }
-          handlers.onTool?.(execution);
+          if (!taskStream || taskStream.accept(execution)) handlers.onTool?.(execution);
           return;
         }
         if (event === "error") {
@@ -414,7 +447,13 @@ export async function requestChatStream(
             },
           );
         }
-        doneResponse = parseChatResponse(payload, { toolVerification: request.toolVerification });
+        if (taskScope && !receivedTaskMeta) throw new ToolTaskProtocolError();
+        doneResponse = parseChatResponse(payload, request);
+        if (taskStream && doneResponse.toolTask) {
+          if (taskStream.steps.length !== doneResponse.toolExecutions.length) throw new ToolTaskProtocolError();
+          doneResponse.toolExecutions.forEach((execution) => taskStream.accept(execution));
+          taskStream.seal(doneResponse.toolTask);
+        }
         return "stop";
       },
       deadline.touch,

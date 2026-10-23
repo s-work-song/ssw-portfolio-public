@@ -5,6 +5,7 @@ import type {
 import { ChatApiError } from "./parse.ts";
 import { modelHistoryCharacters, parseModelHistory } from "./modelHistory.ts";
 import { normalizePortfolioToolName } from "../portfolio-tools/schema.ts";
+import { expectedToolTaskScope, parseToolTaskResponse, ToolTaskProtocolError } from "./toolTaskRuntime.ts";
 
 type BrowserSnapshot = Pick<ChatRequest,
   "pageContext" | "uiSettings" | "uiSettingChanges" | "viewState">;
@@ -18,6 +19,7 @@ const BROWSER_VERIFICATION_TOOL_NAMES = new Set<ChatToolVerificationResult["tool
   "set_portfolio_chat_font_size",
   "set_portfolio_stream_animation",
   "control_portfolio_view",
+  "control_portfolio_research_details",
   "open_portfolio_settings",
 ]);
 
@@ -70,17 +72,37 @@ export async function requestVerifiedToolResponse(
   if (signal.aborted) throw new DOMException("The operation was aborted.", "AbortError");
   const latest = readLatestBrowserState();
   const toolHistory = verifiedToolHistory(modelHistory, results, latest);
+  if (request.toolTask?.dispatchComplete) {
+    if (!toolHistory || !request.toolTask.steps) throw new ToolTaskProtocolError();
+    const nativeSteps = request.toolTask.steps.filter((step) => step.source === "native");
+    const nativeCalls = toolHistory.flatMap((item) => item.role === "assistant" ? item.tool_calls ?? [] : [])
+      .filter((call) => {
+        const name = normalizePortfolioToolName(call.function.name);
+        return name && (BROWSER_VERIFICATION_TOOL_NAMES.has(name as ChatToolVerificationResult["toolName"])
+          || name === "get_portfolio_ui_settings" || name === "get_portfolio_view_state");
+      });
+    if (nativeCalls.length !== nativeSteps.length || nativeCalls.some((call, index) =>
+      call.id !== nativeSteps[index].toolCallId
+      || normalizePortfolioToolName(call.function.name) !== nativeSteps[index].toolName)) {
+      throw new ToolTaskProtocolError();
+    }
+  }
   const toolVerification: ChatToolVerification = typeof followup === "boolean"
     ? { results, explanationRequested: followup }
     : { results, ...followup };
-  const response = await send({
+  const verifiedRequest: ChatRequest = {
     ...request,
     ...latest,
     history: request.history,
     ...(toolHistory ? { toolHistory } : {}),
     reasoningEnabled: false,
     toolVerification,
-  });
+  };
+  const response = await send(verifiedRequest);
+  if (signal.aborted) throw new DOMException("The operation was aborted.", "AbortError");
+  if (expectedToolTaskScope(verifiedRequest)) {
+    parseToolTaskResponse(response.toolTask, verifiedRequest, response.toolExecutions);
+  }
   if (response.toolExecutions.length > 0) {
     throw new ChatApiError("화면 확인 응답에 예상하지 않은 도구 실행이 포함됐어요.");
   }

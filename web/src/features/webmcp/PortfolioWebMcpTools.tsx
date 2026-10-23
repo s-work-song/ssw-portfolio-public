@@ -58,18 +58,18 @@ const UI_TOOL_PRESENTATION: Readonly<
   'get_portfolio_ui_settings': {
     title: '현재 포트폴리오 UI 설정 확인',
     description:
-      '현재 사이트 테마, 포인트 색상, 채팅 레이아웃, 채팅 글꼴과 글자 크기를 읽습니다. 화면을 변경하지 않습니다.',
+      '현재 사이트 테마(theme: light/dark/system), 포인트 색상(accent), 채팅 레이아웃(chatLayout), 글꼴(chatFont), 글자 크기(chatFontSize)와 스트리밍 연출(streamAnimation)을 읽습니다. 인자는 빈 객체이며 화면을 변경하지 않습니다.',
     readOnly: true,
   },
   'set_portfolio_theme': {
     title: '포트폴리오 화면 모드 변경',
     description:
-      '사용자가 명시적으로 요청한 경우 사이트를 라이트 또는 다크 모드로 변경합니다.',
+      '사용자가 명시적으로 요청한 경우 theme을 light(라이트), dark(다크), system(운영체제 설정 따르기) 중 하나로 변경합니다.',
   },
   'set_portfolio_accent': {
     title: '포트폴리오 포인트 색상 변경',
     description:
-      '사용자가 명시적으로 요청한 포인트 색상으로 버튼과 강조 요소의 색을 변경합니다. 기본 색상은 blue(로얄블루)입니다.',
+      '사용자가 명시적으로 요청한 accent으로 버튼과 강조 요소의 색을 변경합니다. blue(로얄블루, 기본), indigo(인디고), emerald(에메랄드), amber(앰버), rose(로즈), violet(바이올렛) 중 하나를 사용합니다.',
   },
   'cycle_portfolio_accent': {
     title: '포트폴리오 포인트 색상 순회',
@@ -79,22 +79,22 @@ const UI_TOOL_PRESENTATION: Readonly<
   'set_portfolio_chat_layout': {
     title: '포트폴리오 채팅 레이아웃 변경',
     description:
-      'PC 채팅창을 플로팅 창 또는 오른쪽 고정 패널로 변경합니다. 좁은 화면에서는 플로팅 창이 적용됩니다.',
+      'layout을 floating(떼어 놓은 플로팅 창) 또는 dock(오른쪽 고정 패널)으로 변경합니다. 좁은 화면에서는 floating이 적용됩니다.',
   },
   'set_portfolio_chat_font': {
     title: '포트폴리오 채팅 글꼴 변경',
     description:
-      '채팅 메시지와 입력창, 추천 질문의 글꼴을 Pretendard, Noto Sans KR 또는 시스템 글꼴로 변경합니다.',
+      '채팅 메시지와 입력창, 추천 질문의 font를 pretendard(Pretendard), noto-sans-kr(Noto Sans KR), system(시스템 글꼴) 중 하나로 변경합니다.',
   },
   'set_portfolio_chat_font_size': {
     title: '포트폴리오 채팅 글자 크기 변경',
     description:
-      '채팅 메시지와 입력창, 추천 질문의 글자 크기를 작게, 기본, 크게 또는 매우 크게로 변경합니다.',
+      '채팅 메시지와 입력창, 추천 질문의 size를 small(작게), medium(기본), large(크게), xlarge(매우 크게) 중 하나로 변경합니다.',
   },
   'set_portfolio_stream_animation': {
     title: '채팅 스트리밍 연출 변경',
     description:
-      '사용자가 명시적으로 요청한 채팅 답변 스트리밍 연출을 변경합니다. 스트리밍 사용 여부 자체는 변경하지 않습니다.',
+      '사용자가 명시적으로 요청한 채팅 답변의 animation을 none, typewriter, word-fade, token-chunks, blur-focus, slide-up, skeleton, mask-wipe, scramble, letter-drop, highlight-trail 중 하나로 변경합니다. 스트리밍 사용 여부 자체는 변경하지 않습니다.',
   },
   'get_portfolio_view_state': {
     title: '현재 포트폴리오 화면 상태 확인',
@@ -103,11 +103,14 @@ const UI_TOOL_PRESENTATION: Readonly<
     readOnly: true,
   },
   'control_portfolio_view': {
-    title: '포트폴리오 화면 이동 및 연구 상세 제어',
+    title: '포트폴리오 화면 이동',
     description:
-      '개발·배포 환경 페이지는 architecture, 개발 환경·접속 경로는 development-environment, 배포 구성은 deployment-overview, 인프라 최적화는 infrastructure-optimization, Rust 전환 메모리 비교는 migration-memory-history로 이동합니다. ' +
-      'SI 소개는 si-levels, 01~05단계는 si-level-chat/read-only/implementation/tools/orchestration, FFmpeg·컨택트 시트는 si-tools-ffmpeg, 대표 세션 협업 사례는 si-session-messaging으로 이동합니다. ' +
-      '메인·홈 요청은 소개 Overview로 이동하고, 이력서, 자기소개서, 연구 경험의 연구 여정·성능 최적화·도구 & AI 접목 탭, 연구 연도, 기록 화면으로 이동합니다. 학창 시절 연구 경험은 research-2011로 이동하며 페이지에는 연도 대신 학창 시절로 표시됩니다. 소개 페이지 안에서는 과거 작업 아카이브, AI 에이전트 협업 프로젝트와 AI 활용 실험 섹션의 개별 항목(Canvas 피하기 게임, 엑셀 행 매핑 WPF 앱, Android AR 캠프파이어 앱, 공용 인프라 프로젝트군, 이커머스 데모, 코드 아카이브) 위치로도 이동합니다. 연구 여정의 전체 상세 또는 지정한 연도의 상세만 펼치거나 접을 수도 있습니다. 사용자가 화면 이동이나 연구 상세 제어를 명시적으로 요청했을 때 사용하세요.',
+      '개발·배포 환경 페이지는 architecture, 개발 환경·접속 경로는 development-environment, 배포 구성은 deployment-overview, Rust 전환 메모리 비교는 migration-memory-history로 이동합니다. ' +
+      '메인·홈 요청은 main 또는 overview로 소개 Overview에, 이력서는 resume, 자기소개서는 cover-letter, 연구 경험은 research로 이동합니다. 연구 여정·성능 최적화·도구 & AI 접목 탭은 research-timeline/research-optimization/research-tools, 연구 연도는 research-2011/research-2022/research-2023/research-2024/research-2025/research-2026, 기록은 log입니다. research-2011은 학창 시절로 표시됩니다. SI 소개는 si-levels, 활용 01~05단계는 si-level-chat/si-level-read-only/si-level-implementation/si-level-tools/si-level-orchestration, 사례는 si-tools-ffmpeg/si-session-messaging입니다. 소개 페이지의 아카이브·협업 프로젝트·개별 항목은 스키마의 past-work-archive, ai-collaboration-projects, archive-*, project-* action으로 이동합니다. 인자는 action 하나뿐이며 year나 target은 받지 않습니다. 펼침·접기는 이 도구의 동작이 아니므로 control_portfolio_research_details를 사용하세요.',
+  },
+  'control_portfolio_research_details': {
+    title: '연구 여정 상세 펼침·접기',
+    description: '연구 여정의 상세를 action: expand(펼침) 또는 collapse(접기) 상태로 만듭니다. target은 all(전체), 2011(학창 시절), 2022, 2023, 2024, 2025, 2026 중 하나이며 action과 target을 모두 지정해야 합니다. year는 받지 않습니다. 필요한 연구 페이지와 탭으로 이동하며 토글하지 않고 지정 상태를 적용합니다. 모든 대상 카드의 실제 상태를 확인한 뒤 applied 또는 failed를 반환합니다. 연구 상세 제어 요청에 사용하고, 단순 이동은 control_portfolio_view를 사용하세요.',
   },
   'open_portfolio_settings': {
     title: '포트폴리오 설정 페이지 열기',
@@ -117,7 +120,7 @@ const UI_TOOL_PRESENTATION: Readonly<
 };
 
 /**
- * 채팅 모델과 같은 이름의 UI 도구 11종을 브라우저 모델 컨텍스트에 등록한다.
+ * 채팅 모델과 같은 이름의 UI 도구를 브라우저 모델 컨텍스트에 등록한다.
  *
  * 등록은 순차적으로 한 개씩 진행하고, 하나가 실패해도 나머지를 계속 등록한다
  * (지원 범위가 브라우저마다 달라 일부만 거부될 수 있다). 언마운트되면
@@ -133,12 +136,12 @@ export function PortfolioWebMcpTools() {
     if (!modelContext || typeof modelContext.registerTool !== 'function') return;
 
     const controller = new AbortController();
-    const executeUiTool = (
+    const executeUiTool = async (
       name: Exclude<PortfolioUiToolName, 'cycle_portfolio_accent'>,
       input: Record<string, unknown>,
-    ): WebMcpToolResult => {
+    ): Promise<WebMcpToolResult> => {
       try {
-        return toolResult(executePortfolioUiTool({ name, input }));
+        return toolResult(await executePortfolioUiTool({ name, input, signal: controller.signal }));
       } catch (error) {
         return toolError(error);
       }

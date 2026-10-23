@@ -240,16 +240,50 @@ sequenceDiagram
 
 ---
 
+### 작업 범위와 실제 브라우저 관측
+
+새 요청은 `portfolio-tool-task-v1`을 사용한다. 대화·턴 ID에 사용자 턴별 `taskId`와
+실행 시도별 `generation`을 더하며, 이 값은 인증이나 서버 세션이 아니라 현재 요청의
+동등성 확인용이다. `toolTaskRuntime.ts`가 meta/tool/done과 최종 확인 응답의 동일 scope,
+0부터 연속인 최대 16개 단계, 고유 native 호출 ID, 불변 발행 목록을 검사한다.
+같은 단계·ID·실행 내용의 재전달만 무시한다. 값이 다르거나 잘못된 항목이 하나라도
+있으면 작업 전체를 거절하며, v1에서는 레거시 파서처럼 항목을 버리거나 8개로 자르지 않는다.
+
+`accepted`는 발행·접수일 뿐 실제 실행이나 성공이 아니다. 단계는 브라우저 큐 시작 때
+`running`이 되고 기존 DOM·정렬·설정 비교로만 `arrived`/`applied`를 얻는다.
+getter의 `reported`는 서버 스냅숏 또는 예상값 보고로 남기고 브라우저 성공으로 바꾸지 않는다.
+말풍선의 접을 수 있는 작업 목록은 이 실제 상태를 보여 주며 메인 답변 생성 상태와 분리한다.
+도구 전담 작업은 기존 호출을 제한된 작업 범위로 분리한 것이며, 브라우저 verifier는
+별도 LLM이나 병렬 추론 세션이 아니다. 이 진행 표시 때문에 모델 호출을 추가하지 않는다.
+
+정상 done의 `dispatchComplete: true`와 전체 manifest를 받은 경우에만 native 이력과
+모든 변경 단계의 실제 관측을 후속 확인에 보낸다. 확인에 실패한 재시도는 동일 task/세대와
+관측을 보존하고 도구를 다시 실행하지 않는다. 실행 전 실패해 단계가 전혀 없을 때만
+generation을 높여 실행을 재시도한다. done 없는 부분 발행, 계약 충돌, 사용자 취소는
+실행 재시도 버튼을 제거한다. 완료한 관측은 보존하며 필요한 변경은 새 사용자 턴으로 요청한다.
+취소·새 대화·비활성 controller의 늦은 콜백은 다음 작업의 UI나 완료 상태를 변경하지 않는다.
+
+별도 관측 전송은 `NEXT_PUBLIC_TOOL_TASK_TELEMETRY_ENABLED=true`일 때만 활성화되며
+기본값은 꺼짐이다. `toolTaskTelemetry.ts`가 대화·턴·작업·호출 ID, 단계·도구명·상태만
+엄격한 허용 필드로 만들고 기존 API의 `/api/chat/tool-events`로 보낸다. 질문, 도구 인수,
+결과 본문, URL, API 키는 포함하지 않으며 브라우저에서 런처에 직접 접속하지 않는다.
+한 배치는 최대 32개·16KiB이고 source별 순서와 event ID를 보존한다. 사용자 stop과 분리된
+2.5초 timeout을 쓰며 전송 실패나 미지원은 실제 실행·채팅 결과에 영향을 주지 않는다.
+브라우저 task 완료·실패는 전체 발행 목록과 실제 변경 관측을 확인한 직후 고정한다.
+이후 메인 답변 HTTP가 실패·취소되거나 확인 요청을 재시도해도 도구 완료를 뒤집지 않는다.
+일반 답변·이력 조회·캐시처럼 실행이 없는 요청은 브라우저 도구 관측을 전송하지 않는다.
+구현 검증은 격리된 로컬 환경에 한정하며 운영 배포·활성화는 별도 절차다.
+
 ## 3. 도구 실행이 한곳으로 모이는 길
 
-채팅 모델은 서버가 제공하는 **UI 도구 11개**를 사용한다. 테마·포인트 색상·채팅
+채팅 모델은 서버가 제공하는 **UI 도구 12개**를 사용한다. 테마·포인트 색상·채팅
 배치·글꼴·글자 크기·연출 변경, UI/화면 상태 조회, 페이지 이동·연구 상세 제어,
 설정 페이지 열기, 색상 순회가 해당한다. 기록 검색은 모델 도구가 아니라 기본 RAG와
 기록 페이지 API가 담당한다. 전체 이름·허용 인자는 비공개 서버의
 `backend/src/tools/portfolio-log-search.js`가 정본이다.
 
 WebMCP는 `document.modelContext`를 제공하는 환경에서만 **채팅 모델과 같은 이름의
-UI 도구 11개**를 등록한다. 기록 목차 조회·열기는 등록하지 않고, 기록 페이지 API와
+UI 도구 12개**를 등록한다. 기록 목차 조회·열기는 등록하지 않고, 기록 페이지 API와
 기본 RAG는 유지한다. 공개 프런트에서 등록하는 정확한 목록은
 [`web/README.md`](../README.md#webmcp-도구)와
 `src/features/webmcp/PortfolioWebMcpTools.tsx`에서 확인한다.
@@ -271,7 +305,8 @@ flowchart TD
 
   ThemeSet["ThemeContext<br/>테마 색상 글꼴 배치"]
   Router["navigateRoute<br/>라우팅과 앵커 스크롤"]
-  ViewCtl["runPortfolioViewAction<br/>연구 상세 펼침 접기"]
+  ViewCtl["runPortfolioViewAction<br/>action 전용 화면 이동"]
+  Details["runPortfolioResearchDetailsControl<br/>action·target 상세 제어와 실제 도착 확인"]
 
   Cycle["cycle_portfolio_accent<br/>공통 비동기 순회·중단 시 원복"]
 
@@ -292,14 +327,18 @@ flowchart TD
   Executor --> Schema
   Executor --> ViewCtl
   ViewCtl --> Router
+  Executor --> Details
+  Details --> Router
 
   Parse --> Cycle
   Register --> Cycle
   Cycle --> Runtime
 ```
 
-- 동기 UI 도구 10개는 출발지가 달라도 `PortfolioUiToolCommand`가 되어 같은 실행기를
-  지난다. 색상 순회는 취소 가능한 비동기 도구라 두 경로 모두 ChatProvider의
+- 동기 UI 도구 10개와 비동기 연구 상세 제어는 출발지가 달라도 `PortfolioUiToolCommand`가
+  되어 같은 실행기를 지난다. 화면 이동은 `control_portfolio_view({action})`, 상세는
+  `control_portfolio_research_details({action,target})`로 나누며 추가 인자는 거부한다.
+  색상 순회는 취소 가능한 비동기 도구라 두 경로 모두 ChatProvider의
   공통 순회 함수를 거친다.
 - 검증도 한곳이다. 도메인 입력 정의가 SSE 응답 파서와 WebMCP 등록·실행 양쪽에
   쓰여, "챗봇으로는 되는데 도구로는 안 되는" 차이가 생기지 않는다.
@@ -307,6 +346,23 @@ flowchart TD
   높이 전환 뒤 좌표가 달라지면 제한 시간 안에서 재계산하고, 숨김·전환 중인 요소는
   완료로 보고하지 않는다. 자체 RAF 스크롤은 `behavior: instant`를 써 CSS smooth와
   중첩하지 않으며, 문서 끝에서는 더 이동할 수 없는 경계만 예외로 허용한다.
+- 상세 제어는 요청 게시·이동 전에 목표 앵커의 도착 신호를 구독해 빠른 이동도 놓치지 않는다.
+  `target: all`은 활성 연구 여정에서 실제 보이는 유효 연도를 변경 전에 한 번 읽고,
+  전체 카드를 펼치거나 접은 뒤 그 연도 앵커로 다시 정렬한다. 카드 적용 범위와
+  위치 관측 대상을 분리하며 URL 해시만으로 숨김·비활성 연도를 복구하지 않는다.
+  다른 페이지·탭이거나 보이는 유효 연도가 없으면 기존 연구 개요로 이동하고,
+  특정 연도를 지정한 요청은 현재 위치와 관계없이 그 연도로 이동한다.
+  상세 요청의 준비 조건·취소 신호를 공통 이동에 전달해 React의 카드 상태 반영과
+  타임라인 높이 전환이 끝나기 전 옛 위치에서 도착을 확정하지 않는다. 같은 경로도
+  새 조건이 있는 요청은 별도 이동으로 구분하고, 오래된 프레임·콜백은 새 이동을
+  완료하거나 취소하지 못한다. 다른 경로·해시로 이동하면 이전 스크롤은 중단한다.
+  카드 전체가 지정 상태여도 스크롤이 진행 중이면 끝내지 않는다. 목표 앵커 도착과
+  현재 경로·활성 DOM·실제 상단 정렬·모든 카드 상태를 같은 8초 예산 안에서 확인한 뒤
+  `applied`를 기록하고 후속 화면 상태를 읽는다. 실패·취소·예외 때 구독을 정리한다.
+  이는 사용자 명령 후 로컬 DOM 관측이며 추론 서버 상태를 폴링하지 않는다.
+- 도구 큐는 순서를 유지해 앞선 이동·상세 제어의 관측을 기다린다. 큐 항목 시작과
+  실제 UI 실행 직전에 요청의 유효성·취소를 확인하므로, 기다리던 요청을 중단하거나
+  새 대화를 시작한 뒤 옛 큐의 설정이 뒤늦게 적용되지 않는다.
 - 포인트 색상 순회는 브라우저가 순서대로 다섯 색을 적용하고, 중단 시 시작 색으로
   되돌린다. WebMCP도 한 번의 도구 호출로 같은 동작을 실행한다.
 - 모델 로그 검색과 검색 결과 자동 이동은 제거했다. 기록 페이지의 직접 검색과 기본 RAG는 유지한다.
@@ -407,6 +463,8 @@ flowchart TD
 | 말풍선 · 온보딩 · 연결 안내 | `src/features/chat/MessageItem.tsx`, `ChatOnboarding.tsx`, `ChatOfflineNotice.tsx` |
 | 네트워크와 SSE | `src/features/chat/api.ts` |
 | 순수 파서와 그 테스트 | `src/features/chat/parse.ts`, `parse.test.mjs` |
+| 작업 scope · 단계 순서 · 완료 목록 · 취소 경계 | `src/features/chat/toolTaskRuntime.ts`, `toolTaskRuntime.test.mjs` |
+| 실제 작업 진행 표시 · 선택적 메타데이터 전송 | `src/features/chat/toolTaskPresentation.ts`, `toolTaskTelemetry.ts` |
 | 도구 계약 단일 소스 (서버 `backend/src/shared/view-targets.js`와 수동 동기화) | `src/features/portfolio-tools/contract.ts`, `settings.ts`, `view.ts` (`schema.ts`는 호환 re-export) |
 | 도구 결과 상태 줄 문구 | `src/features/chat/constants.ts`, `MessageItem.tsx` |
 | 실패 상태 · 로컬 진단 · 재시도 · 대화 이력 | `src/features/chat/chatFailure.ts`, `chatHistory.ts`, `ChatProvider.tsx`, `chatFailure.test.mjs` |
