@@ -215,7 +215,11 @@ test('제작 모델은 크레딧이나 선택 제목에서 안내하고 설명·
 test('실험 제목·모델의 하단 중복 표시를 없애도 분류·작품·BGM·직접 실행은 보존한다', async () => {
   const source = await readFile(new URL('./AgentExperimentGallery.tsx', import.meta.url), 'utf8');
   assert.match(source, /<h3 id="agent-experiments-heading">SI 활용 실험<\/h3>/);
-  assert.doesNotMatch(source, /<h4>\{active\.title\}<\/h4>|<dl aria-label="사용 모델">/);
+  const caption = source.slice(source.indexOf('<div className={styles.caption}>'));
+  assert.doesNotMatch(caption, /<h4>\{active\.title\}<\/h4>|<dl aria-label="사용 모델">/);
+  // 이동·핑용 상단 헤더는 기존 작품 제목만 한 번 재사용하고 하단 중복은 만들지 않는다.
+  assert.match(source, /<header className=\{styles\.experimentHeading\} data-agent-experiment-heading="true" tabIndex=\{-1\}>[\s\S]*?<h4>\{active\.title\}<\/h4>[\s\S]*?<\/header>/);
+  assert.equal((source.match(/<h4>\{active\.title\}<\/h4>/g) ?? []).length, 1);
   assert.match(source, /<strong>\{item\.title\}<\/strong>/);
   assert.match(source, /aria-label="실험 분류"/);
   assert.match(source, /aria-label="실험 바로 선택"/);

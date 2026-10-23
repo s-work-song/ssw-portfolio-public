@@ -15,6 +15,9 @@ export const CHAT_ACTION_PAGE_ENTERED_EVENT =
 /** 앵커 요소까지 도착해 스크롤이 끝났음을 알린다. */
 export const CHAT_ACTION_TARGET_ARRIVED_EVENT =
   "portfolio:chat-action-target-arrived";
+/** 같은 해시로 다시 이동할 때도 선택·렌더를 도착 전에 준비한다. */
+export const CHAT_ACTION_TARGET_PREPARE_EVENT =
+  "portfolio:chat-action-target-prepare";
 /** 이동 연출이 끝난 뒤 채팅 입력창에 다시 초점을 돌려 달라는 신호다. 전달할 값이 없어 일반 Event로 보낸다. */
 export const CHAT_ACTION_RESTORE_CHAT_INPUT_EVENT =
   "portfolio:chat-action-restore-input";
@@ -38,6 +41,11 @@ export interface ChatActionPageEnteredDetail {
 /** 도착한 앵커 요소의 id다. */
 export interface ChatActionTargetArrivedDetail {
   anchor: string;
+}
+
+export interface ChatActionTargetPrepareDetail {
+  anchor: string;
+  signal?: AbortSignal;
 }
 
 /** 상세 변경처럼 DOM 커밋을 기다려야 하는 이동만 추가 준비 조건·취소를 전달한다. */

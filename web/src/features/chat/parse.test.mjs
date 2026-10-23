@@ -13,6 +13,7 @@ import { parseModelHistory } from './modelHistory.ts';
 import { isPortfolioTargetAligned, isPortfolioTargetReady } from '../portfolio-tools/viewTargetVisibility.ts';
 import { workflowStageFromHash } from '../../app/about-me/ai-workflow/workflowStageNavigation.ts';
 import { pageContextFromPathname } from './constants.ts';
+import { experimentDomFixture } from '../portfolio-tools/experimentNavigationFixtures.mjs';
 
 test('SI 단계·실제 사례와 인프라 최적화의 도구 목적지·해시는 유효하다', () => {
   const cases = [
@@ -173,19 +174,22 @@ test('둘러보기는 WebGL·자기소개서·연구 연도·SI 표기와 활용
 
 test('WebGL 이동 액션과 WebMCP 화면 조회는 같은 분류 앵커·작품 ID를 보존한다', t => {
   const previousWindow = globalThis.window;
-  t.after(() => { globalThis.window = previousWindow; });
+  const previousDocument = globalThis.document;
+  t.after(() => { globalThis.window = previousWindow; globalThis.document = previousDocument; });
   assert.equal(ACTION_ROUTES.agent_experiments_webgl, '/about-me#agent-experiments-webgl');
   assert.deepEqual(parseAction({ id: 'agent_experiments_webgl', label: 'WebGL 실험 보기' }), {
     id: 'agent_experiments_webgl', label: 'WebGL 실험 보기',
   });
   for (const anchor of ['agent-experiments-webgl', 'exploded-atlas', 'iced-latte']) {
+    const fixture = experimentDomFixture(undefined, anchor === 'iced-latte' ? 'iced-latte' : 'exploded-atlas');
+    globalThis.document = fixture.document;
     globalThis.window = { location: { hash: `#${anchor}` } };
     const state = readPortfolioViewState('/about-me/');
     assert.equal(state.page, 'overview');
     assert.equal(state.anchor, anchor);
     assert.equal(parsePortfolioViewState(state).anchor, anchor);
   }
-  assert.equal(PORTFOLIO_VIEW_ACTIONS.length, 36);
+  assert.equal(PORTFOLIO_VIEW_ACTIONS.length, 71);
 });
 
 test('SI 둘러보기는 소개와 01~05의 헤더로 이동하고 질문 없이 기록까지 이어진다', () => {
@@ -840,7 +844,7 @@ test('소개에서 제외한 게임 모음 목적지는 도구 입력과 추천 
 test('도구: 소개 페이지 안의 이동 목적지도 허용 목록에 들어 있다', () => {
   // 서버 목록(비공개 backend/src/shared/view-targets.js)과 수동으로 맞추는
   // 값이라, 개수가 달라지면 한쪽만 고친 것이다.
-  assert.equal(PORTFOLIO_VIEW_ACTIONS.length, 36);
+  assert.equal(PORTFOLIO_VIEW_ACTIONS.length, 71);
   assert.equal(
     parseToolExecution(
       execution('control_portfolio_view', 'control_portfolio_view', {

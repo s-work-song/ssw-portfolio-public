@@ -4,6 +4,8 @@ import {
   isPortfolioTargetAligned,
   isPortfolioTargetReady,
 } from '../portfolio-tools/viewTargetVisibility';
+import { createTargetLayoutStabilityCheck, resolvePortfolioNavigationTarget } from '../portfolio-tools/experimentNavigation';
+import { agentExperimentViewTargetForAnchor } from '../../data/agentExperimentViewTargets';
 
 import {
   useCallback,
@@ -97,6 +99,7 @@ import {
   CHAT_ACTION_PAGE_ENTERED_EVENT,
   CHAT_ACTION_RESTORE_CHAT_INPUT_EVENT,
   CHAT_ACTION_TARGET_ARRIVED_EVENT,
+  CHAT_ACTION_TARGET_PREPARE_EVENT,
   aboutTabPathFromPath,
   normalizeNavigationPath,
   pathWithoutHash,
@@ -104,6 +107,7 @@ import {
   type ChatActionNavigateDetail,
   type ChatActionPageEnteredDetail,
   type ChatActionTargetArrivedDetail,
+  type ChatActionTargetPrepareDetail,
 } from "./navigation";
 import type {
   ActionId,
@@ -939,8 +943,8 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
    * 기다린다. 페이지·패널 진입 애니메이션이 재생 중이면 끝나기를 기다린 뒤
    * 위치를 잰다. 애니메이션 도중의 좌표로 스크롤하면 엉뚱한 곳에서 멈춘다.
    *
-   * 도착하면 포커스를 옮기고 도착 이벤트를 알린 뒤 강조 표시를 1.65초 뒤에
-   * 거둔다. 모션이 억제된 환경에서는 강조를 생략한다. 끝내 요소를 찾지 못하면
+   * 도착하면 포커스·강조를 먼저 적용하고 도착 이벤트를 알린다. 강조는 1.65초
+   * 뒤에 거두며 모션 억제 시 실험 목적지만 정적인 테두리로 표시한다. 끝내 요소를 찾지 못하면
    * 예약을 비우고 조용히 포기한다.
    */
   const scrollToPendingActionAnchor = useCallback(() => {
@@ -950,6 +954,11 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
     const scrollToken = ++actionScrollTokenRef.current;
     const options = activeActionNavigationOptionsRef.current;
     const targetPath = pendingActionPathRef.current;
+    const experimentDestination = agentExperimentViewTargetForAnchor(anchor);
+    const checkStableLayout = createTargetLayoutStabilityCheck();
+    const hasStableTargetLayout = (target: HTMLElement | null) => !experimentDestination
+      || checkStableLayout(target, window.performance.now(),
+        document.scrollingElement?.scrollTop ?? window.scrollY, window.innerWidth, window.innerHeight);
     const isCurrent = () => actionNavigationTokenRef.current === navigationToken
       && actionScrollTokenRef.current === scrollToken && pendingActionAnchorRef.current === anchor;
     if (actionScrollFrameRef.current !== null) {
@@ -983,6 +992,11 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
       }
       return true;
     };
+    if (!canContinue()) return;
+    // URL이 그대로여도 이전 수동 선택을 복원한 뒤 실제 본문 커밋을 기다린다.
+    window.dispatchEvent(new CustomEvent<ChatActionTargetPrepareDetail>(CHAT_ACTION_TARGET_PREPARE_EVENT, {
+      detail: { anchor, signal: options?.signal },
+    }));
     const startedAt = window.performance.now();
     const abandonPendingAction = () => {
       if (!isCurrent()) return;
@@ -1016,7 +1030,9 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
         (Number.parseFloat(rootStyle.scrollPaddingTop) || 0);
       if (
         options?.isTargetReady?.() === false ||
+        resolvePortfolioNavigationTarget(anchor) !== target ||
         !isPortfolioTargetReady(target) ||
+        !hasStableTargetLayout(target) ||
         !isPortfolioTargetAligned(
           target,
           expectedTop,
@@ -1029,36 +1045,37 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
       }
       clearActionNavigation();
       target.focus({ preventScroll: true });
+      if (!motionSuppressed || experimentDestination) {
+        if (actionTargetHighlightTimerRef.current !== null) {
+          window.clearTimeout(actionTargetHighlightTimerRef.current);
+        }
+        highlightedActionTargetRef.current?.removeAttribute("data-chat-action-target");
+        highlightedActionTargetRef.current = target;
+        target.setAttribute("data-chat-action-target", motionSuppressed ? "static" : "true");
+        actionTargetHighlightTimerRef.current = window.setTimeout(() => {
+          target.removeAttribute("data-chat-action-target");
+          if (highlightedActionTargetRef.current === target) highlightedActionTargetRef.current = null;
+          actionTargetHighlightTimerRef.current = null;
+        }, 1_650);
+      }
       window.dispatchEvent(
         new CustomEvent<ChatActionTargetArrivedDetail>(
           CHAT_ACTION_TARGET_ARRIVED_EVENT,
-          { detail: { anchor: target.id } },
+          { detail: { anchor } },
         ),
       );
       restoreChatInputAfterNavigation();
-
-      if (motionSuppressed) return;
-      if (actionTargetHighlightTimerRef.current !== null) {
-        window.clearTimeout(actionTargetHighlightTimerRef.current);
-      }
-      highlightedActionTargetRef.current?.removeAttribute(
-        "data-chat-action-target",
-      );
-      highlightedActionTargetRef.current = target;
-      target.setAttribute("data-chat-action-target", "true");
-      actionTargetHighlightTimerRef.current = window.setTimeout(() => {
-        target.removeAttribute("data-chat-action-target");
-        if (highlightedActionTargetRef.current === target) {
-          highlightedActionTargetRef.current = null;
-        }
-        actionTargetHighlightTimerRef.current = null;
-      }, 1_650);
     };
 
     const scroll = () => {
       if (!canContinue()) return;
-      const target = document.getElementById(anchor);
+      const target = resolvePortfolioNavigationTarget(anchor);
       if (!target || options?.isTargetReady?.() === false || !isPortfolioTargetReady(target)) {
+        hasStableTargetLayout(null);
+        retryOrAbandon();
+        return;
+      }
+      if (!hasStableTargetLayout(target)) {
         retryOrAbandon();
         return;
       }
@@ -1151,15 +1168,30 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
       const navigationToken = actionNavigationTokenRef.current;
       const isCurrent = () => actionNavigationTokenRef.current === navigationToken
         && !options?.signal?.aborted;
-      if (options?.signal) {
-        const cancel = () => {
-          if (actionNavigationTokenRef.current !== navigationToken) return;
-          actionNavigationTokenRef.current += 1;
-          clearActionNavigation();
-        };
-        options.signal.addEventListener("abort", cancel, { once: true });
-        actionNavigationAbortCleanupRef.current = () => options.signal?.removeEventListener("abort", cancel);
-      }
+      const cancel = () => {
+        if (actionNavigationTokenRef.current !== navigationToken) return;
+        actionNavigationTokenRef.current += 1;
+        pendingChatNavigationFocusRef.current = false;
+        clearActionNavigation();
+      };
+      const cancelForScrollKey = (event: KeyboardEvent) => {
+        if (!['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'PageUp', 'PageDown', 'Home', 'End', ' '].includes(event.key)) return;
+        if ((event.target as HTMLElement | null)?.closest?.('input, textarea, select, [contenteditable="true"]')) return;
+        cancel();
+      };
+      options?.signal?.addEventListener("abort", cancel, { once: true });
+      // 새 클릭·수동 스크롤은 도구의 예약된 이동보다 우선한다. 자체 스크롤 이벤트는 듣지 않는다.
+      window.addEventListener('wheel', cancel, { passive: true });
+      window.addEventListener('touchmove', cancel, { passive: true });
+      window.addEventListener('pointerdown', cancel, { passive: true });
+      window.addEventListener('keydown', cancelForScrollKey);
+      actionNavigationAbortCleanupRef.current = () => {
+        options?.signal?.removeEventListener("abort", cancel);
+        window.removeEventListener('wheel', cancel);
+        window.removeEventListener('touchmove', cancel);
+        window.removeEventListener('pointerdown', cancel);
+        window.removeEventListener('keydown', cancelForScrollKey);
+      };
 
       const hashIndex = route.indexOf("#");
       const actionAnchor =
@@ -1680,7 +1712,7 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
           read: () => {
             // URL이 먼저 바뀌어도 이전 페이지의 main을 도착으로 보지 않는다.
             const target = anchor
-              ? document.getElementById(anchor)
+              ? resolvePortfolioNavigationTarget(anchor)
               : pathWithoutHash(route) === "/about-me/research"
                 ? document.getElementById("research-experiments")?.closest("main")
                 : document.querySelector<HTMLElement>('[data-option="theme-mode"]')?.closest("main");

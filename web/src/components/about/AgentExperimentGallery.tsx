@@ -3,7 +3,7 @@
 import { useEffect, useLayoutEffect, useRef, useState, type KeyboardEvent, type ReactNode } from 'react';
 import { agentExperiments, type AgentExperiment } from '@/data/agentExperiments';
 import { AGENT_EXPERIMENT_CATEGORY_ANCHORS, AGENT_EXPERIMENT_INTRO_ANCHOR, agentExperimentForAnchor } from '@/data/agentExperimentNavigation';
-import { CHAT_ACTION_TARGET_ARRIVED_EVENT } from '@/features/chat/navigation';
+import { CHAT_ACTION_TARGET_PREPARE_EVENT, type ChatActionTargetPrepareDetail } from '@/features/chat/navigation';
 import ProjectMediaCarousel from './ProjectMediaCarousel';
 import { creditsWithoutTitleRepeat, imageWithoutRepeatedCaption, mergeModelCredits, type DisplayModelCredit } from './experimentPresentation';
 import { audioPreviewSource, formatAudioPreviewDuration, groupAudioPreviews, pauseAndResetAudioPreview } from './experimentAudioPreview';
@@ -301,6 +301,13 @@ export default function AgentExperimentGallery() {
   }, [category]);
 
   useEffect(() => {
+    const selectAnchor = (anchor: string) => {
+      const target = agentExperimentForAnchor(visibleExperiments, anchor);
+      if (!target) return;
+      setCategory(target.category);
+      setSelectedId(target.id);
+      setSelectedModel(0);
+    };
     const selectHashExperiment = () => {
       let hash = '';
       try {
@@ -308,19 +315,22 @@ export default function AgentExperimentGallery() {
       } catch {
         return;
       }
-      const target = agentExperimentForAnchor(visibleExperiments, hash);
-      if (!target) return;
-      setCategory(target.category);
-      setSelectedId(target.id);
-      setSelectedModel(0);
+      selectAnchor(hash);
+    };
+    const prepareExperiment = (event: Event) => {
+      const request = (event as CustomEvent<ChatActionTargetPrepareDetail>).detail;
+      if (typeof request?.anchor !== 'string' || request.signal?.aborted) return;
+      selectAnchor(request.anchor);
     };
     selectHashExperiment();
     window.addEventListener('hashchange', selectHashExperiment);
-    // 수동으로 다른 탭을 연 뒤 같은 '현재 장소'로 돌아와도 분류를 복원한다.
-    window.addEventListener(CHAT_ACTION_TARGET_ARRIVED_EVENT, selectHashExperiment);
+    window.addEventListener('popstate', selectHashExperiment);
+    // 도착 후 복원하면 비선택 버튼을 성공으로 오인한다. 같은 해시도 먼저 선택한다.
+    window.addEventListener(CHAT_ACTION_TARGET_PREPARE_EVENT, prepareExperiment);
     return () => {
       window.removeEventListener('hashchange', selectHashExperiment);
-      window.removeEventListener(CHAT_ACTION_TARGET_ARRIVED_EVENT, selectHashExperiment);
+      window.removeEventListener('popstate', selectHashExperiment);
+      window.removeEventListener(CHAT_ACTION_TARGET_PREPARE_EVENT, prepareExperiment);
     };
   }, []);
 
@@ -345,7 +355,8 @@ export default function AgentExperimentGallery() {
   }
 
   return (
-    <section id="agent-experiments" className={styles.section} aria-labelledby="agent-experiments-heading">
+    <section id="agent-experiments" className={styles.section} aria-labelledby="agent-experiments-heading"
+      data-active-experiment-id={active.id} data-active-experiment-category={active.category}>
       <header className={styles.heading}>
         <div>
           <p className={styles.eyebrow}>SI EXPERIMENTS</p>
@@ -398,7 +409,12 @@ export default function AgentExperimentGallery() {
       </div>
 
       <div id="agent-experiment-stage" className={styles.stage}>
-        <article key={active.id} className={styles.slide} aria-label={active.title}>
+        <article key={active.id} className={styles.slide} aria-label={active.title}
+          data-agent-experiment-id={active.id} data-agent-experiment-category={active.category}>
+          <header className={styles.experimentHeading} data-agent-experiment-heading="true" tabIndex={-1}>
+            <p className={styles.eyebrow}>{active.category}</p>
+            <h4>{active.title}</h4>
+          </header>
           {active.animationGroups?.length ? (
             <div className={styles.animationGroups} aria-label={`${active.title} 모델별 애니메이션 비교`}>
               {active.animationGroups.map((group) => (

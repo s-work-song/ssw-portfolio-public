@@ -44,9 +44,13 @@ test('설명 박스와 대분류 탭의 앵커를 분리하고 일곱 분류의 
   assert.match(component, /<section id="agent-experiments"/);
   assert.match(component, /<div id=\{AGENT_EXPERIMENT_INTRO_ANCHOR\} tabIndex=\{-1\} className=\{styles\.introPanel\}/);
   assert.match(component, /<button key=\{value\} id=\{AGENT_EXPERIMENT_CATEGORY_ANCHORS\[value\]\}/);
-  assert.match(component, /agentExperimentForAnchor\(visibleExperiments, hash\)/);
-  assert.match(component, /addEventListener\(CHAT_ACTION_TARGET_ARRIVED_EVENT, selectHashExperiment\)/);
-  assert.match(component, /removeEventListener\(CHAT_ACTION_TARGET_ARRIVED_EVENT, selectHashExperiment\)/);
+  assert.match(component, /agentExperimentForAnchor\(visibleExperiments, anchor\)/);
+  assert.match(component, /addEventListener\(CHAT_ACTION_TARGET_PREPARE_EVENT, prepareExperiment\)/);
+  assert.match(component, /removeEventListener\(CHAT_ACTION_TARGET_PREPARE_EVENT, prepareExperiment\)/);
+  assert.match(component, /addEventListener\('popstate', selectHashExperiment\)/);
+  assert.doesNotMatch(component, /CHAT_ACTION_TARGET_ARRIVED_EVENT/);
+  assert.match(component, /data-active-experiment-id=\{active\.id\}/);
+  assert.match(component, /data-agent-experiment-heading="true" tabIndex=\{-1\}/);
 });
 
 test('실험 선택 목록은 가로 스크롤 없이 줄바꿈하고 키보드 탐색을 유지한다', async () => {

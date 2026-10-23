@@ -9,6 +9,8 @@
  * 쓸 때는 허용 목록 안의 경로만 만든다.
  */
 import { ACTION_ROUTES } from '../chat/constants.ts';
+import { AGENT_EXPERIMENT_VIEW_TARGETS, type AgentExperimentViewAction } from '../../data/agentExperimentViewTargets.ts';
+import { readAgentExperimentAnchor } from '../portfolio-tools/experimentNavigation.ts';
 import {
   PORTFOLIO_RESEARCH_YEARS,
   PORTFOLIO_VIEW_ACTIONS,
@@ -99,7 +101,12 @@ export interface PortfolioViewTarget {
  * 여기에 없는 동작은 애초에 허용 목록을 통과하지 못하므로, 이 표가 도구가
  * 만들 수 있는 경로의 상한이다.
  */
+const EXPERIMENT_VIEW_TARGETS = Object.fromEntries(AGENT_EXPERIMENT_VIEW_TARGETS.map((target) => [target.action, {
+  action: target.action, route: target.route, label: target.label, message: `${target.label}(으)로 이동을 시작했습니다.`,
+}])) as Record<AgentExperimentViewAction, PortfolioViewTarget>;
+
 const VIEW_TARGETS: Readonly<Record<PortfolioViewAction, PortfolioViewTarget>> = {
+  ...EXPERIMENT_VIEW_TARGETS,
   main: {
     action: 'main',
     route: ACTION_ROUTES.overview,
@@ -554,6 +561,7 @@ export function readPortfolioViewState(pathname: string): ChatPortfolioViewState
   }
   // 링크에 심어 둔 임의 문장이 모델 컨텍스트로 들어가지 않게 형태를 제한한다.
   let anchor = ANCHOR_PATTERN.test(rawAnchor) ? rawAnchor : null;
+  if (page === 'overview' && anchor) anchor = readAgentExperimentAnchor(anchor);
   let researchTab: ChatPortfolioResearchTab | null = null;
   let researchYear: PortfolioResearchYear | null = null;
 

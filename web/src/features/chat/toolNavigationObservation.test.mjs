@@ -6,6 +6,11 @@ import { navigationPathMatches, observeToolNavigation } from './toolNavigationOb
 import * as navigationContract from './navigation.ts';
 import { isPortfolioTargetAligned, isPortfolioTargetReady } from '../portfolio-tools/viewTargetVisibility.ts';
 import { executePortfolioUiTool, portfolioUiCommandFromChatExecution } from '../portfolio-tools/portfolioUiToolExecutor.ts';
+import { createTargetLayoutStabilityCheck, resolvePortfolioNavigationTarget } from '../portfolio-tools/experimentNavigation.ts';
+import { AGENT_EXPERIMENT_VIEW_TARGETS, agentExperimentViewTargetForAnchor } from '../../data/agentExperimentViewTargets.ts';
+import { experimentDomFixture, installGallerySelectionEffect } from '../portfolio-tools/experimentNavigationFixtures.mjs';
+import { readPortfolioViewState, resolvePortfolioViewTarget } from '../webmcp/portfolioView.ts';
+import { workflowStageFromHash } from '../../app/about-me/ai-workflow/workflowStageNavigation.ts';
 
 function fixture(overrides = {}) {
   let now = 0;
@@ -175,7 +180,8 @@ test('Provider 연결은 실제 경로·설정 본문·기존 DOM 가시성과 �
 });
 
 /** 모사한 이동기가 아니라 Provider의 실제 콜백을 타입만 지워 DOM·RAF fixture에서 실행한다. */
-function providerNavigationFixture(t, { motionSuppressed = true, mobile = false } = {}) {
+function providerNavigationFixture(t, { motionSuppressed = true, mobile = false,
+  pathname = '/about-me/research', hash = '#research-year-2025', experimentId } = {}) {
   const source = readFileSync(new URL('./ChatProvider.tsx', import.meta.url), 'utf8');
   const slice = (start, end) => {
     const from = source.indexOf(start);
@@ -211,6 +217,7 @@ function providerNavigationFixture(t, { motionSuppressed = true, mobile = false 
   const state = { layoutAnimations: [], panelAnimations: [], closed: 0 };
   const scroller = { scrollTop: 1_000, scrollHeight: 10_000,
     scrollTo: ({ top }) => { scroller.scrollTop = top; } };
+  const experiment = experimentId ? experimentDomFixture(scroller, experimentId) : null;
   const root = { scrollHeight: 10_000 };
   const timeline = { getAnimations: () => state.layoutAnimations };
   const targets = Object.fromEntries(['2025', '2026'].map((year, index) => [year, {
@@ -225,12 +232,14 @@ function providerNavigationFixture(t, { motionSuppressed = true, mobile = false 
     focus: () => {}, setAttribute: () => {}, removeAttribute: () => {},
   }]));
   const windowFixture = {
-    location: new URL('http://localhost/about-me/research#research-year-2025'),
-    performance: { now: () => now }, innerHeight: 800,
+    location: new URL(`http://localhost${pathname}${hash}`),
+    performance: { now: () => now }, innerHeight: 800, innerWidth: 1440,
     history: { state: {}, pushState: (_state, _title, path) => {
       windowFixture.location = new URL(path, windowFixture.location.href);
     } },
     dispatchEvent: event => events.dispatchEvent(event),
+    addEventListener: (...args) => events.addEventListener(...args),
+    removeEventListener: (...args) => events.removeEventListener(...args),
     requestAnimationFrame: callback => schedule(callback, 16), cancelAnimationFrame: id => tasks.delete(id),
     setTimeout: schedule, clearTimeout: id => tasks.delete(id),
     getComputedStyle: element => ({ display: 'block', visibility: 'visible',
@@ -238,7 +247,7 @@ function providerNavigationFixture(t, { motionSuppressed = true, mobile = false 
     matchMedia: () => ({ matches: mobile }), scrollTo: value => scroller.scrollTo(value),
   };
   const documentFixture = { scrollingElement: scroller, documentElement: root,
-    getElementById: id => targets[id.replace('research-year-', '')] ?? null };
+    getElementById: id => experiment?.document.getElementById(id) ?? targets[id.replace('research-year-', '')] ?? null };
   globalThis.window = windowFixture;
   globalThis.document = documentFixture;
   const refs = Object.fromEntries([
@@ -246,6 +255,7 @@ function providerNavigationFixture(t, { motionSuppressed = true, mobile = false 
     'pendingActionAnchorRef', 'pendingActionPathRef', 'pendingActionAwaitingPageEntryRef',
     'activeActionNavigationRouteRef', 'activeActionNavigationOptionsRef', 'actionNavigationAbortCleanupRef',
     'actionTargetHighlightTimerRef', 'highlightedActionTargetRef', 'pendingActionRouteRef',
+    'pendingChatNavigationFocusRef',
   ].map(name => [name, { current: null }]));
   const context = {
     ...navigationContract, ...refs, window: windowFixture, document: documentFixture,
@@ -253,7 +263,8 @@ function providerNavigationFixture(t, { motionSuppressed = true, mobile = false 
     actionNavigationTokenRef: { current: 0 }, actionScrollTokenRef: { current: 0 },
     isOpenRef: { current: true }, mobileHistoryEntryRef: { current: false },
     navigationPathMatches, isPortfolioTargetReady, isPortfolioTargetAligned,
-    motionSuppressed, pageTransition: 'none', pathname: '/about-me/research',
+    createTargetLayoutStabilityCheck, resolvePortfolioNavigationTarget, agentExperimentViewTargetForAnchor,
+    motionSuppressed, pageTransition: 'none', pathname,
     router: { prefetch: () => {}, push: path => { windowFixture.location = new URL(path, windowFixture.location.href); } },
     restoreChatInputAfterNavigation: () => {}, logChatFailureLocally: () => {},
     scrollDurationForDistance: () => 120, easeInOutCubic: value => value, easeOutCubic: value => value,
@@ -267,10 +278,12 @@ function providerNavigationFixture(t, { motionSuppressed = true, mobile = false 
   `)(...Object.values(context));
   t.after(() => {
     api.clearActionNavigation();
+    if (refs.actionTargetHighlightTimerRef.current !== null) tasks.delete(refs.actionTargetHighlightTimerRef.current);
     globalThis.window = previousWindow;
     globalThis.document = previousDocument;
   });
-  return { ...api, refs, state, targets, arrivals, scroller, window: windowFixture, tasks, scheduled,
+  return { ...api, refs, state, targets, arrivals, scroller, window: windowFixture, document: documentFixture,
+    tasks, scheduled, experiment, schedule,
     async tick(until) {
       for (;;) {
         const next = [...tasks.values()].sort((a, b) => a.at - b.at || a.id - b.id)[0];
@@ -376,6 +389,154 @@ test('실제 Provider: 모바일 닫기 대기에도 준비 조건·signal을 �
   f.navigateToActionTarget(pending.route, pending.options);
   assert.equal(f.window.location.hash, '#research-year-2025');
   assert.equal(f.tasks.size, 0);
+});
+
+test('실제 Provider + Gallery: 공개 27항목·7분류·소개를 선택·정렬·핑한 뒤 원래 앵커로 도착을 보고한다', async t => {
+  const f = providerNavigationFixture(t, { pathname: '/about-me', hash: '', experimentId: 'svg-illustrations' });
+  const hook = installGallerySelectionEffect(f.window, id => f.experiment.commit(id));
+  t.after(hook.cleanup);
+  const pingAtArrival = [];
+  f.window.addEventListener(navigationContract.CHAT_ACTION_TARGET_ARRIVED_EVENT, event => {
+    pingAtArrival.push(resolvePortfolioNavigationTarget(event.detail.anchor)?.getAttribute('data-chat-action-target'));
+  });
+  for (const [index, destination] of AGENT_EXPERIMENT_VIEW_TARGETS.entries()) {
+    const startAt = index * 2_000;
+    f.navigateToActionTarget(destination.route);
+    await f.tick(startAt + 99);
+    assert.equal(f.arrivals.length, index, `${destination.action}: 안정화 전에 도착하지 않는다`);
+    await f.tick(startAt + 350);
+    assert.equal(f.arrivals.at(-1), destination.anchor);
+    assert.equal(pingAtArrival.at(-1), 'static', '모션 끔에서도 핑을 표시한 다음 arrived를 보낸다');
+    const target = resolvePortfolioNavigationTarget(destination.anchor);
+    assert.equal(target.getBoundingClientRect().top, 180);
+    assert.equal(f.experiment.state.focused, target);
+    if (destination.kind !== 'intro') assert.equal(f.experiment.state.selectedId, destination.itemId);
+    if (destination.kind === 'item') assert.equal(target, f.experiment.heading);
+    await f.tick(startAt + 2_000);
+    assert.equal(target.getAttribute('data-chat-action-target'), null);
+  }
+  assert.equal(f.arrivals.length, 35);
+  assert.equal(f.tasks.size, 0);
+});
+
+test('실제 Provider + Gallery: 같은 해시에서 같은/다른 분류를 수동 선택한 이력도 본문 커밋과 애니메이션을 기다린다', async t => {
+  for (const initialId of ['planet-defense', 'svg-illustrations']) {
+    await t.test(initialId, async t => {
+      const f = providerNavigationFixture(t, { pathname: '/about-me', hash: '#oscillo-rhythm-game', experimentId: initialId });
+      let selected;
+      const hook = installGallerySelectionEffect(f.window, id => { selected = id; });
+      t.after(hook.cleanup);
+      selected = null;
+      f.navigateToActionTarget('/about-me#oscillo-rhythm-game');
+      assert.equal(selected, 'oscillo-rhythm-game', 'hashchange가 없어도 준비 이벤트로 다시 선택한다');
+      await f.tick(300);
+      assert.deepEqual(f.arrivals, []);
+      assert.equal(f.scroller.scrollTop, 1_000);
+      f.experiment.commit(selected);
+      f.experiment.state.animations = [{ playState: 'running' }];
+      await f.tick(500);
+      assert.deepEqual(f.arrivals, []);
+      f.experiment.state.animations = [];
+      await f.tick(650);
+      assert.deepEqual(f.arrivals, ['oscillo-rhythm-game']);
+      assert.equal(f.experiment.heading.getAttribute('data-chat-action-target'), 'static');
+      assert.equal(f.experiment.itemButtons[selected].getAttribute('data-chat-action-target'), null);
+      assert.equal(f.experiment.state.selectedId, selected);
+    });
+  }
+});
+
+test('실제 Provider + Gallery: 다른 페이지에서 진입해 본문이 마운트된 뒤 선택하고 뷰포트 재배치 후에 도착한다', async t => {
+  const f = providerNavigationFixture(t, { experimentId: 'svg-illustrations' });
+  f.experiment.state.rendered = false;
+  f.navigateToActionTarget('/about-me#modern-warfare-sample');
+  await f.tick(100);
+  assert.deepEqual(f.arrivals, []);
+  assert.equal(f.window.location.pathname, '/about-me');
+  f.experiment.state.rendered = true;
+  const hook = installGallerySelectionEffect(f.window, id => f.experiment.commit(id));
+  t.after(hook.cleanup);
+  f.scrollToPendingActionAnchor();
+  await f.tick(180);
+  f.window.innerWidth = 390;
+  f.experiment.state.width = 310;
+  f.experiment.state.documentTop = 2_200;
+  await f.tick(250);
+  assert.deepEqual(f.arrivals, [], '리사이즈로 바뀐 본문 좌표가 안정될 때까지 기다린다');
+  await f.tick(350);
+  assert.deepEqual(f.arrivals, ['modern-warfare-sample']);
+  assert.equal(f.experiment.heading.getBoundingClientRect().top, 180);
+  assert.equal(readPortfolioViewState('/about-me').anchor, 'modern-warfare-sample');
+});
+
+test('실제 Provider: 휠·터치·새 클릭·스크롤 키가 예약 이동을 취소하고 늦은 커밋도 스크롤·포커스를 되돌리지 않는다', async t => {
+  for (const eventType of ['wheel', 'touchmove', 'pointerdown', 'keydown']) {
+    await t.test(eventType, async t => {
+      const f = providerNavigationFixture(t, { pathname: '/about-me', hash: '', experimentId: 'planet-defense' });
+      f.refs.pendingChatNavigationFocusRef.current = true;
+      f.navigateToActionTarget('/about-me#oscillo-rhythm-game');
+      await f.tick(40);
+      const event = new Event(eventType);
+      if (eventType === 'keydown') Object.defineProperty(event, 'key', { value: 'PageDown' });
+      f.window.dispatchEvent(event);
+      f.scroller.scrollTop = 1_234;
+      f.experiment.commit('oscillo-rhythm-game');
+      await f.tick(1_000);
+      assert.equal(f.scroller.scrollTop, 1_234);
+      assert.equal(f.experiment.state.focused, null);
+      assert.equal(f.refs.pendingChatNavigationFocusRef.current, false);
+      assert.deepEqual(f.arrivals, []);
+      assert.equal(f.tasks.size, 0);
+    });
+  }
+});
+
+test('실제 Provider: 새 실험 요청과 명시적 중단은 옛 이동 콜백을 폐기하고 숨긴 본문에는 핑하지 않는다', async t => {
+  const f = providerNavigationFixture(t, { pathname: '/about-me', hash: '', experimentId: 'planet-defense' });
+  const old = new AbortController();
+  f.navigateToActionTarget('/about-me#oscillo-rhythm-game', { signal: old.signal });
+  await f.tick(40);
+  const oldRetry = f.scheduled.at(-1).callback;
+  const current = new AbortController();
+  f.navigateToActionTarget('/about-me#modern-warfare-sample', { signal: current.signal });
+  f.experiment.commit('modern-warfare-sample');
+  f.experiment.state.articleHidden = true;
+  old.abort();
+  oldRetry(100);
+  await f.tick(300);
+  assert.deepEqual(f.arrivals, []);
+  assert.equal(f.refs.activeActionNavigationRouteRef.current, '/about-me#modern-warfare-sample');
+  f.experiment.state.articleHidden = false;
+  await f.tick(450);
+  assert.deepEqual(f.arrivals, ['modern-warfare-sample']);
+  const cancelled = new AbortController();
+  f.navigateToActionTarget('/about-me#oscillo-rhythm-game', { signal: cancelled.signal });
+  cancelled.abort();
+  f.experiment.commit('oscillo-rhythm-game');
+  await f.tick(700);
+  assert.deepEqual(f.arrivals, ['modern-warfare-sample']);
+  assert.equal(f.experiment.heading.getAttribute('data-chat-action-target'), null);
+});
+
+test('실제 Provider: 05단계 이력에서도 si-levels는 소개 헤더로 도착하고 05단계를 목적지로 재사용하지 않는다', async t => {
+  const f = providerNavigationFixture(t, { motionSuppressed: false,
+    pathname: '/about-me/ai-workflow', hash: '#workflow-header-orchestration' });
+  const intro = { ...f.targets['2025'], id: 'ai-workflow-intro', documentTop: 300,
+    attributes: {}, setAttribute(name, value) { this.attributes[name] = value; },
+    removeAttribute(name) { delete this.attributes[name]; } };
+  f.targets['ai-workflow-intro'] = intro;
+  const panel = { id: 'workflow-orchestration', contains: () => false };
+  f.document.querySelector = () => panel;
+  assert.equal(workflowStageFromHash(f.window.location.hash), 'orchestration');
+  f.navigateToActionTarget(resolvePortfolioViewTarget('si-levels').route);
+  await f.tick(500);
+  assert.equal(f.window.location.hash, '#ai-workflow-intro');
+  assert.equal(workflowStageFromHash(f.window.location.hash), 'chat');
+  assert.deepEqual(f.arrivals, ['ai-workflow-intro']);
+  assert.equal(intro.attributes['data-chat-action-target'], 'true');
+  assert.equal(readPortfolioViewState('/about-me/ai-workflow').anchor, 'ai-workflow-intro');
+  const tabs = readFileSync(new URL('../../app/about-me/ai-workflow/WorkflowStageTabs.tsx', import.meta.url), 'utf8');
+  assert.match(tabs, /if \(!hash\.startsWith\('#workflow-'\) && !hash\.startsWith\('#example-'\) && !hash\.startsWith\('#story-'\)\) return;/u);
 });
 
 function providerToolQueueFixture() {

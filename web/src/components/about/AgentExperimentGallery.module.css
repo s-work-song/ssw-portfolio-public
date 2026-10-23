@@ -42,6 +42,8 @@
 .section button:focus-visible, .section a:focus-visible { outline: 2px solid var(--accent, #6366f1); outline-offset: 3px; }
 .stage { border: 1px solid var(--border-strong); border-radius: 16px; overflow: hidden; }
 .slide { animation: reveal 220ms ease-out; }
+.experimentHeading { padding: clamp(16px, 3vw, 24px); border-bottom: 1px solid var(--border); scroll-margin-top: 108px; }
+.experimentHeading h4 { margin: 0; font-size: clamp(1.05rem, 2.3vw, 1.35rem); line-height: 1.5; overflow-wrap: anywhere; }
 .animationGroups { display: grid; gap: 20px; padding: 20px; background: var(--bg-elev-2); }
 .animationGroupTitle { margin: 0 0 10px; color: var(--accent, #6366f1); font-size: .88rem; font-weight: 700; }
 .animationCards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }

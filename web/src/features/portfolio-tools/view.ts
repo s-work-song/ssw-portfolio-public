@@ -6,6 +6,7 @@ import {
   isAllowed,
   type InputDefinition,
 } from './contract.ts';
+import { AGENT_EXPERIMENT_VIEW_ACTIONS } from '../../data/agentExperimentViewTargets.ts';
 
 /** `control_portfolio_view`가 받을 수 있는 화면 제어 동작이다. */
 export const PORTFOLIO_VIEW_ACTIONS = [
@@ -20,6 +21,7 @@ export const PORTFOLIO_VIEW_ACTIONS = [
   'archive-wpf-excel-row-mapper', 'archive-android-ar-campfire',
   'project-common-infrastructure', 'project-ecommerce-demo',
   'project-code-archive',
+  ...AGENT_EXPERIMENT_VIEW_ACTIONS,
 ] as const;
 export const PORTFOLIO_RESEARCH_YEARS = ['2011', '2022', '2023', '2024', '2025', '2026'] as const;
 export const PORTFOLIO_RESEARCH_DETAILS_ACTIONS = ['expand', 'collapse'] as const;
@@ -61,7 +63,7 @@ export const portfolioViewControlInput: InputDefinition<PortfolioViewControlInpu
   schema: enumObjectSchema({
     action: {
       values: PORTFOLIO_VIEW_ACTIONS,
-      description: '화면 이동 전용. architecture는 개발·배포 환경, development-environment는 개발 환경, deployment-overview는 배포 구성, infrastructure-optimization은 인프라 최적화, migration-memory-history는 Rust 메모리 비교. si-levels는 SI 소개, si-level-*은 단계, si-tools-ffmpeg는 컨택트 시트, si-session-messaging은 대표 세션 협업 사례. research-2011은 학창 시절 연구 경험. 상세 펼침·접기는 control_portfolio_research_details를 사용한다.',
+      description: '화면 이동 전용. architecture는 개발·배포 환경, development-environment는 개발 환경, deployment-overview는 배포 구성, infrastructure-optimization은 인프라 최적화, migration-memory-history는 Rust 메모리 비교. 번호 없는 SI 활용 단계 소개는 si-levels, 명시한 01~05단계만 si-level-*, si-tools-ffmpeg는 컨택트 시트, si-session-messaging은 대표 세션 협업 사례. agent-experiments는 SI 실험 소개, agent-experiments-*는 7분류, agent-experiment-*는 공개 개별 실험 소개 카드다. 외부 게임 실행이나 음원 재생은 하지 않는다. research-2011은 학창 시절 연구 경험. 상세 펼침·접기는 control_portfolio_research_details를 사용한다.',
     },
   }, ['action']),
   parse(input) {
