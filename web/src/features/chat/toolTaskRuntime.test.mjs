@@ -231,6 +231,58 @@ test('실제 JSON/SSE 오류는 HTTP상태·용량코드·서버 재시도 소�
     error => error.code === 'network' && chatRetryFailureKind(error) === 'transient');
 });
 
+test('실제 JSON/SSE: generic 502·503·504만 transient fallback이며 명시 영구·충돌·잘못된 코드는 차단한다', async () => {
+  for (const streaming of [false, true]) {
+    for (const status of [500, 502, 503, 504]) {
+      for (const payload of [undefined, { error: 'internal_error' }, { code: 'authentication_error' },
+        { code: 'network', error: 'upstream_busy' }, { code: { hidden: 'private' } }, { error: '' }]) {
+        const api = fixtureApi(async () => payload === undefined ? new Response('<html>error</html>', { status })
+          : Response.json(payload, { status }));
+        await assert.rejects(streaming ? api.requestChatStream(request(), new AbortController().signal, { onDelta() {} })
+          : api.requestChat(request(), new AbortController().signal), error => {
+          assert.equal(chatRetryFailureKind(error), payload === undefined && status !== 500 ? 'transient' : undefined);
+          assert.equal(error.httpStatus, status);
+          return true;
+        });
+      }
+    }
+  }
+});
+
+test('실제 JSON/SSE: Retry-After 숫자·0·긴 값·HTTP-date·body metadata를 이른 시각으로 바꾸지 않는다', async () => {
+  for (const streaming of [false, true]) {
+    for (const [code, status] of [['rate_limited', 429], ['upstream_busy', 503]]) {
+      for (const [header, bodyDelay, expected] of [
+        ['0', undefined, 0], ['2', undefined, 2_000], ['99999', undefined, 99_999_000],
+        [undefined, 0, 0], [undefined, 65_000, 65_000], ['2', 3_000, 3_000], ['3', 2_000, 3_000],
+      ]) {
+        const api = fixtureApi(async () => Response.json({ error: code, retryAfterMs: bodyDelay },
+          { status, headers: header === undefined ? {} : { 'retry-after': header } }));
+        await assert.rejects(streaming ? api.requestChatStream(request(), new AbortController().signal, { onDelta() {} })
+          : api.requestChat(request(), new AbortController().signal), error => {
+          assert.equal(error.retryAfterMs, expected);
+          return true;
+        });
+      }
+      const deadline = Math.ceil(Date.now() / 1_000) * 1_000 + 90_000;
+      const dateApi = fixtureApi(async () => Response.json({ error: code },
+        { status, headers: { 'retry-after': new Date(deadline).toUTCString() } }));
+      const before = Date.now();
+      await assert.rejects(streaming ? dateApi.requestChatStream(request(), new AbortController().signal, { onDelta() {} })
+        : dateApi.requestChat(request(), new AbortController().signal), error => {
+        assert.ok(error.retryAfterMs >= deadline - Date.now());
+        assert.ok(error.retryAfterMs <= deadline - before);
+        return true;
+      });
+    }
+  }
+  for (const retryAfterMs of [0, 1, 60_000, 90_000]) {
+    const api = fixtureApi(async () => sse([['error', { code: 'rate_limited', retryAfterMs }]]));
+    await assert.rejects(api.requestChatStream(request(), new AbortController().signal, { onDelta() {} }),
+      error => error.retryAfterMs === retryAfterMs && chatRetryFailureKind(error) === 'rate_limited');
+  }
+});
+
 test('실제 JSON/SSE API는 같은 scope·원 native ID와 ordered manifest를 보존하고 중복 SSE를 실행하지 않는다', async () => {
   const write = execution(); const read = getter(); const done = response([write, read]);
   const meta = ['meta', { toolTask: { ...scope, status: 'running' } }];
@@ -323,7 +375,8 @@ test('Provider는 stop/partial prefix의 실행 retry를 없애고 정상 verifi
   assert.match(caught, /Boolean\(pending\.toolReportRequest && pending\.toolVerification && pending\.toolTask\.dispatchComplete\)/u);
   assert.doesNotMatch(caught, /pending\.toolVerification =/u, 'done 없는 prefix를 임의 확인 요청으로 바꾸지 않는다');
   const retry = provider.slice(provider.indexOf('const prepareRetry ='), provider.indexOf('const stopGenerating ='));
-  assert.match(retry, /if \(!pending\.toolVerification\) \{\s*pending\.retryNotice[^;]+;\s*pending\.toolTask = nextChatToolTaskGeneration/u);
+  assert.match(retry, /if \(!pending\.toolVerification\) \{\s*pending\.toolTask = nextChatToolTaskGeneration/u);
+  assert.match(retry, /if \(plan\.phase === "report"\) \{[\s\S]*?immutableChatRequest\(\{ \.\.\.report, history: plan\.history \}\)/u);
   const widget = readFileSync(new URL('./ChatWidget.tsx', import.meta.url), 'utf8');
   assert.match(widget, /latestMessage\.retryAllowed !== false/u);
 });

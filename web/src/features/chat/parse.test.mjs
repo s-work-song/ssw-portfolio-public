@@ -641,14 +641,19 @@ test('추천 질문: 길이·중복을 거르고 최대 네 개만 남긴다', (
   assert.equal(questions[0], '충분히 긴 질문입니다');
 });
 
-test('retry-after: 없거나 이상하면 기본 10초, 아주 크면 5분에서 자른다', () => {
+test('retry-after: 기본 10초, 명시한 0·초·HTTP-date·긴 대기값을 축소 없이 보존한다', () => {
   assert.equal(retryAfterMsFromHeader(null), 10_000);
   assert.equal(retryAfterMsFromHeader('  '), 10_000);
   assert.equal(retryAfterMsFromHeader('nope'), 10_000);
-  assert.equal(retryAfterMsFromHeader('0'), 10_000);
+  assert.equal(retryAfterMsFromHeader('0'), 0);
   assert.equal(retryAfterMsFromHeader('-3'), 10_000);
   assert.equal(retryAfterMsFromHeader('7'), 7_000);
-  assert.equal(retryAfterMsFromHeader('99999'), 300_000);
+  assert.equal(retryAfterMsFromHeader('99999'), 99_999_000);
+  assert.equal(retryAfterMsFromHeader('0.0011'), 2);
+  const now = Date.parse('2026-10-24T00:00:00Z');
+  assert.equal(retryAfterMsFromHeader('Sat, 24 Oct 2026 00:02:00 GMT', now), 120_000);
+  assert.equal(retryAfterMsFromHeader('Fri, 23 Oct 2026 23:59:00 GMT', now), 0);
+  assert.ok(Number.isNaN(retryAfterMsFromHeader(null, now, NaN)));
 });
 
 test('도구: 등록 키와 이름은 모두 snake_case이고 과거 별칭은 입력에서만 정규화한다', () => {

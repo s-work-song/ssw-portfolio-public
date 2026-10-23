@@ -69,9 +69,6 @@ export const RATE_LIMITED_MESSAGE =
 /** 서버가 retry-after를 주지 않았을 때 쓰는 대기 시간이다. */
 export const DEFAULT_RETRY_AFTER_MS = 10_000;
 
-/** 서버가 비정상적으로 긴 대기를 요구해도 이 값을 넘기지 않는다. */
-export const MAX_RETRY_AFTER_MS = 5 * 60 * 1_000;
-
 /** 응답의 audience 필드가 가질 수 있는 값이다. */
 const API_AUDIENCES: readonly ApiAudience[] = [
   "default",
@@ -200,14 +197,20 @@ export class ChatApiError extends Error {
 /**
  * retry-after 헤더 값을 재시도 대기 밀리초로 바꾼다.
  *
- * 헤더가 없거나 숫자가 아니거나 0 이하면 기본 대기(10초)를 쓰고, 서버가 아주
- * 큰 값을 보내도 5분에서 자른다. 화면의 카운트다운이 무한정 잠기지 않게 하는
- * 안전장치다. 헤더 문자열만 받으므로 Response 객체 없이 검증할 수 있다.
+ * 초 단위와 HTTP-date를 읽고 0도 보존한다. 큰 값을 줄여 서버가 지정한
+ * 시각보다 일찍 보내지 않는다. 자동으로 기다릴 수 있는 한도는 복구 정책이 정한다.
  */
-export function retryAfterMsFromHeader(header: string | null): number {
-  const seconds = header?.trim() ? Number(header.trim()) : Number.NaN;
-  if (!Number.isFinite(seconds) || seconds <= 0) return DEFAULT_RETRY_AFTER_MS;
-  return Math.min(Math.round(seconds * 1_000), MAX_RETRY_AFTER_MS);
+export function retryAfterMsFromHeader(
+  header: string | null, now = Date.now(), fallback = DEFAULT_RETRY_AFTER_MS,
+): number {
+  const value = header?.trim();
+  if (!value) return fallback;
+  if (/^\d+(?:\.\d+)?$/u.test(value)) {
+    const delay = Number(value) * 1_000;
+    return Number.isFinite(delay) ? Math.ceil(delay) : fallback;
+  }
+  const date = /^[a-z]{3,9}[, ]/iu.test(value) ? Date.parse(value) : Number.NaN;
+  return Number.isFinite(date) ? Math.max(0, date - now) : fallback;
 }
 
 /** 도구 실행 식별자가 계약대로인지 확인한다(1~128자 문자열). */

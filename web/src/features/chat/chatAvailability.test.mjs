@@ -226,8 +226,8 @@ test('idle 첫 질문은 대화·작성 입력·진행 및 중단 UI를 보여 �
   assert.match(widget, /chatAvailabilityPresentation\(availability, hasConversation\)/);
   assert.match(widget, /\{showCheckingScreen \? \(/);
   assert.match(widget, /\{composerVisible && \(/);
-  assert.match(widget, /\{isLoading \? \([\s\S]*?onClick=\{stopGenerating\}/);
-  assert.match(widget, /disabled=\{availability !== "online" \|\| draft\.trim\(\)\.length === 0\}/);
+  assert.match(widget, /\{isLoading \|\| hasCancellableManualWait \? \([\s\S]*?onClick=\{stopGenerating\}/);
+  assert.match(widget, /disabled=\{availability !== "online" \|\| draft\.trim\(\)\.length === 0 \|\| retryWaitSeconds > 0\}/);
 });
 
 test('초기 준비·명시적 확인·확인된 오프라인의 기존 화면과 입력 경계를 유지한다', () => {

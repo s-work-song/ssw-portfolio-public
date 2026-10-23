@@ -7,6 +7,7 @@ import { parseModelHistory } from "./modelHistory.ts";
 import { normalizePortfolioToolName } from "../portfolio-tools/schema.ts";
 import { expectedToolTaskScope, parseToolTaskResponse, parseToolTaskSteps, ToolTaskProtocolError } from "./toolTaskRuntime.ts";
 import { ToolReportPreparationError } from "./toolReport.ts";
+import { immutableChatRequest } from "./chatRequestSnapshot.ts";
 
 type BrowserSnapshot = Pick<ChatRequest,
   "pageContext" | "uiSettings" | "uiSettingChanges" | "viewState">;
@@ -69,18 +70,6 @@ function buildVerifiedToolHistory(
     }) } : item;
   });
   return { history: verified };
-}
-
-/** 준비가 끝난 보고 요청은 재시도 때 최신 화면으로 덮어쓰지 않는 불변 스냅숏이다. */
-function immutableReportRequest(request: ChatRequest): ChatRequest {
-  const snapshot = structuredClone(request);
-  const freeze = (value: unknown): void => {
-    if (value === null || typeof value !== "object" || Object.isFrozen(value)) return;
-    for (const child of Object.values(value)) freeze(child);
-    Object.freeze(value);
-  };
-  freeze(snapshot);
-  return snapshot;
 }
 
 /** 실행 큐 완료 뒤에만 현재 브라우저 상태를 읽어 같은 질문의 최종 답변을 받는다. */
@@ -156,7 +145,7 @@ export async function requestVerifiedToolResponse(
       throw error;
     }
   }
-  const verifiedRequest = immutableReportRequest(preparedRequest);
+  const verifiedRequest = immutableChatRequest(preparedRequest);
   const response = await send(verifiedRequest);
   if (signal.aborted) throw new DOMException("The operation was aborted.", "AbortError");
   if (expectedToolTaskScope(verifiedRequest)) {

@@ -275,21 +275,25 @@ export const MessageItem = memo(function MessageItem({
   const hasFailed = message.generationState === "failed";
   const toolReportState = messageToolReportState(message);
   const isStreaming = message.generationState === "streaming";
+  const isRecovering = message.generationState === "recovering";
+  const isWaiting = message.generationState === "waiting";
+  const hasActiveStatus = isStreaming || isRecovering || isWaiting;
   const isIncompleteAnswer =
     message.role === "assistant" &&
     Boolean(message.generationState) &&
     message.generationState !== "complete";
-  /** 아직 한 글자도 오지 않은 "생성 중"에만 보여 주는 대기 문구다. */
-  const pendingNotice = isStreaming
-    ? slowResponse
-      ? "평소보다 오래 걸리고 있어요. 기다리거나 중단할 수 있어요"
-      : message.retryNotice === "reduced_context" ? "오래된 대화를 일부 제외해 다시 시도하고 있어요…"
-      : message.retryNotice === "retrying" ? "응답을 다시 생성하고 있어요…"
-      : toolReportState === "pending" ? "도구 실행 결과를 정리하고 있어요…" : "응답을 생성하고 있어요…"
-    : null;
+  /** 생성·복구·대기는 같은 영역을 치환한다. 임시 답변 본문을 만들지 않는다. */
+  const statusText = isWaiting && retryWaitSeconds > 0 ? `서버 대기 ${retryWaitSeconds}초 · 이후 다시 시도해 주세요`
+    : retryWaitSeconds > 0 ? `대기 ${retryWaitSeconds}초`
+    : isWaiting ? "다시 시도할 수 있어요"
+    : slowResponse ? "평소보다 오래 걸리고 있어요. 기다리거나 중단할 수 있어요"
+    : message.retryNotice === "reduced_context" ? "문맥 정리 중 · 오래된 대화를 일부 제외해 다시 시도해요"
+    : isRecovering || message.retryNotice === "retrying" ? "답변을 다시 생성 중"
+    : toolReportState === "pending" ? "결과 보고 중" : "응답 생성 중";
 
   return (
     <article
+      aria-live={message.role === "assistant" && !hasActiveStatus && !hasFailed ? "polite" : "off"}
       data-tool-report-state={toolReportState}
       data-tool-report-failure={message.toolReportFailure}
       className={[
@@ -307,13 +311,15 @@ export const MessageItem = memo(function MessageItem({
           오프라인 · 생성 답변 없음
         </strong>
       )}
-      {isStreaming && (
-        <strong className={styles.generationBadge}>
-          {toolReportState === "pending" ? "결과 보고 중" : "생성 중"}
-          <span className={styles.generationDots} aria-hidden="true">
-            <span /><span /><span />
-          </span>
-        </strong>
+      {hasActiveStatus && (
+        <p className={styles.generationBadge} role="status" aria-live="polite" aria-atomic="true">
+          <span>{statusText}</span>
+          {(!isWaiting || retryWaitSeconds > 0) && (
+            <span className={styles.generationDots} aria-hidden="true">
+              <span /><span /><span />
+            </span>
+          )}
+        </p>
       )}
       {message.generationState === "stopped" && (
         <strong className={styles.stoppedBadge}>
@@ -340,7 +346,7 @@ export const MessageItem = memo(function MessageItem({
         <div
           className={styles.toolResults}
           style={isToolStatusOnly ? { marginBottom: 0 } : undefined}
-          role="status"
+          role="group"
           aria-label="화면 도구 실행 결과"
         >
           {message.toolResults.map((result) => (
@@ -355,17 +361,13 @@ export const MessageItem = memo(function MessageItem({
         </div>
       )}
       {isToolStatusOnly ? null : isIncompleteAnswer ? (
-        (message.content || pendingNotice) && (
+        message.content && (
           <p className={`${styles.messageText} ${styles.partialText}`}>
-            {message.content ? (
-              <StreamingText
-                text={message.content}
-                animation={streamAnimation}
-                isStreaming={isStreaming}
-              />
-            ) : (
-              pendingNotice
-            )}
+            <StreamingText
+              text={message.content}
+              animation={streamAnimation}
+              isStreaming={isStreaming}
+            />
           </p>
         )
       ) : message.role === "assistant" ? (
@@ -435,6 +437,11 @@ export const MessageItem = memo(function MessageItem({
                 : toolReportState === "failed" ? "결과 보고 다시 시도" : "다시 시도"}
             </button>
           )}
+        </div>
+      )}
+      {isWaiting && canRetry && (
+        <div className={styles.messageFailure}>
+          <button type="button" disabled={retryWaitSeconds > 0} onClick={onRetry}>다시 시도</button>
         </div>
       )}
       {summaryActions.length > 0 && (

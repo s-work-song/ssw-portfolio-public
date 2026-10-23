@@ -4,12 +4,15 @@ import { createRequire } from 'node:module';
 import { ChatApiError, parseChatResponse } from './parse.ts';
 import { expectedToolTaskScope, stepFromExecution, ToolTaskProtocolError, ToolTaskRuntime } from './toolTaskRuntime.ts';
 import { BrowserToolTaskTelemetry } from './toolTaskTelemetry.ts';
-import { nextChatToolTaskGeneration } from './chatRequestIdentity.ts';
+import { ChatConversationIdentity, createChatToolTask, nextChatToolTaskGeneration } from './chatRequestIdentity.ts';
 import { requestVerifiedToolResponse, toolFollowupForVerification } from './toolVerificationRequest.ts';
 import { toolReportFailureCode } from './toolReport.ts';
-import { failedChatMessage, messagesForChatRetry, chatFailureRetryAfterMs } from './chatFailure.ts';
+import { failedChatMessage, messagesForChatRetry, chatFailureRetryAfterMs, chatRetryWaitSeconds } from './chatFailure.ts';
+import { historyFromMessages } from './chatHistory.ts';
 import { appendUiSettingChange, createUiSettingChange } from './uiSettingChangeJournal.ts';
-import { chatRetryFailureKind, historyForCapacityRetry } from './chatRetryRecovery.ts';
+import { chatRetryFailureKind, chatRecoveryDelayMs, exhaustChatRecoveryPhase, historyForCapacityRetry,
+  initialChatRecoveryBudget, planChatRecovery } from './chatRetryRecovery.ts';
+import { immutableChatRequest } from './chatRequestSnapshot.ts';
 import { canSendUnverifiedExplanation } from './chatAvailability.ts';
 import { settingToolResultLabel } from './constants.ts';
 import { portfolioUiCommandFromChatExecution } from '../portfolio-tools/portfolioUiToolExecutor.ts';
@@ -55,10 +58,10 @@ export function providerReportFixture(t, options = {}) {
   };
   const helpers = select('function fallbackToolResultLabel(', 'const DESKTOP_EXIT_DURATION_MS');
   const perform = select('  const performRequest = useCallback(', '\n  /**\n   * 추론 서버가 꺼져');
-  const recovery = select('  const prepareRetry = useCallback(', '\n  /**\n   * 사용자 질문을 보낸다.');
-  const retry = select('  const retry = useCallback(', '\n  /**\n   * 진행 중인 응답');
+  const wait = select('  const syncRetryWait = useCallback(', '\n  useEffect(');
+  const recovery = select('  const prepareRetry = useCallback(', '\n  /** 스트리밍 사용 여부');
   const ts = createRequire(import.meta.url)('typescript');
-  const compiled = ts.transpileModule(`${helpers}\n${perform}\n${recovery}\n${retry}`, {
+  const compiled = ts.transpileModule(`${helpers}\n${wait}\n${perform}\n${recovery}`, {
     compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.None },
   }).outputText;
   const fixture = fourToolReportCase();
@@ -68,21 +71,31 @@ export function providerReportFixture(t, options = {}) {
   const state = { messages: [], effects: [], requests: [], reportRequests: [], telemetry: [], diagnostics: [],
     uiSettings: { ...fixture.latest.uiSettings, theme: 'light', chatFontSize: 'medium' },
     viewState: { page: 'overview', anchor: null }, reportMode: options.reportMode ?? 'success',
-    finishReport: null, finishOrdinary: null, loading: false, retryWait: null,
-    ordinaryOutcomes: [...(options.ordinaryOutcomes ?? [])], loadingChanges: [] };
+    finishReport: null, finishOrdinary: null, loading: false, retryWaitSeconds: 0,
+    ordinaryOutcomes: [...(options.ordinaryOutcomes ?? [])], loadingChanges: [], messageSnapshots: [], availability: [],
+    requestOutcomes: [...(options.requestOutcomes ?? [])], reportOutcomes: [...(options.reportOutcomes ?? [])],
+    waits: [], finishRecovery: null, browserReads: 0 };
+  let clock = Date.now();
+  const FixtureDate = class extends Date { static now() { return clock; } };
   if (options.messages) state.messages = [...options.messages];
   const refs = Object.fromEntries(['inFlightRef', 'stopRequestedRef', 'abortRef', 'mountedRef', 'renderQueueRef',
-    'retryRef', 'retryWaitDeadlineRef', 'pendingChatNavigationFocusRef'].map(name => [name, { current: null }]));
+    'retryRef', 'retryWaitDeadlineRef', 'requestCooldownDeadlineRef', 'retryWaitTimerRef',
+    'conversationIdentityRef', 'pendingChatNavigationFocusRef'].map(name => [name, { current: null }]));
   refs.mountedRef.current = true;
   refs.retryWaitDeadlineRef.current = 0;
+  refs.requestCooldownDeadlineRef.current = 0;
+  const intervals = new Map();
+  let timerId = 0;
   const uiSettingsRef = { get current() { return state.uiSettings; } };
   const uiSettingChangesRef = { current: structuredClone(fixture.latest.uiSettingChanges) };
   const window = { location: { pathname: '/about-me' }, crypto: { randomUUID: () => 'settings-group-1' },
-    localStorage: { setItem() {} }, setTimeout, clearTimeout, addEventListener() {}, removeEventListener() {} };
+    localStorage: { setItem() {} }, setTimeout, clearTimeout, addEventListener() {}, removeEventListener() {},
+    setInterval(callback) { intervals.set(++timerId, callback); return timerId; },
+    clearInterval(id) { intervals.delete(id); } };
   const response = (extra = {}) => ({ mode: 'model', status: 'online', generated: true, answer: '확인한 결과 보고',
     segments: [], actions: [], suggestedQuestions: [], audience: 'default', tone: 'official', pageContext: 'research',
     cached: false, toolExecutions: [], ...extra });
-  const finalResponse = request => response({ toolTask: { ...fixture.scope, steps: fixture.steps, dispatchComplete: true,
+  const finalResponse = request => response({ toolTask: { ...expectedToolTaskScope(request), steps: request.toolTask.steps, dispatchComplete: true,
     status: request.toolVerification.results.some(result => result.status === 'failed') ? 'failed' : 'completed' } });
   const send = async (request, signal, handlers) => {
     state.requests.push(request);
@@ -97,23 +110,30 @@ export function providerReportFixture(t, options = {}) {
         dispatchComplete: true, status: 'not_required' } }), request);
     }
     if (!request.toolVerification) {
+      const initialOutcome = state.requestOutcomes.shift();
+      if (initialOutcome?.error) throw initialOutcome.error;
+      const executions = fixture.executions.map(item => ({ ...item, toolTask: { ...item.toolTask, ...expectedToolTaskScope(request) } }));
       if (options.incompleteDispatch) {
         handlers?.onTool?.(fixture.executions[0]);
         handlers?.onTool?.(fixture.executions[1]);
         await Promise.resolve();
         throw new ChatApiError('fixture incomplete', { code: 'invalid_response' });
       }
-      for (const item of fixture.executions) {
+      for (const item of executions) {
         handlers?.onTool?.(item);
         if (options.duplicateTools) handlers?.onTool?.(structuredClone(item));
       }
-      return parseChatResponse(response({ toolExecutions: fixture.executions,
-        toolTask: { ...fixture.scope, steps: fixture.steps, status: 'awaiting_browser', dispatchComplete: true },
+      return parseChatResponse(response({ toolExecutions: executions,
+        toolTask: { ...expectedToolTaskScope(request), steps: executions.map(stepFromExecution), status: 'awaiting_browser', dispatchComplete: true },
         ...(options.missingHistory ? {} : { modelHistory: fixture.native }),
         toolFollowup: { explanationRequested: true, knowledgeRequested: false },
       }), request);
     }
     state.reportRequests.push(request);
+    const reportOutcome = state.reportOutcomes.shift();
+    if (reportOutcome?.partial) handlers?.onDelta?.(reportOutcome.partial);
+    reportOutcome?.beforeError?.({ state, refs, pending });
+    if (reportOutcome?.error) throw reportOutcome.error;
     const mode = state.reportMode;
     if (mode === 'hold') {
       await new Promise(resolve => { state.finishReport = resolve; });
@@ -138,18 +158,31 @@ export function providerReportFixture(t, options = {}) {
     return result;
   };
   let sequence = 0;
-  const context = { ...refs, window, document: {}, process: { env: {} },
+  const context = { ...refs, window, document: {}, process: { env: {} }, Date: FixtureDate,
     useCallback: callback => callback, canRequest: () => options.canRequest ?? true,
     availability: options.availability ?? 'online', canSendUnverifiedExplanation, uiSettingsRef, uiSettingChangesRef,
-    setMessages: update => { state.messages = update(state.messages); },
+    messagesRef: { get current() { return state.messages; } },
+    setMessages: update => { state.messages = typeof update === 'function' ? update(state.messages) : update;
+      state.messageSnapshots.push(structuredClone(state.messages)); },
     setIsLoading: value => { state.loading = value; state.loadingChanges.push(value); }, setError() {},
-    clearRetryWait: () => { state.retryWait = null; refs.retryWaitDeadlineRef.current = 0; },
-    beginRetryWait: delay => { state.retryWait = delay; refs.retryWaitDeadlineRef.current = Date.now() + delay; },
+    setRetryWaitSeconds: value => { state.retryWaitSeconds = value; }, RETRY_WAIT_TICK_MS: 250,
+    setAudience() {}, initialMessages: () => [], ChatConversationIdentity, createChatToolTask, historyFromMessages, chatRetryWaitSeconds,
+    waitForAbortableDelay: async (delay, signal) => {
+      state.waits.push(delay);
+      if (signal.aborted) throw new DOMException('Aborted', 'AbortError');
+      if (options.holdRecovery) {
+        await new Promise((resolve, reject) => {
+          const onAbort = () => { signal.removeEventListener('abort', onAbort); reject(new DOMException('Aborted', 'AbortError')); };
+          signal.addEventListener('abort', onAbort, { once: true });
+          state.finishRecovery = () => { signal.removeEventListener('abort', onAbort); clock += delay; resolve(); };
+        });
+      } else clock += delay;
+    },
     nextId: prefix => `${prefix}-${++sequence}`, audienceToApi: value => value,
     audience: 'default', tone: 'official', pageContext: 'overview', pathname: '/about-me', reasoningEnabled: false,
     ...{ mode: 'light', accent: 'royalblue', chatLayout: 'floating', chatFont: 'pretendard', chatFontSize: 'medium', streamAnimation: 'none' },
     streamingEnabled: options.streaming !== false,
-    readPortfolioViewState: () => structuredClone(state.viewState), pageContextFromPathname: () => 'research',
+    readPortfolioViewState: () => { state.browserReads++; return structuredClone(state.viewState); }, pageContextFromPathname: () => 'research',
     expectedToolTaskScope, stepFromExecution, ToolTaskProtocolError, ToolTaskRuntime, BrowserToolTaskTelemetry,
     requestToolTaskEvents: async body => { state.telemetry.push(body); },
     requestChat: (request, signal) => send(request, signal), requestChatStream: send,
@@ -177,18 +210,27 @@ export function providerReportFixture(t, options = {}) {
     runAccentCycle: () => assert.fail('색상 순회는 이 fixture 범위가 아니다'),
     TOOL_VERIFICATION_MIN_DELAY_MS: 500, TOOL_ARRIVAL_TIMEOUT_MS: 8000,
     ChatApiError, failedChatMessage, messagesForChatRetry, chatFailureRetryAfterMs, nextChatToolTaskGeneration,
-    chatRetryFailureKind, historyForCapacityRetry,
+    chatRetryFailureKind, chatRecoveryDelayMs, exhaustChatRecoveryPhase, historyForCapacityRetry,
+    initialChatRecoveryBudget, planChatRecovery, immutableChatRequest,
     logChatFailureLocally: (stage, error) => state.diagnostics.push([stage, toolReportFailureCode(error)]),
-    chatFailureAvailability: () => null, reportAvailability() {},
+    chatFailureAvailability: () => 'offline', reportAvailability(value) { state.availability.push(value); },
     UI_TOOL_NOT_CALLED_RESULT: {}, UI_TOOL_INCOMPLETE_RESULT: {},
   };
-  const api = new Function(...Object.keys(context), `${compiled}\nreturn { performRequestWithRecovery, retry };`)(...Object.values(context));
+  const api = new Function(...Object.keys(context), `${compiled}\nreturn { performRequestWithRecovery, retry, sendMessage, resetConversation, stopGenerating };`)(...Object.values(context));
   t.after(() => { refs.abortRef.current?.abort(); state.finishReport?.(); state.finishOrdinary?.(); });
   return { ...fixture, state, refs, pending, run: () => {
     refs.retryRef.current = pending;
     return api.performRequestWithRecovery(pending);
-  }, retry: api.retry,
-    stop() { refs.stopRequestedRef.current = true; refs.abortRef.current?.abort(); },
+  }, retry: api.retry, send: api.sendMessage, reset: api.resetConversation, stop: api.stopGenerating,
+    performExisting: () => api.performRequestWithRecovery(pending),
+    advanceTime(ms) { clock += ms; for (const callback of intervals.values()) callback(); },
+    async untilRecovery(count = 1) {
+      for (let index = 0; index < 100; index++) {
+        if (state.waits.length >= count) return;
+        await Promise.resolve();
+      }
+      assert.fail('복구 대기까지 도달하지 못했다');
+    },
     async untilRequest(count = 1) {
       for (let index = 0; index < 100; index++) {
         if (state.requests.length >= count) return;

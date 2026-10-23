@@ -572,10 +572,11 @@ export function ChatWidget() {
   const retryTargetMessageId = useMemo(() => {
     const latestMessage = messages[messages.length - 1];
     return latestMessage?.role === "assistant" &&
-      latestMessage.generationState === "failed" && latestMessage.retryAllowed !== false
+      (latestMessage.generationState === "failed" || latestMessage.generationState === "waiting") && latestMessage.retryAllowed !== false
       ? latestMessage.id
       : null;
   }, [messages]);
+  const hasCancellableManualWait = messages[messages.length - 1]?.generationState === "waiting" && retryWaitSeconds > 0;
   /**
    * 마지막 답변이 검색 결과 기반이었는지다.
    * 인사말은 건너뛰고 뒤에서부터 처음 만나는 답변으로 판단한다. 입력창 아래
@@ -1311,7 +1312,7 @@ export function ChatWidget() {
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const message = draft.trim();
-    if (!message || isLoading || availability !== "online") return;
+    if (!message || isLoading || retryWaitSeconds > 0 || availability !== "online") return;
     resetInputHistoryNavigation("");
     setDraft("");
     await sendMessage(message);
@@ -1588,8 +1589,7 @@ export function ChatWidget() {
               <div
                 ref={messageListRef}
                 className={styles.body}
-                aria-live="polite"
-                aria-busy={isLoading || availability === "checking"}
+                aria-busy={availability === "checking"}
                 onScroll={handleMessageScroll}
                 onTouchStart={handleUserScrollIntent}
                 onWheel={handleUserScrollIntent}
@@ -1622,7 +1622,7 @@ export function ChatWidget() {
                         slowResponse={slowResponse}
                         canRetry={message.id === retryTargetMessageId}
                         retryWaitSeconds={
-                          message.id === retryTargetMessageId
+                          message.id === messages[messages.length - 1]?.id
                             ? retryWaitSeconds
                             : 0
                         }
@@ -1650,13 +1650,6 @@ export function ChatWidget() {
                       )}
                     </Fragment>
                   ))}
-                  {isLoading && (
-                    <p className={styles.loading} role="status">
-                      {slowResponse
-                        ? "평소보다 오래 걸리고 있어요. 기다리거나 중단할 수 있어요"
-                        : "공개 자료에서 답변을 찾고 있어요…"}
-                    </p>
-                  )}
                   {error && !retryTargetMessageId && (
                     <div className={styles.error} role="alert">
                       <p>{error}</p>
@@ -1738,21 +1731,21 @@ export function ChatWidget() {
                       aria-keyshortcuts="ArrowUp ArrowDown"
                       placeholder="경력, 기술, 프로젝트를 질문해 보세요"
                     />
-                    {isLoading ? (
+                    {isLoading || hasCancellableManualWait ? (
                       <button
                         type="button"
                         className={styles.stopButton}
                         onClick={stopGenerating}
-                        aria-label="챗봇 응답 생성 중단"
+                        aria-label={hasCancellableManualWait ? "챗봇 재시도 대기 취소" : "챗봇 응답 생성 중단"}
                       >
-                        중단
+                        {hasCancellableManualWait ? "대기 취소" : "중단"}
                       </button>
                     ) : (
                       <button
                         type="submit"
-                        disabled={availability !== "online" || draft.trim().length === 0}
+                        disabled={availability !== "online" || draft.trim().length === 0 || retryWaitSeconds > 0}
                       >
-                        전송
+                        {retryWaitSeconds > 0 ? `대기 ${retryWaitSeconds}초` : "전송"}
                       </button>
                     )}
                   </form>

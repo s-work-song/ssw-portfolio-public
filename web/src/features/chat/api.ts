@@ -74,19 +74,6 @@ export async function requestToolTaskEvents(events: BrowserToolTaskEvents): Prom
   }
 }
 
-/**
- * 429 응답을 재시도 대기 시간이 담긴 오류로 바꾼다.
- *
- * 화면은 code `rate_limited`로 분기해 남은 초를 세고 버튼을 잠근다.
- */
-function rateLimitedError(response: Response): ChatApiError {
-  return new ChatApiError(RATE_LIMITED_MESSAGE, {
-    code: "rate_limited",
-    httpStatus: response.status,
-    retryAfterMs: retryAfterMsFromHeader(response.headers.get("retry-after")),
-  });
-}
-
 /** 원문 오류와 별개인 코드·상태·재시도 소진 여부만 고정 형식으로 읽는다. */
 function responseErrorOptions(payload: unknown, httpStatus?: number) {
   const value = isRecord(payload) ? payload : {};
@@ -95,22 +82,35 @@ function responseErrorOptions(payload: unknown, httpStatus?: number) {
   const rawCode = !conflictingCodes && isString(suppliedCodes[0]) &&
     /^[a-z][a-z0-9_]{0,63}$/u.test(suppliedCodes[0]) ? suppliedCodes[0] : undefined;
   const code = httpStatus === 401 || httpStatus === 403 ? "authentication_error"
-    : conflictingCodes ? undefined : httpStatus === 413 ? "payload_too_large" : rawCode;
+    : conflictingCodes ? "error_code_conflict"
+    : suppliedCodes.length > 0 && !rawCode ? "invalid_error_code"
+    : httpStatus === 413 ? "payload_too_large"
+    : httpStatus === 429 && !rawCode ? "rate_limited" : rawCode;
+  const retryAfterMs = typeof value.retryAfterMs === "number" && Number.isFinite(value.retryAfterMs)
+    && value.retryAfterMs >= 0 ? Math.ceil(value.retryAfterMs) : undefined;
   return {
     code, httpStatus, retryExhausted: value.retryExhausted === true,
-    ...(code === "rate_limited" ? { retryAfterMs: retryAfterMsFromHeader(null) } : {}),
+    ...(retryAfterMs !== undefined ? { retryAfterMs }
+      : code === "rate_limited" ? { retryAfterMs: retryAfterMsFromHeader(null) } : {}),
     explanation: isString(value.explanation) ? value.explanation.slice(0, 240) : undefined,
   };
 }
 
 /** JSON/SSE를 열기 전의 HTTP 실패는 같은 코드·상태 계약으로 전달한다. */
 async function errorFromHttpResponse(response: Response): Promise<ChatApiError> {
-  if (response.status === 429) return rateLimitedError(response);
   let payload: unknown;
   try { payload = await response.json(); } catch { /* HTML 오류에도 실제 HTTP 상태는 보존한다. */ }
-  const message = isRecord(payload) && isString(payload.message) ? payload.message
+  const message = response.status === 429 ? RATE_LIMITED_MESSAGE
+    : isRecord(payload) && isString(payload.message) ? payload.message
     : "요청을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요.";
-  return new ChatApiError(message, responseErrorOptions(payload, response.status));
+  const options = responseErrorOptions(payload, response.status);
+  const header = retryAfterMsFromHeader(response.headers.get("retry-after"), Date.now(), Number.NaN);
+  // 중복 메타데이터가 다르면 더 늦은 시각을 따른다. rate fallback은 실제 헤더보다 우선하지 않는다.
+  const bodyDelay = isRecord(payload) && typeof payload.retryAfterMs === "number"
+    && Number.isFinite(payload.retryAfterMs) && payload.retryAfterMs >= 0 ? Math.ceil(payload.retryAfterMs) : undefined;
+  const suppliedDelays = [header, bodyDelay].filter((value): value is number => typeof value === "number" && Number.isFinite(value));
+  return new ChatApiError(message, { ...options,
+    ...(suppliedDelays.length ? { retryAfterMs: Math.max(...suppliedDelays) } : {}) });
 }
 
 /**

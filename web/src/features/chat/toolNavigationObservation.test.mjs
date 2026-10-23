@@ -555,7 +555,8 @@ function providerToolQueueFixture() {
     compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.None },
   }).outputText;
   const controller = new AbortController();
-  const abortRef = { current: controller };
+  const lifetime = new AbortController();
+  const abortRef = { current: lifetime };
   const effects = [];
   const results = [];
   const errors = [];
@@ -573,7 +574,7 @@ function providerToolQueueFixture() {
   };
   const context = {
     taskRuntime: undefined, taskTelemetry: { tool: () => {} }, publishToolResults: () => {},
-    controller, abortRef, mountedRef: { current: true }, pending: {}, handledToolCallIds,
+    controller, lifetime, abortRef, mountedRef: { current: true }, pending: {}, handledToolCallIds,
     verificationToolCallIds: new Set(), verificationExecutions: new Map(), toolStartedAt: new Map(),
     requiresBrowserToolVerification: () => true, shouldStream: false, appendStreamDelta: () => {},
     renderQueueRef: { current: null }, streamingMessageId: undefined, setMessages: () => {},

@@ -787,8 +787,19 @@
 }
 
 .generationBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  margin-top: 0;
   border-color: color-mix(in srgb, var(--chat-accent) 55%, var(--chat-border));
   color: var(--chat-accent);
+  font-size: var(--chat-control-font-size, 12px);
+  line-height: 1.5;
+}
+
+.generationBadge:only-child {
+  margin-bottom: 0;
 }
 
 .generationDots {
@@ -796,7 +807,7 @@
   align-items: center;
   gap: 3px;
   height: 8px;
-  margin-left: 6px;
+  flex-shrink: 0;
   vertical-align: middle;
 }
 
@@ -1306,23 +1317,11 @@
   outline-offset: 2px;
 }
 
-.loading,
 .error {
   align-self: flex-start;
   margin: 0;
   color: var(--chat-dim);
   font-size: var(--chat-control-font-size, 12px);
-}
-
-.loading::before {
-  content: "";
-  display: inline-block;
-  width: 7px;
-  height: 7px;
-  margin-right: 7px;
-  border-radius: 50%;
-  background: var(--chat-accent);
-  animation: pulse 1s ease-in-out infinite alternate;
 }
 
 .error {
@@ -1741,10 +1740,6 @@
    고르면 OS 모션 줄이기보다 사용자 선택을 우선한다. */
 @media (prefers-reduced-motion: reduce) {
   :global(:root:not([data-motion="on"])) .quickMenuAction {
-    animation: none;
-  }
-
-  :global(:root:not([data-motion="on"])) .loading::before {
     animation: none;
   }
 

@@ -517,7 +517,7 @@ export interface ChatMessage {
   role: "user" | "assistant";
   content: string;
   kind: "greeting" | "message" | "retrieval_fallback" | "failure_explanation" | "tool_status";
-  generationState?: "streaming" | "complete" | "stopped" | "failed";
+  generationState?: "streaming" | "recovering" | "waiting" | "complete" | "stopped" | "failed";
   segments?: ChatSegment[];
   actions?: ChatAction[];
   suggestedQuestions?: string[];

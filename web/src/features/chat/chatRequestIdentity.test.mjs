@@ -87,7 +87,8 @@ test('Provider는 메시지와 같은 메모리 수명으로 ID를 보존하고 
   assert.ok(retry.includes('performRequestWithRecovery(pending)'));
   const recovery = provider.slice(provider.indexOf('const prepareRetry ='), provider.indexOf('const sendMessage ='));
   assert.equal(recovery.includes('nextTurnIds'), false);
-  assert.ok(recovery.includes('await performRequest(pending)'));
+  assert.ok(recovery.includes('await performRequest(pending, lifetime)'));
+  assert.ok(recovery.includes('abortRef.current = lifetime'));
   const api = readFileSync(new URL('./api.ts', import.meta.url), 'utf8');
   const serializedBodies = api.match(/body: JSON\.stringify\(\{ \.\.\.request, toolHistory: request\.toolVerification \? request\.toolHistory : undefined \}\)/g) ?? [];
   assert.equal(serializedBodies.length, 2, 'JSON 및 SSE 요청 모두 같은 request/ID를 그대로 전송하고 toolHistory만 검증 요청에 제한한다');

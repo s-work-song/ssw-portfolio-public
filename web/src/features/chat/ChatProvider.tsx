@@ -56,11 +56,15 @@ import {
   chatRetryWaitSeconds,
   failedChatMessage,
   logChatFailureLocally,
-  messagesForChatRetry,
   visibleChatMessages,
 } from "./chatFailure";
 import { historyFromMessages } from "./chatHistory";
-import { chatRetryFailureKind, historyForCapacityRetry, type ChatRetryFailureKind } from "./chatRetryRecovery";
+import {
+  chatRetryFailureKind, chatRecoveryDelayMs, exhaustChatRecoveryPhase, historyForCapacityRetry,
+  initialChatRecoveryBudget, planChatRecovery, type ChatRecoveryBudget, type ChatRecoveryPlan,
+  type ChatRetryFailureKind,
+} from "./chatRetryRecovery";
+import { immutableChatRequest } from "./chatRequestSnapshot";
 import { navigationPathMatches, observeToolNavigation } from "./toolNavigationObservation";
 import {
   ChatConversationIdentity, createChatToolTask, nextChatToolTaskGeneration, type ChatRequestIds,
@@ -378,7 +382,7 @@ function isStreamAnimation(
 /**
  * 다시 시도할 때 그대로 재사용할 요청 재료다.
  * 재시도가 "그때 그 요청"과 같아야 하므로 대화 기록까지 스냅숏으로 들고 있다.
- * assistantMessageId는 실패한 답변 말풍선을 재시도 전에 지우는 데 쓴다.
+ * assistantMessageId는 자동·수동 재시도에서도 같은 말풍선을 유지하는 데 쓴다.
  */
 interface PendingRetry extends ChatRequestIds {
   toolTask: NonNullable<ChatRequest["toolTask"]>;
@@ -390,10 +394,11 @@ interface PendingRetry extends ChatRequestIds {
   /** 원본 이력과 별개인, 마지막 용량 복구 시도에서 사용한 이력이다. */
   attemptHistory?: ChatHistoryItem[];
   retryFailureKind?: ChatRetryFailureKind;
-  automaticRetryEligible?: boolean;
-  /** 서버 또는 클라이언트에서 소진한 자동 예산. 수동 재시도로 되돌리지 않는다. */
-  automaticRetryUsed?: boolean;
+  /** request/report 예산은 별개지만 한 사용자 턴 전체 상한도 함께 유지한다. */
+  recoveryBudget?: ChatRecoveryBudget;
   retryNotBefore?: number;
+  /** 긴 서버 대기는 전송 수명을 끝내고 수동 재시도 재료만 남긴다. */
+  waitingForManual?: boolean;
   retryNotice?: ChatMessage["retryNotice"];
   audienceOverride?: AudienceChoice;
   assistantMessageId?: string;
@@ -401,6 +406,8 @@ interface PendingRetry extends ChatRequestIds {
   toolVerification?: ChatRequest["toolVerification"];
   /** 검증을 통과한 보고 전용 요청. 재시도에는 이 불변 스냅숏만 다시 보낸다. */
   toolReportRequest?: ChatRequest;
+  /** 용량 복구 때 history만 줄인 별도 불변 복사본. 원본 보고 요청은 보존한다. */
+  toolReportAttemptRequest?: ChatRequest;
   toolResults?: ToolResult[];
 }
 
@@ -466,6 +473,8 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
   const conversationIdentityRef = useRef<ChatConversationIdentity | null>(null);
   const retryWaitTimerRef = useRef<number | null>(null);
   const retryWaitDeadlineRef = useRef(0);
+  /** 서버 not-before는 중단·새 대화와 독립적이며 이 Provider 마운트 동안 유지한다. */
+  const requestCooldownDeadlineRef = useRef(0);
   /** 렌더 사이클과 무관하게 최신 대화·포인트 색을 읽기 위한 참조다. */
   const messagesRef = useRef<ChatMessage[]>(messages);
   const accentCycleInProgressRef = useRef(false);
@@ -517,39 +526,37 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
     messagesRef.current = messages;
   }, [messages]);
 
-  /** 재시도 대기 카운트다운을 멈추고 남은 초를 0으로 되돌린다. */
-  const clearRetryWait = useCallback(() => {
+  /** 현재 재시도와 독립 서버 cooldown 중 더 늦은 시각을 화면에 반영한다. */
+  const syncRetryWait = useCallback(() => {
     if (retryWaitTimerRef.current !== null) {
       window.clearInterval(retryWaitTimerRef.current);
       retryWaitTimerRef.current = null;
     }
-    retryWaitDeadlineRef.current = 0;
-    setRetryWaitSeconds(0);
-  }, []);
-
-  /** 서버가 알려준 대기 시간 동안 재시도 버튼을 잠그고 남은 초를 센다. */
-  const beginRetryWait = useCallback((durationMs: number) => {
-    if (retryWaitTimerRef.current !== null) {
-      window.clearInterval(retryWaitTimerRef.current);
-      retryWaitTimerRef.current = null;
-    }
-    if (durationMs <= 0) {
-      retryWaitDeadlineRef.current = 0;
-      setRetryWaitSeconds(0);
-      return;
-    }
-    const deadline = Date.now() + durationMs;
-    retryWaitDeadlineRef.current = deadline;
-    setRetryWaitSeconds(chatRetryWaitSeconds(deadline, Date.now()));
-    retryWaitTimerRef.current = window.setInterval(() => {
-      const remaining = chatRetryWaitSeconds(deadline, Date.now());
+    const update = () => {
+      const remaining = chatRetryWaitSeconds(
+        Math.max(retryWaitDeadlineRef.current, requestCooldownDeadlineRef.current), Date.now(),
+      );
       setRetryWaitSeconds(remaining);
       if (remaining === 0 && retryWaitTimerRef.current !== null) {
         window.clearInterval(retryWaitTimerRef.current);
         retryWaitTimerRef.current = null;
       }
-    }, RETRY_WAIT_TICK_MS);
+      return remaining;
+    };
+    if (update() > 0) retryWaitTimerRef.current = window.setInterval(update, RETRY_WAIT_TICK_MS);
   }, []);
+
+  /** 현재 flow의 대기만 취소한다. 서버가 정한 다음 전송 가능 시각은 지우지 않는다. */
+  const clearRetryWait = useCallback(() => {
+    retryWaitDeadlineRef.current = 0;
+    syncRetryWait();
+  }, [syncRetryWait]);
+
+  /** 자동 복구·수동 재시도 버튼에 같은 남은 대기 시간을 표시한다. */
+  const beginRetryWait = useCallback((durationMs: number) => {
+    retryWaitDeadlineRef.current = durationMs > 0 ? Date.now() + durationMs : 0;
+    syncRetryWait();
+  }, [syncRetryWait]);
 
   useEffect(
     () => () => {
@@ -1562,22 +1569,20 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
    * 이미 요청이 진행 중이면 아무 일도 하지 않는다.
    */
   const performRequest = useCallback(
-    async (pending: PendingRetry) => {
-      if (inFlightRef.current) return;
-      inFlightRef.current = true;
-      stopRequestedRef.current = false;
-      setIsLoading(true);
+    async (pending: PendingRetry, lifetime: AbortController): Promise<ChatRecoveryPlan | undefined> => {
       setError(null);
       clearRetryWait();
       pending.retryFailureKind = undefined;
-      pending.automaticRetryEligible = false;
       pending.retryNotBefore = undefined;
+      pending.waitingForManual = false;
 
       const controller = new AbortController();
-      abortRef.current = controller;
+      const abortAttempt = () => controller.abort();
+      lifetime.signal.addEventListener("abort", abortAttempt, { once: true });
+      if (lifetime.signal.aborted) controller.abort();
       const isRequestActive = () => mountedRef.current && !controller.signal.aborted
-        && abortRef.current === controller;
-      const request: ChatRequest = pending.toolReportRequest ?? {
+        && abortRef.current === lifetime;
+      const request: ChatRequest = pending.toolReportAttemptRequest ?? pending.toolReportRequest ?? {
         toolTask: pending.toolTask,
         conversationId: pending.conversationId,
         turnId: pending.turnId,
@@ -1625,7 +1630,6 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
       // 이 사용자 요청에서 실제 반영된 설정만 같은 묶음으로 기록한다.
       let settingChangeGroupId: string | null = null;
       let deferStreamDeltas = false;
-      let receivedPartialOutput = false;
       const deferredStreamDeltas: string[] = [];
 
       /*
@@ -1640,7 +1644,7 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
       // JSON 응답도 요청 시작부터 같은 생성 중 말풍선을 사용한다.
       let toolResultMessageId: string | undefined;
       const publishToolResults = () => {
-        if (!mountedRef.current || abortRef.current !== controller) return;
+        if (!mountedRef.current || abortRef.current !== lifetime) return;
         const snapshot = [...toolResults.values()];
         const toolTaskProgress = taskSnapshot();
         if (!toolResultMessageId) {
@@ -1991,18 +1995,18 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
               ? {
                   ...chatMessage,
                   content: `${chatMessage.content}${text}`,
+                  retryNotice: undefined,
                 }
               : chatMessage,
           ),
         );
       };
 
-      streamingMessageId = nextId("assistant");
+      streamingMessageId = pending.assistantMessageId ?? nextId("assistant");
       toolResultMessageId = streamingMessageId;
       pending.assistantMessageId = streamingMessageId;
-      setMessages((current) => [
-        ...current,
-        {
+      setMessages((current) => {
+        const message: ChatMessage = {
           id: streamingMessageId as string,
           role: "assistant",
           content: "",
@@ -2013,8 +2017,11 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
           ...(taskSnapshot() ? { toolTaskProgress: taskSnapshot() } : {}),
           // 확인 설명의 재시도에서도 이미 완료한 도구 칩을 즉시 보존한다.
           ...(toolResults.size > 0 ? { toolResults: [...toolResults.values()] } : {}),
-        },
-      ]);
+        };
+        return current.some((item) => item.id === streamingMessageId)
+          ? current.map((item) => item.id === streamingMessageId ? message : item)
+          : [...current, message];
+      });
 
       let renderQueue = shouldStream
         ? new StreamRenderQueue(appendStreamDelta)
@@ -2026,7 +2033,6 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
         let response = shouldStream
           ? await requestChatStream(request, controller.signal, {
               onDelta(text) {
-                if (text) receivedPartialOutput = true;
                 if (deferStreamDeltas) deferredStreamDeltas.push(text);
                 else renderQueue?.enqueue(text);
               },
@@ -2173,7 +2179,7 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
         retryRef.current = null;
         clearRetryWait();
       } catch (requestError) {
-        if (!mountedRef.current || abortRef.current !== controller) return;
+        if (!mountedRef.current || abortRef.current !== lifetime) return;
         const requestWasAborted =
           controller.signal.aborted ||
           (requestError instanceof DOMException &&
@@ -2206,27 +2212,60 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
           }
           return;
         }
+        // 응답 계약 실패도 검증된 보고 요청이 남아 있으면 보고만 다시 보낸다.
+        // 준비가 실패했거나 발행이 끝나지 않은 실행 요청은 이 경로로 승격하지 않는다.
+        const frozenReport = Boolean(pending.toolReportRequest && pending.toolVerification && pending.toolTask.dispatchComplete);
+        const retryAllowed = frozenReport
+          || (!protocolFailure && Boolean(taskRuntime && taskRuntime.mutationDispatchCount === 0 && taskRuntime.steps.length === 0));
+        const zeroToolRequest = !pending.toolReportRequest && !pending.toolVerification &&
+          Boolean(taskRuntime && taskRuntime.mutationDispatchCount === 0 && taskRuntime.steps.length === 0);
+        const phase = frozenReport ? "report" : "request";
+        pending.recoveryBudget ??= initialChatRecoveryBudget();
+        if (requestError instanceof ChatApiError && requestError.retryExhausted) {
+          pending.recoveryBudget = exhaustChatRecoveryPhase(pending.recoveryBudget, phase);
+        }
+        pending.retryFailureKind = zeroToolRequest || frozenReport ? chatRetryFailureKind(requestError) : undefined;
+        const retryDelay = pending.retryFailureKind ? chatRecoveryDelayMs(requestError, pending.retryFailureKind)
+          : chatFailureRetryAfterMs(requestError);
+        const now = Date.now();
+        const serverDelay = chatFailureRetryAfterMs(requestError);
+        if (serverDelay > 0) {
+          requestCooldownDeadlineRef.current = Math.max(requestCooldownDeadlineRef.current, now + serverDelay);
+        }
+        pending.retryNotBefore = now + retryDelay;
+        const plan = retryAllowed && !protocolFailure && (zeroToolRequest || frozenReport)
+          ? planChatRecovery({ phase, budget: pending.recoveryBudget, error: requestError, now,
+            history: (pending.toolReportAttemptRequest ?? pending.toolReportRequest)?.history ?? pending.attemptHistory ?? pending.history })
+          : undefined;
+        // done 없는 prefix는 완료된 manifest가 아니다. 실제 관측만 보존하고
+        // 부분 결과를 완료라고 보고하거나 원래 실행 요청을 재전송하지 않는다.
+        pending.toolResults = [...toolResults.values()];
+        pending.toolTaskProgress = taskSnapshot();
+        if (plan) {
+          // 복구를 결정한 시도에는 실패/오프라인 표시를 발행하지 않는다.
+          // 완료된 도구 관측은 유지하고, 불완전한 현재 본문만 같은 말풍선에서 지운다.
+          pending.recoveryBudget = plan.budget;
+          pending.retryNotice = plan.kind === "capacity" ? "reduced_context" : "retrying";
+          pending.waitingForManual = !plan.automatic;
+          retryRef.current = pending;
+          renderQueue?.cancel();
+          if (toolReportState) toolReportState = "pending";
+          setMessages((current) => current.map((chatMessage) => chatMessage.id === streamingMessageId
+            ? { ...chatMessage, content: "", segments: undefined, actions: undefined, suggestedQuestions: undefined,
+              generationState: plan.automatic ? "recovering" : "waiting", retryAllowed: !plan.automatic,
+              retryNotice: pending.retryNotice, toolResults: [...toolResults.values()],
+              toolTaskProgress: taskSnapshot(), ...reportSnapshot() }
+            : chatMessage));
+          beginRetryWait(Math.max(0, plan.retryAt - Date.now()));
+          setError(null);
+          return plan;
+        }
         taskRuntime?.terminate("failed");
         if (verificationToolCallIds.size > 0) taskTelemetry.task("failed");
         if (toolReportState) {
           toolReportState = "failed";
           toolReportFailure = toolReportFailureCode(requestError);
         }
-        // 응답 계약 실패도 검증된 보고 요청이 남아 있으면 보고만 다시 보낸다.
-        // 준비가 실패했거나 발행이 끝나지 않은 실행 요청은 이 경로로 승격하지 않는다.
-        const retryAllowed = Boolean(pending.toolReportRequest && pending.toolVerification && pending.toolTask.dispatchComplete)
-          || (!protocolFailure && Boolean(taskRuntime && taskRuntime.mutationDispatchCount === 0 && taskRuntime.steps.length === 0));
-        const zeroToolRequest = !pending.toolReportRequest && !pending.toolVerification &&
-          Boolean(taskRuntime && taskRuntime.mutationDispatchCount === 0 && taskRuntime.steps.length === 0);
-        pending.retryFailureKind = zeroToolRequest ? chatRetryFailureKind(requestError) : undefined;
-        pending.automaticRetryEligible = retryAllowed && zeroToolRequest && !protocolFailure &&
-          !receivedPartialOutput && Boolean(pending.retryFailureKind);
-        if (requestError instanceof ChatApiError && requestError.retryExhausted) pending.automaticRetryUsed = true;
-        const retryDelay = chatFailureRetryAfterMs(requestError);
-        pending.retryNotBefore = Date.now() + retryDelay;
-        // done 없는 prefix는 완료된 manifest가 아니다. 실제 관측만 보존하고
-        // 부분 결과를 완료라고 보고하거나 원래 실행 요청을 재전송하지 않는다.
-        pending.toolResults = [...toolResults.values()];
         pending.toolTaskProgress = taskSnapshot();
         publishToolResults();
         logChatFailureLocally(toolReportState ? "tool_report" : "request", requestError);
@@ -2265,13 +2304,10 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
       } finally {
         // 응답 실패로 큐를 끝까지 기다리지 못한 경우에도 남은 이동·도구를 중단한다.
         controller.abort();
+        lifetime.signal.removeEventListener("abort", abortAttempt);
         void toolExecutionQueue.catch(() => undefined);
         renderQueue?.cancel();
         if (renderQueueRef.current === renderQueue) renderQueueRef.current = null;
-        if (abortRef.current === controller) abortRef.current = null;
-        stopRequestedRef.current = false;
-        inFlightRef.current = false;
-        if (mountedRef.current) setIsLoading(false);
       }
     },
     [
@@ -2310,39 +2346,78 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
     [availability],
   );
 
-  /** 실패 뒤에만 요청 사본을 준비한다. 화면 대화와 보고 스냅숏은 수정하지 않는다. */
-  const prepareRetry = useCallback((pending: PendingRetry, automatic: boolean): boolean => {
+  /** 수동 재시도도 예산을 초기화하지 않고, 같은 말풍선과 관측 스냅숏을 재사용한다. */
+  const prepareRetry = useCallback((pending: PendingRetry): boolean => {
     if (!mountedRef.current || retryRef.current !== pending || inFlightRef.current ||
-      Date.now() < Math.max(retryWaitDeadlineRef.current, pending.retryNotBefore ?? 0) ||
+      Date.now() < Math.max(requestCooldownDeadlineRef.current, retryWaitDeadlineRef.current, pending.retryNotBefore ?? 0) ||
       (!canRequest() && !canSendUnverifiedExplanation(availability, pending.responseMode ?? "default"))) return false;
     if (pending.toolVerification && !pending.toolReportRequest) return false;
-    if (automatic && (pending.automaticRetryUsed || !pending.automaticRetryEligible ||
-      pending.toolVerification || pending.toolReportRequest)) return false;
-    const reducedHistory = !pending.toolVerification && !pending.toolReportRequest &&
-      pending.retryFailureKind === "capacity"
-      ? historyForCapacityRetry(pending.attemptHistory ?? pending.history) : undefined;
-    if (automatic && pending.retryFailureKind === "capacity" && !reducedHistory) return false;
-    if (automatic) pending.automaticRetryUsed = true;
-    if (reducedHistory) pending.attemptHistory = reducedHistory;
+    const report = pending.toolReportAttemptRequest ?? pending.toolReportRequest;
+    const reducedHistory = pending.retryFailureKind === "capacity"
+      ? historyForCapacityRetry(report?.history ?? pending.attemptHistory ?? pending.history) : undefined;
+    if (reducedHistory) {
+      if (report) pending.toolReportAttemptRequest = immutableChatRequest({ ...report, history: reducedHistory });
+      else pending.attemptHistory = reducedHistory;
+    }
+    pending.retryNotice = reducedHistory ? "reduced_context" : "retrying";
     if (!pending.toolVerification) {
-      pending.retryNotice = pending.attemptHistory ? "reduced_context" : "retrying";
       pending.toolTask = nextChatToolTaskGeneration(pending.toolTask);
       pending.toolTaskProgress = undefined;
       pending.toolTaskTelemetry = undefined;
     }
-    if (pending.assistantMessageId) {
-      const failedMessageId = pending.assistantMessageId;
-      setMessages((current) => messagesForChatRetry(current, failedMessageId));
-      pending.assistantMessageId = undefined;
-    }
     return true;
   }, [availability, canRequest]);
 
-  /** 첫 요청의 finally가 끝난 뒤에만 새 controller로 한 번 복구한다. 재귀 호출은 없다. */
+  /** 전송·복구 대기를 한 수명으로 묶어 중단·새 대화가 예약된 재전송까지 취소한다. */
   const performRequestWithRecovery = useCallback(async (pending: PendingRetry) => {
-    await performRequest(pending);
-    if (prepareRetry(pending, true)) await performRequest(pending);
-  }, [performRequest, prepareRetry]);
+    if (inFlightRef.current || !mountedRef.current || Date.now() < requestCooldownDeadlineRef.current) return;
+    const lifetime = new AbortController();
+    abortRef.current = lifetime;
+    inFlightRef.current = true;
+    stopRequestedRef.current = false;
+    setIsLoading(true);
+    const active = () => mountedRef.current && abortRef.current === lifetime && !lifetime.signal.aborted;
+    try {
+      while (active()) {
+        const plan = await performRequest(pending, lifetime);
+        if (!plan || !active() || retryRef.current !== pending) break;
+        // 긴 서버 대기는 자동 예약 없이 끝낸다. 별도 cooldown만 새 전송을 잠근다.
+        if (!plan.automatic) break;
+        while (active() && Date.now() < plan.retryAt) {
+          await waitForAbortableDelay(Math.min(60_000, plan.retryAt - Date.now()), lifetime.signal);
+        }
+        if (!active() || retryRef.current !== pending) break;
+        clearRetryWait();
+        if (plan.phase === "report") {
+          const report = pending.toolReportAttemptRequest ?? pending.toolReportRequest!;
+          if (plan.history) pending.toolReportAttemptRequest = immutableChatRequest({ ...report, history: plan.history });
+        } else {
+          if (plan.history) pending.attemptHistory = plan.history;
+          pending.toolTask = nextChatToolTaskGeneration(pending.toolTask);
+          pending.toolTaskProgress = undefined;
+          pending.toolTaskTelemetry = undefined;
+        }
+      }
+    } catch (error) {
+      if (!(error instanceof DOMException && error.name === "AbortError")) throw error;
+    } finally {
+      if (abortRef.current === lifetime) {
+        if (mountedRef.current && lifetime.signal.aborted && stopRequestedRef.current) {
+          retryRef.current = null;
+          clearRetryWait();
+          setMessages((current) => current.map((message) => message.id === pending.assistantMessageId
+            ? { ...message, generationState: "stopped", retryAllowed: false,
+              ...(pending.toolReportRequest ? { toolReportState: "stopped" } : {}) } : message));
+          setError(null);
+        }
+        abortRef.current = null;
+        stopRequestedRef.current = false;
+        inFlightRef.current = false;
+        if (mountedRef.current) setIsLoading(false);
+      }
+      lifetime.abort();
+    }
+  }, [clearRetryWait, performRequest]);
 
   /**
    * 사용자 질문을 보낸다.
@@ -2354,13 +2429,18 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
   const sendMessage = useCallback(
     async (content: string, audienceOverride?: AudienceChoice, responseMode: "default" | "explanation" = "default") => {
       const message = content.trim();
-      if (!message || (!canRequest() && !canSendUnverifiedExplanation(availability, responseMode)) || inFlightRef.current) {
+      if (!message || (!canRequest() && !canSendUnverifiedExplanation(availability, responseMode)) || inFlightRef.current ||
+        Date.now() < Math.max(requestCooldownDeadlineRef.current, retryWaitDeadlineRef.current)) {
         return;
       }
 
+      const previousManualWait = retryRef.current?.waitingForManual ? retryRef.current : undefined;
       const history = historyFromMessages(messagesRef.current);
       setMessages((current) => [
-        ...current,
+        ...current.map((item) => item.id === previousManualWait?.assistantMessageId
+          ? { ...item, generationState: "stopped" as const, retryAllowed: false,
+            ...(previousManualWait?.toolReportRequest ? { toolReportState: "stopped" as const } : {}) }
+          : item),
         {
           id: nextId("user"),
           role: "user",
@@ -2384,13 +2464,12 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
    * 마지막 실패를 다시 보낸다. 용량 오류만 이전 시도 이력에서 더 줄이고,
    * 완료된 도구 보고는 원래 불변 스냅숏을 그대로 사용한다.
    *
-   * 실패한 답변 말풍선이 있으면 먼저 지운다. 그러지 않으면 실패한 답변과 새
-   * 답변이 나란히 남는다. 재시도할 재료가 없거나 요청이 진행 중이면 아무 일도
-   * 하지 않는다.
+   * 실패한 답변은 같은 말풍선에서 교체한다. 재시도할 재료가 없거나
+   * 요청이 진행 중이면 아무 일도 하지 않는다.
    */
   const retry = useCallback(async () => {
     const pending = retryRef.current;
-    if (!pending || !prepareRetry(pending, false)) return;
+    if (!pending || !prepareRetry(pending)) return;
     await performRequestWithRecovery(pending);
   }, [performRequestWithRecovery, prepareRetry]);
 
@@ -2401,11 +2480,21 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
    * 취소한다. 중단 표시와 안내는 요청 쪽 실패 처리에서 붙인다.
    */
   const stopGenerating = useCallback(() => {
+    const waiting = retryRef.current;
+    if (!inFlightRef.current && waiting?.waitingForManual) {
+      retryRef.current = null;
+      clearRetryWait();
+      setMessages((current) => current.map((message) => message.id === waiting.assistantMessageId
+        ? { ...message, generationState: "stopped", retryAllowed: false,
+          ...(waiting.toolReportRequest ? { toolReportState: "stopped" } : {}) } : message));
+      setError(null);
+      return;
+    }
     if (!inFlightRef.current || !abortRef.current) return;
     stopRequestedRef.current = true;
     renderQueueRef.current?.cancel();
     abortRef.current.abort();
-  }, []);
+  }, [clearRetryWait]);
 
   /**
    * 대화를 처음 상태로 되돌린다.
