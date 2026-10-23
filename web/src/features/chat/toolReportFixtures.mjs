@@ -9,6 +9,8 @@ import { requestVerifiedToolResponse, toolFollowupForVerification } from './tool
 import { toolReportFailureCode } from './toolReport.ts';
 import { failedChatMessage, messagesForChatRetry, chatFailureRetryAfterMs } from './chatFailure.ts';
 import { appendUiSettingChange, createUiSettingChange } from './uiSettingChangeJournal.ts';
+import { chatRetryFailureKind, historyForCapacityRetry } from './chatRetryRecovery.ts';
+import { canSendUnverifiedExplanation } from './chatAvailability.ts';
 import { settingToolResultLabel } from './constants.ts';
 import { portfolioUiCommandFromChatExecution } from '../portfolio-tools/portfolioUiToolExecutor.ts';
 
@@ -53,20 +55,26 @@ export function providerReportFixture(t, options = {}) {
   };
   const helpers = select('function fallbackToolResultLabel(', 'const DESKTOP_EXIT_DURATION_MS');
   const perform = select('  const performRequest = useCallback(', '\n  /**\n   * 추론 서버가 꺼져');
+  const recovery = select('  const prepareRetry = useCallback(', '\n  /**\n   * 사용자 질문을 보낸다.');
   const retry = select('  const retry = useCallback(', '\n  /**\n   * 진행 중인 응답');
   const ts = createRequire(import.meta.url)('typescript');
-  const compiled = ts.transpileModule(`${helpers}\n${perform}\n${retry}`, {
+  const compiled = ts.transpileModule(`${helpers}\n${perform}\n${recovery}\n${retry}`, {
     compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.None },
   }).outputText;
   const fixture = fourToolReportCase();
   const pending = { ...fixture.request, toolTask: { schemaVersion: fixture.scope.schemaVersion, taskId: fixture.scope.taskId, generation: 1 } };
+  if (options.history) pending.history = options.history;
+  if (options.responseMode) pending.responseMode = options.responseMode;
   const state = { messages: [], effects: [], requests: [], reportRequests: [], telemetry: [], diagnostics: [],
     uiSettings: { ...fixture.latest.uiSettings, theme: 'light', chatFontSize: 'medium' },
     viewState: { page: 'overview', anchor: null }, reportMode: options.reportMode ?? 'success',
-    finishReport: null, loading: false, retryWait: null };
+    finishReport: null, finishOrdinary: null, loading: false, retryWait: null,
+    ordinaryOutcomes: [...(options.ordinaryOutcomes ?? [])], loadingChanges: [] };
+  if (options.messages) state.messages = [...options.messages];
   const refs = Object.fromEntries(['inFlightRef', 'stopRequestedRef', 'abortRef', 'mountedRef', 'renderQueueRef',
-    'retryRef', 'pendingChatNavigationFocusRef'].map(name => [name, { current: null }]));
+    'retryRef', 'retryWaitDeadlineRef', 'pendingChatNavigationFocusRef'].map(name => [name, { current: null }]));
   refs.mountedRef.current = true;
+  refs.retryWaitDeadlineRef.current = 0;
   const uiSettingsRef = { get current() { return state.uiSettings; } };
   const uiSettingChangesRef = { current: structuredClone(fixture.latest.uiSettingChanges) };
   const window = { location: { pathname: '/about-me' }, crypto: { randomUUID: () => 'settings-group-1' },
@@ -78,6 +86,16 @@ export function providerReportFixture(t, options = {}) {
     status: request.toolVerification.results.some(result => result.status === 'failed') ? 'failed' : 'completed' } });
   const send = async (request, signal, handlers) => {
     state.requests.push(request);
+    if (options.ordinary) {
+      const outcome = state.ordinaryOutcomes.shift();
+      if (outcome?.wait) await new Promise(resolve => { state.finishOrdinary = resolve; });
+      if (signal.aborted) throw new DOMException('Aborted', 'AbortError');
+      if (outcome?.partial) handlers?.onDelta?.(outcome.partial);
+      outcome?.beforeError?.({ state, refs, pending });
+      if (outcome?.error) throw outcome.error;
+      return parseChatResponse(response({ toolTask: { ...expectedToolTaskScope(request), steps: [],
+        dispatchComplete: true, status: 'not_required' } }), request);
+    }
     if (!request.toolVerification) {
       if (options.incompleteDispatch) {
         handlers?.onTool?.(fixture.executions[0]);
@@ -121,10 +139,12 @@ export function providerReportFixture(t, options = {}) {
   };
   let sequence = 0;
   const context = { ...refs, window, document: {}, process: { env: {} },
-    useCallback: callback => callback, canRequest: () => true, uiSettingsRef, uiSettingChangesRef,
+    useCallback: callback => callback, canRequest: () => options.canRequest ?? true,
+    availability: options.availability ?? 'online', canSendUnverifiedExplanation, uiSettingsRef, uiSettingChangesRef,
     setMessages: update => { state.messages = update(state.messages); },
-    setIsLoading: value => { state.loading = value; }, setError() {},
-    clearRetryWait: () => { state.retryWait = null; }, beginRetryWait: delay => { state.retryWait = delay; },
+    setIsLoading: value => { state.loading = value; state.loadingChanges.push(value); }, setError() {},
+    clearRetryWait: () => { state.retryWait = null; refs.retryWaitDeadlineRef.current = 0; },
+    beginRetryWait: delay => { state.retryWait = delay; refs.retryWaitDeadlineRef.current = Date.now() + delay; },
     nextId: prefix => `${prefix}-${++sequence}`, audienceToApi: value => value,
     audience: 'default', tone: 'official', pageContext: 'overview', pathname: '/about-me', reasoningEnabled: false,
     ...{ mode: 'light', accent: 'royalblue', chatLayout: 'floating', chatFont: 'pretendard', chatFontSize: 'medium', streamAnimation: 'none' },
@@ -157,14 +177,25 @@ export function providerReportFixture(t, options = {}) {
     runAccentCycle: () => assert.fail('색상 순회는 이 fixture 범위가 아니다'),
     TOOL_VERIFICATION_MIN_DELAY_MS: 500, TOOL_ARRIVAL_TIMEOUT_MS: 8000,
     ChatApiError, failedChatMessage, messagesForChatRetry, chatFailureRetryAfterMs, nextChatToolTaskGeneration,
+    chatRetryFailureKind, historyForCapacityRetry,
     logChatFailureLocally: (stage, error) => state.diagnostics.push([stage, toolReportFailureCode(error)]),
     chatFailureAvailability: () => null, reportAvailability() {},
     UI_TOOL_NOT_CALLED_RESULT: {}, UI_TOOL_INCOMPLETE_RESULT: {},
   };
-  const api = new Function(...Object.keys(context), `${compiled}\nreturn { performRequest, retry };`)(...Object.values(context));
-  t.after(() => { refs.abortRef.current?.abort(); state.finishReport?.(); });
-  return { ...fixture, state, refs, pending, run: () => api.performRequest(pending), retry: api.retry,
+  const api = new Function(...Object.keys(context), `${compiled}\nreturn { performRequestWithRecovery, retry };`)(...Object.values(context));
+  t.after(() => { refs.abortRef.current?.abort(); state.finishReport?.(); state.finishOrdinary?.(); });
+  return { ...fixture, state, refs, pending, run: () => {
+    refs.retryRef.current = pending;
+    return api.performRequestWithRecovery(pending);
+  }, retry: api.retry,
     stop() { refs.stopRequestedRef.current = true; refs.abortRef.current?.abort(); },
+    async untilRequest(count = 1) {
+      for (let index = 0; index < 100; index++) {
+        if (state.requests.length >= count) return;
+        await Promise.resolve();
+      }
+      assert.fail('일반 요청까지 도달하지 못했다');
+    },
     async untilReport(count = 1) {
       for (let index = 0; index < 100; index++) {
         if (state.reportRequests.length >= count) return;

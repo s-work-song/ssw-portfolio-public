@@ -503,6 +503,8 @@ export type ChatToolReportFailure = "history_invalid" | "history_budget" | "mani
   | "request_failed" | "timeout" | "response_contract" | "empty_answer";
 
 export interface ChatMessage {
+  /** 재시도 대기 중의 표시 전용 상태다. 모델 요청이나 원본 이력에는 넣지 않는다. */
+  retryNotice?: "retrying" | "reduced_context";
   toolTaskProgress?: ChatToolTaskProgress;
   /** 도구 실행의 실제 결과와 별개인 마지막 보고 요청 상태다. */
   toolReportState?: ChatToolReportState;

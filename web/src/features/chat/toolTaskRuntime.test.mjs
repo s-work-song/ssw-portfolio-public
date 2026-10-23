@@ -12,6 +12,7 @@ import { requestVerifiedToolResponse } from './toolVerificationRequest.ts';
 import { toolTaskStepText, toolTaskSummary } from './toolTaskPresentation.ts';
 import { BrowserToolTaskTelemetry, isSafeBrowserToolTaskEvents } from './toolTaskTelemetry.ts';
 import { failedChatMessage } from './chatFailure.ts';
+import { chatRetryFailureKind } from './chatRetryRecovery.ts';
 
 const scope = { schemaVersion: 'portfolio-tool-task-v1', conversationId: 'conversation-1',
   turnId: 'turn-1', taskId: 'task-1', generation: 1 };
@@ -177,6 +178,59 @@ function fixtureApi(fetchFixture, env = {}) {
 const sse = events => new Response(events.map(([kind, data]) => `event: ${kind}\ndata: ${JSON.stringify(data)}\n\n`).join(''),
   { headers: { 'content-type': 'text/event-stream' } });
 
+test('실제 JSON/SSE 오류는 HTTP상태·용량코드·서버 재시도 소진 boolean을 같은 계약으로 보존한다', async () => {
+  for (const streaming of [false, true]) {
+    for (const [status, code, expected] of [[400, 'context_length_exceeded', 'capacity'],
+      [413, 'payload_too_large', 'capacity'], [502, 'request_too_large', 'capacity'],
+      [503, 'upstream_unavailable', 'transient'], [409, 'context_length_exceeded', undefined],
+      [401, 'upstream_unavailable', undefined]]) {
+      const api = fixtureApi(async () => Response.json({ error: code, message: 'private', retryExhausted: true }, { status }));
+      await assert.rejects(streaming ? api.requestChatStream(request(), new AbortController().signal, { onDelta() {} })
+        : api.requestChat(request(), new AbortController().signal), error => {
+        assert.equal(error.httpStatus, status);
+        assert.equal(error.retryExhausted, true);
+        assert.equal(chatRetryFailureKind(error), expected);
+        return true;
+      });
+    }
+    for (const [payload, expected] of [
+      [{ code: 'context_length_exceeded' }, 'capacity'],
+      [{ code: 'context_length_exceeded', error: 'context_length_exceeded' }, 'capacity'],
+      [{ code: 'context_length_exceeded', error: 'upstream_busy' }, undefined],
+      [{ code: 'context_length_exceeded', error: { hidden: 'private' } }, undefined],
+    ]) {
+      const api = fixtureApi(async () => Response.json(payload, { status: 502 }));
+      await assert.rejects(streaming ? api.requestChatStream(request(), new AbortController().signal, { onDelta() {} })
+        : api.requestChat(request(), new AbortController().signal), error => {
+        assert.equal(chatRetryFailureKind(error), expected);
+        return true;
+      });
+    }
+    const htmlAuth = fixtureApi(async () => new Response('<html>private</html>', { status: 403 }));
+    await assert.rejects(streaming ? htmlAuth.requestChatStream(request(), new AbortController().signal, { onDelta() {} })
+      : htmlAuth.requestChat(request(), new AbortController().signal), error =>
+      error.code === 'authentication_error' && error.httpStatus === 403 && chatRetryFailureKind(error) === undefined);
+    const limited = fixtureApi(async () => new Response('limited', { status: 429, headers: { 'retry-after': '2' } }));
+    await assert.rejects(streaming ? limited.requestChatStream(request(), new AbortController().signal, { onDelta() {} })
+      : limited.requestChat(request(), new AbortController().signal), error =>
+      error.code === 'rate_limited' && error.httpStatus === 429 && error.retryAfterMs === 2_000);
+  }
+  for (const retryExhausted of [true, false, 'true', 1, undefined]) {
+    const api = fixtureApi(async () => sse([['error', { code: 'context_length_exceeded', retryExhausted }]]));
+    await assert.rejects(api.requestChatStream(request(), new AbortController().signal, { onDelta() {} }), error => {
+      assert.equal(error.code, 'context_length_exceeded');
+      assert.equal(error.retryExhausted, retryExhausted === true);
+      assert.equal(error.httpStatus, undefined);
+      return true;
+    });
+  }
+  const brokenStream = fixtureApi(async () => new Response(new ReadableStream({
+    start(controller) { controller.error(new TypeError('private network failure')); },
+  }), { headers: { 'content-type': 'text/event-stream' } }));
+  await assert.rejects(brokenStream.requestChatStream(request(), new AbortController().signal, { onDelta() {} }),
+    error => error.code === 'network' && chatRetryFailureKind(error) === 'transient');
+});
+
 test('실제 JSON/SSE API는 같은 scope·원 native ID와 ordered manifest를 보존하고 중복 SSE를 실행하지 않는다', async () => {
   const write = execution(); const read = getter(); const done = response([write, read]);
   const meta = ['meta', { toolTask: { ...scope, status: 'running' } }];
@@ -268,8 +322,8 @@ test('Provider는 stop/partial prefix의 실행 retry를 없애고 정상 verifi
   assert.match(caught, /retryRef\.current = null/u);
   assert.match(caught, /Boolean\(pending\.toolReportRequest && pending\.toolVerification && pending\.toolTask\.dispatchComplete\)/u);
   assert.doesNotMatch(caught, /pending\.toolVerification =/u, 'done 없는 prefix를 임의 확인 요청으로 바꾸지 않는다');
-  const retry = provider.slice(provider.indexOf('const retry ='), provider.indexOf('const stopGenerating ='));
-  assert.match(retry, /if \(!pending\.toolVerification\) \{\s*pending\.toolTask = nextChatToolTaskGeneration/u);
+  const retry = provider.slice(provider.indexOf('const prepareRetry ='), provider.indexOf('const stopGenerating ='));
+  assert.match(retry, /if \(!pending\.toolVerification\) \{\s*pending\.retryNotice[^;]+;\s*pending\.toolTask = nextChatToolTaskGeneration/u);
   const widget = readFileSync(new URL('./ChatWidget.tsx', import.meta.url), 'utf8');
   assert.match(widget, /latestMessage\.retryAllowed !== false/u);
 });

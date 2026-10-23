@@ -82,8 +82,35 @@ export async function requestToolTaskEvents(events: BrowserToolTaskEvents): Prom
 function rateLimitedError(response: Response): ChatApiError {
   return new ChatApiError(RATE_LIMITED_MESSAGE, {
     code: "rate_limited",
+    httpStatus: response.status,
     retryAfterMs: retryAfterMsFromHeader(response.headers.get("retry-after")),
   });
+}
+
+/** 원문 오류와 별개인 코드·상태·재시도 소진 여부만 고정 형식으로 읽는다. */
+function responseErrorOptions(payload: unknown, httpStatus?: number) {
+  const value = isRecord(payload) ? payload : {};
+  const suppliedCodes = [value.code, value.error].filter(code => code !== undefined);
+  const conflictingCodes = suppliedCodes.some(code => code !== suppliedCodes[0]);
+  const rawCode = !conflictingCodes && isString(suppliedCodes[0]) &&
+    /^[a-z][a-z0-9_]{0,63}$/u.test(suppliedCodes[0]) ? suppliedCodes[0] : undefined;
+  const code = httpStatus === 401 || httpStatus === 403 ? "authentication_error"
+    : conflictingCodes ? undefined : httpStatus === 413 ? "payload_too_large" : rawCode;
+  return {
+    code, httpStatus, retryExhausted: value.retryExhausted === true,
+    ...(code === "rate_limited" ? { retryAfterMs: retryAfterMsFromHeader(null) } : {}),
+    explanation: isString(value.explanation) ? value.explanation.slice(0, 240) : undefined,
+  };
+}
+
+/** JSON/SSE를 열기 전의 HTTP 실패는 같은 코드·상태 계약으로 전달한다. */
+async function errorFromHttpResponse(response: Response): Promise<ChatApiError> {
+  if (response.status === 429) return rateLimitedError(response);
+  let payload: unknown;
+  try { payload = await response.json(); } catch { /* HTML 오류에도 실제 HTTP 상태는 보존한다. */ }
+  const message = isRecord(payload) && isString(payload.message) ? payload.message
+    : "요청을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요.";
+  return new ChatApiError(message, responseErrorOptions(payload, response.status));
 }
 
 /**
@@ -163,25 +190,13 @@ export async function requestChat(
     );
   }
 
+  if (!response.ok) throw await errorFromHttpResponse(response);
+
   let payload: unknown;
   try {
     payload = await response.json();
   } catch {
     throw new ChatApiError("채팅 서버의 응답을 읽지 못했습니다.", { code: "invalid_response" });
-  }
-
-  if (!response.ok) {
-    if (response.status === 429) throw rateLimitedError(response);
-    const message =
-      isRecord(payload) && isString(payload.message)
-        ? payload.message
-        : "요청을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요.";
-    throw new ChatApiError(message, {
-      code: response.status === 401 || response.status === 403 ? "authentication_error"
-        : isRecord(payload) && isString(payload.code) ? payload.code : undefined,
-      explanation: isRecord(payload) && isString(payload.explanation)
-        ? payload.explanation.slice(0, 240) : undefined,
-    });
   }
 
   return parseChatResponse(payload, request);
@@ -192,22 +207,6 @@ export interface ChatStreamHandlers {
   onDelta: (text: string) => void;
   onMeta?: (meta: Readonly<Record<string, unknown>>) => void;
   onTool?: (execution: ChatToolExecution) => void;
-}
-
-/**
- * 오류 응답에서 사용자에게 보여 줄 문구를 뽑는다.
- *
- * JSON 오류가 아니거나 message가 없으면 내부 사정이 드러나지 않는 고정
- * 문구로 되돌린다.
- */
-async function errorMessageFromResponse(response: Response): Promise<string> {
-  try {
-    const payload: unknown = await response.json();
-    if (isRecord(payload) && isString(payload.message)) return payload.message;
-  } catch {
-    // JSON 오류 응답이 아니면 공개용 고정 문구를 사용한다.
-  }
-  return "요청을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요.";
 }
 
 /**
@@ -308,7 +307,11 @@ async function consumeSseResponse(
 
   try {
     while (!stopped) {
-      const chunk = await reader.read();
+      let chunk: ReadableStreamReadResult<Uint8Array>;
+      try { chunk = await reader.read(); } catch (error) {
+        if (error instanceof DOMException && error.name === "AbortError") throw error;
+        throw new ChatApiError("채팅 스트림 연결이 끊겼습니다.", { code: "network" });
+      }
       if (chunk.done) break;
       onActivity?.();
       buffer += decoder.decode(chunk.value, { stream: true });
@@ -386,10 +389,7 @@ export async function requestChatStream(
 
     if (!response.ok) {
       // 400·413·429는 SSE를 열기 전이라 여전히 JSON으로 온다.
-      if (response.status === 429) throw rateLimitedError(response);
-      throw new ChatApiError(await errorMessageFromResponse(response), {
-        code: response.status === 401 || response.status === 403 ? "authentication_error" : undefined,
-      });
+      throw await errorFromHttpResponse(response);
     }
     let doneResponse: ChatResponse | null = null;
 
@@ -441,11 +441,7 @@ export async function requestChatStream(
             isString(payload.message)
               ? payload.message
               : "응답 생성 중 오류가 발생했습니다.",
-            {
-              code: isString(payload.code) ? payload.code : undefined,
-              explanation: isString(payload.explanation)
-                ? payload.explanation.slice(0, 240) : undefined,
-            },
+            responseErrorOptions(payload),
           );
         }
         if (taskScope && !receivedTaskMeta) throw new ToolTaskProtocolError();

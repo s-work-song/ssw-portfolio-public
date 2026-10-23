@@ -791,6 +791,36 @@
   color: var(--chat-accent);
 }
 
+.generationDots {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  height: 8px;
+  margin-left: 6px;
+  vertical-align: middle;
+}
+
+.generationDots span {
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: currentColor;
+  animation: generationDot 1.2s ease-in-out infinite;
+}
+
+.generationDots span:nth-child(2) {
+  animation-delay: 160ms;
+}
+
+.generationDots span:nth-child(3) {
+  animation-delay: 320ms;
+}
+
+@keyframes generationDot {
+  0%, 60%, 100% { opacity: 0.35; transform: translateY(0); }
+  30% { opacity: 1; transform: translateY(-3px); }
+}
+
 .stoppedBadge,
 .failedBadge,
 .toolResult[data-tool-status="stopped"],
@@ -1703,6 +1733,10 @@
   transition: none;
 }
 
+:global(:root[data-motion="off"]) .generationDots span {
+  animation: none;
+}
+
 /* 사이트 모션 정책(globals.css)과 같은 관례: 사용자가 "항상 켬"(data-motion="on")을
    고르면 OS 모션 줄이기보다 사용자 선택을 우선한다. */
 @media (prefers-reduced-motion: reduce) {
@@ -1711,6 +1745,10 @@
   }
 
   :global(:root:not([data-motion="on"])) .loading::before {
+    animation: none;
+  }
+
+  :global(:root:not([data-motion="on"])) .generationDots span {
     animation: none;
   }
 

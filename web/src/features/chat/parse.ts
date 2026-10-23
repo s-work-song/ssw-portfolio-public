@@ -164,6 +164,10 @@ export interface ChatApiErrorOptions {
   code?: string;
   /** 429처럼 재시도까지 기다려야 하는 시간이다. */
   retryAfterMs?: number;
+  /** HTTP 오류의 실제 상태다. SSE error 이벤트에는 없을 수 있다. */
+  httpStatus?: number;
+  /** 서버가 같은 요청의 자동 재시도를 이미 소진했을 때만 true다. */
+  retryExhausted?: boolean;
   /** 서버가 같은 요청 안에서 생성한 안전한 실패 설명이다. */
   explanation?: string;
 }
@@ -178,6 +182,8 @@ export interface ChatApiErrorOptions {
 export class ChatApiError extends Error {
   readonly code?: string;
   readonly retryAfterMs?: number;
+  readonly httpStatus?: number;
+  readonly retryExhausted: boolean;
   readonly explanation?: string;
 
   constructor(message: string, options: ChatApiErrorOptions = {}) {
@@ -185,6 +191,8 @@ export class ChatApiError extends Error {
     this.name = "ChatApiError";
     this.code = options.code;
     this.retryAfterMs = options.retryAfterMs;
+    this.httpStatus = options.httpStatus;
+    this.retryExhausted = options.retryExhausted === true;
     this.explanation = options.explanation;
   }
 }

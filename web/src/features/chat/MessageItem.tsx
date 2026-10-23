@@ -283,6 +283,8 @@ export const MessageItem = memo(function MessageItem({
   const pendingNotice = isStreaming
     ? slowResponse
       ? "평소보다 오래 걸리고 있어요. 기다리거나 중단할 수 있어요"
+      : message.retryNotice === "reduced_context" ? "오래된 대화를 일부 제외해 다시 시도하고 있어요…"
+      : message.retryNotice === "retrying" ? "응답을 다시 생성하고 있어요…"
       : toolReportState === "pending" ? "도구 실행 결과를 정리하고 있어요…" : "응답을 생성하고 있어요…"
     : null;
 
@@ -306,7 +308,12 @@ export const MessageItem = memo(function MessageItem({
         </strong>
       )}
       {isStreaming && (
-        <strong className={styles.generationBadge}>{toolReportState === "pending" ? "결과 보고 중" : "생성 중"}</strong>
+        <strong className={styles.generationBadge}>
+          {toolReportState === "pending" ? "결과 보고 중" : "생성 중"}
+          <span className={styles.generationDots} aria-hidden="true">
+            <span /><span /><span />
+          </span>
+        </strong>
       )}
       {message.generationState === "stopped" && (
         <strong className={styles.stoppedBadge}>

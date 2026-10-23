@@ -7,6 +7,7 @@ import { modelHistoryCharacters, parseModelHistory } from './modelHistory.ts';
 import { parseChatResponse } from './parse.ts';
 import { fourToolReportCase } from './toolReportFixtures.mjs';
 import { ToolReportPreparationError } from './toolReport.ts';
+import { historyForCapacityRetry } from './chatRetryRecovery.ts';
 import {
   requestVerifiedToolResponse,
   toolFollowupForVerification,
@@ -578,4 +579,41 @@ test('중복 목록 정책은 유지하되 12k 초과 이력의 여섯 턴과 �
   assert.deepEqual(history.filter(({ role }) => role === 'tool').map(({ content }) => JSON.parse(content).snapshot.sequence),
     [0, 1, 2, 3, 4, 5], '중복 목록 외에 각 턴의 관측값은 모두 보존한다');
   assert.deepEqual(nativeHistories, before, '응답 modelHistory 원본을 바꾸지 않는다');
+});
+
+test('용량 재시도는 최신 한 턴을 보호하고 오래된 완결 native 턴 절반만 앞에서 제외한다', () => {
+  const turns = Array.from({ length: 6 }, (_, index) => [
+    { role: 'user', content: `질문${index}` }, ...completed(`retry_${index}`),
+  ]);
+  const original = turns.flat();
+  const before = structuredClone(original);
+  const reduced = historyForCapacityRetry(original);
+  assert.deepEqual(reduced, turns.slice(3).flat());
+  assert.equal(reduced[1], turns[3][1]);
+  assert.equal(reduced[1].tool_calls[0].function.arguments, rawArguments);
+  assert.deepEqual(historyForCapacityRetry(reduced), turns.slice(4).flat());
+  assert.deepEqual(historyForCapacityRetry(historyForCapacityRetry(reduced)), turns[5]);
+  assert.equal(historyForCapacityRetry(turns[5]), undefined);
+  assert.deepEqual(original, before);
+  assert.deepEqual(historyFromMessages(turns.flatMap((items, index) => [
+    message(`u${index}`, 'user', items[0].content), message(`a${index}`, 'assistant', '공개 최종 답변', {
+      generationState: 'complete', modelHistory: items.slice(1),
+    }),
+  ])), original, '일반 요청 이력에는 실패 복구 축소를 상시 적용하지 않는다');
+});
+
+test('용량 재시도는 미완결·고아·중복·사설 체인이나 선행 안내를 추측해 자르지 않는다', () => {
+  const latest = [{ role: 'user', content: '최신 질문' }, ...completed('latest')];
+  for (const invalid of [[], [{ role: 'assistant', content: '선행 안내' }],
+    [{ role: 'user', content: '중단한 질문' }],
+    [{ role: 'user', content: '고아 체인' }, batch()[1]],
+    [{ role: 'user', content: '중복 체인' }, ...batch(), ...batch()],
+    [{ role: 'user', content: '사설 체인' }, ...batch('bad', 'private_tool')]]) {
+    assert.equal(historyForCapacityRetry([...invalid, ...latest]), undefined);
+  }
+  const first = [{ role: 'user', content: '첫 질문' }, ...completed('first')];
+  const second = [{ role: 'user', content: '둘째 질문' }, ...completed('second')];
+  const incomplete = [{ role: 'user', content: '중단한 질문' }];
+  assert.deepEqual(historyForCapacityRetry([...first, ...second, ...incomplete, ...latest]),
+    [...second, ...incomplete, ...latest], '미완결 경계 앞의 연속 완결 그룹만 제거 후보로 본다');
 });

@@ -60,6 +60,7 @@ import {
   visibleChatMessages,
 } from "./chatFailure";
 import { historyFromMessages } from "./chatHistory";
+import { chatRetryFailureKind, historyForCapacityRetry, type ChatRetryFailureKind } from "./chatRetryRecovery";
 import { navigationPathMatches, observeToolNavigation } from "./toolNavigationObservation";
 import {
   ChatConversationIdentity, createChatToolTask, nextChatToolTaskGeneration, type ChatRequestIds,
@@ -386,6 +387,14 @@ interface PendingRetry extends ChatRequestIds {
   message: string;
   responseMode?: "default" | "explanation";
   history: ChatHistoryItem[];
+  /** 원본 이력과 별개인, 마지막 용량 복구 시도에서 사용한 이력이다. */
+  attemptHistory?: ChatHistoryItem[];
+  retryFailureKind?: ChatRetryFailureKind;
+  automaticRetryEligible?: boolean;
+  /** 서버 또는 클라이언트에서 소진한 자동 예산. 수동 재시도로 되돌리지 않는다. */
+  automaticRetryUsed?: boolean;
+  retryNotBefore?: number;
+  retryNotice?: ChatMessage["retryNotice"];
   audienceOverride?: AudienceChoice;
   assistantMessageId?: string;
   toolHistory?: ChatRequest["toolHistory"];
@@ -456,6 +465,7 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
   // 메시지 이력을 새로고침에서 복원하지 않으므로 ID도 브라우저 메모리만 쓴다.
   const conversationIdentityRef = useRef<ChatConversationIdentity | null>(null);
   const retryWaitTimerRef = useRef<number | null>(null);
+  const retryWaitDeadlineRef = useRef(0);
   /** 렌더 사이클과 무관하게 최신 대화·포인트 색을 읽기 위한 참조다. */
   const messagesRef = useRef<ChatMessage[]>(messages);
   const accentCycleInProgressRef = useRef(false);
@@ -513,6 +523,7 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
       window.clearInterval(retryWaitTimerRef.current);
       retryWaitTimerRef.current = null;
     }
+    retryWaitDeadlineRef.current = 0;
     setRetryWaitSeconds(0);
   }, []);
 
@@ -523,10 +534,12 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
       retryWaitTimerRef.current = null;
     }
     if (durationMs <= 0) {
+      retryWaitDeadlineRef.current = 0;
       setRetryWaitSeconds(0);
       return;
     }
     const deadline = Date.now() + durationMs;
+    retryWaitDeadlineRef.current = deadline;
     setRetryWaitSeconds(chatRetryWaitSeconds(deadline, Date.now()));
     retryWaitTimerRef.current = window.setInterval(() => {
       const remaining = chatRetryWaitSeconds(deadline, Date.now());
@@ -1556,6 +1569,9 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
       setIsLoading(true);
       setError(null);
       clearRetryWait();
+      pending.retryFailureKind = undefined;
+      pending.automaticRetryEligible = false;
+      pending.retryNotBefore = undefined;
 
       const controller = new AbortController();
       abortRef.current = controller;
@@ -1567,7 +1583,7 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
         turnId: pending.turnId,
         message: pending.message,
         responseMode: pending.responseMode ?? "default",
-        history: pending.history,
+        history: pending.attemptHistory ?? pending.history,
         audience: audienceToApi(pending.audienceOverride ?? audience),
         tone,
         pageContext,
@@ -1609,6 +1625,7 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
       // 이 사용자 요청에서 실제 반영된 설정만 같은 묶음으로 기록한다.
       let settingChangeGroupId: string | null = null;
       let deferStreamDeltas = false;
+      let receivedPartialOutput = false;
       const deferredStreamDeltas: string[] = [];
 
       /*
@@ -1620,7 +1637,7 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
       const toolResults = new Map<string, ToolResult>(
         (pending.toolResults ?? []).map((result) => [result.callId, result]),
       );
-      // 스트리밍이면 곧 만들 답변 말풍선, 아니면 완료 시점에 만드는 말풍선이다.
+      // JSON 응답도 요청 시작부터 같은 생성 중 말풍선을 사용한다.
       let toolResultMessageId: string | undefined;
       const publishToolResults = () => {
         if (!mountedRef.current || abortRef.current !== controller) return;
@@ -1634,6 +1651,7 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
           setMessages((current) => [...current, {
             id: streamingMessageId!, role: "assistant", content: "", kind: "message",
             generationState: "streaming", toolResults: snapshot, toolTaskProgress, ...reportSnapshot(),
+            ...(pending.retryNotice ? { retryNotice: pending.retryNotice } : {}),
           }]);
           return;
         }
@@ -1979,25 +1997,24 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
         );
       };
 
-      if (shouldStream) {
-        streamingMessageId = nextId("assistant");
-        toolResultMessageId = streamingMessageId;
-        pending.assistantMessageId = streamingMessageId;
-        setMessages((current) => [
-          ...current,
-          {
-            id: streamingMessageId as string,
-            role: "assistant",
-            content: "",
-            kind: "message",
-            generationState: "streaming",
-            ...reportSnapshot(),
-            ...(taskSnapshot() ? { toolTaskProgress: taskSnapshot() } : {}),
-            // 확인 설명의 재시도에서도 이미 완료한 도구 칩을 즉시 보존한다.
-            ...(toolResults.size > 0 ? { toolResults: [...toolResults.values()] } : {}),
-          },
-        ]);
-      }
+      streamingMessageId = nextId("assistant");
+      toolResultMessageId = streamingMessageId;
+      pending.assistantMessageId = streamingMessageId;
+      setMessages((current) => [
+        ...current,
+        {
+          id: streamingMessageId as string,
+          role: "assistant",
+          content: "",
+          kind: "message",
+          generationState: "streaming",
+          ...(pending.retryNotice ? { retryNotice: pending.retryNotice } : {}),
+          ...reportSnapshot(),
+          ...(taskSnapshot() ? { toolTaskProgress: taskSnapshot() } : {}),
+          // 확인 설명의 재시도에서도 이미 완료한 도구 칩을 즉시 보존한다.
+          ...(toolResults.size > 0 ? { toolResults: [...toolResults.values()] } : {}),
+        },
+      ]);
 
       let renderQueue = shouldStream
         ? new StreamRenderQueue(appendStreamDelta)
@@ -2009,6 +2026,7 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
         let response = shouldStream
           ? await requestChatStream(request, controller.signal, {
               onDelta(text) {
+                if (text) receivedPartialOutput = true;
                 if (deferStreamDeltas) deferredStreamDeltas.push(text);
                 else renderQueue?.enqueue(text);
               },
@@ -2198,6 +2216,14 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
         // 준비가 실패했거나 발행이 끝나지 않은 실행 요청은 이 경로로 승격하지 않는다.
         const retryAllowed = Boolean(pending.toolReportRequest && pending.toolVerification && pending.toolTask.dispatchComplete)
           || (!protocolFailure && Boolean(taskRuntime && taskRuntime.mutationDispatchCount === 0 && taskRuntime.steps.length === 0));
+        const zeroToolRequest = !pending.toolReportRequest && !pending.toolVerification &&
+          Boolean(taskRuntime && taskRuntime.mutationDispatchCount === 0 && taskRuntime.steps.length === 0);
+        pending.retryFailureKind = zeroToolRequest ? chatRetryFailureKind(requestError) : undefined;
+        pending.automaticRetryEligible = retryAllowed && zeroToolRequest && !protocolFailure &&
+          !receivedPartialOutput && Boolean(pending.retryFailureKind);
+        if (requestError instanceof ChatApiError && requestError.retryExhausted) pending.automaticRetryUsed = true;
+        const retryDelay = chatFailureRetryAfterMs(requestError);
+        pending.retryNotBefore = Date.now() + retryDelay;
         // done 없는 prefix는 완료된 manifest가 아니다. 실제 관측만 보존하고
         // 부분 결과를 완료라고 보고하거나 원래 실행 요청을 재전송하지 않는다.
         pending.toolResults = [...toolResults.values()];
@@ -2234,7 +2260,7 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
         retryRef.current = retryAllowed ? pending : null;
         // 실패 말풍선이 고정 안내와 재시도를 담으므로 하단 오류 박스는 비운다.
         setError(null);
-        if (retryAllowed) beginRetryWait(chatFailureRetryAfterMs(requestError));
+        if (retryAllowed) beginRetryWait(retryDelay);
         else clearRetryWait();
       } finally {
         // 응답 실패로 큐를 끝까지 기다리지 못한 경우에도 남은 이동·도구를 중단한다.
@@ -2284,6 +2310,40 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
     [availability],
   );
 
+  /** 실패 뒤에만 요청 사본을 준비한다. 화면 대화와 보고 스냅숏은 수정하지 않는다. */
+  const prepareRetry = useCallback((pending: PendingRetry, automatic: boolean): boolean => {
+    if (!mountedRef.current || retryRef.current !== pending || inFlightRef.current ||
+      Date.now() < Math.max(retryWaitDeadlineRef.current, pending.retryNotBefore ?? 0) ||
+      (!canRequest() && !canSendUnverifiedExplanation(availability, pending.responseMode ?? "default"))) return false;
+    if (pending.toolVerification && !pending.toolReportRequest) return false;
+    if (automatic && (pending.automaticRetryUsed || !pending.automaticRetryEligible ||
+      pending.toolVerification || pending.toolReportRequest)) return false;
+    const reducedHistory = !pending.toolVerification && !pending.toolReportRequest &&
+      pending.retryFailureKind === "capacity"
+      ? historyForCapacityRetry(pending.attemptHistory ?? pending.history) : undefined;
+    if (automatic && pending.retryFailureKind === "capacity" && !reducedHistory) return false;
+    if (automatic) pending.automaticRetryUsed = true;
+    if (reducedHistory) pending.attemptHistory = reducedHistory;
+    if (!pending.toolVerification) {
+      pending.retryNotice = pending.attemptHistory ? "reduced_context" : "retrying";
+      pending.toolTask = nextChatToolTaskGeneration(pending.toolTask);
+      pending.toolTaskProgress = undefined;
+      pending.toolTaskTelemetry = undefined;
+    }
+    if (pending.assistantMessageId) {
+      const failedMessageId = pending.assistantMessageId;
+      setMessages((current) => messagesForChatRetry(current, failedMessageId));
+      pending.assistantMessageId = undefined;
+    }
+    return true;
+  }, [availability, canRequest]);
+
+  /** 첫 요청의 finally가 끝난 뒤에만 새 controller로 한 번 복구한다. 재귀 호출은 없다. */
+  const performRequestWithRecovery = useCallback(async (pending: PendingRetry) => {
+    await performRequest(pending);
+    if (prepareRetry(pending, true)) await performRequest(pending);
+  }, [performRequest, prepareRetry]);
+
   /**
    * 사용자 질문을 보낸다.
    *
@@ -2315,38 +2375,24 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
         message, history, audienceOverride, responseMode,
       };
       retryRef.current = pending;
-      await performRequest(pending);
+      await performRequestWithRecovery(pending);
     },
-    [availability, canRequest, nextId, performRequest],
+    [availability, canRequest, nextId, performRequestWithRecovery],
   );
 
   /**
-   * 마지막으로 실패한 요청을 같은 재료로 다시 보낸다.
+   * 마지막 실패를 다시 보낸다. 용량 오류만 이전 시도 이력에서 더 줄이고,
+   * 완료된 도구 보고는 원래 불변 스냅숏을 그대로 사용한다.
    *
    * 실패한 답변 말풍선이 있으면 먼저 지운다. 그러지 않으면 실패한 답변과 새
    * 답변이 나란히 남는다. 재시도할 재료가 없거나 요청이 진행 중이면 아무 일도
    * 하지 않는다.
    */
   const retry = useCallback(async () => {
-    if (!canRequest() || !retryRef.current || inFlightRef.current) {
-      return;
-    }
     const pending = retryRef.current;
-    if (pending.toolVerification && !pending.toolReportRequest) return;
-    if (!pending.toolVerification) {
-      pending.toolTask = nextChatToolTaskGeneration(pending.toolTask);
-      pending.toolTaskProgress = undefined;
-      pending.toolTaskTelemetry = undefined;
-    }
-    if (pending.assistantMessageId) {
-      const failedMessageId = pending.assistantMessageId;
-      setMessages((current) =>
-        messagesForChatRetry(current, failedMessageId),
-      );
-      pending.assistantMessageId = undefined;
-    }
-    await performRequest(pending);
-  }, [canRequest, performRequest]);
+    if (!pending || !prepareRetry(pending, false)) return;
+    await performRequestWithRecovery(pending);
+  }, [performRequestWithRecovery, prepareRetry]);
 
   /**
    * 진행 중인 응답 생성을 사용자의 뜻으로 중단한다.

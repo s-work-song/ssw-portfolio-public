@@ -21,9 +21,231 @@ import { fourToolReportCase, providerReportFixture } from './toolReportFixtures.
 import { ToolReportPreparationError, hasVerifiedToolCompletion, messageToolReportState,
   toolReportFailureCode, toolReportFailureNotice } from './toolReport.ts';
 import { ToolTaskProtocolError } from './toolTaskRuntime.ts';
+import { chatRetryFailureKind } from './chatRetryRecovery.ts';
 
 const message = (id, role, content, extra = {}) => ({
   id, role, content, kind: 'message', ...extra,
+});
+
+const recoveryTurns = () => Array.from({ length: 6 }, (_, index) => [
+  { role: 'user', content: `이전 질문 ${index}` },
+  { role: 'assistant', content: null, tool_calls: [{ id: `history_getter_${index}`, type: 'function',
+    function: { name: 'get_portfolio_view_state', arguments: ' { } ' } }] },
+  { role: 'tool', tool_call_id: `history_getter_${index}`, content: ` { "original": ${index} } ` },
+  { role: 'assistant', content: `이전 답변 ${index}` },
+]);
+
+test('재시도 정책은 명시적인 일시·용량 오류만 분류하고 인증·충돌·429·일반4xx·계약 오류는 제외한다', () => {
+  for (const code of ['network', 'timeout', 'upstream_timeout', 'request_timeout', 'upstream_unavailable']) {
+    assert.equal(chatRetryFailureKind(new ChatApiError('private', { code })), 'transient');
+    assert.equal(chatRetryFailureKind(new ChatApiError('private', { code, httpStatus: 400 })), undefined);
+  }
+  for (const code of ['context_length_exceeded', 'request_too_large', 'payload_too_large']) {
+    for (const httpStatus of [undefined, 400, 413, 422, 502]) {
+      assert.equal(chatRetryFailureKind(new ChatApiError('private', { code, httpStatus })), 'capacity');
+    }
+    for (const httpStatus of [401, 403, 404, 405, 409, 429]) {
+      assert.equal(chatRetryFailureKind(new ChatApiError('private', { code, httpStatus })), undefined);
+    }
+  }
+  for (const code of ['rate_limited', 'upstream_busy', 'authentication_error', 'invalid_response', 'empty_answer',
+    'tool_call_failed', 'internal_error', 'unknown', undefined]) {
+    assert.equal(chatRetryFailureKind(new ChatApiError('context_length_exceeded라는 문구만 있음', { code })), undefined);
+  }
+  assert.equal(chatRetryFailureKind(new ToolTaskProtocolError()), undefined);
+  assert.equal(chatRetryFailureKind(new TypeError('network라는 문구만 있음')), undefined);
+  assert.equal(new ChatApiError('private', { retryExhausted: true }).retryExhausted, true);
+  for (const retryExhausted of [undefined, false, 'true', 1, {}]) {
+    assert.equal(new ChatApiError('private', { retryExhausted }).retryExhausted, false);
+  }
+});
+
+test('실제 Provider: 일반 일시 오류는 같은 원문 이력·현재 질문으로 한 번만 자동 재시도한다', async t => {
+  for (const streaming of [true, false]) {
+    for (const code of ['network', 'timeout', 'upstream_timeout', 'request_timeout', 'upstream_unavailable']) {
+      await t.test(`${streaming ? 'SSE' : 'JSON'} ${code}`, async t => {
+        const history = recoveryTurns().flat();
+        const original = structuredClone(history);
+        const f = providerReportFixture(t, { ordinary: true, streaming, history,
+          ordinaryOutcomes: [{ error: new ChatApiError('private', { code }) }] });
+        const question = f.pending.message;
+        await f.run();
+        assert.equal(f.state.requests.length, 2);
+        assert.equal(f.state.requests[0].history, history);
+        assert.equal(f.state.requests[1].history, history);
+        assert.equal(f.state.requests[1].message, question);
+        assert.equal(f.state.requests[1].conversationId, f.scope.conversationId);
+        assert.equal(f.state.requests[1].turnId, f.scope.turnId);
+        assert.equal(f.state.requests[1].toolTask.taskId, f.scope.taskId);
+        assert.deepEqual(f.state.requests.map(request => request.toolTask.generation), [1, 2]);
+        assert.equal(f.pending.history, history);
+        assert.equal(f.pending.attemptHistory, undefined);
+        assert.deepEqual(history, original);
+        assert.equal(f.pending.automaticRetryUsed, true);
+        assert.deepEqual(f.state.effects, []);
+        assert.equal(f.state.messages.length, 1);
+        assert.equal(f.state.messages[0].generationState, 'complete');
+        assert.equal(f.refs.inFlightRef.current, false);
+        assert.equal(f.refs.abortRef.current, null);
+      });
+    }
+  }
+});
+
+test('실제 Provider: 용량 자동/수동 재시도는 마지막 시도에서 단계적으로 줄이고 화면의 원본 대화는 보존한다', async t => {
+  for (const streaming of [true, false]) {
+    await t.test(streaming ? 'SSE' : 'JSON', async t => {
+      const turns = recoveryTurns();
+      const history = turns.flat();
+      const uiMessages = turns.flatMap((turn, index) => [message(`u${index}`, 'user', turn[0].content),
+        message(`a${index}`, 'assistant', `이전 답변 ${index}`, { generationState: 'complete', modelHistory: turn.slice(1) })]);
+      const f = providerReportFixture(t, { ordinary: true, streaming, history, messages: uiMessages,
+        ordinaryOutcomes: [
+          { error: new ChatApiError('private', { code: 'context_length_exceeded' }) },
+          { error: new ChatApiError('private', { code: 'request_too_large' }) },
+          { error: new ChatApiError('private', { code: 'payload_too_large' }) },
+          { wait: true },
+        ] });
+      f.pending.responseMode = 'explanation';
+      const question = f.pending.message;
+      await f.run();
+      assert.equal(f.state.requests.length, 2);
+      assert.deepEqual(f.state.requests[1].history, turns.slice(3).flat());
+      assert.equal(f.state.messages.at(-1).generationState, 'failed');
+      await f.retry();
+      assert.equal(f.state.requests.length, 3, '수동 재시도는 자동 예산을 다시 채우지 않는다');
+      assert.deepEqual(f.state.requests[2].history, turns.slice(4).flat());
+      const lastAttempt = f.retry();
+      await f.untilRequest(4);
+      assert.deepEqual(f.state.requests[3].history, turns[5]);
+      assert.equal(f.state.messages.at(-1).generationState, 'streaming');
+      assert.equal(f.state.messages.at(-1).retryNotice, 'reduced_context');
+      assert.equal(f.pending.history, history);
+      assert.deepEqual(f.state.messages.slice(0, uiMessages.length), uiMessages);
+      assert.deepEqual(historyFromMessages(uiMessages), history);
+      for (const request of f.state.requests) {
+        assert.equal(request.message, question);
+        assert.equal(request.responseMode, 'explanation');
+        assert.equal(request.conversationId, f.scope.conversationId);
+        assert.equal(request.turnId, f.scope.turnId);
+        assert.equal(request.toolTask.taskId, f.scope.taskId);
+      }
+      assert.deepEqual(f.state.requests.map(request => request.toolTask.generation), [1, 2, 3, 4]);
+      f.state.finishOrdinary();
+      await lastAttempt;
+      assert.equal(f.state.messages.at(-1).generationState, 'complete');
+      assert.deepEqual(f.state.effects, []);
+    });
+  }
+});
+
+test('실제 Provider: 최근 한 턴뿐이면 용량 자동 재시도를 하지 않고 transient 수동 재시도도 이력을 줄이지 않는다', async t => {
+  const history = recoveryTurns().at(-1);
+  const f = providerReportFixture(t, { ordinary: true, history, ordinaryOutcomes: [
+    { error: new ChatApiError('private', { code: 'context_length_exceeded' }) },
+    { error: new ChatApiError('private', { code: 'network', retryExhausted: true }) },
+  ] });
+  await f.run();
+  assert.equal(f.state.requests.length, 1);
+  await f.retry();
+  assert.equal(f.state.requests.length, 2);
+  await f.retry();
+  assert.equal(f.state.requests.length, 3);
+  assert.ok(f.state.requests.every(request => request.history === history));
+  assert.equal(f.pending.attemptHistory, undefined);
+});
+
+test('실제 Provider: server retryExhausted는 최종 오류 종류와 관계없이 자동 예산을 소진하고 수동 용량 축소만 허용한다', async t => {
+  for (const code of ['network', 'context_length_exceeded']) {
+    await t.test(code, async t => {
+      const turns = recoveryTurns();
+      const f = providerReportFixture(t, { ordinary: true, history: turns.flat(), ordinaryOutcomes: [
+        { error: new ChatApiError('private', { code, retryExhausted: true }) },
+        { error: new ChatApiError('private', { code: 'network' }) },
+      ] });
+      await f.run();
+      assert.equal(f.state.requests.length, 1);
+      assert.equal(f.pending.automaticRetryUsed, true);
+      await f.retry();
+      assert.equal(f.state.requests.length, 2);
+      assert.deepEqual(f.state.requests[1].history, code === 'context_length_exceeded' ? turns.slice(3).flat() : turns.flat());
+      assert.equal(f.state.messages.at(-1).generationState, 'failed');
+    });
+  }
+});
+
+test('실제 Provider: 429·busy·auth·충돌·일반4xx·응답계약·부분출력에는 자동 재시도가 없다', async t => {
+  const cases = [
+    { code: 'rate_limited', httpStatus: 429, retryAfterMs: 10_000 }, { code: 'upstream_busy' },
+    { code: 'authentication_error', httpStatus: 401 }, { code: 'network', httpStatus: 403 },
+    { code: 'context_length_exceeded', httpStatus: 409 }, { code: 'network', httpStatus: 400 },
+    { code: 'invalid_response' }, { code: 'empty_answer' }, { protocol: true },
+    { code: 'network', partial: '이미 받은 답변' }, { code: 'context_length_exceeded', partial: '일부 본문' },
+  ];
+  for (const option of cases) {
+    await t.test(`${option.code ?? 'protocol'} ${option.httpStatus ?? ''} ${option.partial ?? ''}`, async t => {
+      const error = option.protocol ? new ToolTaskProtocolError() : new ChatApiError('private', option);
+      const f = providerReportFixture(t, { ordinary: true, history: recoveryTurns().flat(),
+        ordinaryOutcomes: [{ error, partial: option.partial }] });
+      await f.run();
+      assert.equal(f.state.requests.length, 1);
+      assert.equal(f.state.messages.at(-1).generationState, 'failed');
+      if (option.partial) assert.equal(f.state.messages.at(-1).content, option.partial);
+      assert.equal(f.pending.attemptHistory, undefined);
+    });
+  }
+});
+
+test('실제 Provider: idle AI 설명은 재시도할 수 있고 429 deadline 이전의 수동 호출은 전송하지 않는다', async t => {
+  const f = providerReportFixture(t, { ordinary: true, availability: 'idle', canRequest: false,
+    responseMode: 'explanation', ordinaryOutcomes: [
+      { error: new ChatApiError('private', { code: 'invalid_response' }) },
+      { error: new ChatApiError('private', { code: 'rate_limited', retryAfterMs: 10_000 }) },
+    ] });
+  await f.run();
+  assert.equal(f.state.requests.length, 1);
+  await f.retry();
+  assert.equal(f.state.requests.length, 2, 'idle에서도 최초 AI 설명과 같은 허용 규칙으로 수동 재시도한다');
+  const waiting = f.state.messages.at(-1);
+  await f.retry();
+  assert.equal(f.state.requests.length, 2);
+  assert.equal(f.state.messages.at(-1), waiting);
+  f.refs.retryWaitDeadlineRef.current = Date.now() - 1;
+  f.pending.retryNotBefore = Date.now() - 1;
+  await f.retry();
+  assert.equal(f.state.requests.length, 3);
+  assert.equal(f.state.messages.at(-1).generationState, 'complete');
+});
+
+test('실제 Provider: 자동 두번째 요청 중 stop·새 대화·unmount·중복 클릭은 늦은 답변이나 추가 요청을 만들지 않는다', async t => {
+  for (const kind of ['stop', 'new-chat', 'unmount', 'double-click']) {
+    await t.test(kind, async t => {
+      const f = providerReportFixture(t, { ordinary: true, ordinaryOutcomes: [
+        { error: new ChatApiError('private', { code: 'network' }) }, { wait: true },
+      ] });
+      const run = f.run();
+      await f.untilRequest(2);
+      assert.equal(f.refs.inFlightRef.current, true);
+      if (kind === 'stop') f.stop();
+      else if (kind === 'new-chat') {
+        f.refs.retryRef.current = null;
+        f.state.messages = [];
+        f.refs.abortRef.current.abort();
+      } else if (kind === 'unmount') {
+        f.refs.mountedRef.current = false;
+        f.refs.abortRef.current.abort();
+      } else await f.retry();
+      f.state.finishOrdinary();
+      await run;
+      assert.equal(f.state.requests.length, 2);
+      assert.deepEqual(f.state.effects, []);
+      if (kind === 'stop') assert.equal(f.state.messages.at(-1).generationState, 'stopped');
+      if (kind === 'new-chat') assert.deepEqual(f.state.messages, []);
+      if (kind === 'double-click') assert.equal(f.state.messages.at(-1).generationState, 'complete');
+      assert.equal(f.refs.inFlightRef.current, false);
+      assert.equal(f.refs.abortRef.current, null);
+    });
+  }
 });
 
 test('실패 표시에는 고정 안내만 쓰고 오류 원문·별도 설명을 렌더하지 않는다', () => {
@@ -177,6 +399,22 @@ test('실제 MessageItem 렌더: 상태 전용 완료에는 칩만 있고 빈 Ma
   }));
   assert.ok(normal.includes('모델이 만든 자연어 설명'));
   assert.ok(normal.includes('class="markdownMessage"'));
+  const renderLoading = (generationState, toolReportState) => renderToStaticMarkup(React.createElement(
+    componentModule.exports.MessageItem, { ...props, suggestedQuestions: [], includeComplement: false,
+      message: message('loading', 'assistant', '', { generationState, toolReportState }) }));
+  for (const reportState of [undefined, 'pending']) {
+    const loading = renderLoading('streaming', reportState);
+    assert.ok(loading.includes(reportState ? '결과 보고 중' : '생성 중'));
+    assert.ok(loading.includes('<span class="generationDots" aria-hidden="true"><span></span><span></span><span></span></span>'));
+  }
+  for (const state of ['complete', 'failed', 'stopped']) {
+    assert.equal(renderLoading(state).includes('generationDots'), false);
+  }
+  const widgetCss = readFileSync(new URL('./ChatWidget.module.css', import.meta.url), 'utf8');
+  assert.match(widgetCss, /\.generationDots span\s*\{[^}]*animation:\s*generationDot 1\.2s[^}]*infinite/u);
+  assert.match(widgetCss, /:global\(:root\[data-motion="off"\]\) \.generationDots span\s*\{\s*animation: none;/u);
+  const reducedMotionCss = widgetCss.slice(widgetCss.indexOf('@media (prefers-reduced-motion: reduce)'));
+  assert.match(reducedMotionCss, /:global\(:root:not\(\[data-motion="on"\]\)\) \.generationDots span\s*\{\s*animation: none;/u);
   const failed = renderToStaticMarkup(React.createElement(componentModule.exports.MessageItem, {
     ...props, suggestedQuestions: [], message: failedChatMessage(message('c', 'assistant', '', { toolResults: [chip] }), true),
   }));
