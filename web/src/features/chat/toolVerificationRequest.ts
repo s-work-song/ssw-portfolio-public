@@ -3,7 +3,7 @@ import type {
   ChatToolVerification, ChatToolVerificationResult,
 } from "./types";
 import { ChatApiError } from "./parse.ts";
-import { modelHistoryCharacters, parseModelHistory } from "./modelHistory.ts";
+import { parseModelHistory } from "./modelHistory.ts";
 import { normalizePortfolioToolName } from "../portfolio-tools/schema.ts";
 import { expectedToolTaskScope, parseToolTaskResponse, parseToolTaskSteps, ToolTaskProtocolError } from "./toolTaskRuntime.ts";
 import { ToolReportPreparationError } from "./toolReport.ts";
@@ -44,9 +44,9 @@ function buildVerifiedToolHistory(
   history: ChatHistoryItem[] | undefined,
   results: ChatToolVerificationResult[],
   latest: BrowserSnapshot,
-): { history: ChatHistoryItem[]; failure?: never } | { history?: never; failure: "history_invalid" | "history_budget" } {
+): { history: ChatHistoryItem[]; failure?: never } | { history?: never; failure: "history_invalid" } {
   const native = parseModelHistory(history);
-  if (!native || native.length > 24 || native.at(-1)?.role !== "tool") return { failure: "history_invalid" };
+  if (!native || native.at(-1)?.role !== "tool") return { failure: "history_invalid" };
   const calls = new Map(native.flatMap((item) => item.role === "assistant"
     ? (item.tool_calls ?? []).map((call) => [call.id, call] as const) : []));
   const observations = new Map(results.map((result) => [result.toolCallId, result]));
@@ -59,7 +59,7 @@ function buildVerifiedToolHistory(
   if (observations.size !== results.length || expected.size !== observations.size ||
     results.some((result) => expected.get(result.toolCallId) !== result.toolName)) return { failure: "history_invalid" };
   // 최종 상태는 요청 최상위에도 있다. 이력에는 마지막 관측 결과에 한 번만
-  // 보존해 설정 변경 기록 20개가 도구 수만큼 복제되어 12k를 넘지 않게 한다.
+  // 보존하고 각 도구의 실제 관측과 getter 원문은 빠짐없이 유지한다.
   const finalObservationIndex = native.findLastIndex((item) => item.role === "tool" && observations.has(item.tool_call_id));
   const verified = native.map((item, index): ChatHistoryItem => {
     if (item.role !== "tool") return item;
@@ -68,7 +68,7 @@ function buildVerifiedToolHistory(
       ...observation, ...(index === finalObservationIndex ? latest : {}),
     }) } : item;
   });
-  return modelHistoryCharacters(verified) <= 12_000 ? { history: verified } : { failure: "history_budget" };
+  return { history: verified };
 }
 
 /** 준비가 끝난 보고 요청은 재시도 때 최신 화면으로 덮어쓰지 않는 불변 스냅숏이다. */

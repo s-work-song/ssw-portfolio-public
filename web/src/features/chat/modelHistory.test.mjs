@@ -164,14 +164,14 @@ test('다중 변경 호출은 모든 브라우저 관측이 있을 때만 native
   assert.deepEqual(JSON.parse(verified[2].content), { ...sizeResult, ...browser });
 });
 
-test('4도구와 누적 설정20개는 최종 snapshot을 1회 보존해 12k 안에 들고 호출·관측·상태 값을 잃지 않는다', async () => {
+test('4도구와 누적 설정20개는 최종 snapshot을 1회 보존하고 호출·관측·상태 값을 잃지 않는다', async () => {
   const f = fourToolReportCase();
   const original = JSON.stringify(f.native);
   const repeated = f.native.map((item, index) => index === 0 ? item
     : { ...item, content: JSON.stringify({ ...f.results[index - 1], ...f.latest }) });
   assert.ok(modelHistoryCharacters(repeated) > 12_000, '기존 정상 사용 경로의 상한 초과를 재현한다');
   const compact = verifiedToolHistory(f.native, f.results, f.latest);
-  assert.ok(modelHistoryCharacters(compact) < 12_000);
+  assert.ok(modelHistoryCharacters(compact) < modelHistoryCharacters(repeated));
   assert.equal(compact.length, f.native.length);
   assert.equal(JSON.stringify(f.native), original);
   assert.equal(compact[0], f.native[0]);
@@ -216,14 +216,38 @@ test('마지막 관측 뒤의 getter 원문도 보존하고 snapshot은 마지�
   assert.equal(verified.filter(item => item.role === 'tool' && Object.hasOwn(JSON.parse(item.content), 'uiSettings')).length, 1);
 });
 
-test('큰 원문·잘못된 native·manifest 불일치는 여전히 전송 전 안전 코드로 거절한다', async () => {
-  for (const reason of ['history_budget', 'history_invalid', 'manifest_mismatch']) {
+test('16개 도구의 29항목·20k 초과 getter 원문도 관측·manifest와 함께 불변 보고 요청에 보존한다', async () => {
+  const f = fourToolReportCase();
+  const getters = Array.from({ length: 12 }, (_, index) => {
+    const id = `getter_${index}`;
+    const pair = batch(id, 'get_portfolio_view_state', ' { } ');
+    pair[1].content = index === 0 ? ` { "unmodified": "${'x'.repeat(20_001)}" } ` : ' { "page": "research" } ';
+    f.steps.push({ stepIndex: 4 + index, toolCallId: id, toolName: 'get_portfolio_view_state',
+      source: 'native', dispatchStatus: 'reported' });
+    return pair;
+  });
+  f.native.push(...getters.flat());
+  const before = structuredClone(f.native);
+  let sent;
+  await requestVerifiedToolResponse(Promise.resolve(), f.request, f.results, () => f.latest,
+    async value => { sent = value; return response({ toolTask: { ...f.scope, steps: f.steps,
+      dispatchComplete: true, status: 'completed' } }); }, new AbortController().signal, f.native);
+  assert.ok(modelHistoryCharacters(sent.toolHistory) > 20_000);
+  assert.equal(sent.toolHistory.length, 29);
+  assert.deepEqual(sent.toolHistory.slice(5), getters.flat());
+  assert.deepEqual(sent.toolVerification.results, f.results);
+  assert.deepEqual(sent.toolTask.steps, f.steps);
+  assert.deepEqual(f.native, before);
+  assert.ok(Object.isFrozen(sent.toolHistory.at(-1)));
+  const snapshot = JSON.stringify(sent);
+  getters[0][1].content = '나중에 바뀐 getter';
+  assert.equal(JSON.stringify(sent), snapshot);
+});
+
+test('잘못된 native·manifest 불일치는 여전히 전송 전 안전 코드로 거절한다', async () => {
+  for (const reason of ['history_invalid', 'manifest_mismatch']) {
     const f = fourToolReportCase();
-    if (reason === 'history_budget') {
-      const getter = batch('large_getter', 'get_portfolio_view_state', '{}');
-      getter[1].content = JSON.stringify({ unmodified: 'x'.repeat(12_100) });
-      f.native.push(...getter);
-    } else if (reason === 'history_invalid') f.native[0].tool_calls[0].function.arguments = '{broken';
+    if (reason === 'history_invalid') f.native[0].tool_calls[0].function.arguments = '{broken';
     else f.request.toolTask.steps[0].toolCallId = 'different-native-id';
     let sends = 0;
     await assert.rejects(requestVerifiedToolResponse(Promise.resolve(), f.request, f.results, () => f.latest,
@@ -369,7 +393,7 @@ test('failed/stopped/greeting/legacy failure explanation의 native 이력은 재
   ]), [{ role: 'user', content: '중단한 질문' }]);
 });
 
-test('native 이력도 최근 다섯 USER turn을 보존하고 여섯 번째 오래된 턴 전체를 제외한다', () => {
+test('native 이력은 여섯 USER turn도 오래된 질문·호출·결과·답변부터 모두 보존한다', () => {
   const messages = Array.from({ length: 6 }, (_, i) => [
     message(`u${i}`, 'user', `질문${i}`),
     message(`a${i}`, 'assistant', '공개 최종 답변', { generationState: 'complete', modelHistory: completed(`call_${i}`) }),
@@ -380,24 +404,24 @@ test('native 이력도 최근 다섯 USER turn을 보존하고 여섯 번째 오
     { role: 'user', content: `질문${i}` }, ...completed(`call_${i}`),
   ]).flat());
   const history = historyFromMessages(messages);
-  assert.equal(history.length, 20);
-  assert.deepEqual(history, Array.from({ length: 5 }, (_, i) => [
-    { role: 'user', content: `질문${i + 1}` }, ...completed(`call_${i + 1}`),
+  assert.equal(history.length, 24);
+  assert.deepEqual(history, Array.from({ length: 6 }, (_, i) => [
+    { role: 'user', content: `질문${i}` }, ...completed(`call_${i}`),
   ]).flat());
 });
 
-test('native 호출 없는 일반 대화는 기존과 같이 최근 다섯 USER turn/열 개 메시지를 유지한다', () => {
+test('native 호출 없는 일반 대화도 다섯 턴을 넘겨 모든 원문 메시지를 유지한다', () => {
   const messages = Array.from({ length: 6 }, (_, i) => [
     message(`u${i}`, 'user', `질문${i}`),
     message(`a${i}`, 'assistant', `답변${i}`, { generationState: 'complete' }),
   ]).flat();
   assert.equal(historyFromMessages(messages.slice(0, 10)).length, 10);
-  assert.deepEqual(historyFromMessages(messages), Array.from({ length: 5 }, (_, i) => [
-    { role: 'user', content: `질문${i + 1}` }, { role: 'assistant', content: `답변${i + 1}` },
+  assert.deepEqual(historyFromMessages(messages), Array.from({ length: 6 }, (_, i) => [
+    { role: 'user', content: `질문${i}` }, { role: 'assistant', content: `답변${i}` },
   ]).flat());
 });
 
-test('연속 assistant 선행 안내는 하나의 legacy group으로 USER turn과 함께 다섯 그룹까지만 보존한다', () => {
+test('연속 assistant 선행 안내도 USER turn 수와 무관하게 같은 순서로 보존한다', () => {
   const leading = Array.from({ length: 12 }, (_, i) =>
     message(`legacy${i}`, 'assistant', `안내${i}`, { generationState: 'complete' }));
   const pairs = Array.from({ length: 5 }, (_, i) => [
@@ -408,10 +432,10 @@ test('연속 assistant 선행 안내는 하나의 legacy group으로 USER turn�
   assert.equal(fourTurns.length, 20, '선행 안내 열두 개는 네 USER 턴과 함께 다섯 그룹으로 보존한다');
   assert.deepEqual(fourTurns, [...leading, ...pairs.slice(0, 8)].map(({ role, content }) => ({ role, content })));
   assert.deepEqual(historyFromMessages([...leading, ...pairs]),
-    pairs.map(({ role, content }) => ({ role, content })), '다섯 USER 턴이 생기면 가장 오래된 선행 안내 그룹 전체를 제외한다');
+    [...leading, ...pairs].map(({ role, content }) => ({ role, content })), 'USER 턴이 늘어도 선행 안내를 버리지 않는다');
 });
 
-test('다섯 native USER turn의 최대 130개 wire item도 문자 예산 안이면 체인 그대로 유지한다', () => {
+test('여섯 native USER turn의 156개 wire item도 체인을 끊거나 앞부분을 버리지 않는다', () => {
   const nativeTurn = (i) => [
     ...Array.from({ length: 12 }, (_, n) => [
       { role: 'assistant', content: null, tool_calls: [{
@@ -427,39 +451,62 @@ test('다섯 native USER turn의 최대 130개 wire item도 문자 예산 안이
     message(`a${i}`, 'assistant', `최종 답변${i}`, { generationState: 'complete', modelHistory: nativeTurn(i) }),
   ]).flat();
   const history = historyFromMessages(messages);
-  assert.equal(history.length, 130);
-  assert.ok(modelHistoryCharacters(history) <= 12_000);
-  assert.deepEqual(history, Array.from({ length: 5 }, (_, i) => [
-    { role: 'user', content: `질문${i + 1}` }, ...nativeTurn(i + 1),
+  assert.equal(history.length, 156);
+  assert.deepEqual(history, Array.from({ length: 6 }, (_, i) => [
+    { role: 'user', content: `질문${i}` }, ...nativeTurn(i),
   ]).flat());
 });
 
-test('12000자 예산에는 raw 인수/호출 ID/도구명/결과/본문이 모두 포함되고 큰 턴 전체를 제외한다', () => {
+test('12000자를 넘는 턴도 raw 인수·호출 ID·도구명·결과·본문을 잘라내지 않는다', () => {
   const native = completed();
-  native[1].content = 'x'.repeat(11_930);
-  assert.ok(modelHistoryCharacters(native) > 11_930);
+  native[1].content = 'x'.repeat(20_001);
+  assert.ok(modelHistoryCharacters(native) > 20_000);
   const messages = [message('old-u', 'user', '앞 질문'), message('old-a', 'assistant', '앞 답변'),
     message('big-u', 'user', '큰 질문'.repeat(50)),
     message('big-a', 'assistant', '공개 최종 답변', { generationState: 'complete', modelHistory: native })];
-  // 최신 턴 자체가 초과하면 더 오래된 부분 이력도 남기지 않는다.
-  assert.deepEqual(historyFromMessages(messages), []);
-  native[1].content = 'x'.repeat(11_800);
-  const history = historyFromMessages([message('u', 'user', '질문'),
-    message('a', 'assistant', '공개 최종 답변', { modelHistory: native })]);
-  assert.ok(history.length <= 130);
-  assert.ok(modelHistoryCharacters(history) <= 12_000);
-  assert.equal(history[0].role, 'user');
+  const history = historyFromMessages(messages);
+  assert.deepEqual(history, [{ role: 'user', content: '앞 질문' }, { role: 'assistant', content: '앞 답변' },
+    { role: 'user', content: '큰 질문'.repeat(50) }, ...native]);
+  assert.ok(modelHistoryCharacters(history) > 20_000);
+  assert.equal(history.at(-2), native[1]);
 });
 
-test('CURRENT chain의 item/문자 상한을 넘으면 잘라내지 않고 선택 필드만 제외한다', () => {
-  const tooMany = [...Array.from({ length: 13 }, (_, i) => batch(`call_${i}`)).flat()];
-  assert.equal(parseModelHistory(tooMany), undefined);
+test('CURRENT chain은 25항목·12k/20k를 넘겨도 완결된 공개 이력 원문을 보존한다', () => {
+  const many = [...Array.from({ length: 16 }, (_, i) => batch(`call_${i}`)).flat(),
+    { role: 'assistant', content: '공개 최종 답변' }];
+  assert.equal(many.length, 33);
+  assert.equal(parseModelHistory(many), many);
+  assert.equal(parseChatResponse(response({ modelHistory: many })).modelHistory, many);
   const tooLarge = completed();
   tooLarge[1].content = 'x'.repeat(20_001);
-  assert.equal(parseModelHistory(tooLarge), undefined);
-  const requestTooLarge = batch();
+  assert.equal(parseModelHistory(tooLarge), tooLarge);
+  assert.equal(parseChatResponse(response({ modelHistory: tooLarge })).modelHistory, tooLarge);
+  const requestTooLarge = batch('large_getter', 'get_portfolio_view_state', '{}');
   requestTooLarge[1].content = 'x'.repeat(12_001);
-  assert.equal(verifiedToolHistory(requestTooLarge, [], browser), undefined);
+  assert.deepEqual(verifiedToolHistory(requestTooLarge, [], browser), requestTooLarge);
+});
+
+test('2k를 넘는 유효한 native JSON 인수도 공백과 순서를 포함해 원문 그대로 보존한다', () => {
+  const largeArguments = ` ${' '.repeat(2_001)}{ "theme" : "dark" }\n`;
+  const native = batch('long_arguments', 'set_portfolio_theme', largeArguments);
+  assert.ok(largeArguments.length > 2_000);
+  assert.equal(parseModelHistory(native), native);
+  const result = { ...verification[0], toolCallId: 'long_arguments' };
+  const verified = verifiedToolHistory(native, [result], browser);
+  assert.equal(verified[0].tool_calls[0].function.arguments, largeArguments);
+  assert.deepEqual(JSON.parse(verified[1].content), { ...result, ...browser });
+});
+
+test('질문 입력창은 고정 maxLength 없이 2k를 넘는 원문을 상태로 전달한다', () => {
+  const widget = readFileSync(new URL('./ChatWidget.tsx', import.meta.url), 'utf8');
+  const input = widget.match(/<textarea\s+id="chat-message"[\s\S]*?\/>/u)?.[0];
+  assert.ok(input);
+  assert.doesNotMatch(input, /maxLength\s*=/u);
+  assert.match(input, /changeDraft\(event\.currentTarget\.value\)/u);
+  const question = `  ${'질문 원문 '.repeat(500)}  `;
+  assert.ok(question.length > 2_000);
+  assert.deepEqual(historyFromMessages([message('long-question', 'user', question)]),
+    [{ role: 'user', content: question }]);
 });
 
 const optionsRound = (id, catalog, snapshot = {}) => [
@@ -505,10 +552,10 @@ test('같은 지원 목록의 과거 사본만 줄이고 최신 턴·다른 버�
     '현재 체인에서도 첫 조회 뒤 동일한 반복만 줄인다');
 });
 
-test('12,000자 계산 전에 중복 목록을 줄여 최근 다섯 턴과 최신 카탈로그를 보존한다', () => {
+test('중복 목록 정책은 유지하되 12k 초과 이력의 여섯 턴과 각 관측값을 모두 보존한다', () => {
   const catalog = { theme: { label: '테마', values: { dark: 'd'.repeat(680) } } };
   const nativeHistories = Array.from({ length: 6 }, (_, index) =>
-    optionsRound(String(index), catalog, { state: 's'.repeat(1_700), sequence: index }));
+    optionsRound(String(index), catalog, { state: 's'.repeat(3_000), sequence: index }));
   const before = structuredClone(nativeHistories);
   const messages = nativeHistories.flatMap((modelHistory, index) => [
     message(`catalog-u${index}`, 'user', `카탈로그 질문${index}`),
@@ -521,12 +568,14 @@ test('12,000자 계산 전에 중복 목록을 줄여 최근 다섯 턴과 최�
     '축약 전 최근 다섯 턴은 문자 예산을 넘는 fixture다');
   const history = historyFromMessages(messages);
   assert.deepEqual(history.filter(({ role }) => role === 'user').map(({ content }) => content),
-    ['카탈로그 질문1', '카탈로그 질문2', '카탈로그 질문3', '카탈로그 질문4', '카탈로그 질문5']);
-  assert.ok(modelHistoryCharacters(history) <= 12_000);
+    ['카탈로그 질문0', '카탈로그 질문1', '카탈로그 질문2', '카탈로그 질문3', '카탈로그 질문4', '카탈로그 질문5']);
+  assert.ok(modelHistoryCharacters(history) > 12_000);
   const catalogs = history.filter(({ role }) => role === 'tool')
     .map(({ content }) => JSON.parse(content))
     .filter((result) => Object.hasOwn(result, 'supportedOptions'));
   assert.equal(catalogs.length, 1);
-  assert.equal(catalogs[0].snapshot.sequence, 5, '턴 탈락 뒤에도 가장 최근 카탈로그가 남는다');
+  assert.equal(catalogs[0].snapshot.sequence, 5, '가장 최근 카탈로그 원문이 남는다');
+  assert.deepEqual(history.filter(({ role }) => role === 'tool').map(({ content }) => JSON.parse(content).snapshot.sequence),
+    [0, 1, 2, 3, 4, 5], '중복 목록 외에 각 턴의 관측값은 모두 보존한다');
   assert.deepEqual(nativeHistories, before, '응답 modelHistory 원본을 바꾸지 않는다');
 });

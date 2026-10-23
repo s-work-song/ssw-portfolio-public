@@ -363,14 +363,15 @@ test('실패 질문·답변·설명과 중단/스트리밍 답변은 다음 모�
   ]);
 });
 
-test('일반 대화의 최근 다섯 USER 턴과 12000자 상한을 유지한다', () => {
+test('일반 대화의 여섯 USER 턴과 12000자 초과 질문도 모두 보존한다', () => {
   const messages = Array.from({ length: 6 }, (_, n) => [
     message(`u${n}`, 'user', `질문${n}`),
     message(`a${n}`, 'assistant', `답변${n}`, { generationState: 'complete' }),
   ]).flat();
-  assert.deepEqual(historyFromMessages(messages), messages.slice(2).map(({ role, content }) => ({ role, content })));
-  assert.equal(historyFromMessages(messages).length, 10);
-  assert.deepEqual(historyFromMessages([message('big', 'user', 'x'.repeat(12_001))]), []);
+  assert.deepEqual(historyFromMessages(messages), messages.map(({ role, content }) => ({ role, content })));
+  assert.equal(historyFromMessages(messages).length, 12);
+  assert.deepEqual(historyFromMessages([message('big', 'user', 'x'.repeat(12_001))]),
+    [{ role: 'user', content: 'x'.repeat(12_001) }]);
 });
 
 test('재시도는 실패 답변과 구형 설명만 지우고 원래 질문·완료 답변을 보존한다', () => {

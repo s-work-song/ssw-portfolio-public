@@ -1728,7 +1728,6 @@ export function ChatWidget() {
                       id="chat-message"
                       ref={inputRef}
                       rows={2}
-                      maxLength={2_000}
                       value={draft}
                       onChange={(event) =>
                         changeDraft(event.currentTarget.value)

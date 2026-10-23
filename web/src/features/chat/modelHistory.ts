@@ -13,7 +13,7 @@ const validId = (value: unknown): value is string =>
  * 보존한다. 알 수 없는 필드나 사설 도구가 섞이면 선택 필드 전체를 버린다.
  */
 export function parseModelHistory(value: unknown): ChatHistoryItem[] | undefined {
-  if (!Array.isArray(value) || value.length === 0 || value.length > 25) return undefined;
+  if (!Array.isArray(value) || value.length === 0) return undefined;
   const pending = new Set<string>();
   const seen = new Set<string>();
   let finalSeen = false;
@@ -30,7 +30,7 @@ export function parseModelHistory(value: unknown): ChatHistoryItem[] | undefined
             !validId(call.id) || seen.has(call.id) || call.type !== "function" ||
             !isRecord(call.function) || !onlyKeys(call.function, ["name", "arguments"]) ||
             typeof call.function.name !== "string" || !PUBLIC_HISTORY_TOOLS.has(call.function.name) ||
-            typeof call.function.arguments !== "string" || call.function.arguments.length > 2_000) {
+            typeof call.function.arguments !== "string") {
             return undefined;
           }
           try {
@@ -52,11 +52,10 @@ export function parseModelHistory(value: unknown): ChatHistoryItem[] | undefined
   }
   if (pending.size) return undefined;
   const history = value as ChatHistoryItem[];
-  if (modelHistoryCharacters(history) > 20_000) return undefined;
   return history;
 }
 
-/** 백엔드와 동일하게 모든 본문·호출 ID·이름·원문 인수를 문자 예산에 포함한다. */
+/** 회귀 검증용 문자 수다. 본문·호출 ID·이름·원문 인수를 세며 문맥을 제한하지 않는다. */
 export function modelHistoryCharacters(history: readonly ChatHistoryItem[]): number {
   return history.reduce((total, item) => total + (item.content?.length ?? 0) +
     (item.role === "tool" ? item.tool_call_id.length : 0) +
