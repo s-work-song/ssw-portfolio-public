@@ -14,6 +14,19 @@ import { readPortfolioViewState, resolvePortfolioViewTarget } from '../webmcp/po
 import { parseToolExecution } from '../chat/parse.ts';
 import { CHAT_ACTION_TARGET_PREPARE_EVENT } from '../chat/navigation.ts';
 
+test('실험 제목 핑은 카드 안쪽 곡률을 공유해 둥근 clipping 경계에서 잘리지 않는다', () => {
+  const css = readFileSync(new URL('../../components/about/AgentExperimentGallery.module.css', import.meta.url), 'utf8');
+  const stage = css.match(/\.stage\s*\{([^}]+)\}/u)?.[1] ?? '';
+  assert.match(stage, /--experiment-stage-radius:\s*16px/u);
+  assert.match(stage, /--experiment-stage-border-width:\s*1px/u);
+  assert.match(stage, /border-radius:\s*var\(--experiment-stage-radius\)/u);
+  assert.match(stage, /overflow:\s*hidden/u);
+  // 공통 [data-chat-action-target]보다 구체적으로 지정하고 animated/static 모두 적용한다.
+  const highlight = css.match(/\.experimentHeading:global\(\[data-chat-action-target\]\)\s*\{([^}]+)\}/u)?.[1] ?? '';
+  assert.match(highlight, /border-radius:\s*calc\(var\(--experiment-stage-radius\) - var\(--experiment-stage-border-width\)\)\s+calc\(var\(--experiment-stage-radius\) - var\(--experiment-stage-border-width\)\)\s+0\s+0/u);
+  assert.doesNotMatch(highlight, /(?:z-index|overflow|position|scroll-margin|padding):/u);
+});
+
 function useDom(t, id = 'svg-illustrations') {
   const previousWindow = globalThis.window;
   const previousDocument = globalThis.document;

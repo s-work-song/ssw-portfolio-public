@@ -40,9 +40,13 @@
 }
 .filters button[aria-pressed='true']:hover { color: var(--accent-contrast, #fff); background: transparent; border-color: transparent; }
 .section button:focus-visible, .section a:focus-visible { outline: 2px solid var(--accent, #6366f1); outline-offset: 3px; }
-.stage { border: 1px solid var(--border-strong); border-radius: 16px; overflow: hidden; }
+.stage { --experiment-stage-radius: 16px; --experiment-stage-border-width: 1px; border: var(--experiment-stage-border-width) solid var(--border-strong); border-radius: var(--experiment-stage-radius); overflow: hidden; }
 .slide { animation: reveal 220ms ease-out; }
 .experimentHeading { padding: clamp(16px, 3vw, 24px); border-bottom: 1px solid var(--border); scroll-margin-top: 108px; }
+/* 공통 핑의 사각 모서리가 카드의 overflow 경계에 잘리지 않게 안쪽 곡률을 맞춘다. */
+.experimentHeading:global([data-chat-action-target]) {
+  border-radius: calc(var(--experiment-stage-radius) - var(--experiment-stage-border-width)) calc(var(--experiment-stage-radius) - var(--experiment-stage-border-width)) 0 0;
+}
 .experimentHeading h4 { margin: 0; font-size: clamp(1.05rem, 2.3vw, 1.35rem); line-height: 1.5; overflow-wrap: anywhere; }
 .animationGroups { display: grid; gap: 20px; padding: 20px; background: var(--bg-elev-2); }
 .animationGroupTitle { margin: 0 0 10px; color: var(--accent, #6366f1); font-size: .88rem; font-weight: 700; }
