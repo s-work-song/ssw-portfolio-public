@@ -167,7 +167,7 @@ export async function requestChat(
   try {
     payload = await response.json();
   } catch {
-    throw new ChatApiError("채팅 서버의 응답을 읽지 못했습니다.");
+    throw new ChatApiError("채팅 서버의 응답을 읽지 못했습니다.", { code: "invalid_response" });
   }
 
   if (!response.ok) {
@@ -284,10 +284,10 @@ async function consumeSseResponse(
 ): Promise<void> {
   const contentType = response.headers.get("content-type")?.toLowerCase() ?? "";
   if (!contentType.startsWith("text/event-stream")) {
-    throw new ChatApiError("채팅 서버가 스트리밍 응답을 반환하지 않았습니다.");
+    throw new ChatApiError("채팅 서버가 스트리밍 응답을 반환하지 않았습니다.", { code: "invalid_response" });
   }
   if (!response.body) {
-    throw new ChatApiError("채팅 서버의 스트리밍 응답을 읽지 못했습니다.");
+    throw new ChatApiError("채팅 서버의 스트리밍 응답을 읽지 못했습니다.", { code: "invalid_response" });
   }
 
   const reader = response.body.getReader();
@@ -398,12 +398,13 @@ export async function requestChatStream(
       signal,
       (event, payload) => {
         if (!["meta", "tool", "delta", "done", "error"].includes(event)) {
-          throw new ChatApiError("지원하지 않는 스트리밍 이벤트를 받았습니다.");
+          throw new ChatApiError("지원하지 않는 스트리밍 이벤트를 받았습니다.", { code: "invalid_response" });
         }
         if (event === "meta") {
           if (!isRecord(payload)) {
             throw new ChatApiError(
               "스트리밍 메타데이터 형식을 확인할 수 없습니다.",
+              { code: "invalid_response" },
             );
           }
           if (taskScope) {
@@ -416,7 +417,7 @@ export async function requestChatStream(
         if (event === "delta") {
           if (taskScope && !receivedTaskMeta) throw new ToolTaskProtocolError();
           if (!isRecord(payload) || !isString(payload.text)) {
-            throw new ChatApiError("스트리밍 본문 형식을 확인할 수 없습니다.");
+            throw new ChatApiError("스트리밍 본문 형식을 확인할 수 없습니다.", { code: "invalid_response" });
           }
           // 화면 재생 속도와 무관하게 다음 SSE 이벤트를 즉시 읽는다.
           handlers.onDelta(payload.text);
@@ -427,14 +428,14 @@ export async function requestChatStream(
           const execution = taskScope ? parseTaskToolExecution(payload, taskScope, parseToolExecution)
             : parseToolExecution(payload);
           if (!execution) {
-            throw new ChatApiError("모델 도구 실행 형식을 확인할 수 없습니다.");
+            throw new ChatApiError("모델 도구 실행 형식을 확인할 수 없습니다.", { code: "invalid_response" });
           }
           if (!taskStream || taskStream.accept(execution)) handlers.onTool?.(execution);
           return;
         }
         if (event === "error") {
           if (!isRecord(payload)) {
-            throw new ChatApiError("스트리밍 오류 형식을 확인할 수 없습니다.");
+            throw new ChatApiError("스트리밍 오류 형식을 확인할 수 없습니다.", { code: "invalid_response" });
           }
           throw new ChatApiError(
             isString(payload.message)
@@ -459,7 +460,7 @@ export async function requestChatStream(
       deadline.touch,
     );
     if (!doneResponse) {
-      throw new ChatApiError("완료되지 않은 스트리밍 응답을 받았습니다.");
+      throw new ChatApiError("완료되지 않은 스트리밍 응답을 받았습니다.", { code: "invalid_response" });
     }
     return doneResponse;
   } catch (error) {

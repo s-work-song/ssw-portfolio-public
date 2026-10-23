@@ -1,4 +1,5 @@
 import { ChatApiError } from "./parse.ts";
+import { toolReportFailureCode } from "./toolReport.ts";
 import type { ChatMessage } from "./types";
 
 const DIAGNOSTIC_CODES = new Set([
@@ -41,7 +42,7 @@ export function messagesForChatRetry(messages: ChatMessage[], failedMessageId: s
   return visibleChatMessages(messages).filter((message) => message.id !== failedMessageId);
 }
 
-type DiagnosticStage = "request" | "tool" | "navigation";
+type DiagnosticStage = "request" | "tool" | "navigation" | "tool_report";
 type DiagnosticLogger = (label: string, detail: Record<string, string | number>) => void;
 
 /**
@@ -56,6 +57,7 @@ export function logChatFailureLocally(
 ): void {
   if (!isLocalChatDiagnosticHost(hostname)) return;
   const detail: Record<string, string | number> = { stage };
+  if (stage === "tool_report") detail.reportFailure = toolReportFailureCode(error);
   if (error instanceof ChatApiError) {
     detail.type = "ChatApiError";
     if (error.code) {

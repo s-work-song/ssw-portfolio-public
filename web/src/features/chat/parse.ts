@@ -562,7 +562,7 @@ export function parseChatResponse(
   context: Pick<ChatRequest, "toolTask" | "conversationId" | "turnId" | "toolVerification"> = {},
 ): ChatResponse {
   if (!isRecord(value)) {
-    throw new ChatApiError("서버 응답 형식을 확인할 수 없습니다.");
+    throw new ChatApiError("서버 응답 형식을 확인할 수 없습니다.", { code: "invalid_response" });
   }
 
   const {
@@ -610,7 +610,7 @@ export function parseChatResponse(
       !Array.isArray(toolExecutions) || toolExecutions.length !== 0
     ))
   ) {
-    throw new ChatApiError("서버 응답 형식을 확인할 수 없습니다.");
+    throw new ChatApiError("서버 응답 형식을 확인할 수 없습니다.", { code: "invalid_response" });
   }
 
   const parsedSegments = segments
@@ -733,6 +733,6 @@ export function parseEventData(data: string): unknown {
   try {
     return JSON.parse(data);
   } catch {
-    throw new ChatApiError("스트리밍 응답 데이터를 읽지 못했습니다.");
+    throw new ChatApiError("스트리밍 응답 데이터를 읽지 못했습니다.", { code: "invalid_response" });
   }
 }

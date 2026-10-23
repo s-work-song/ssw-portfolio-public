@@ -360,7 +360,7 @@ test('실제 JSON·SSE done API와 완료 말풍선 매핑은 추천 생략 메�
   const provider = readFileSync(new URL('./ChatProvider.tsx', import.meta.url), 'utf8');
   const messageStart = provider.indexOf('const completedMessage: ChatMessage = ') + 'const completedMessage: ChatMessage = '.length;
   const messageEnd = provider.indexOf('\n        };', messageStart) + '\n        }'.length;
-  const completedMessage = new Function('response', 'streamingMessageId', 'nextId', 'toolResults', 'taskSnapshot',
+  const completedMessage = new Function('response', 'streamingMessageId', 'nextId', 'toolResults', 'taskSnapshot', 'reportSnapshot',
     `return ${provider.slice(messageStart, messageEnd)};`);
   const request = { message: '현재 시간이 어떻게 돼?', history: [], audience: 'default', tone: 'official', pageContext: 'default' };
   for (const suppressed of [true, undefined]) {
@@ -385,7 +385,7 @@ test('실제 JSON·SSE done API와 완료 말풍선 매핑은 추천 생략 메�
       assert.equal(response.answer, payload.answer);
       if (streaming) assert.deepEqual(deltas, [payload.answer]);
       const chip = { callId: 'theme-1', tool: 'set_portfolio_theme', label: '다크', status: 'applied' };
-      const message = completedMessage(response, 'assistant-1', () => 'assistant-2', new Map([['theme-1', chip]]), () => undefined);
+      const message = completedMessage(response, 'assistant-1', () => 'assistant-2', new Map([['theme-1', chip]]), () => undefined, () => ({}));
       assert.equal(message.recommendationsSuppressed, suppressed);
       assert.equal(message.content, payload.answer);
       assert.deepEqual(message.toolResults, [chip]);

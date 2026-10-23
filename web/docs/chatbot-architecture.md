@@ -178,7 +178,7 @@ sequenceDiagram
   올 때마다 초기화된다. 만료로 끊긴 경우에만 `timeout` 코드가 붙어, 사용자
   중단과 다른 실패 상태가 남는다. 오류 원문은 표시하지 않는다.
 - `done` 본문이 검증을 통과하지 못하거나 보여 줄 본문이 하나도 없으면
-  `empty_answer`로 실패시킨다. 빈 말풍선이 화면에 굳는 것보다 낫다.
+  각각 `invalid_response`와 `empty_answer`로 실패시킨다. 빈 말풍선이 화면에 굳는 것보다 낫다.
 - 화면 이동·설정 변경 도구가 있으면 도구 큐가 실제 결말까지 기다린다. 첫 서버
   답변은 보류하고, 최소 500ms 뒤 현재 설정과 URL·DOM 기반 화면 상태를 다시 읽어
   `toolVerification` 확인 요청을 보낸다. 모델에는 확인 요청에서 도구를 다시
@@ -200,8 +200,12 @@ sequenceDiagram
 - 선택 `modelHistory`가 있으면 실제 assistant 호출·tool 결과·공개 최종 답변을 다음
   질문의 이력에 그대로 펼친다. ID·raw arguments·결과 문자열을 요약하지 않고,
   visible assistant를 중복하지 않는다. 브라우저 확인 전에는 임시 본문을 빼고 실제
-  관측으로 해당 tool content만 교체해 `toolHistory`로 보낸다. 확인 요청만 실패한
-  재시도는 같은 질문·입력 ID·관측 체인으로 보고만 요청해 변경 도구를 재실행하지 않는다.
+  관측으로 해당 tool content만 교체해 `toolHistory`로 보낸다. 각 변경 결과에는 해당
+  단계의 관측을 남기고, 공통 최종 화면 스냅숏은 마지막 변경 결과에 한 번만 포함한다.
+  getter 원문과 native 호출 ID·인수·순서·전체 관측은 보존한다. 같은 설정 변경 기록을
+  모든 결과에 복제하여 12,000자 예산을 소모하지 않으며, 실제 초과 입력은 계속 거부한다.
+  확인 요청만 실패한 재시도는 최초 전송 전에 검증·복제·동결한 같은 질문·입력 ID·
+  관측 체인·최종 화면 스냅숏으로 보고만 요청해 변경 도구를 재실행하지 않는다.
   구형 API가 선택 필드를 생략하면 기존 일반 user/assistant 이력을 사용한다.
 - 이력은 메모리에만 보관하고 기본 최근 대화 묶음 5개·wire 130개·12,000자 한계를
   함께 적용한다. 호출·결과 메시지가 늘어도 일반 대화의 5개 사용자 턴을 유지하도록
@@ -271,6 +275,14 @@ generation을 높여 실행을 재시도한다. done 없는 부분 발행, 계�
 2.5초 timeout을 쓰며 전송 실패나 미지원은 실제 실행·채팅 결과에 영향을 주지 않는다.
 브라우저 task 완료·실패는 전체 발행 목록과 실제 변경 관측을 확인한 직후 고정한다.
 이후 메인 답변 HTTP가 실패·취소되거나 확인 요청을 재시도해도 도구 완료를 뒤집지 않는다.
+최종 설명은 별도 `toolReportState`의 `pending/complete/failed/stopped`로 관리한다.
+모든 변경이 확인된 뒤 보고만 실패하면 작업 목록의 완료를 유지하고
+"마지막 결과 보고를 완료하지 못했습니다"와 "결과 보고 다시 시도"를 표시한다.
+부분 실행이나 미확인 단계가 있는 작업에는 모든 화면 변경이 완료됐다고 표시하지 않는다.
+이력 예산·manifest 불일치 등 전송 전 준비 실패도 실행 실패와 구분하되, 검증된 보고
+요청이 없으면 재시도를 허용하지 않는다. 검증·동결된 요청이 있는 HTTP·timeout·응답
+계약 실패는 사용자가 보고만 재시도할 수 있다. 자동 재시도나 도구 재발행은 없다.
+재시도 응답도 동일 작업·세대·목록을 검증하고, 예상하지 않은 추가 도구는 계속 거부한다.
 일반 답변·이력 조회·캐시처럼 실행이 없는 요청은 브라우저 도구 관측을 전송하지 않는다.
 구현 검증은 격리된 로컬 환경에 한정하며 운영 배포·활성화는 별도 절차다.
 
@@ -469,6 +481,7 @@ flowchart TD
 | 도구 결과 상태 줄 문구 | `src/features/chat/constants.ts`, `MessageItem.tsx` |
 | 실패 상태 · 로컬 진단 · 재시도 · 대화 이력 | `src/features/chat/chatFailure.ts`, `chatHistory.ts`, `ChatProvider.tsx`, `chatFailure.test.mjs` |
 | 도구 완료 후 최신 브라우저 상태와 최종 답변 요청 | `src/features/chat/toolVerificationRequest.ts`, `ChatProvider.tsx` |
+| 도구 실행과 별도인 결과 보고 상태 · 안전한 실패 구분 · 보고 전용 재시도 | `src/features/chat/toolReport.ts`, `chatFailure.test.mjs` |
 | 공개 native 대화·원문 이력·사용자 턴 단위 예산 | `src/features/chat/modelHistory.ts`, `chatHistory.ts`, `modelHistory.test.mjs` |
 | 대화 · 입력별 추적 ID 수명과 HTTP LAN UUID | `src/features/chat/chatRequestIdentity.ts`, `chatRequestIdentity.test.mjs`, `types.ts` |
 | 도구 실행기 | `src/features/portfolio-tools/portfolioUiToolExecutor.ts` |

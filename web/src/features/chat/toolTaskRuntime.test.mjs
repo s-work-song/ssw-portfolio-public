@@ -244,7 +244,8 @@ test('최종 확인 SSE의 잘못된 done scope는 이미 받은 delta를 버리
   assert.deepEqual(message.toolResults, chips);
   assert.equal(message.toolTaskProgress.status, 'completed');
   const provider = readFileSync(new URL('./ChatProvider.tsx', import.meta.url), 'utf8');
-  assert.match(provider, /toolTaskProgress: taskSnapshot\(\) \}, deferStreamDeltas \|\| protocolFailure\)/u);
+  assert.match(provider, /const discardUnverifiedContent = deferStreamDeltas \|\| protocolFailure \|\| toolReportFailure === "response_contract"/u);
+  assert.match(provider, /toolTaskProgress: taskSnapshot\(\), \.\.\.reportSnapshot\(\) \}, discardUnverifiedContent\)/u);
 });
 
 test('확인 후속은 원 native 이력이 없으면 보내지 않고 요청 취소 뒤 돌아온 응답도 반영하지 않는다', async () => {
@@ -265,7 +266,7 @@ test('Provider는 stop/partial prefix의 실행 retry를 없애고 정상 verifi
   const caught = provider.slice(provider.indexOf('} catch (requestError)'), provider.indexOf('\n      } finally', provider.indexOf('} catch (requestError)')));
   assert.match(caught, /if \(protocolFailure \|\| \(!pending\.toolVerification && !taskRuntime\?\.dispatchComplete\)\) controller\.abort\(\)/u);
   assert.match(caught, /retryRef\.current = null/u);
-  assert.match(caught, /Boolean\(pending\.toolVerification && pending\.toolTask\.dispatchComplete\)/u);
+  assert.match(caught, /Boolean\(pending\.toolReportRequest && pending\.toolVerification && pending\.toolTask\.dispatchComplete\)/u);
   assert.doesNotMatch(caught, /pending\.toolVerification =/u, 'done 없는 prefix를 임의 확인 요청으로 바꾸지 않는다');
   const retry = provider.slice(provider.indexOf('const retry ='), provider.indexOf('const stopGenerating ='));
   assert.match(retry, /if \(!pending\.toolVerification\) \{\s*pending\.toolTask = nextChatToolTaskGeneration/u);

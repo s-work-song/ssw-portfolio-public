@@ -66,6 +66,7 @@ import {
 } from "./chatRequestIdentity";
 import { expectedToolTaskScope, stepFromExecution, ToolTaskProtocolError, ToolTaskRuntime } from "./toolTaskRuntime";
 import { BrowserToolTaskTelemetry } from "./toolTaskTelemetry";
+import { toolReportFailureCode } from "./toolReport";
 import { loadMarkdownRenderer } from "./MessageItem";
 import { StreamRenderQueue } from "./streamRenderQueue";
 import {
@@ -115,6 +116,8 @@ import type {
   ChatAnimation,
   ChatHistoryItem,
   ChatMessage,
+  ChatToolReportState,
+  ChatToolReportFailure,
   ChatRequest,
   ChatSettingChange,
   ChatStreamAnimation,
@@ -387,6 +390,8 @@ interface PendingRetry extends ChatRequestIds {
   assistantMessageId?: string;
   toolHistory?: ChatRequest["toolHistory"];
   toolVerification?: ChatRequest["toolVerification"];
+  /** 검증을 통과한 보고 전용 요청. 재시도에는 이 불변 스냅숏만 다시 보낸다. */
+  toolReportRequest?: ChatRequest;
   toolResults?: ToolResult[];
 }
 
@@ -1556,7 +1561,7 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
       abortRef.current = controller;
       const isRequestActive = () => mountedRef.current && !controller.signal.aborted
         && abortRef.current === controller;
-      const request: ChatRequest = {
+      const request: ChatRequest = pending.toolReportRequest ?? {
         toolTask: pending.toolTask,
         conversationId: pending.conversationId,
         turnId: pending.turnId,
@@ -1587,6 +1592,11 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
       pending.toolTaskTelemetry = taskTelemetry;
       const taskRuntime = pending.toolVerification ? undefined : new ToolTaskRuntime(taskScope, isRequestActive);
       const taskProgress: ChatToolTaskProgress | undefined = pending.toolTaskProgress;
+      let toolReportState: ChatToolReportState | undefined = pending.toolReportRequest ? "pending" : undefined;
+      let toolReportFailure: ChatToolReportFailure | undefined;
+      const reportSnapshot = () => toolReportState ? {
+        toolReportState, ...(toolReportFailure ? { toolReportFailure } : {}),
+      } : {};
       let sealedTask: ChatToolTaskResponse | undefined;
       const taskSnapshot = () => taskRuntime?.snapshot() ?? taskProgress;
       const shouldStream = streamingEnabled;
@@ -1623,14 +1633,14 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
           pending.assistantMessageId = streamingMessageId;
           setMessages((current) => [...current, {
             id: streamingMessageId!, role: "assistant", content: "", kind: "message",
-            generationState: "streaming", toolResults: snapshot, toolTaskProgress,
+            generationState: "streaming", toolResults: snapshot, toolTaskProgress, ...reportSnapshot(),
           }]);
           return;
         }
         setMessages((current) =>
           current.map((chatMessage) =>
             chatMessage.id === toolResultMessageId
-              ? { ...chatMessage, toolResults: snapshot, toolTaskProgress }
+              ? { ...chatMessage, toolResults: snapshot, toolTaskProgress, ...reportSnapshot() }
               : chatMessage,
           ),
         );
@@ -1798,7 +1808,7 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
       const handleToolExecution = (execution: ChatToolExecution) => {
         if (!isRequestActive()) return;
         if (pending.toolVerification) {
-          throw new ChatApiError("화면 확인 응답이 새 도구를 호출해 중단했어요.");
+          throw new ToolTaskProtocolError();
         }
         if (taskRuntime && !taskRuntime.accept(execution)) return;
         if (handledToolCallIds.has(execution.toolCallId)) return;
@@ -1981,6 +1991,7 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
             content: "",
             kind: "message",
             generationState: "streaming",
+            ...reportSnapshot(),
             ...(taskSnapshot() ? { toolTaskProgress: taskSnapshot() } : {}),
             // 확인 설명의 재시도에서도 이미 완료한 도구 칩을 즉시 보존한다.
             ...(toolResults.size > 0 ? { toolResults: [...toolResults.values()] } : {}),
@@ -2018,6 +2029,7 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
           const browserStatus = verificationResults.some((result) => result.status === "failed") ? "failed" : "completed";
           taskRuntime?.finish(browserStatus);
           taskTelemetry.task(browserStatus);
+          toolReportState = "pending";
           publishToolResults();
           // 첫 응답은 브라우저 확인 전의 내부 중간 결과다. 화면에는 확인된
           // 결과만 재생한다.
@@ -2038,6 +2050,7 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
               // 확인 요청만 실패했을 때 도구를 다시 실행하지 않고 같은 원질문과
               // 관측된 체인으로 재시도한다. 이전 완료 이력은 변경하지 않는다.
               pending.toolVerification = verificationRequest.toolVerification;
+              pending.toolReportRequest = verificationRequest;
               pending.toolTask = verificationRequest.toolTask!;
               pending.toolTaskProgress = taskSnapshot();
               pending.toolHistory = verificationRequest.toolHistory;
@@ -2050,9 +2063,7 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
                       renderQueue?.enqueue(text);
                     },
                     onTool() {
-                      throw new ChatApiError(
-                        "화면 확인 응답이 새 도구를 호출해 중단했어요.",
-                      );
+                      throw new ToolTaskProtocolError();
                     },
                   },
                 )
@@ -2088,6 +2099,7 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
           throw new DOMException("The operation was aborted.", "AbortError");
         }
         if (!mountedRef.current) return;
+        if (toolReportState) toolReportState = "complete";
         // 실제 답변 상태를 즉시 반영한다. 복구 후에도 이전 오프라인 배너가 남거나
         // 늦게 끝난 상태 조회가 정상 답변을 다시 오프라인으로 덮지 않게 한다.
         reportAvailability(response.status === "upstream_offline" ? "offline" : "online");
@@ -2105,6 +2117,7 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
           );
         }
         const completedMessage: ChatMessage = {
+          ...reportSnapshot(),
           ...(taskSnapshot() ? { toolTaskProgress: taskSnapshot() } : {}),
           ...(response.modelHistory ? { modelHistory: response.modelHistory } : {}),
           id: streamingMessageId ?? nextId("assistant"),
@@ -2155,6 +2168,7 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
         // 실패 시 실행 전/보류 본문을 되살리지 않는다.
         deferredStreamDeltas.length = 0;
         if (requestWasAborted) {
+          if (toolReportState) toolReportState = "stopped";
           taskRuntime?.terminate("cancelled");
           if (verificationToolCallIds.size > 0) taskTelemetry.task("cancelled");
           if (stopRequestedRef.current) {
@@ -2165,7 +2179,7 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
                 current.map((chatMessage) =>
                   chatMessage.id === streamingMessageId
                     ? { ...chatMessage, generationState: "stopped", retryAllowed: false,
-                      toolTaskProgress: taskSnapshot() }
+                      toolTaskProgress: taskSnapshot(), ...reportSnapshot() }
                     : chatMessage,
                 ),
               );
@@ -2176,24 +2190,29 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
         }
         taskRuntime?.terminate("failed");
         if (verificationToolCallIds.size > 0) taskTelemetry.task("failed");
-        const retryAllowed = !protocolFailure && (
-          Boolean(pending.toolVerification && pending.toolTask.dispatchComplete)
-          || Boolean(taskRuntime && taskRuntime.mutationDispatchCount === 0 && taskRuntime.steps.length === 0)
-        );
+        if (toolReportState) {
+          toolReportState = "failed";
+          toolReportFailure = toolReportFailureCode(requestError);
+        }
+        // 응답 계약 실패도 검증된 보고 요청이 남아 있으면 보고만 다시 보낸다.
+        // 준비가 실패했거나 발행이 끝나지 않은 실행 요청은 이 경로로 승격하지 않는다.
+        const retryAllowed = Boolean(pending.toolReportRequest && pending.toolVerification && pending.toolTask.dispatchComplete)
+          || (!protocolFailure && Boolean(taskRuntime && taskRuntime.mutationDispatchCount === 0 && taskRuntime.steps.length === 0));
         // done 없는 prefix는 완료된 manifest가 아니다. 실제 관측만 보존하고
         // 부분 결과를 완료라고 보고하거나 원래 실행 요청을 재전송하지 않는다.
         pending.toolResults = [...toolResults.values()];
         pending.toolTaskProgress = taskSnapshot();
         publishToolResults();
-        logChatFailureLocally("request", requestError);
+        logChatFailureLocally(toolReportState ? "tool_report" : "request", requestError);
         const failureAvailability = chatFailureAvailability(requestError);
         if (failureAvailability) reportAvailability(failureAvailability);
+        const discardUnverifiedContent = deferStreamDeltas || protocolFailure || toolReportFailure === "response_contract";
         if (streamingMessageId) {
           setMessages((current) =>
             current.map((chatMessage) =>
               chatMessage.id === streamingMessageId
                 ? failedChatMessage({ ...chatMessage, retryAllowed,
-                  toolTaskProgress: taskSnapshot() }, deferStreamDeltas || protocolFailure)
+                  toolTaskProgress: taskSnapshot(), ...reportSnapshot() }, discardUnverifiedContent)
                 : chatMessage,
             ),
           );
@@ -2208,6 +2227,7 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
             content: "",
             retryAllowed,
             toolTaskProgress: taskSnapshot(),
+            ...reportSnapshot(),
             ...(toolResults.size > 0 ? { toolResults: [...toolResults.values()] } : {}),
           }, false)]);
         }
@@ -2312,6 +2332,7 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
       return;
     }
     const pending = retryRef.current;
+    if (pending.toolVerification && !pending.toolReportRequest) return;
     if (!pending.toolVerification) {
       pending.toolTask = nextChatToolTaskGeneration(pending.toolTask);
       pending.toolTaskProgress = undefined;

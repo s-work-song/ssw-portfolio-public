@@ -22,6 +22,7 @@ import { StreamingText } from "./StreamingText";
 import { toolResultDisplayStatus, toolResultText } from "./toolResultPresentation";
 import { toolTaskSummary, toolTaskStepText } from "./toolTaskPresentation.ts";
 import { CHAT_FAILURE_NOTICE } from "./chatFailure";
+import { messageToolReportState, toolReportFailureNotice } from "./toolReport.ts";
 import type {
   ActionId,
   ChatAction,
@@ -272,6 +273,7 @@ export const MessageItem = memo(function MessageItem({
     includeComplement,
   );
   const hasFailed = message.generationState === "failed";
+  const toolReportState = messageToolReportState(message);
   const isStreaming = message.generationState === "streaming";
   const isIncompleteAnswer =
     message.role === "assistant" &&
@@ -281,11 +283,13 @@ export const MessageItem = memo(function MessageItem({
   const pendingNotice = isStreaming
     ? slowResponse
       ? "평소보다 오래 걸리고 있어요. 기다리거나 중단할 수 있어요"
-      : "응답을 생성하고 있어요…"
+      : toolReportState === "pending" ? "도구 실행 결과를 정리하고 있어요…" : "응답을 생성하고 있어요…"
     : null;
 
   return (
     <article
+      data-tool-report-state={toolReportState}
+      data-tool-report-failure={message.toolReportFailure}
       className={[
         styles.message,
         message.role === "user"
@@ -302,16 +306,16 @@ export const MessageItem = memo(function MessageItem({
         </strong>
       )}
       {isStreaming && (
-        <strong className={styles.generationBadge}>생성 중</strong>
+        <strong className={styles.generationBadge}>{toolReportState === "pending" ? "결과 보고 중" : "생성 중"}</strong>
       )}
       {message.generationState === "stopped" && (
         <strong className={styles.stoppedBadge}>
-          응답 생성이 중단되었습니다
+          {toolReportState === "stopped" ? "마지막 결과 보고가 중단되었습니다" : "응답 생성이 중단되었습니다"}
         </strong>
       )}
       {hasFailed && (
         <strong className={styles.failedBadge}>
-          응답 생성을 완료하지 못했습니다
+          {toolReportState === "failed" ? "마지막 결과 보고를 완료하지 못했습니다" : "응답 생성을 완료하지 못했습니다"}
         </strong>
       )}
       {message.toolTaskProgress && message.toolTaskProgress.steps.length > 0 && (
@@ -410,7 +414,7 @@ export const MessageItem = memo(function MessageItem({
       )}
       {hasFailed && (
         <div className={styles.messageFailure} role="alert">
-          <p>{message.retryAllowed === false
+          <p>{toolReportState === "failed" ? toolReportFailureNotice(message) : message.retryAllowed === false
             ? "작업을 완료하지 못했어요. 이미 반영된 결과는 유지됩니다. 필요한 작업을 새 질문으로 요청해 주세요."
             : CHAT_FAILURE_NOTICE}</p>
           {canRetry && (
@@ -420,8 +424,8 @@ export const MessageItem = memo(function MessageItem({
               onClick={onRetry}
             >
               {retryWaitSeconds > 0
-                ? `${retryWaitSeconds}초 후 다시 시도`
-                : "다시 시도"}
+                ? `${retryWaitSeconds}초 후 ${toolReportState === "failed" ? "결과 보고 다시 시도" : "다시 시도"}`
+                : toolReportState === "failed" ? "결과 보고 다시 시도" : "다시 시도"}
             </button>
           )}
         </div>

@@ -497,8 +497,16 @@ export interface ChatResponse {
 }
 
 /** 화면에 그려지는 말풍선 하나다. */
+export type ChatToolReportState = "pending" | "complete" | "failed" | "stopped";
+/** 오류 원문 대신 화면·로컬 진단에 쓸 수 있는 고정 분류다. */
+export type ChatToolReportFailure = "history_invalid" | "history_budget" | "manifest_mismatch"
+  | "request_failed" | "timeout" | "response_contract" | "empty_answer";
+
 export interface ChatMessage {
   toolTaskProgress?: ChatToolTaskProgress;
+  /** 도구 실행의 실제 결과와 별개인 마지막 보고 요청 상태다. */
+  toolReportState?: ChatToolReportState;
+  toolReportFailure?: ChatToolReportFailure;
   /** 부분 실행·취소 작업은 원래 실행 요청을 재전송할 수 없다. */
   retryAllowed?: boolean;
   /** 완료된 응답의 재전송용 이력. 세션 메모리에만 두고 화면/저장소에는 쓰지 않는다. */

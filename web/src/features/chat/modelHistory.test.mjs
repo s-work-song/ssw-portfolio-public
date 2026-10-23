@@ -5,6 +5,8 @@ import { historyFromMessages } from './chatHistory.ts';
 import { compactRepeatedSupportedOptions } from './historyCompaction.ts';
 import { modelHistoryCharacters, parseModelHistory } from './modelHistory.ts';
 import { parseChatResponse } from './parse.ts';
+import { fourToolReportCase } from './toolReportFixtures.mjs';
+import { ToolReportPreparationError } from './toolReport.ts';
 import {
   requestVerifiedToolResponse,
   toolFollowupForVerification,
@@ -158,8 +160,77 @@ test('다중 변경 호출은 모든 브라우저 관측이 있을 때만 native
   };
   assert.equal(verifiedToolHistory(initial, verification, browser), undefined);
   const verified = verifiedToolHistory(initial, [...verification, sizeResult], browser);
-  assert.deepEqual(JSON.parse(verified[1].content), { ...verification[0], ...browser });
+  assert.deepEqual(JSON.parse(verified[1].content), verification[0]);
   assert.deepEqual(JSON.parse(verified[2].content), { ...sizeResult, ...browser });
+});
+
+test('4도구와 누적 설정20개는 최종 snapshot을 1회 보존해 12k 안에 들고 호출·관측·상태 값을 잃지 않는다', async () => {
+  const f = fourToolReportCase();
+  const original = JSON.stringify(f.native);
+  const repeated = f.native.map((item, index) => index === 0 ? item
+    : { ...item, content: JSON.stringify({ ...f.results[index - 1], ...f.latest }) });
+  assert.ok(modelHistoryCharacters(repeated) > 12_000, '기존 정상 사용 경로의 상한 초과를 재현한다');
+  const compact = verifiedToolHistory(f.native, f.results, f.latest);
+  assert.ok(modelHistoryCharacters(compact) < 12_000);
+  assert.equal(compact.length, f.native.length);
+  assert.equal(JSON.stringify(f.native), original);
+  assert.equal(compact[0], f.native[0]);
+  assert.deepEqual(compact.map(item => item.tool_call_id), f.native.map(item => item.tool_call_id));
+  assert.equal(JSON.stringify(compact[0].tool_calls), JSON.stringify(f.calls));
+  const payloads = compact.slice(1).map(item => JSON.parse(item.content));
+  assert.equal(payloads.filter(item => Object.hasOwn(item, 'uiSettings')).length, 1);
+  payloads.forEach((payload, index) => {
+    const { pageContext, uiSettings, uiSettingChanges, viewState, ...observation } = payload;
+    assert.deepEqual(observation, f.results[index]);
+    if (index === payloads.length - 1) {
+      assert.deepEqual({ pageContext, uiSettings, uiSettingChanges, viewState }, f.latest);
+    } else assert.equal(uiSettings, undefined);
+  });
+  let sent;
+  await requestVerifiedToolResponse(Promise.resolve(), f.request, f.results, () => f.latest,
+    async request => { sent = request; return response({ toolTask: { ...f.scope, steps: f.steps,
+      dispatchComplete: true, status: 'completed' } }); }, new AbortController().signal, f.native);
+  assert.deepEqual(sent.toolHistory, compact);
+  assert.deepEqual(sent.uiSettingChanges, f.latest.uiSettingChanges);
+  assert.deepEqual(sent.toolVerification.results, f.results);
+  for (const value of [sent, sent.toolTask, sent.toolTask.steps, sent.toolVerification.results[0],
+    sent.toolHistory[0].tool_calls[0].function, sent.uiSettings, sent.uiSettingChanges[0], sent.history]) {
+    assert.ok(Object.isFrozen(value));
+  }
+  const snapshot = JSON.stringify(sent);
+  f.latest.uiSettings.theme = 'light';
+  f.results[0].status = 'failed';
+  f.request.history[0].content = '나중에 바뀐 원본';
+  assert.equal(JSON.stringify(sent), snapshot, '원본과 현재 화면 변경은 준비된 보고 재시도를 바꾸지 못한다');
+});
+
+test('마지막 관측 뒤의 getter 원문도 보존하고 snapshot은 마지막 mutation 결과에만 남긴다', () => {
+  const f = fourToolReportCase();
+  const getter = batch('getter_after', 'get_portfolio_view_state', ' { } ');
+  getter[1].content = ' { "originalGetter": "값 그대로" } ';
+  const native = [...f.native, ...getter];
+  const verified = verifiedToolHistory(native, f.results, f.latest);
+  assert.equal(verified.at(-2), getter[0]);
+  assert.equal(verified.at(-1), getter[1]);
+  assert.deepEqual(JSON.parse(verified[4].content), { ...f.results[3], ...f.latest });
+  assert.equal(verified.filter(item => item.role === 'tool' && Object.hasOwn(JSON.parse(item.content), 'uiSettings')).length, 1);
+});
+
+test('큰 원문·잘못된 native·manifest 불일치는 여전히 전송 전 안전 코드로 거절한다', async () => {
+  for (const reason of ['history_budget', 'history_invalid', 'manifest_mismatch']) {
+    const f = fourToolReportCase();
+    if (reason === 'history_budget') {
+      const getter = batch('large_getter', 'get_portfolio_view_state', '{}');
+      getter[1].content = JSON.stringify({ unmodified: 'x'.repeat(12_100) });
+      f.native.push(...getter);
+    } else if (reason === 'history_invalid') f.native[0].tool_calls[0].function.arguments = '{broken';
+    else f.request.toolTask.steps[0].toolCallId = 'different-native-id';
+    let sends = 0;
+    await assert.rejects(requestVerifiedToolResponse(Promise.resolve(), f.request, f.results, () => f.latest,
+      async () => { sends++; return response(); }, new AbortController().signal, f.native),
+    error => error instanceof ToolReportPreparationError && error.reportFailure === reason);
+    assert.equal(sends, 0);
+  }
 });
 
 test('이동·상세 혼합 체인은 순서와 raw 인수를 보존하고 상세 action,target 실제 관측을 전달한다', async () => {
@@ -202,7 +273,10 @@ test('verification과 재시도는 원래 bare question과 이전 completed hist
     () => browser, async (value) => { retryRequest = value; throw error; },
     new AbortController().signal, batch()), (actual) => actual === error);
   assert.equal(retryRequest.message, original.message);
-  assert.equal(retryRequest.history, original.history);
+  assert.deepEqual(retryRequest.history, original.history);
+  assert.notEqual(retryRequest.history, original.history, '재시도 스냅숏은 이전 이력과 값이 같지만 별도 불변 복제본이다');
+  assert.equal(Object.isFrozen(retryRequest), true);
+  assert.equal(Object.isFrozen(retryRequest.history), true);
   assert.equal(retryRequest.turnId, original.turnId);
   assert.deepEqual(retryRequest.toolHistory, verifiedToolHistory(batch(), verification, browser));
   assert.deepEqual(retryRequest.toolVerification.results, verification);

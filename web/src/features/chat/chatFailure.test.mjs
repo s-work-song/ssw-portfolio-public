@@ -17,6 +17,10 @@ import { ChatApiError } from './parse.ts';
 import { requestVerifiedToolResponse } from './toolVerificationRequest.ts';
 import { toolResultDisplayStatus, toolResultText } from './toolResultPresentation.ts';
 import { CHAT_QUICK_START_OPTION_BY_ACTION_ID } from './constants.ts';
+import { fourToolReportCase, providerReportFixture } from './toolReportFixtures.mjs';
+import { ToolReportPreparationError, hasVerifiedToolCompletion, messageToolReportState,
+  toolReportFailureCode, toolReportFailureNotice } from './toolReport.ts';
+import { ToolTaskProtocolError } from './toolTaskRuntime.ts';
 
 const message = (id, role, content, extra = {}) => ({
   id, role, content, kind: 'message', ...extra,
@@ -80,13 +84,13 @@ test('tool 뒤 done 없는 스트림 실패는 대기 실행을 중단하고 부
   const provider = readFileSync(new URL('./ChatProvider.tsx', import.meta.url), 'utf8');
   const failure = provider.slice(
     provider.indexOf('} catch (requestError) {'),
-    provider.indexOf('logChatFailureLocally("request", requestError)'),
+    provider.indexOf('const failureAvailability ='),
   );
   const queueWait = failure.indexOf('await toolExecutionQueue');
   const cancelIncomplete = failure.indexOf('!taskRuntime?.dispatchComplete)) controller.abort()');
   assert.ok(cancelIncomplete >= 0 && cancelIncomplete < queueWait);
   assert.equal(failure.includes('pending.toolVerification = {'), false);
-  assert.ok(failure.includes('Boolean(pending.toolVerification && pending.toolTask.dispatchComplete)'));
+  assert.ok(failure.includes('Boolean(pending.toolReportRequest && pending.toolVerification && pending.toolTask.dispatchComplete)'));
   assert.ok(failure.includes('taskRuntime.mutationDispatchCount === 0 && taskRuntime.steps.length === 0'));
   assert.ok(failure.includes('pending.toolResults = [...toolResults.values()]'));
 });
@@ -192,6 +196,42 @@ test('실제 MessageItem 렌더: 상태 전용 완료에는 칩만 있고 빈 Ma
   assert.equal(stopped.includes('data-tool-status="started"'), false);
   for (const status of ['arrived', 'applied', 'failed']) assert.ok(stopped.includes(`data-tool-status="${status}"`));
   assert.deepEqual(mixedResults.map(result => result.status), ['started', 'arrived', 'applied', 'failed']);
+
+  const four = fourToolReportCase();
+  const progress = { scope: four.scope, status: 'completed', dispatchComplete: true,
+    steps: four.steps.map((step, index) => ({ ...step, state: four.results[index].status })) };
+  const chips = four.results.map(result => ({ callId: result.toolCallId, tool: result.toolName,
+    label: result.toolName, status: result.status }));
+  const base = message('report', 'assistant', '', { generationState: 'failed', toolTaskProgress: progress, toolResults: chips });
+  const renderReport = value => renderToStaticMarkup(React.createElement(componentModule.exports.MessageItem,
+    { ...props, suggestedQuestions: [], includeComplement: false, canRetry: value.retryAllowed === true, message: value }));
+  for (const extra of [
+    { toolReportState: 'failed', toolReportFailure: 'timeout', retryAllowed: true },
+    { toolReportState: 'failed', toolReportFailure: 'history_budget', retryAllowed: false },
+    { retryAllowed: false },
+  ]) {
+    const html = renderReport({ ...base, ...extra });
+    assert.ok(html.includes('마지막 결과 보고를 완료하지 못했습니다'));
+    assert.ok(html.includes('도구 작업 완료 · 4/4단계 확인'));
+    assert.ok(html.includes('요청한 화면 변경은 모두 확인됐어요'));
+    assert.ok(html.includes('이미 반영된 변경은 다시 실행하지 않습니다'));
+    assert.equal(html.includes('작업을 완료하지 못했어요'), false);
+    assert.equal(html.includes('필요한 작업을 새 질문으로'), false);
+    assert.equal(html.includes('<button'), extra.retryAllowed === true);
+    if (extra.retryAllowed) assert.ok(html.includes('결과 보고 다시 시도'));
+    if (extra.toolReportFailure === 'history_budget') assert.ok(html.includes('보고용으로 준비하지 못했습니다'));
+  }
+  const partialProgress = structuredClone(progress);
+  partialProgress.status = 'failed';
+  partialProgress.steps.at(-1).state = 'failed';
+  const partial = renderReport({ ...base, toolTaskProgress: partialProgress, toolReportState: 'failed', retryAllowed: true,
+    toolResults: chips.map((chip, index) => index === 3 ? { ...chip, status: 'failed' } : chip) });
+  assert.ok(partial.includes('일부 작업은 완료를 확인하지 못했어요'));
+  assert.ok(partial.includes('도구 작업 확인 실패 · 3/4단계 확인'));
+  assert.equal(partial.includes('화면 변경은 모두 확인'), false);
+  const reportStopped = renderReport({ ...base, generationState: 'stopped', toolReportState: 'stopped', retryAllowed: false });
+  assert.ok(reportStopped.includes('마지막 결과 보고가 중단되었습니다'));
+  assert.ok(reportStopped.includes('도구 작업 완료 · 4/4단계 확인'));
 });
 
 test('추천 생략 말풍선은 문단·하단·빠른 시작 보완·후속 질문만 숨기고 모델 본문·결과 칩은 보존한다', () => {
@@ -406,4 +446,174 @@ test('중단되었거나 도구 완료 큐가 실패한 경우 페이지 재조�
     forbidden, forbidden, controller.signal), (error) => error.name === 'AbortError');
   await assert.rejects(requestVerifiedToolResponse(Promise.reject(new Error('도구 실패')), initialRequest(), [],
     forbidden, forbidden, new AbortController().signal), /도구 실패/);
+});
+
+test('실제 Provider: 4개 반영 뒤 전송·시간초과·응답계약 실패는 동일 불변 보고만 재시도하고 도구를 재실행하지 않는다', async t => {
+  for (const streaming of [true, false]) {
+    for (const reportMode of ['network', 'timeout', 'protocol', 'malformed', 'unexpected-tool']) {
+      await t.test(`${streaming ? 'SSE' : 'JSON'} ${reportMode}`, async t => {
+        const f = providerReportFixture(t, { streaming, reportMode, duplicateTools: true });
+        await f.run();
+        const failed = f.state.messages.at(-1);
+        assert.equal(failed.generationState, 'failed');
+        assert.equal(failed.toolReportState, 'failed');
+        assert.equal(failed.toolTaskProgress.status, 'completed');
+        assert.equal(hasVerifiedToolCompletion(failed.toolTaskProgress), true);
+        assert.equal(failed.retryAllowed, true);
+        assert.equal(failed.toolReportFailure, reportMode === 'timeout' ? 'timeout'
+          : reportMode === 'network' ? 'request_failed' : 'response_contract');
+        assert.equal(failed.content.includes('UNVERIFIED_REPORT_TEXT'), false);
+        assert.equal(f.state.effects.length, 4);
+        assert.equal(f.state.requests.length, 2, '자동 보고 재시도는 하지 않는다');
+        const prepared = f.state.reportRequests[0];
+        const snapshot = JSON.stringify(prepared);
+        f.state.uiSettings.theme = 'light';
+        f.state.viewState.page = 'settings';
+        f.pending.history[0].content = '나중 질문으로 바뀌어도 재시도는 스냅숏 유지';
+        f.state.reportMode = 'success';
+        await f.retry();
+        assert.equal(f.state.effects.length, 4);
+        assert.equal(f.state.reportRequests.length, 2);
+        assert.equal(f.state.reportRequests[1], prepared);
+        assert.equal(JSON.stringify(f.state.reportRequests[1]), snapshot);
+        assert.equal(prepared.toolTask.taskId, f.scope.taskId);
+        assert.equal(prepared.toolTask.generation, 1);
+        assert.equal(prepared.conversationId, f.scope.conversationId);
+        assert.equal(prepared.turnId, f.scope.turnId);
+        const completed = f.state.messages.at(-1);
+        assert.equal(completed.generationState, 'complete');
+        assert.equal(completed.toolReportState, 'complete');
+        assert.equal(completed.toolTaskProgress.status, 'completed');
+        assert.deepEqual(completed.toolResults, failed.toolResults);
+        await f.pending.toolTaskTelemetry.flush();
+        const terminal = f.state.telemetry.flatMap(batch => batch.events).filter(event => event.kind === 'task');
+        assert.deepEqual(terminal.map(event => event.status), ['completed']);
+      });
+    }
+  }
+});
+
+test('실제 Provider: 완료된 4단계의 native 준비 실패는 실행 완료를 유지하되 재전송하지 않는다', async t => {
+  const f = providerReportFixture(t, { missingHistory: true });
+  await f.run();
+  const failed = f.state.messages.at(-1);
+  assert.equal(f.state.effects.length, 4);
+  assert.equal(f.state.requests.length, 1);
+  assert.equal(f.state.reportRequests.length, 0);
+  assert.equal(failed.toolTaskProgress.status, 'completed');
+  assert.equal(failed.toolReportState, 'failed');
+  assert.equal(failed.toolReportFailure, 'history_invalid');
+  assert.equal(failed.retryAllowed, false);
+  assert.match(toolReportFailureNotice(failed), /화면 변경은 모두 확인/);
+  assert.match(toolReportFailureNotice(failed), /보고용으로 준비하지 못/);
+  await f.retry();
+  assert.equal(f.state.effects.length, 4);
+  assert.equal(f.state.requests.length, 1);
+});
+
+test('실제 Provider: 일부 도구 실패와 미완결 dispatch는 전체 성공으로 표시하거나 실행 재시도로 승격하지 않는다', async t => {
+  await t.test('일부 반영 실패 뒤 보고 실패·복구', async t => {
+    const f = providerReportFixture(t, { failedTool: 'font', reportMode: 'network' });
+    await f.run();
+    const failed = f.state.messages.at(-1);
+    assert.equal(failed.toolTaskProgress.status, 'failed');
+    assert.equal(failed.toolTaskProgress.steps.at(-1).state, 'failed');
+    assert.equal(failed.toolReportState, 'failed');
+    assert.equal(hasVerifiedToolCompletion(failed.toolTaskProgress), false);
+    assert.doesNotMatch(toolReportFailureNotice(failed), /모두 확인/);
+    f.state.reportMode = 'success';
+    await f.retry();
+    assert.equal(f.state.effects.length, 4);
+    assert.equal(f.state.messages.at(-1).generationState, 'complete');
+    assert.equal(f.state.messages.at(-1).toolTaskProgress.status, 'failed');
+  });
+  await t.test('done 없는 부분 발행', async t => {
+    const f = providerReportFixture(t, { incompleteDispatch: true });
+    await f.run();
+    const failed = f.state.messages.at(-1);
+    assert.equal(failed.toolTaskProgress.dispatchComplete, false);
+    assert.equal(failed.toolTaskProgress.status, 'failed');
+    assert.equal(failed.retryAllowed, false);
+    assert.equal(messageToolReportState(failed), undefined);
+    assert.equal(f.state.reportRequests.length, 0);
+    const effects = f.state.effects.length;
+    await f.retry();
+    assert.equal(f.state.effects.length, effects);
+    assert.equal(f.state.requests.length, 1);
+  });
+});
+
+test('실제 Provider: 보고 중 중단·중복 클릭·새 대화는 도구 재실행이나 늦은 답변 반영을 만들지 않는다', async t => {
+  await t.test('보고 중 사용자 중단', async t => {
+    const f = providerReportFixture(t, { reportMode: 'hold' });
+    const running = f.run();
+    await f.untilReport();
+    f.stop();
+    f.state.finishReport();
+    await running;
+    const stopped = f.state.messages.at(-1);
+    assert.equal(stopped.toolTaskProgress.status, 'completed');
+    assert.equal(stopped.toolReportState, 'stopped');
+    assert.equal(stopped.generationState, 'stopped');
+    assert.equal(stopped.retryAllowed, false);
+    await f.retry();
+    assert.equal(f.state.effects.length, 4);
+    assert.equal(f.state.requests.length, 2);
+  });
+  await t.test('보고 재시도 버튼 연타', async t => {
+    const f = providerReportFixture(t, { reportMode: 'network' });
+    await f.run();
+    f.state.reportMode = 'hold';
+    const retrying = f.retry();
+    await f.untilReport(2);
+    await f.retry();
+    assert.equal(f.state.reportRequests.length, 2);
+    f.state.finishReport();
+    await retrying;
+    assert.equal(f.state.messages.at(-1).toolReportState, 'complete');
+    assert.equal(f.state.effects.length, 4);
+  });
+  await t.test('새 대화 뒤 늦은 이전 보고', async t => {
+    const f = providerReportFixture(t, { reportMode: 'hold' });
+    const running = f.run();
+    await f.untilReport();
+    f.refs.abortRef.current = new AbortController();
+    f.state.messages = [];
+    f.state.finishReport();
+    await running;
+    assert.deepEqual(f.state.messages, []);
+    assert.equal(f.state.effects.length, 4);
+  });
+});
+
+test('구형 완료4/4+실패 말풍선도 실제 완료를 부정하지 않고 불완전·실패·getter는 성공으로 승격하지 않는다', () => {
+  const f = fourToolReportCase();
+  const progress = { scope: f.scope, status: 'completed', dispatchComplete: true,
+    steps: f.steps.map((step, index) => ({ ...step, state: f.results[index].status })) };
+  const old = message('legacy', 'assistant', '', { generationState: 'failed', retryAllowed: false, toolTaskProgress: progress });
+  assert.equal(messageToolReportState(old), 'failed');
+  assert.match(toolReportFailureNotice(old), /화면 변경은 모두 확인/);
+  assert.doesNotMatch(toolReportFailureNotice(old), /작업을 완료하지 못|새 질문으로 요청/);
+  for (const change of [task => { task.dispatchComplete = false; }, task => { task.status = 'failed'; },
+    task => { task.steps[3].state = 'failed'; }, task => { task.steps[3].state = 'running'; },
+    task => { task.steps[3].stepIndex = 9; }, task => { task.steps = []; }]) {
+    const task = structuredClone(progress); change(task);
+    assert.equal(messageToolReportState({ ...old, toolTaskProgress: task }), undefined);
+  }
+});
+
+test('보고 준비·전송·응답 실패 진단은 고정 코드만 남기고 비밀·원문을 출력하지 않는다', () => {
+  const errors = [new ToolReportPreparationError('history_budget'), new ToolReportPreparationError('history_invalid'),
+    new ToolReportPreparationError('manifest_mismatch'), new ChatApiError('PRIVATE', { code: 'timeout' }),
+    new ToolTaskProtocolError(), new ChatApiError('PRIVATE', { code: 'invalid_response' }), new Error('PRIVATE')];
+  const expected = ['history_budget', 'history_invalid', 'manifest_mismatch', 'timeout', 'response_contract', 'response_contract', 'request_failed'];
+  errors.forEach((error, index) => {
+    error.message = 'PRIVATE question token stack';
+    error.request = { Authorization: 'PRIVATE' };
+    const calls = [];
+    logChatFailureLocally('tool_report', error, 'localhost', (...args) => calls.push(args));
+    assert.equal(toolReportFailureCode(error), expected[index]);
+    assert.equal(calls[0][1].reportFailure, expected[index]);
+    assert.equal(JSON.stringify(calls).includes('PRIVATE'), false);
+  });
 });
