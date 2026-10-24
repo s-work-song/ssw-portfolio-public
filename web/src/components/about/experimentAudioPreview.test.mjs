@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
+import { agentExperiments } from '../../data/agentExperiments.ts';
 import { audioPreviewSource, formatAudioPreviewDuration, groupAudioPreviews, pauseAndResetAudioPreview } from './experimentAudioPreview.ts';
 
 test('프리뷰는 Opus·Lyria·GPT 앨범 순서로 묶고 앨범 내 곡 순서와 원본을 보존한다', () => {
@@ -13,6 +14,18 @@ test('프리뷰는 Opus·Lyria·GPT 앨범 순서로 묶고 앨범 내 곡 순�
   assert.deepEqual(grouped.map(({ tracks }) => tracks.map(({ title }) => title)), [['Neon', 'Pixel'], ['Midnight'], ['Iron', 'Gravity']]);
   assert.deepEqual(input, original);
   assert.deepEqual(groupAudioPreviews([]), []);
+});
+
+test('실제 OSCILLO 프리뷰 17곡을 게임과 같은 5개 앨범 순서로 묶고 원본을 보존한다', () => {
+  const previews = agentExperiments.find(({ id }) => id === 'oscillo-rhythm-game').audioPreviews;
+  const original = structuredClone(previews);
+  const grouped = groupAudioPreviews(previews);
+  assert.deepEqual(grouped.map(({ album }) => album), [
+    'Opus 5.5', 'Lyria 3.5', 'Lyria 3.5 보컬', 'Lyria 3.0 보컬 메들리 · 밈 가사', 'GPT Dots 리메이크',
+  ]);
+  assert.deepEqual(grouped.map(({ tracks }) => tracks.length), [3, 3, 3, 5, 3]);
+  assert.deepEqual(grouped.flatMap(({ tracks }) => tracks), previews);
+  assert.deepEqual(previews, original);
 });
 
 test('음원 경로는 로컬에만 basePath를 붙이고 외부 HTTPS URL은 경로·쿼리·해시까지 보존한다', () => {

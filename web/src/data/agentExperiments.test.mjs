@@ -247,33 +247,42 @@ test('OSCILLO는 2D 리듬게임의 실제 캡처·실행 링크·확인된 제�
   }
 });
 
-test('OSCILLO의 9개 13초 MP3 프리뷰는 새 호스트의 해시 경로와 앨범·곡 순서를 사용한다', () => {
+test('OSCILLO의 17개 13초 MP3 프리뷰는 해시 경로와 5개 앨범·곡 순서를 사용한다', () => {
   const rhythm = visible.find(({ id }) => id === 'oscillo-rhythm-game');
   const expected = [
-    ['Opus 5.5', 'Neon Highway', 'cbdd863e68279b1c39840ad69dbc33ae7672e6da05d5ace76d930ecb382ce113'],
-    ['Opus 5.5', 'Pixel Picnic', 'e23d4ac10ef3751d0937c1e5e8f16dad608c225c5ae1e98b86922ed06ee8cf2c'],
-    ['Opus 5.5', 'Overclock', '3894dc4da2767eaf54dfbaef9faebd269fe836c6b05732a7f7e566628623f84d'],
-    ['Lyria 3.5', 'Midnight Weight', '497e0052fcf7fc0f043d13f11c9baa761e4df19df2968f1d4dedf151aa39198b'],
-    ['Lyria 3.5', 'After the Great Ascent', 'add698450b67a492ea7132e27a7e21dc18f3f237df851b0f2d5ca1b0dee0ac90'],
-    ['Lyria 3.5', 'The High Noon Hustle', 'ac412b1ac30ef5af960fcfa47b1db9a3799fdad5edfda05bde9535dbf2220e33'],
-    ['GPT Dots 리메이크', 'IRON OVERHAUL', '868ac32914ad49ac02689ce9448404da8837ac12f6a0523afa78b1225fb44b3c'],
-    ['GPT Dots 리메이크', 'LOW B GRAVITY', 'b25c0c7934ecbd3f286359f6babc013083de152269463bd93bc7b77de1a6538e'],
-    ['GPT Dots 리메이크', 'Iron Wall March', 'c723ea54155f73eb0558fe8e09dfebcfb2b214c088552db82598cfab17f637a2'],
+    ['Opus 5.5', 'Neon Highway', 'neon-highway.30bff6f87e82.mp3'],
+    ['Opus 5.5', 'Pixel Picnic', 'pixel-picnic.b942f6527a59.mp3'],
+    ['Opus 5.5', 'Overclock', 'overclock.e7b29385bb2a.mp3'],
+    ['Lyria 3.5', 'Midnight Weight', 'midnight-weight.20f79edd89da.mp3'],
+    ['Lyria 3.5', 'After the Great Ascent', 'after-the-great-ascent.9e51d493779b.mp3'],
+    ['Lyria 3.5', 'The High Noon Hustle', 'the-high-noon-hustle.416ff5c5bb1f.mp3'],
+    ['Lyria 3.5 보컬', '내 눈물 속에 갇힌 너', 'trapped-in-my-tears.b2689a0bcb46.mp3'],
+    ['Lyria 3.5 보컬', '하얀 입김', 'white-breath.6032598e16c4.mp3'],
+    ['Lyria 3.5 보컬', '새벽의 끝에서', 'at-the-end-of-dawn.3ca8ab97a927.mp3'],
+    ['Lyria 3.0 보컬 메들리 · 밈 가사', 'Medley 01', 'medley-01.c5d210be3559.mp3'],
+    ['Lyria 3.0 보컬 메들리 · 밈 가사', '웹 퍼블리셔 메들리', 'web-publisher-medley.82d183de34da.mp3'],
+    ['Lyria 3.0 보컬 메들리 · 밈 가사', '개발밈 메들리', 'dev-meme-medley.52895475ab7d.mp3'],
+    ['Lyria 3.0 보컬 메들리 · 밈 가사', '보안 메들리', 'security-medley.4364a987c109.mp3'],
+    ['Lyria 3.0 보컬 메들리 · 밈 가사', '흐르는 빛의 항해', 'flowing-light-voyage.86d8cbd67b6c.mp3'],
+    ['GPT Dots 리메이크', 'IRON OVERHAUL', 'iron-overhaul.36a988772853.mp3'],
+    ['GPT Dots 리메이크', 'LOW B GRAVITY', 'low-b-gravity.98117d5d2864.mp3'],
+    ['GPT Dots 리메이크', 'Iron Wall March', 'iron-wall-march.c723ea54155f.mp3'],
   ];
-  assert.equal(rhythm.audioPreviews.length, 9);
-  assert.equal(new Set(rhythm.audioPreviews.map(({ src }) => src)).size, 9);
-  assert.deepEqual([...new Set(rhythm.audioPreviews.map(({ album }) => album))], ['Opus 5.5', 'Lyria 3.5', 'GPT Dots 리메이크']);
-  assert.deepEqual(Object.values(Object.groupBy(rhythm.audioPreviews, ({ album }) => album)).map(tracks => tracks.length), [3, 3, 3]);
+  assert.equal(rhythm.audioPreviews.length, 17);
+  assert.equal(new Set(rhythm.audioPreviews.map(({ src }) => src)).size, 17);
+  assert.deepEqual([...new Set(rhythm.audioPreviews.map(({ album }) => album))], ['Opus 5.5', 'Lyria 3.5', 'Lyria 3.5 보컬', 'Lyria 3.0 보컬 메들리 · 밈 가사', 'GPT Dots 리메이크']);
+  assert.deepEqual(Object.values(Object.groupBy(rhythm.audioPreviews, ({ album }) => album)).map(tracks => tracks.length), [3, 3, 3, 5, 3]);
   for (const [index, preview] of rhythm.audioPreviews.entries()) {
-    const [album, title, sha256] = expected[index];
+    const [album, title, filename] = expected[index];
     assert.equal(preview.album, album);
     assert.equal(preview.title, title);
     assert.equal(preview.durationSeconds, 13);
     const url = new URL(preview.src);
-    const slug = title.toLowerCase().replaceAll(' ', '-');
     assert.equal(url.origin, 'https://pf-samples.sworksong.workers.dev');
-    assert.equal(url.pathname, `/rhythm-game-oscillo/previews/${slug}.${sha256.slice(0, 12)}.mp3`);
+    assert.equal(url.pathname, `/rhythm-game-oscillo/previews/${filename}`);
+    assert.match(filename, /^[a-z0-9]+(?:-[a-z0-9]+)*\.[a-f0-9]{12}\.mp3$/);
     assert.equal(url.search + url.hash, '');
+    assert.deepEqual(Object.keys(preview).sort(), ['album', 'durationSeconds', 'src', 'title']);
   }
 });
 

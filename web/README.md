@@ -284,11 +284,13 @@ OSCILLO는 앨범·곡·난이도를 선택하고 4개 레인으로 내려오는
 사용자가 확인한 제작 정보는 코드 `Opus 5.5`, 음원 `다양한 모델 혼합`이며 별도 역할로 표시합니다.
 `images/agent-experiments/oscillo/`의 실제 곡 선택·플레이 캡처 두 장을 사용하고,
 `https://pf-samples.sworksong.workers.dev/rhythm-game-oscillo/`를 직접 실행 링크로 연결합니다.
-MP3 프리뷰 9곡은 같은 호스트의 `/rhythm-game-oscillo/previews/`에 있는 콘텐츠 해시 포함 URL로 연결합니다.
+MP3 프리뷰 17곡은 같은 호스트의 `/rhythm-game-oscillo/previews/`에 있는 콘텐츠 해시 포함 URL로 연결합니다.
 공개 프런트엔드의 런타임·테스트는 별도 샘플 저장소나 원본 ZIP에 의존하지 않습니다.
-`Opus 5.5`(3곡), `Lyria 3.5`(3곡), `GPT Dots 리메이크`(3곡) 순서로 선택하며 모두 13초입니다.
-Lyria의 `After the Great Ascent`를 추가하고 `LOW B GRAVITY`는 갱신된 프리뷰를 사용합니다.
-`GPT Dots 리메이크`의 세 번째 `Iron Wall March` 프리뷰는 콘텐츠 해시 `c723ea54155f`의 교체본을 사용합니다. 다른 8곡과 순서·앨범은 유지합니다.
+`Opus 5.5`(3곡), `Lyria 3.5`(3곡), `Lyria 3.5 보컬`(3곡),
+`Lyria 3.0 보컬 메들리 · 밈 가사`(5곡), `GPT Dots 리메이크`(3곡) 순서이며,
+게임의 앨범·곡 순서와 일치하고 모두 13초입니다.
+보컬·메들리 8곡을 추가하고 기존 곡의 프리뷰도 전체 묶음의 현행 파일로 연결합니다.
+`Iron Wall March`는 기존 교체본과 동일한 파일이며, 이전 프리뷰 주소의 호환성은 샘플 호스트에서 유지합니다.
 외부 음원 URL에는 GitHub Pages의 `basePath`를 붙이지 않습니다.
 단일 플레이어에서 사용자가 재생을 눌러 듣고, 곡을 바꾸면 이전 곡을 멈춘 뒤 처음부터 준비합니다.
 다른 실험·분류로 이동하면 재생을 멈추고, 이미지 슬라이드만 바꾸면 음원 재생은 유지합니다.

@@ -1,6 +1,6 @@
 import type { AgentExperimentAudioPreview } from '../../data/agentExperiments.ts';
 
-const albumOrder = ['Opus 5.5', 'Lyria 3.5', 'GPT Dots 리메이크'];
+const albumOrder = ['Opus 5.5', 'Lyria 3.5', 'Lyria 3.5 보컬', 'Lyria 3.0 보컬 메들리 · 밈 가사', 'GPT Dots 리메이크'];
 
 /** 사이트 내부의 루트 경로에만 basePath를 붙이고 외부 음원 URL은 보존한다. */
 export function audioPreviewSource(src: string, basePath: string): string {
