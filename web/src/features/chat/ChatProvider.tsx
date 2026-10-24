@@ -65,6 +65,10 @@ import {
   type ChatRetryFailureKind,
 } from "./chatRetryRecovery";
 import { immutableChatRequest } from "./chatRequestSnapshot";
+import {
+  CLARIFICATION_CANCEL_MESSAGE, CLARIFICATION_PROTOCOL, ChatClarificationSession,
+  clarificationChoicePrompt, isExplicitClarificationCancel, type PendingChatClarification,
+} from "./chatClarification";
 import { navigationPathMatches, observeToolNavigation } from "./toolNavigationObservation";
 import {
   ChatConversationIdentity, createChatToolTask, nextChatToolTaskGeneration, type ChatRequestIds,
@@ -385,6 +389,7 @@ function isStreamAnimation(
  * assistantMessageId는 자동·수동 재시도에서도 같은 말풍선을 유지하는 데 쓴다.
  */
 interface PendingRetry extends ChatRequestIds {
+  clarificationReply?: ChatRequest["clarificationReply"];
   toolTask: NonNullable<ChatRequest["toolTask"]>;
   toolTaskProgress?: ChatToolTaskProgress;
   toolTaskTelemetry?: BrowserToolTaskTelemetry;
@@ -450,6 +455,8 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
   /** 429 등으로 재시도까지 남은 초다. 0이면 바로 재시도할 수 있다. */
   const [retryWaitSeconds, setRetryWaitSeconds] = useState(0);
   const [messages, setMessages] = useState<ChatMessage[]>(initialMessages);
+  const [pendingClarification, setPendingClarification] = useState<PendingChatClarification | null>(null);
+  const clarificationSessionRef = useRef(new ChatClarificationSession());
   const [audience, setAudience] = useState<AudienceChoice | null>(null);
   const [tone, setTone] = useState<Tone>("official");
   const [streamingEnabled, setStreamingEnabledState] = useState(true);
@@ -1583,6 +1590,8 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
       const isRequestActive = () => mountedRef.current && !controller.signal.aborted
         && abortRef.current === lifetime;
       const request: ChatRequest = pending.toolReportAttemptRequest ?? pending.toolReportRequest ?? {
+        clarificationProtocol: CLARIFICATION_PROTOCOL,
+        ...(pending.clarificationReply ? { clarificationReply: pending.clarificationReply } : {}),
         toolTask: pending.toolTask,
         conversationId: pending.conversationId,
         turnId: pending.turnId,
@@ -2144,6 +2153,7 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
           ...reportSnapshot(),
           ...(taskSnapshot() ? { toolTaskProgress: taskSnapshot() } : {}),
           ...(response.modelHistory ? { modelHistory: response.modelHistory } : {}),
+          ...(response.clarification ? { clarification: response.clarification } : {}),
           id: streamingMessageId ?? nextId("assistant"),
           role: "assistant",
           content: response.answer,
@@ -2165,6 +2175,12 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
             ? { toolResults: [...toolResults.values()] }
             : {}),
         };
+        if (response.clarification) {
+          setPendingClarification(clarificationSessionRef.current.activate(completedMessage.id, response.clarification));
+        } else {
+          clarificationSessionRef.current.clear();
+          setPendingClarification(null);
+        }
         // 아직 결말이 나지 않은 이동은 이 id의 말풍선으로 결과를 마저 보낸다.
         toolResultMessageId = completedMessage.id;
         setMessages((current) =>
@@ -2419,6 +2435,20 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
     }
   }, [clearRetryWait, performRequest]);
 
+  /** 명시 취소는 모델이나 이미 완료된 도구의 undo를 부르지 않고 질문의 선택권만 끝낸다. */
+  const cancelClarification = useCallback((messageId: string, epoch: number, content = CLARIFICATION_CANCEL_MESSAGE) => {
+    if (!mountedRef.current || inFlightRef.current
+      || !clarificationSessionRef.current.matches(messageId, epoch, messagesRef.current)) return;
+    clarificationSessionRef.current.clear();
+    setPendingClarification(null);
+    retryRef.current = null;
+    setError(null);
+    setMessages((current) => [
+      ...current.map(item => item.id === messageId ? { ...item, clarificationState: "cancelled" as const } : item),
+      { id: nextId("user"), role: "user", content, kind: "message" },
+    ]);
+  }, [nextId]);
+
   /**
    * 사용자 질문을 보낸다.
    *
@@ -2427,20 +2457,35 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
    * 기록에 중복으로 들어가지 않게 하기 위함이다. 재시도 재료도 여기서 남긴다.
    */
   const sendMessage = useCallback(
-    async (content: string, audienceOverride?: AudienceChoice, responseMode: "default" | "explanation" = "default") => {
+    async (content: string, audienceOverride?: AudienceChoice, responseMode: "default" | "explanation" = "default",
+      choice?: { messageId: string; epoch: number; value: string }) => {
       const message = content.trim();
-      if (!message || (!canRequest() && !canSendUnverifiedExplanation(availability, responseMode)) || inFlightRef.current ||
+      if (!mountedRef.current || !message || inFlightRef.current) return;
+      const active = clarificationSessionRef.current.current;
+      const hasActive = active && clarificationSessionRef.current.matches(active.messageId, active.epoch, messagesRef.current);
+      if (choice && (!hasActive || choice.messageId !== active.messageId || choice.epoch !== active.epoch
+        || !active.clarification.choices.some(option => option.value === choice.value))) return;
+      if (hasActive && !choice && responseMode === "default" && isExplicitClarificationCancel(message)) {
+        cancelClarification(active.messageId, active.epoch, message);
+        return;
+      }
+      if ((!canRequest() && !canSendUnverifiedExplanation(availability, responseMode)) ||
         Date.now() < Math.max(requestCooldownDeadlineRef.current, retryWaitDeadlineRef.current)) {
         return;
       }
 
       const previousManualWait = retryRef.current?.waitingForManual ? retryRef.current : undefined;
       const history = historyFromMessages(messagesRef.current);
+      const clarificationReply = hasActive && responseMode === "default"
+        ? clarificationSessionRef.current.consume(active.messageId, active.epoch, messagesRef.current, choice?.value) : undefined;
+      if (choice && !clarificationReply) return;
+      clarificationSessionRef.current.clear();
+      setPendingClarification(null);
       setMessages((current) => [
         ...current.map((item) => item.id === previousManualWait?.assistantMessageId
           ? { ...item, generationState: "stopped" as const, retryAllowed: false,
             ...(previousManualWait?.toolReportRequest ? { toolReportState: "stopped" as const } : {}) }
-          : item),
+          : item.id === active?.messageId ? { ...item, clarificationState: "closed" as const } : item),
         {
           id: nextId("user"),
           role: "user",
@@ -2449,16 +2494,25 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
         },
       ]);
       conversationIdentityRef.current ??= new ChatConversationIdentity();
-      const pending = {
+      const pending: PendingRetry = {
         ...conversationIdentityRef.current.nextTurnIds(),
         toolTask: createChatToolTask(),
         message, history, audienceOverride, responseMode,
+        ...(clarificationReply ? { clarificationReply } : {}),
       };
       retryRef.current = pending;
       await performRequestWithRecovery(pending);
     },
-    [availability, canRequest, nextId, performRequestWithRecovery],
+    [availability, canRequest, cancelClarification, nextId, performRequestWithRecovery],
   );
+
+  /** 선택은 명확한 새 사용자 요청으로만 이어진다. 여기서 DOM이나 설정 setter를 호출하지 않는다. */
+  const replyToClarification = useCallback(async (messageId: string, epoch: number, value: string) => {
+    const active = clarificationSessionRef.current.current;
+    if (!mountedRef.current || !active || !clarificationSessionRef.current.matches(messageId, epoch, messagesRef.current)) return;
+    const prompt = clarificationChoicePrompt(active.clarification, value);
+    if (prompt) await sendMessage(prompt, undefined, "default", { messageId, epoch, value });
+  }, [sendMessage]);
 
   /**
    * 마지막 실패를 다시 보낸다. 용량 오류만 이전 시도 이력에서 더 줄이고,
@@ -2480,6 +2534,11 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
    * 취소한다. 중단 표시와 안내는 요청 쪽 실패 처리에서 붙인다.
    */
   const stopGenerating = useCallback(() => {
+    const active = clarificationSessionRef.current.current;
+    if (!inFlightRef.current && active) {
+      cancelClarification(active.messageId, active.epoch);
+      return;
+    }
     const waiting = retryRef.current;
     if (!inFlightRef.current && waiting?.waitingForManual) {
       retryRef.current = null;
@@ -2494,7 +2553,7 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
     stopRequestedRef.current = true;
     renderQueueRef.current?.cancel();
     abortRef.current.abort();
-  }, [clearRetryWait]);
+  }, [cancelClarification, clearRetryWait]);
 
   /**
    * 대화를 처음 상태로 되돌린다.
@@ -2503,6 +2562,8 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
    * 사용자가 원한 것은 "새 대화"이지 "중단 안내"가 아니기 때문이다.
    */
   const resetConversation = useCallback(() => {
+    clarificationSessionRef.current.clear();
+    setPendingClarification(null);
     if (conversationIdentityRef.current) conversationIdentityRef.current.reset();
     else conversationIdentityRef.current = new ChatConversationIdentity();
     retryRef.current = null;
@@ -2722,6 +2783,7 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
       error,
       retryWaitSeconds,
       messages: visibleChatMessages(messages),
+      pendingClarification,
       audience,
       tone,
       streamingEnabled,
@@ -2749,6 +2811,8 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
       resetConversation,
       showSettingsWebMcpGuide,
       sendMessage,
+      replyToClarification,
+      cancelClarification,
       stopGenerating,
       retry,
       navigateRoute: stableNavigateRoute,
@@ -2781,6 +2845,7 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
       isOpen,
       isClosing,
       messages,
+      pendingClarification,
       navigateAction,
       stableNavigateRoute,
       executePortfolioUiTool,
@@ -2809,6 +2874,8 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
       selectTone,
       showSettingsWebMcpGuide,
       sendMessage,
+      replyToClarification,
+      cancelClarification,
       stopGenerating,
       streamAnimation,
       streamingEnabled,

@@ -23,11 +23,13 @@ import { toolResultDisplayStatus, toolResultText } from "./toolResultPresentatio
 import { toolTaskSummary, toolTaskStepText } from "./toolTaskPresentation.ts";
 import { CHAT_FAILURE_NOTICE } from "./chatFailure";
 import { messageToolReportState, toolReportFailureNotice } from "./toolReport.ts";
+import { clarificationAccentColors, clarificationChoiceLabel, clarificationCurrentValue } from "./chatClarification.ts";
 import type {
   ActionId,
   ChatAction,
   ChatMessage,
   ChatStreamAnimation,
+  ChatUiSettings,
 } from "./types";
 import styles from "./ChatWidget.module.css";
 
@@ -237,6 +239,12 @@ interface MessageItemProps {
   /** 이 말풍선에서 재시도 버튼을 노출할지 여부다. */
   canRetry: boolean;
   retryWaitSeconds: number;
+  clarificationEpoch?: number;
+  clarificationSettings?: ChatUiSettings;
+  clarificationCanSubmit?: boolean;
+  clarificationBusy?: boolean;
+  onClarificationChoice?: (messageId: string, epoch: number, value: string) => void;
+  onClarificationCancel?: (messageId: string, epoch: number) => void;
   onActivateAction: (actionId: ActionId) => void;
   onAskSuggestedQuestion: (question: string) => void;
   onRetry: () => void;
@@ -262,11 +270,21 @@ export const MessageItem = memo(function MessageItem({
   slowResponse,
   canRetry,
   retryWaitSeconds,
+  clarificationEpoch,
+  clarificationSettings,
+  clarificationCanSubmit = false,
+  clarificationBusy = false,
+  onClarificationChoice,
+  onClarificationCancel,
   onActivateAction,
   onAskSuggestedQuestion,
   onRetry,
 }: MessageItemProps) {
   const isToolStatusOnly = message.kind === "tool_status";
+  const clarification = message.clarification;
+  const clarificationActive = clarificationEpoch !== undefined && !message.clarificationState;
+  const currentClarificationValue = clarification && clarificationSettings
+    ? clarificationCurrentValue(clarification, clarificationSettings) : undefined;
   const summaryActions = isToolStatusOnly ? [] : summaryActionsForMessage(
     message,
     activeQuickDestination,
@@ -420,6 +438,51 @@ export const MessageItem = memo(function MessageItem({
         </div>
       ) : (
         <p className={styles.messageText}>{message.content}</p>
+      )}
+      {clarification && message.generationState === "complete" && (
+        <section className={styles.clarification} aria-label="설정 확인 선택"
+          data-clarification-id={clarification.id}
+          data-clarification-state={clarificationActive ? "active" : message.clarificationState ?? "closed"}>
+          <p className={styles.clarificationHint}>
+            {message.clarificationState === "cancelled" ? "이 설정 변경 요청을 취소했어요."
+              : !clarificationActive ? "이전 선택 안내입니다. 새 요청은 입력창에서 보내 주세요."
+              : clarification.choices.length === 0 ? "아직 변경하지 않았어요. 원하는 설정을 조금 더 구체적으로 입력해 주세요."
+              : clarification.target ? "아직 변경하지 않았어요. 선택하면 해당 값으로 변경 요청을 보내요."
+              : "아직 변경하지 않았어요. 바꾸려는 설정 항목을 선택해 주세요."}
+          </p>
+          {currentClarificationValue !== undefined && (
+            <p className={styles.clarificationCurrent}>현재: {clarificationChoiceLabel(clarification, currentClarificationValue)}</p>
+          )}
+          {clarification.choices.length > 0 && (
+            <div className={styles.clarificationChoices} role="group" aria-label="설정 선택지">
+              {clarification.choices.map((choice, index) => {
+                const colors = clarificationAccentColors(clarification, choice.value);
+                const label = clarificationChoiceLabel(clarification, choice.value);
+                const current = choice.value === currentClarificationValue;
+                return (
+                  <button key={choice.value} type="button" className={styles.clarificationChoice}
+                    disabled={!clarificationActive || !clarificationCanSubmit}
+                    data-clarification-value={choice.value} data-current={current ? "true" : undefined}
+                    aria-label={`${index + 1}. ${label} 선택${current ? ", 현재 값" : ""}${clarification.target ? " · 변경 요청 보내기" : " · 설정 항목 확인"}`}
+                    style={colors ? { "--clarification-swatch": colors.swatch,
+                      "--clarification-label-light": colors.light, "--clarification-label-dark": colors.dark } as CSSProperties : undefined}
+                    onClick={() => { if (clarificationEpoch !== undefined) onClarificationChoice?.(message.id, clarificationEpoch, choice.value); }}>
+                    <span className={styles.clarificationOrdinal} aria-hidden="true">{index + 1}</span>
+                    {colors && <span className={styles.clarificationSwatch} aria-hidden="true" />}
+                    <span className={styles.clarificationLabel}>{label}</span>
+                    {current && <span className={styles.clarificationCurrentBadge}>현재</span>}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+          {clarificationActive && (
+            <button type="button" className={styles.clarificationCancel} disabled={clarificationBusy}
+              onClick={() => { if (clarificationEpoch !== undefined) onClarificationCancel?.(message.id, clarificationEpoch); }}>
+              이 변경 요청 취소
+            </button>
+          )}
+        </section>
       )}
       {hasFailed && (
         <div className={styles.messageFailure} role="alert">

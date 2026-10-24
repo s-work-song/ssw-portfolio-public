@@ -13,6 +13,8 @@ import { appendUiSettingChange, createUiSettingChange } from './uiSettingChangeJ
 import { chatRetryFailureKind, chatRecoveryDelayMs, exhaustChatRecoveryPhase, historyForCapacityRetry,
   initialChatRecoveryBudget, planChatRecovery } from './chatRetryRecovery.ts';
 import { immutableChatRequest } from './chatRequestSnapshot.ts';
+import { CLARIFICATION_CANCEL_MESSAGE, CLARIFICATION_PROTOCOL, ChatClarificationSession,
+  clarificationChoicePrompt, isExplicitClarificationCancel } from './chatClarification.ts';
 import { canSendUnverifiedExplanation } from './chatAvailability.ts';
 import { settingToolResultLabel } from './constants.ts';
 import { portfolioUiCommandFromChatExecution } from '../portfolio-tools/portfolioUiToolExecutor.ts';
@@ -98,7 +100,7 @@ export function providerReportFixture(t, options = {}) {
     finishReport: null, finishOrdinary: null, loading: false, retryWaitSeconds: 0,
     ordinaryOutcomes: [...(options.ordinaryOutcomes ?? [])], loadingChanges: [], messageSnapshots: [], availability: [],
     requestOutcomes: [...(options.requestOutcomes ?? [])], reportOutcomes: [...(options.reportOutcomes ?? [])],
-    waits: [], finishRecovery: null, browserReads: 0 };
+    waits: [], finishRecovery: null, browserReads: 0, pendingClarification: null, finishInitial: null };
   let clock = Date.now();
   const FixtureDate = class extends Date { static now() { return clock; } };
   if (options.messages) state.messages = [...options.messages];
@@ -108,6 +110,7 @@ export function providerReportFixture(t, options = {}) {
   refs.mountedRef.current = true;
   refs.retryWaitDeadlineRef.current = 0;
   refs.requestCooldownDeadlineRef.current = 0;
+  refs.clarificationSessionRef = { current: new ChatClarificationSession() };
   const intervals = new Map();
   let timerId = 0;
   const uiSettingsRef = { get current() { return state.uiSettings; } };
@@ -135,7 +138,14 @@ export function providerReportFixture(t, options = {}) {
     }
     if (!request.toolVerification) {
       const initialOutcome = state.requestOutcomes.shift();
+      if (initialOutcome?.wait) await new Promise(resolve => { state.finishInitial = resolve; });
+      if (signal.aborted && !initialOutcome?.ignoreAbort) throw new DOMException('Aborted', 'AbortError');
       if (initialOutcome?.error) throw initialOutcome.error;
+      if (initialOutcome?.response) {
+        const value = typeof initialOutcome.response === 'function' ? initialOutcome.response(request) : initialOutcome.response;
+        handlers?.onDelta?.(value.answer);
+        return parseChatResponse(value, request);
+      }
       const executions = fixture.executions.map(item => ({ ...item, toolTask: { ...item.toolTask, ...expectedToolTaskScope(request) } }));
       if (options.incompleteDispatch) {
         handlers?.onTool?.(fixture.executions[0]);
@@ -185,6 +195,8 @@ export function providerReportFixture(t, options = {}) {
   const context = { ...refs, window, document: {}, process: { env: {} }, Date: FixtureDate,
     useCallback: callback => callback, canRequest: () => options.canRequest ?? true,
     availability: options.availability ?? 'online', canSendUnverifiedExplanation, uiSettingsRef, uiSettingChangesRef,
+    CLARIFICATION_CANCEL_MESSAGE, CLARIFICATION_PROTOCOL, clarificationChoicePrompt, isExplicitClarificationCancel,
+    setPendingClarification: value => { state.pendingClarification = value; },
     messagesRef: { get current() { return state.messages; } },
     setMessages: update => { state.messages = typeof update === 'function' ? update(state.messages) : update;
       state.messageSnapshots.push(structuredClone(state.messages)); },
@@ -220,6 +232,10 @@ export function providerReportFixture(t, options = {}) {
       if (command.signal.aborted) throw new DOMException('Aborted', 'AbortError');
       state.effects.push([command.name, structuredClone(command.input)]);
       if (command.name === 'set_portfolio_theme') state.uiSettings.theme = command.input.theme;
+      if (command.name === 'set_portfolio_accent') state.uiSettings.accent = command.input.accent;
+      if (command.name === 'set_portfolio_chat_layout') state.uiSettings.chatLayout = command.input.layout;
+      if (command.name === 'set_portfolio_chat_font') state.uiSettings.chatFont = command.input.font;
+      if (command.name === 'set_portfolio_stream_animation') state.uiSettings.streamAnimation = command.input.animation;
       if (command.name === 'set_portfolio_chat_font_size' && options.failedTool !== 'font') state.uiSettings.chatFontSize = command.input.size;
       if (command.name === 'control_portfolio_view') {
         state.viewState = structuredClone(fixture.latest.viewState);
@@ -240,12 +256,13 @@ export function providerReportFixture(t, options = {}) {
     chatFailureAvailability: () => 'offline', reportAvailability(value) { state.availability.push(value); },
     UI_TOOL_NOT_CALLED_RESULT: {}, UI_TOOL_INCOMPLETE_RESULT: {},
   };
-  const api = new Function(...Object.keys(context), `${compiled}\nreturn { performRequestWithRecovery, retry, sendMessage, resetConversation, stopGenerating };`)(...Object.values(context));
-  t.after(() => { refs.abortRef.current?.abort(); state.finishReport?.(); state.finishOrdinary?.(); });
+  const api = new Function(...Object.keys(context), `${compiled}\nreturn { performRequestWithRecovery, retry, sendMessage, resetConversation, stopGenerating, replyToClarification, cancelClarification };`)(...Object.values(context));
+  t.after(() => { refs.abortRef.current?.abort(); state.finishReport?.(); state.finishOrdinary?.(); state.finishInitial?.(); });
   return { ...fixture, state, refs, pending, run: () => {
     refs.retryRef.current = pending;
     return api.performRequestWithRecovery(pending);
   }, retry: api.retry, send: api.sendMessage, reset: api.resetConversation, stop: api.stopGenerating,
+    choose: api.replyToClarification, cancelClarification: api.cancelClarification,
     performExisting: () => api.performRequestWithRecovery(pending),
     advanceTime(ms) { clock += ms; for (const callback of intervals.values()) callback(); },
     async untilRecovery(count = 1) {

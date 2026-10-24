@@ -297,6 +297,9 @@ export function ChatWidget() {
     chatDockWidth,
     motion,
     mode,
+    accent,
+    chatFont,
+    chatFontSize,
     setMode,
     setChatDockWidth,
   } = useTheme();
@@ -308,11 +311,13 @@ export function ChatWidget() {
     error,
     retryWaitSeconds,
     messages,
+    pendingClarification,
     audience,
     streamingEnabled,
     reasoningEnabled,
     effectiveChatAnimation,
     effectiveStreamAnimation,
+    streamAnimation: selectedStreamAnimation,
     guidedTour,
     guidedTourStep,
     guidedTourInviteVisible,
@@ -328,6 +333,8 @@ export function ChatWidget() {
     resetConversation,
     showSettingsWebMcpGuide,
     sendMessage,
+    replyToClarification,
+    cancelClarification,
     stopGenerating,
     retry,
     navigateAction,
@@ -339,6 +346,8 @@ export function ChatWidget() {
     dismissGuidedTourInvite,
     returnToGuidedTourStep,
   } = useChat();
+  const clarificationSettings = useMemo(() => ({ theme: mode, accent, chatLayout, chatFont, chatFontSize,
+    streamAnimation: selectedStreamAnimation }), [mode, accent, chatLayout, chatFont, chatFontSize, selectedStreamAnimation]);
   const [draft, setDraft] = useState("");
   const [usedSuggestedQuestionKeys, setUsedSuggestedQuestionKeys] = useState<
     ReadonlySet<string>
@@ -1626,6 +1635,12 @@ export function ChatWidget() {
                             ? retryWaitSeconds
                             : 0
                         }
+                        clarificationEpoch={pendingClarification?.messageId === message.id ? pendingClarification.epoch : undefined}
+                        clarificationSettings={clarificationSettings}
+                        clarificationCanSubmit={!isLoading && retryWaitSeconds <= 0 && availability === "online"}
+                        clarificationBusy={isLoading}
+                        onClarificationChoice={replyToClarification}
+                        onClarificationCancel={cancelClarification}
                         onActivateAction={activateResponseAction}
                         onAskSuggestedQuestion={askSuggestedQuestion}
                         onRetry={handleRetry}

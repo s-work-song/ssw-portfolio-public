@@ -16,6 +16,7 @@ import {
   TONES,
 } from "./constants.ts";
 import { responseModelHistory } from "./modelHistory.ts";
+import { CLARIFICATION_PROTOCOL, parseChatClarification } from "./chatClarification.ts";
 import {
   ACCENTS,
   CHAT_FONTS,
@@ -572,7 +573,7 @@ export function parseToolExecutions(value: unknown): ChatToolExecution[] {
  */
 export function parseChatResponse(
   value: unknown,
-  context: Pick<ChatRequest, "toolTask" | "conversationId" | "turnId" | "toolVerification"> = {},
+  context: Pick<ChatRequest, "toolTask" | "conversationId" | "turnId" | "toolVerification" | "clarificationProtocol"> = {},
 ): ChatResponse {
   if (!isRecord(value)) {
     throw new ChatApiError("서버 응답 형식을 확인할 수 없습니다.", { code: "invalid_response" });
@@ -599,6 +600,7 @@ export function parseChatResponse(
 
   const validMode =
     mode === "model" || mode === "retrieval_fallback" ||
+    (mode === "clarification" && context.clarificationProtocol === CLARIFICATION_PROTOCOL && !context.toolVerification) ||
     (mode === "tool_status" && Boolean(context.toolVerification?.results.length)) ? mode : null;
   const validStatus =
     status === "online" || status === "upstream_offline" ? status : null;
@@ -626,6 +628,21 @@ export function parseChatResponse(
     throw new ChatApiError("서버 응답 형식을 확인할 수 없습니다.", { code: "invalid_response" });
   }
 
+  const clarification = validMode === "clarification" ? parseChatClarification(value.clarification, context) : undefined;
+  if ((validMode !== "clarification" && value.clarification !== undefined)
+    || (validMode === "clarification" && (!clarification || generated !== false || validStatus !== "online" || cached !== false
+      || answer !== clarification.question || uiOnly !== true || uiToolOutcome !== "not_required" || toolFollowup !== undefined
+      || actions.length !== 0 || !Array.isArray(suggestedQuestions) || suggestedQuestions.length !== 0
+      || !Array.isArray(toolExecutions) || toolExecutions.length !== 0
+      || (value.sources !== undefined && (!Array.isArray(value.sources) || value.sources.length !== 0))
+      || segments.length !== 1 || !isRecord(segments[0]) || segments[0].markdown !== answer
+      || !Array.isArray(segments[0].actions) || segments[0].actions.length !== 0
+      || !Array.isArray(value.modelHistory) || value.modelHistory.length !== 1
+      || !isRecord(value.modelHistory[0]) || value.modelHistory[0].role !== "assistant"
+      || value.modelHistory[0].content !== answer || value.modelHistory[0].tool_calls !== undefined))) {
+    throw new ChatApiError("설정 확인 응답 형식을 확인할 수 없습니다.", { code: "invalid_response" });
+  }
+
   const parsedSegments = segments
     .map(parseSegment)
     .filter((segment): segment is ChatSegment => segment !== null);
@@ -643,6 +660,9 @@ export function parseChatResponse(
   // 칩만 남기는 확인 응답은 실제 도구 체인으로 끝나며 합성 assistant가 없다.
   const modelHistory = responseModelHistory(value.modelHistory, answer,
     awaitingBrowser || validMode === "tool_status");
+  if (clarification && !modelHistory) {
+    throw new ChatApiError("설정 확인 응답의 질문 이력을 확인할 수 없습니다.", { code: "invalid_response" });
+  }
   const parsedToolFollowup = parseToolFollowup(toolFollowup);
 
   // 빈 말풍선으로 굳지 않도록, 보여줄 본문이 하나도 없으면 실패로 처리한다.
@@ -655,6 +675,7 @@ export function parseChatResponse(
   return {
     ...(parsedToolTask ? { toolTask: parsedToolTask } : {}),
     ...(modelHistory ? { modelHistory } : {}),
+    ...(clarification ? { clarification } : {}),
     mode: validMode,
     status: validStatus,
     generated,
@@ -670,7 +691,7 @@ export function parseChatResponse(
     // 백엔드와 프론트의 순차 배포 중에도 기존 응답을 계속 읽는다.
     suggestedQuestions: parseSuggestedQuestions(suggestedQuestions),
     // 명시적인 true만 추천 생략으로 받아 구형 응답의 동작을 유지한다.
-    ...(recommendationsSuppressed === true ? { recommendationsSuppressed: true } : {}),
+    ...(recommendationsSuppressed === true || clarification ? { recommendationsSuppressed: true } : {}),
     toolExecutions: parsedToolExecutions,
     cached,
     // 보고하지 않는 서버와 모르는 값은 모두 없는 것으로 본다.

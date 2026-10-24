@@ -23,6 +23,7 @@ import type {
   GuidedTourTargetId,
 } from "./guidedTour";
 import type { PortfolioUiToolExecutor } from "../portfolio-tools/portfolioUiToolExecutor";
+import type { PendingChatClarification } from "./chatClarification";
 
 /**
  * 컨텍스트가 실어 나르는 값 전체다.
@@ -43,6 +44,7 @@ export interface ChatContextValue {
   /** 서버가 요청한 재시도 대기 시간 중 남은 초다. 0이면 바로 재시도할 수 있다. */
   retryWaitSeconds: number;
   messages: ChatMessage[];
+  pendingClarification: PendingChatClarification | null;
   audience: AudienceChoice | null;
   tone: Tone;
   streamingEnabled: boolean;
@@ -84,6 +86,8 @@ export interface ChatContextValue {
     audienceOverride?: AudienceChoice,
     responseMode?: "default" | "explanation",
   ) => Promise<void>;
+  replyToClarification: (messageId: string, epoch: number, value: string) => Promise<void>;
+  cancelClarification: (messageId: string, epoch: number) => void;
   /** 생성 중인 답변을 중단한다. 그 시점까지 받은 내용은 그대로 남는다. */
   stopGenerating: () => void;
   /** 마지막 질문을 다시 보낸다. 실패한 답변 말풍선의 재시도 버튼이 쓴다. */

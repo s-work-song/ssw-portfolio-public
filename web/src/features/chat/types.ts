@@ -474,7 +474,9 @@ export interface ChatResponse {
   toolTask?: ChatToolTaskResponse;
   /** 현재 턴의 공개 모델 이력. 사용자 질문은 프런트에서 별도로 보존한다. */
   modelHistory?: ChatHistoryItem[];
-  mode: "model" | "retrieval_fallback" | "tool_status";
+  mode: "model" | "retrieval_fallback" | "tool_status" | "clarification";
+  /** 실행 전에 부족한 설정값을 묻는 정상 완료 응답이다. 실행 계획은 담지 않는다. */
+  clarification?: ChatClarification;
   status: "online" | "upstream_offline";
   generated: boolean;
   answer: string;
@@ -503,6 +505,9 @@ export type ChatToolReportFailure = "history_invalid" | "history_budget" | "mani
   | "request_failed" | "timeout" | "response_contract" | "empty_answer";
 
 export interface ChatMessage {
+  clarification?: ChatClarification;
+  /** 표시 전용 수명 상태이며 원래 assistant 질문이나 모델 이력을 바꾸지 않는다. */
+  clarificationState?: "closed" | "cancelled";
   /** 재시도 대기 중의 표시 전용 상태다. 모델 요청이나 원본 이력에는 넣지 않는다. */
   retryNotice?: "retrying" | "reduced_context";
   toolTaskProgress?: ChatToolTaskProgress;
@@ -538,6 +543,37 @@ export type ChatSettingChangeToolName =
   | "set_portfolio_chat_font_size"
   | "set_portfolio_stream_animation";
 
+export type ChatClarificationReason = "missing_value" | "ambiguous_target" | "unsupported_value" | "unintelligible";
+
+/** 명료화 문맥은 실행 권한이나 도구 계획이 아닌, 원문 보충 자료다. */
+export interface ChatClarification {
+  schemaVersion: "portfolio-clarification-v1";
+  id: string;
+  reason: ChatClarificationReason;
+  target: ChatSettingChangeToolName | null;
+  question: string;
+  choices: Array<{ value: string; label: string }>;
+  continuation: {
+    conversationId: string | null;
+    originTurnId: string;
+    originalMessage: string;
+    exchanges: Array<{
+      reason: ChatClarificationReason;
+      target: ChatSettingChangeToolName | null;
+      reply: string;
+      choiceValue?: string;
+    }>;
+    sourceTurnId: string;
+    sourceTaskId: string | null;
+    sourceGeneration: number | null;
+  };
+}
+
+export interface ChatClarificationReply extends ChatClarification {
+  /** 버튼 선택에만 붙인다. 직접 입력한 '두번째' 등의 원문은 message에만 둔다. */
+  choiceValue?: string;
+}
+
 /** 브라우저가 실제 반영을 확인한 설정 도구 호출 하나다. */
 export interface ChatSettingChange {
   toolCallId: string;
@@ -550,6 +586,9 @@ export interface ChatSettingChange {
 
 /** 서버로 보내는 질문 요청 본문이다. */
 export interface ChatRequest {
+  /** 새 명료화 응답을 읽을 수 있는 프런트만 명시적으로 협상한다. */
+  clarificationProtocol?: "portfolio-clarification-v1";
+  clarificationReply?: ChatClarificationReply;
   toolTask?: ChatToolTaskRequest;
   /** 선택 추적 ID. 원문 대신 UUID를 쓰며 동일 대화에서 유지한다. */
   conversationId?: string;

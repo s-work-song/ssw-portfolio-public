@@ -1252,6 +1252,74 @@
   color: var(--chat-accent);
 }
 
+.clarification {
+  display: grid;
+  gap: 9px;
+  margin-top: 12px;
+  padding-top: 11px;
+  border-top: 1px solid var(--chat-border);
+}
+
+.clarificationHint,
+.clarificationCurrent {
+  margin: 0;
+  color: var(--chat-dim);
+  font-size: var(--chat-control-font-size, 12px);
+  line-height: 1.55;
+}
+
+.clarificationCurrent { color: var(--chat-text); font-weight: 700; }
+.clarificationChoices { display: grid; grid-template-columns: repeat(auto-fit, minmax(118px, 1fr)); gap: 7px; }
+
+.clarificationChoice {
+  display: flex;
+  min-width: 0;
+  min-height: 44px;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 8px;
+  border: 1px solid var(--chat-border);
+  border-radius: 10px;
+  background: var(--chat-bg);
+  color: var(--clarification-label-light, var(--chat-text));
+  font: inherit;
+  font-size: var(--chat-control-font-size, 12px);
+  font-weight: 700;
+  line-height: 1.4;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 140ms ease;
+}
+
+:global(:root[data-theme='dark']) .clarificationChoice { color: var(--clarification-label-dark, var(--chat-text)); }
+.clarificationChoice:hover:not(:disabled) { border-color: currentColor; }
+.clarificationChoice:disabled { cursor: default; border-style: dashed; }
+.clarificationChoice[data-current='true'] { border-width: 2px; padding: 8px 7px; }
+.clarificationOrdinal { font-size: .85em; }
+.clarificationLabel { min-width: 0; overflow-wrap: anywhere; }
+.clarificationSwatch { width: 13px; height: 13px; flex: 0 0 13px; border: 1px solid var(--chat-border); border-radius: 50%; background: var(--clarification-swatch); }
+.clarificationCurrentBadge { margin-left: auto; color: var(--chat-text); font-size: .85em; white-space: nowrap; }
+
+.clarificationCancel {
+  justify-self: start;
+  min-height: 36px;
+  padding: 7px 9px;
+  border: 1px solid var(--chat-border);
+  border-radius: 8px;
+  background: var(--chat-bg);
+  color: var(--chat-text);
+  font: inherit;
+  font-size: var(--chat-control-font-size, 12px);
+  cursor: pointer;
+}
+
+.clarificationChoice:focus-visible,
+.clarificationCancel:focus-visible { outline: 2px solid var(--chat-text); outline-offset: 2px; }
+:global(:root[data-motion='off']) .clarificationChoice { transition: none; }
+@media (prefers-reduced-motion: reduce) {
+  .clarificationChoice { transition: none; }
+}
+
 /*
  * 스트리밍 답변이 끝난 뒤 선택 가능한 후속 UI를 답변 흐름에 맞춰 공개한다.
  * 요소는 처음부터 레이아웃 공간을 차지하므로 스크롤 높이가 연속해서 튀지 않고,
