@@ -102,10 +102,24 @@ export function clarificationChoiceLabel(clarification: Pick<ChatClarification, 
   return clarification.target ? VALUE_LABELS[clarification.target][value] ?? value : TARGET_LABELS[value as ChatSettingChangeToolName] ?? value;
 }
 
+/** 정본 한글 라벨의 받침이다. 현재 비한글 라벨 '노토 산스 KR'에는 '로'를 붙인다. */
+function finalConsonant(label: string): number {
+  const last = label.charCodeAt(label.length - 1);
+  return last >= 0xac00 && last <= 0xd7a3 ? (last - 0xac00) % 28 : 0;
+}
+
 export function clarificationChoicePrompt(clarification: ChatClarification, value: string): string | undefined {
   if (!clarification.choices.some(choice => choice.value === value)) return undefined;
   const label = clarificationChoiceLabel(clarification, value);
-  return clarification.target ? `${TARGET_LABELS[clarification.target]} 설정을 변경해 줘. 선택한 값: ${label}.` : `${label} 설정을 변경하고 싶어.`;
+  if (!clarification.target) return `${label} 설정을 변경하고 싶어.`;
+  const setting = TARGET_LABELS[clarification.target];
+  const objectParticle = finalConsonant(setting) ? "을" : "를";
+  const final = finalConsonant(label);
+  const valueParticle = final !== 0 && final !== 8 ? "으로" : "로";
+  const requestedValue = clarification.target === "set_portfolio_chat_font_size" && value !== "medium"
+    ? label : `${label}${valueParticle}`;
+  // 대상과 값을 다른 문장으로 분리하면 서버가 첫 문장만 값 없는 변경으로 해석할 수 있다.
+  return `${setting}${objectParticle} ${requestedValue} 변경해 줘.`;
 }
 
 /** 활성 질문에 대한 소수의 명시 취소만 처리한다. 일반 문장이나 과거 작업의 undo를 추측하지 않는다. */

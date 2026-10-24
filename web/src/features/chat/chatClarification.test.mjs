@@ -50,7 +50,11 @@ const normalResponse = request => ({ mode: 'model', status: 'online', generated:
 
 function singleSettingCase(target = 'set_portfolio_theme', value = 'dark') {
   const f = fourToolReportCase();
-  const field = target === 'set_portfolio_theme' ? 'theme' : 'accent';
+  const [field, setting] = {
+    set_portfolio_theme: ['theme', 'theme'], set_portfolio_accent: ['accent', 'accent'],
+    set_portfolio_chat_layout: ['layout', 'chatLayout'], set_portfolio_chat_font: ['font', 'chatFont'],
+    set_portfolio_chat_font_size: ['size', 'chatFontSize'], set_portfolio_stream_animation: ['animation', 'streamAnimation'],
+  }[target];
   const input = { [field]: value };
   const call = { id: 'original_native_setting_01', type: 'function', function: { name: target, arguments: ` ${JSON.stringify(input)}\n` } };
   f.calls = [call];
@@ -59,10 +63,60 @@ function singleSettingCase(target = 'set_portfolio_theme', value = 'dark') {
   f.steps = f.executions.map(stepFromExecution);
   f.native = [{ role: 'assistant', content: null, tool_calls: [call] }, { role: 'tool', tool_call_id: call.id, content: '{"accepted":true}' }];
   f.results = [{ toolCallId: call.id, toolName: target, stepIndex: 0, status: 'applied', elapsedMs: 500 }];
-  f.latest.uiSettings[field] = value;
+  f.latest.uiSettings[setting] = value;
   f.request = { ...f.request, toolTask: { ...f.request.toolTask, steps: f.steps } };
   return f;
 }
+
+test('선택 prompt는 6개 설정의 모든 정본 값을 대상과 한 문장에 묶고 자연스러운 조사를 쓴다', () => {
+  const expected = {
+    set_portfolio_theme: {
+      light: '화면 모드를 라이트로 변경해 줘.', dark: '화면 모드를 다크로 변경해 줘.', system: '화면 모드를 시스템으로 변경해 줘.',
+    },
+    set_portfolio_accent: {
+      blue: '포인트 색상을 로얄블루로 변경해 줘.', indigo: '포인트 색상을 인디고로 변경해 줘.',
+      emerald: '포인트 색상을 에메랄드로 변경해 줘.', amber: '포인트 색상을 앰버로 변경해 줘.',
+      rose: '포인트 색상을 로즈로 변경해 줘.', violet: '포인트 색상을 바이올렛으로 변경해 줘.',
+    },
+    set_portfolio_chat_layout: {
+      floating: '채팅 배치를 플로팅으로 변경해 줘.', dock: '채팅 배치를 오른쪽 고정으로 변경해 줘.',
+    },
+    set_portfolio_chat_font: {
+      pretendard: '채팅 글꼴을 프리텐다드로 변경해 줘.', 'noto-sans-kr': '채팅 글꼴을 노토 산스 KR로 변경해 줘.',
+      system: '채팅 글꼴을 시스템으로 변경해 줘.',
+    },
+    set_portfolio_chat_font_size: {
+      small: '채팅 글자 크기를 작게 변경해 줘.', medium: '채팅 글자 크기를 보통으로 변경해 줘.',
+      large: '채팅 글자 크기를 크게 변경해 줘.', xlarge: '채팅 글자 크기를 매우 크게 변경해 줘.',
+    },
+    set_portfolio_stream_animation: {
+      none: '스트리밍 연출을 없음으로 변경해 줘.', typewriter: '스트리밍 연출을 타자기로 변경해 줘.',
+      'word-fade': '스트리밍 연출을 단어 페이드로 변경해 줘.', 'token-chunks': '스트리밍 연출을 토큰 청크로 변경해 줘.',
+      'blur-focus': '스트리밍 연출을 블러 포커스로 변경해 줘.', 'slide-up': '스트리밍 연출을 슬라이드 업으로 변경해 줘.',
+      skeleton: '스트리밍 연출을 스켈레톤으로 변경해 줘.', 'mask-wipe': '스트리밍 연출을 마스크 와이프로 변경해 줘.',
+      scramble: '스트리밍 연출을 스크램블로 변경해 줘.', 'letter-drop': '스트리밍 연출을 레터 드롭으로 변경해 줘.',
+      'highlight-trail': '스트리밍 연출을 하이라이트 트레일로 변경해 줘.',
+    },
+  };
+  assert.deepEqual(Object.keys(expected), [...clarificationValues({ target: null, reason: 'ambiguous_target' })]);
+  let count = 0;
+  for (const [target, values] of Object.entries(expected)) {
+    const clarification = clarificationFor(req(), { target });
+    const original = structuredClone(clarification);
+    assert.deepEqual(Object.keys(values), clarification.choices.map(choice => choice.value));
+    for (const [value, prompt] of Object.entries(values)) {
+      assert.equal(clarificationChoicePrompt(clarification, value), prompt);
+      assert.equal((prompt.match(/\./g) ?? []).length, 1);
+      assert.equal(prompt.includes('선택한 값:'), false);
+      count++;
+    }
+    assert.deepEqual(clarification, original, '선택 메타데이터나 질문·원문을 바꾸지 않는다');
+    assert.equal(clarificationChoicePrompt(clarification, 'unknown-value'), undefined);
+  }
+  assert.equal(count, 29);
+  const targetOnly = clarificationFor(req(), { target: null, reason: 'ambiguous_target' });
+  assert.equal(clarificationChoicePrompt(targetOnly, 'set_portfolio_chat_font'), '채팅 글꼴 설정을 변경하고 싶어.');
+});
 
 test('명료화는 opt-in 정상 완료이며 질문 한 개와 무도구 manifest를 정확히 보존한다', () => {
   const request = req();
@@ -270,6 +324,67 @@ test('실제 Provider: 항목 질문 뒤 값 질문도 원복합요청·질문·
     f.state.requests[1].message, second.clarification.question]);
 });
 
+test('실제 Provider/MessageItem: 같은 질문이 다시 와도 최신 선택만 활성화하고 이전 버튼은 재실행하지 않는다', async t => {
+  const { render } = messageItemRenderer();
+  for (const streaming of [false, true]) {
+    for (const [target, value, setting, before] of [
+      ['set_portfolio_theme', 'system', 'theme', 'light'],
+      ['set_portfolio_accent', 'amber', 'accent', 'blue'],
+      ['set_portfolio_chat_font', 'noto-sans-kr', 'chatFont', 'pretendard'],
+    ]) {
+      await t.test(`${streaming ? 'SSE' : 'JSON'} ${target}`, async t => {
+        const f = providerReportFixture(t, { fixture: singleSettingCase(target, value), streaming,
+          requestOutcomes: [
+            { response: request => clarificationResponse(request, { target }) },
+            { response: request => clarificationResponse(request, { target }) },
+          ] });
+        f.state.uiSettings[setting] = before;
+        const original = '설정을 바꾸고 결과를 알려줘';
+        await f.send(original);
+        const first = f.state.pendingClarification;
+        await f.choose(first.messageId, first.epoch, value);
+        const latest = f.state.pendingClarification;
+        assert.ok(latest, '재질문 완료 후 pending을 소모된 이전 상태로 남기지 않는다');
+        assert.notEqual(latest.messageId, first.messageId);
+        assert.notEqual(latest.epoch, first.epoch);
+        assert.equal(latest.clarification.question, first.clarification.question);
+        assert.equal(latest.clarification.continuation.originalMessage, original);
+        assert.equal(f.refs.clarificationSessionRef.current.matches(latest.messageId, latest.epoch, f.state.messages), true);
+        assert.equal(f.state.effects.length, 0);
+        assert.equal(f.state.uiSettings[setting], before);
+        assert.equal(f.state.reportRequests.length, 0);
+        const questions = f.state.messages.filter(message => message.clarification);
+        assert.equal(questions.length, 2);
+        assert.equal(questions[0].clarificationState, 'closed');
+        assert.equal(questions[1].clarificationState, undefined);
+        const html = questions.map(message => render({ message,
+          activeQuickDestination: null, streamAnimation: 'none', includeComplement: false, suggestedQuestions: [],
+          revealCompletionControls: false, slowResponse: false, canRetry: false, retryWaitSeconds: 0,
+          clarificationEpoch: latest.messageId === message.id ? latest.epoch : undefined,
+          clarificationSettings: f.state.uiSettings, clarificationCanSubmit: true,
+          onActivateAction() {}, onAskSuggestedQuestion() {}, onRetry() {},
+          onClarificationChoice: f.choose, onClarificationCancel: f.cancelClarification,
+        }));
+        assert.ok(html[0].includes('data-clarification-state="closed"'));
+        assert.ok(html[0].includes('이전 선택 안내입니다.'));
+        assert.equal((html[0].match(/disabled=""/g) ?? []).length, first.clarification.choices.length);
+        assert.ok(html[1].includes('data-clarification-state="active"'));
+        assert.equal(html[1].includes('이전 선택 안내입니다.'), false);
+        assert.equal(html[1].includes('disabled=""'), false);
+        assert.equal(html[1].includes('role="alert"'), false);
+        await f.choose(first.messageId, first.epoch, value);
+        assert.equal(f.state.requests.length, 2, '옛 질문의 늦은 클릭은 무시한다');
+        await f.choose(latest.messageId, latest.epoch, value);
+        assert.equal(f.state.effects.length, 1);
+        assert.equal(f.state.uiSettings[setting], value);
+        assert.equal(f.state.reportRequests.length, 1);
+        assert.deepEqual(f.state.reportRequests[0].toolHistory[0].tool_calls, f.calls);
+        assert.equal(f.state.messages.at(-1).generationState, 'complete');
+      });
+    }
+  }
+});
+
 test('실제 Provider: 취소버튼·명시 취소는 모델/도구0이고 다음 짧은 답을 옛 복합요청에 결속하지 않는다', async t => {
   for (const method of ['button', '취소', '됐어', '안 바꿀래', '안바꿀래']) {
     const f = providerReportFixture(t, { fixture: singleSettingCase('set_portfolio_theme', 'light'),
@@ -415,7 +530,7 @@ test('여섯 색상 태그는 실제 팔레트 swatch를 쓰고 light/dark 라�
   assert.equal(clarificationCurrentValue(clarification, { accent: 'blue' }), 'blue');
 });
 
-test('실제 MessageItem: 색상6개·현재값·키보드 버튼·안전한 취소를 표시하고 실패·재시도·직접실행은 없다', () => {
+function messageItemRenderer() {
   const require = createRequire(import.meta.url);
   const React = require('react');
   const { renderToStaticMarkup } = require('react-dom/server');
@@ -432,13 +547,18 @@ test('실제 MessageItem: 색상6개·현재값·키보드 버튼·안전한 취
     return require(name);
   };
   new Function('require', 'module', 'exports', compiled)(localRequire, component, component.exports);
+  return { source, render: props => renderToStaticMarkup(React.createElement(component.exports.MessageItem, props)) };
+}
+
+test('실제 MessageItem: 색상6개·현재값·키보드 버튼·안전한 취소를 표시하고 실패·재시도·직접실행은 없다', () => {
+  const { source, render: renderMessage } = messageItemRenderer();
   const clarification = clarificationFor(req(), { target: 'set_portfolio_accent' });
   const props = { message: { id: 'a', role: 'assistant', kind: 'message', content: clarification.question, generationState: 'complete',
     clarification, recommendationsSuppressed: true }, activeQuickDestination: null, streamAnimation: 'none', includeComplement: false,
     suggestedQuestions: [], revealCompletionControls: true, slowResponse: false, canRetry: true, retryWaitSeconds: 0,
     clarificationEpoch: 1, clarificationSettings: { accent: 'blue' }, clarificationCanSubmit: true,
     onActivateAction() {}, onAskSuggestedQuestion() {}, onRetry() {}, onClarificationChoice() {}, onClarificationCancel() {} };
-  const render = extra => renderToStaticMarkup(React.createElement(component.exports.MessageItem, { ...props, ...extra }));
+  const render = extra => renderMessage({ ...props, ...extra });
   const html = render({});
   assert.equal((html.match(/data-clarification-value=/g) ?? []).length, 6);
   for (const [key, palette] of Object.entries(ACCENT_PALETTE)) {
