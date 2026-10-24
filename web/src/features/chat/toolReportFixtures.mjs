@@ -47,6 +47,30 @@ export function fourToolReportCase() {
   return { scope, calls, executions, steps, native, results, latest, request };
 }
 
+export function twentyNavigationReportCase() {
+  const base = fourToolReportCase();
+  const calls = Array.from({ length: 20 }, (_, index) => ({
+    id: `navigation_${String(index).padStart(24, '0')}`, type: 'function',
+    function: { name: 'control_portfolio_view', arguments: ' { "action": "research-2025" }\n' },
+  }));
+  const executions = calls.flatMap((call, index) => [
+    { type: 'control_portfolio_view', toolName: call.function.name, toolCallId: call.id,
+      action: 'research-2025', toolTask: { ...base.scope, stepIndex: index * 2,
+        source: 'native', dispatchStatus: 'accepted' } },
+    { type: 'report_portfolio_ui_settings', toolName: 'get_portfolio_ui_settings',
+      toolCallId: `ui-verify:${index}`, available: false, uiSettings: null,
+      toolTask: { ...base.scope, stepIndex: index * 2 + 1, source: 'auxiliary', dispatchStatus: 'reported' } },
+  ]);
+  const steps = executions.map(stepFromExecution);
+  const native = [{ role: 'assistant', content: null, tool_calls: calls },
+    ...calls.map(call => ({ role: 'tool', tool_call_id: call.id, content: '{"accepted":true}' }))];
+  const results = calls.map((call, index) => ({ toolCallId: call.id, toolName: call.function.name,
+    stepIndex: index * 2, action: 'research-2025', status: 'arrived', elapsedMs: 500 }));
+  const request = { ...base.request, message: '연구 2025년으로 스무 번 순서대로 이동한 뒤 결과를 알려 줘.',
+    toolTask: { ...base.request.toolTask, steps } };
+  return { ...base, calls, executions, steps, native, results, request };
+}
+
 /** 실제 Provider의 요청·실행 큐·catch·retry를 실행하고 외부 HTTP/DOM만 대체한다. */
 export function providerReportFixture(t, options = {}) {
   const source = readFileSync(new URL('./ChatProvider.tsx', import.meta.url), 'utf8').replaceAll('\r\n', '\n');
@@ -64,7 +88,7 @@ export function providerReportFixture(t, options = {}) {
   const compiled = ts.transpileModule(`${helpers}\n${wait}\n${perform}\n${recovery}`, {
     compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.None },
   }).outputText;
-  const fixture = fourToolReportCase();
+  const fixture = options.fixture ?? fourToolReportCase();
   const pending = { ...fixture.request, toolTask: { schemaVersion: fixture.scope.schemaVersion, taskId: fixture.scope.taskId, generation: 1 } };
   if (options.history) pending.history = options.history;
   if (options.responseMode) pending.responseMode = options.responseMode;

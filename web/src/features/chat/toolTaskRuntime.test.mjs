@@ -6,6 +6,7 @@ import * as chatParse from './parse.ts';
 import {
   assertToolTaskMeta, expectedToolTaskScope, parseTaskToolExecution,
   parseToolTaskResponse, parseToolTaskSteps, stepFromExecution, ToolTaskProtocolError, ToolTaskRuntime,
+  MAX_NATIVE_TOOL_TASK_STEPS, MAX_AUXILIARY_TOOL_TASK_STEPS, MAX_TOOL_TASK_STEPS,
 } from './toolTaskRuntime.ts';
 import { createChatToolTask, nextChatToolTaskGeneration } from './chatRequestIdentity.ts';
 import { requestVerifiedToolResponse } from './toolVerificationRequest.ts';
@@ -33,6 +34,7 @@ const response = (executions = [], extra = {}) => ({ mode: 'model', status: 'onl
   actions: [], suggestedQuestions: [], toolExecutions: executions, cached: false,
   toolTask: responseTask(executions), ...extra });
 const parseExecution = value => parseTaskToolExecution(value, scope, chatParse.parseToolExecution);
+const fullExecutions = () => Array.from({ length: 20 }, (_, index) => [execution(index * 2), getter(index * 2 + 1)]).flat();
 
 test('v1 scope는 대화·턴·작업·세대·스키마를 정확히 비교하며 추적 ID 원문을 보존한다', () => {
   assert.deepEqual(expectedToolTaskScope(request()), scope);
@@ -63,13 +65,26 @@ test('새 작업은 UUID·세대1, 실행 재시도만 세대 증가하고 확�
   assert.throws(() => nextChatToolTaskGeneration({ ...task, generation: 2_147_483_647 }));
 });
 
-test('task-v1은 16개 전체를 읽으며 17개·중간 invalid·legacy 별칭·unknown 필드를 버리거나 자르지 않는다', () => {
-  const sixteen = Array.from({ length: 16 }, (_, index) => execution(index));
-  assert.equal(chatParse.parseChatResponse(response(sixteen), request()).toolExecutions.length, 16);
-  const seventeen = [...sixteen, execution(16)];
-  assert.throws(() => chatParse.parseChatResponse(response(seventeen), request()), ToolTaskProtocolError);
-  const broken = structuredClone(sixteen); broken[7].theme = 'invalid';
+test('task-v1은 native20+자동조회20 전체40단계를 읽고 각 예산21·전체41을 자르지 않고 거부한다', () => {
+  assert.equal(MAX_NATIVE_TOOL_TASK_STEPS, 20);
+  assert.equal(MAX_AUXILIARY_TOOL_TASK_STEPS, 20);
+  assert.equal(MAX_TOOL_TASK_STEPS, 40);
+  const all = fullExecutions();
+  const parsed = chatParse.parseChatResponse(response(all), request());
+  assert.deepEqual(parsed.toolExecutions, all);
+  assert.deepEqual(parsed.toolTask.steps, all.map(stepFromExecution));
+  for (const values of [
+    Array.from({ length: 21 }, (_, index) => execution(index)),
+    Array.from({ length: 21 }, (_, index) => getter(index)),
+    all.map((item, index) => index === 39 ? execution(index) : item),
+    all.map((item, index) => index === 38 ? getter(index) : item),
+    [...all, execution(40)],
+  ]) assert.throws(() => chatParse.parseChatResponse(response(values), request()), ToolTaskProtocolError);
+  const broken = structuredClone(all); broken[18].theme = 'invalid';
   assert.throws(() => chatParse.parseChatResponse(response(broken), request()), ToolTaskProtocolError);
+});
+
+test('task-v1은 legacy 별칭·unknown 필드를 버리거나 정규화하지 않는다', () => {
   assert.throws(() => parseExecution(execution(0, { toolName: 'set-portfolio-theme' })), ToolTaskProtocolError);
   assert.throws(() => parseExecution(execution(0, { action: 'extra' })), ToolTaskProtocolError);
   assert.throws(() => parseExecution({ ...execution(), toolTask: undefined }), ToolTaskProtocolError);
@@ -112,6 +127,20 @@ test('같은 native ID·step·실행 내용만 중복 무시하며 변조·역�
   assert.throws(() => task.accept(execution(2)), ToolTaskProtocolError);
   assert.throws(() => task.accept(execution(1, { toolCallId: execution().toolCallId })), ToolTaskProtocolError);
   assert.throws(() => task.accept(execution(1, { toolTask: { ...scope, generation: 2, stepIndex: 1, source: 'native', dispatchStatus: 'accepted' } })), ToolTaskProtocolError);
+});
+
+test('streaming runtime은 40단계를 받되 native21·자동조회21번째를 dispatch 전에 거부한다', () => {
+  const complete = new ToolTaskRuntime(scope, () => true);
+  for (const item of fullExecutions()) assert.equal(complete.accept(item), true);
+  assert.equal(complete.steps.length, 40);
+  assert.throws(() => complete.accept(execution(40)), ToolTaskProtocolError);
+  for (const make of [execution, getter]) {
+    const task = new ToolTaskRuntime(scope, () => true);
+    for (let index = 0; index < 20; index++) assert.equal(task.accept(make(index)), true);
+    assert.throws(() => task.accept(make(20)), ToolTaskProtocolError);
+    assert.equal(task.steps.length, 20);
+    assert.equal(task.mutationDispatchCount, 0);
+  }
 });
 
 test('accepted는 미실행이며 getter reported를 arrived/applied로 승격하지 않는다', () => {
@@ -177,6 +206,34 @@ function fixtureApi(fetchFixture, env = {}) {
 }
 const sse = events => new Response(events.map(([kind, data]) => `event: ${kind}\ndata: ${JSON.stringify(data)}\n\n`).join(''),
   { headers: { 'content-type': 'text/event-stream' } });
+
+test('실제 JSON/SSE는 40단계 manifest·실행 순서를 끝까지 보존하며 21번째 native·자동조회를 callback 전에 막는다', async () => {
+  const all = fullExecutions();
+  for (const streaming of [false, true]) {
+    const seen = [];
+    const api = fixtureApi(async () => streaming ? sse([
+      ['meta', { toolTask: { ...scope, status: 'running' } }],
+      ...all.map(item => ['tool', item]), ['done', response(all)],
+    ]) : Response.json(response(all)));
+    const result = streaming ? await api.requestChatStream(request(), new AbortController().signal,
+      { onDelta() {}, onTool(item) { seen.push(item); } })
+      : await api.requestChat(request(), new AbortController().signal);
+    assert.deepEqual(result.toolExecutions, all);
+    assert.deepEqual(result.toolTask.steps, all.map(stepFromExecution));
+    assert.deepEqual(seen, streaming ? all : []);
+  }
+  for (const make of [execution, getter]) {
+    const excessive = Array.from({ length: 21 }, (_, index) => make(index));
+    let calls = 0;
+    const api = fixtureApi(async () => sse([
+      ['meta', { toolTask: { ...scope, status: 'running' } }],
+      ...excessive.map(item => ['tool', item]), ['done', response(excessive)],
+    ]));
+    await assert.rejects(api.requestChatStream(request(), new AbortController().signal,
+      { onDelta() {}, onTool() { calls++; } }), ToolTaskProtocolError);
+    assert.equal(calls, 20);
+  }
+});
 
 test('실제 JSON/SSE 오류는 HTTP상태·용량코드·서버 재시도 소진 boolean을 같은 계약으로 보존한다', async () => {
   for (const streaming of [false, true]) {
@@ -398,13 +455,13 @@ test('브라우저 관측은 허용 metadata만 투영하고 getter를 성공으
   assert.equal(Object.hasOwn(sent[0].events[2], 'toolCallId'), false);
 });
 
-test('브라우저 관측은 32개 단위로 나누고 전송 대기 중 다음 배치도 순서대로만 보낸다', async () => {
+test('40단계의 20회 변경 관측41개는 [32,9]로 나뉘고 대기 중 다음 배치도 순서대로 보낸다', async () => {
   let eventCounter = 0; let releaseFirst; const sent = [];
   const first = new Promise(resolve => { releaseFirst = resolve; });
   const telemetry = new BrowserToolTaskTelemetry(scope, async body => {
     sent.push(body); if (sent.length === 1) await first;
   }, () => `event-${++eventCounter}`);
-  for (let index = 0; index < 16; index++) {
+  for (let index = 20; index < 40; index++) {
     telemetry.tool(stepFromExecution(execution(index)), 'started');
     telemetry.tool(stepFromExecution(execution(index)), 'applied');
   }
@@ -415,9 +472,28 @@ test('브라우저 관측은 32개 단위로 나누고 전송 대기 중 다음 
   assert.equal(sent[0].events.length, 32);
   releaseFirst(); await completion;
   assert.equal(sent.length, 2);
+  assert.deepEqual(sent.map(body => body.events.length), [32, 9]);
   assert.equal(sent[1].events[0].sequence, 32);
-  assert.equal(new Set(sent.flatMap(body => body.events.map(event => event.eventId))).size, 33);
+  assert.equal(sent[1].events.at(-2).stepIndex, 39);
+  assert.equal(sent[1].events.at(-1).sequence, 40);
+  assert.equal(sent[1].events.at(-1).status, 'completed');
+  assert.equal(new Set(sent.flatMap(body => body.events.map(event => event.eventId))).size, 41);
+  assert.ok(sent.every(isSafeBrowserToolTaskEvents));
   assert.ok(sent.every(body => new TextEncoder().encode(JSON.stringify(body)).byteLength <= 16 * 1024));
+});
+
+test('브라우저 관측은 stepIndex39까지 허용하고 40부터 생성·전송 검증 양쪽에서 거부한다', async () => {
+  const sent = [];
+  const telemetry = new BrowserToolTaskTelemetry(scope, async body => { sent.push(body); }, () => 'event-limit');
+  telemetry.tool(stepFromExecution(execution(39)), 'arrived');
+  telemetry.tool(stepFromExecution(execution(40)), 'arrived');
+  await telemetry.flush();
+  assert.equal(sent.length, 1);
+  assert.equal(sent[0].events.length, 1);
+  assert.equal(sent[0].events[0].stepIndex, 39);
+  assert.equal(isSafeBrowserToolTaskEvents(sent[0]), true);
+  const overflow = structuredClone(sent[0]); overflow.events[0].stepIndex = 40;
+  assert.equal(isSafeBrowserToolTaskEvents(overflow), false);
 });
 
 test('브라우저 task terminal은 최종 답변 실패·취소·검증 재시도로 바뀌거나 중복되지 않는다', async () => {

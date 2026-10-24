@@ -4,7 +4,10 @@ import type {
 } from "./types";
 
 export const TOOL_TASK_SCHEMA_VERSION = "portfolio-tool-task-v1" as const;
-export const MAX_TOOL_TASK_STEPS = 16;
+/** 사용자 요청의 native 호출과 서버 자동 조회는 별도 예산이다. */
+export const MAX_NATIVE_TOOL_TASK_STEPS = 20;
+export const MAX_AUXILIARY_TOOL_TASK_STEPS = 20;
+export const MAX_TOOL_TASK_STEPS = MAX_NATIVE_TOOL_TASK_STEPS + MAX_AUXILIARY_TOOL_TASK_STEPS;
 const SCOPE_KEYS = ["schemaVersion", "conversationId", "turnId", "taskId", "generation"];
 const STEP_KEYS = ["stepIndex", "toolCallId", "toolName", "source", "dispatchStatus"];
 const READ_TOOLS = new Set(["get_portfolio_ui_settings", "get_portfolio_view_state"]);
@@ -69,6 +72,7 @@ export function assertToolTaskMeta(value: unknown, expected: ChatToolTaskScope):
 export function parseToolTaskSteps(value: unknown): ChatToolTaskStep[] {
   check(Array.isArray(value) && value.length <= MAX_TOOL_TASK_STEPS);
   const ids = new Set<string>();
+  const counts = { native: 0, auxiliary: 0 };
   return value.map((raw, index) => {
     check(record(raw));
     keys(raw, STEP_KEYS);
@@ -77,6 +81,8 @@ export function parseToolTaskSteps(value: unknown): ChatToolTaskStep[] {
       && (raw.source === "native" || raw.source === "auxiliary")
       && raw.dispatchStatus === (READ_TOOLS.has(raw.toolName) ? "reported" : "accepted")
       && (raw.source !== "auxiliary" || raw.toolName === "get_portfolio_ui_settings"));
+    counts[raw.source] += 1;
+    check(counts.native <= MAX_NATIVE_TOOL_TASK_STEPS && counts.auxiliary <= MAX_AUXILIARY_TOOL_TASK_STEPS);
     ids.add(raw.toolCallId);
     return { stepIndex: index, toolCallId: raw.toolCallId,
       toolName: raw.toolName as ChatToolTaskStep["toolName"], source: raw.source,

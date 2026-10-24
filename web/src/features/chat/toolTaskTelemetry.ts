@@ -1,5 +1,6 @@
 import type { ChatToolTaskScope, ChatToolTaskStep } from "./types";
 import { createChatRequestId } from "./chatRequestIdentity.ts";
+import { MAX_TOOL_TASK_STEPS } from "./toolTaskRuntime.ts";
 
 export interface BrowserToolTaskEvent {
   eventId: string;
@@ -56,7 +57,7 @@ export function isSafeBrowserToolTaskEvents(value: unknown): value is BrowserToo
       ? Object.keys(event).every(key => common.includes(key)) && TASK_STATUSES.includes(String(event.status))
       : event.kind === "tool" && Object.keys(event).every(key => [...common, "stepIndex", "toolCallId", "toolName", "callSource"].includes(key))
         && TOOL_STATUSES.includes(String(event.status)) && Number.isInteger(event.stepIndex)
-        && Number(event.stepIndex) >= 0 && Number(event.stepIndex) < 16 && safeId(event.toolCallId)
+        && Number(event.stepIndex) >= 0 && Number(event.stepIndex) < MAX_TOOL_TASK_STEPS && safeId(event.toolCallId)
         && typeof event.toolName === "string" && TOOL_NAMES.has(event.toolName)
         && (event.callSource === undefined || event.callSource === "native" || event.callSource === "auxiliary");
     if (valid) { seen.add(event.eventId); sequence = Number(event.sequence); }
@@ -83,7 +84,7 @@ export class BrowserToolTaskTelemetry {
   }
 
   tool(step: ChatToolTaskStep, status: "started" | "arrived" | "applied" | "failed"): void {
-    if (this.terminal || !Number.isInteger(step.stepIndex) || step.stepIndex < 0 || step.stepIndex > 15
+    if (this.terminal || !Number.isInteger(step.stepIndex) || step.stepIndex < 0 || step.stepIndex >= MAX_TOOL_TASK_STEPS
       || !safeId(step.toolCallId) || !TOOL_NAMES.has(step.toolName)
       || (step.source !== "native" && step.source !== "auxiliary")
       || step.dispatchStatus !== "accepted"

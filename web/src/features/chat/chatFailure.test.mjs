@@ -17,7 +17,7 @@ import { ChatApiError } from './parse.ts';
 import { requestVerifiedToolResponse } from './toolVerificationRequest.ts';
 import { toolResultDisplayStatus, toolResultText } from './toolResultPresentation.ts';
 import { CHAT_QUICK_START_OPTION_BY_ACTION_ID } from './constants.ts';
-import { fourToolReportCase, providerReportFixture } from './toolReportFixtures.mjs';
+import { fourToolReportCase, twentyNavigationReportCase, providerReportFixture } from './toolReportFixtures.mjs';
 import { ToolReportPreparationError, hasVerifiedToolCompletion, messageToolReportState,
   toolReportFailureCode, toolReportFailureNotice } from './toolReport.ts';
 import { ToolTaskProtocolError } from './toolTaskRuntime.ts';
@@ -34,6 +34,55 @@ const recoveryTurns = () => Array.from({ length: 6 }, (_, index) => [
   { role: 'tool', tool_call_id: `history_getter_${index}`, content: ` { "original": ${index} } ` },
   { role: 'assistant', content: `이전 답변 ${index}` },
 ]);
+
+test('실제 Provider: 20연속 이동과 자동조회20개를 순서대로 관측하고 40단계 전체를 한 최종 보고로 보존한다', async t => {
+  for (const streaming of [false, true]) {
+    for (const reportRetry of [false, true]) {
+      await t.test(`${streaming ? 'SSE' : 'JSON'} 보고 재시도 ${reportRetry}`, async t => {
+        const fixture = twentyNavigationReportCase();
+        const originalCalls = structuredClone(fixture.calls);
+        const originalNative = structuredClone(fixture.native);
+        const f = providerReportFixture(t, { fixture, streaming, duplicateTools: true,
+          reportOutcomes: reportRetry ? [{ error: new ChatApiError('private', { code: 'timeout' }) }] : [] });
+        await f.run();
+        assert.equal(f.state.effects.length, 20);
+        assert.deepEqual(f.state.effects, Array.from({ length: 20 }, () =>
+          ['control_portfolio_view', { action: 'research-2025' }]));
+        assert.equal(f.state.requests.filter(item => !item.toolVerification).length, 1);
+        assert.equal(f.state.reportRequests.length, reportRetry ? 2 : 1);
+        const report = f.state.reportRequests[0];
+        assert.deepEqual(report.toolTask.steps, fixture.steps);
+        assert.equal(report.toolTask.steps.length, 40);
+        assert.equal(report.toolTask.generation, 1);
+        assert.equal(report.toolVerification.results.length, 20);
+        assert.deepEqual(report.toolVerification.results.map(item => item.stepIndex),
+          Array.from({ length: 20 }, (_, index) => index * 2));
+        assert.deepEqual(report.toolVerification.results.map(item => item.toolCallId), originalCalls.map(call => call.id));
+        assert.ok(report.toolVerification.results.every(item => item.status === 'arrived'));
+        assert.deepEqual(report.toolHistory[0].tool_calls, originalCalls);
+        assert.deepEqual(report.toolHistory.filter(item => item.role === 'tool').map(item => item.tool_call_id),
+          originalCalls.map(call => call.id));
+        assert.equal(report.toolHistory.length, 21, '자동조회는 native 이력을 새로 만들지 않는다');
+        assert.deepEqual(fixture.native, originalNative, '기존 native 이력과 인수 문자열을 수정하지 않는다');
+        assert.equal(Object.isFrozen(report), true);
+        assert.equal(Object.isFrozen(report.toolTask.steps), true);
+        assert.equal(Object.isFrozen(report.toolVerification.results), true);
+        if (reportRetry) assert.deepEqual(f.state.reportRequests[1], report);
+        const completed = f.state.messages.at(-1);
+        assert.equal(completed.generationState, 'complete');
+        assert.equal(completed.toolTaskProgress.status, 'completed');
+        assert.equal(completed.toolTaskProgress.steps.length, 40);
+        assert.equal(completed.toolTaskProgress.steps.filter(step => step.state === 'arrived').length, 20);
+        assert.equal(completed.toolTaskProgress.steps.filter(step => step.state === 'reported').length, 20);
+        const events = f.state.telemetry.flatMap(body => body.events);
+        assert.equal(events.filter(event => event.kind === 'tool').length, 40);
+        assert.equal(events.filter(event => event.kind === 'task').length, 1);
+        assert.deepEqual(events.map(event => event.sequence), Array.from({ length: 41 }, (_, index) => index));
+        assert.equal(events.at(-1).status, 'completed');
+      });
+    }
+  }
+});
 
 test('재시도 정책은 일시·용량·429·busy·빈 답변만 분류하고 인증·충돌·일반4xx·계약 오류는 제외한다', () => {
   for (const code of ['network', 'timeout', 'upstream_timeout', 'request_timeout', 'upstream_unavailable', 'upstream_busy']) {

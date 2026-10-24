@@ -1547,14 +1547,14 @@ test('도구: toolName이 어긋나거나 toolCallId가 없으면 거부한다',
   assert.equal(parseToolExecution({ type: 'unknown_tool' }), null);
 });
 
-test('도구 목록: 실패한 항목만 버리고 최대 여덟 개까지 적용한다', () => {
+test('레거시 도구 목록: 전체40개는 보존하고 41개는 조용히 자르지 않고 거부한다', () => {
   const valid = () =>
     execution('set_portfolio_theme', 'set_portfolio_theme', { theme: 'dark' });
-  const values = [
-    ...Array.from({ length: 10 }, () => valid()),
-    { type: 'set_portfolio_theme', toolName: 'set_portfolio_theme' },
-  ];
-  assert.equal(parseToolExecutions(values).length, 8);
+  const values = Array.from({ length: 40 }, () => valid());
+  assert.equal(parseToolExecutions(values).length, 40);
+  assert.throws(() => parseToolExecutions([...values, valid()]), error => error.code === 'invalid_response');
+  assert.equal(parseToolExecutions([...values.slice(1),
+    { type: 'set_portfolio_theme', toolName: 'set_portfolio_theme' }]).length, 39);
   assert.deepEqual(parseToolExecutions('배열이 아님'), []);
 });
 

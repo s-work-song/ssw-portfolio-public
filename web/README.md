@@ -599,6 +599,15 @@ Swiper 높이가 바뀌어 좌표가 달라지면 기존 제한 시간 안에서
 따라서 카드가 먼저 바뀌어도 스크롤 중인 다른 연도를 후속 최종 관측으로 보내지 않습니다.
 이 관측은 사용자 명령 뒤 로컬 DOM만 최대 8초 확인하며 추론 서버 상태를 폴링하지 않습니다.
 
+한 작업의 `portfolio-tool-task-v1` manifest는 native 호출 최대 20개와 서버가 덧붙인
+자동 조회 최대 20개를 별도 예산으로 검증합니다. 전체 40단계의 순서·ID·관측을
+JSON과 SSE 모두 보존하며, 어느 한 예산이라도 넘으면 나머지를 조용히 자르지 않고
+계약 오류로 중단합니다. 출처 태그가 없는 레거시 응답은 출처를 추측하지 않고
+전체 40개 상한만 검사합니다. 자동 조회의 `reported`는 실제 브라우저 도착·변경 확인을
+뜻하지 않으며, 최종 보고와 보고 재시도는 전체 manifest와 native 관측을 그대로 사용합니다.
+브라우저 관측 telemetry도 `stepIndex: 0..39`를 허용하되 전송 한 번의 32개 이벤트·16 KiB
+제한은 유지합니다.
+
 ### 지연 로딩
 
 첫 화면에 필요하지 않은 코드는 실제로 쓰일 때 내려받습니다.
@@ -626,6 +635,8 @@ npm test           # 순수 로직 테스트 (node --test)
 
 - `src/features/chat/parse.test.mjs` — SSE 블록 파싱, 응답 검증, 도구 실행
   허용값, 재시도 대기 시간 환산
+- `src/features/chat/toolTaskRuntime.test.mjs` — native/자동 조회별 20개·전체 40개 상한,
+  JSON/SSE 순서와 중복 방지, 원 manifest·관측 보존 및 telemetry 경계
 - `src/features/chat/modelHistory.test.mjs` — 공개 native 호출/결과 이력, 실제 브라우저 결과
   교체, 확인 재시도, 사용자 턴 단위 보존 및 문자 예산
 - `src/features/chat/chatFailure.test.mjs`, `chatRequestIdentity.test.mjs` — 실패/중단 이력 제외,

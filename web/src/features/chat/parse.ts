@@ -60,7 +60,7 @@ export { isAllowed, isRecord, isString };
  * 한 응답에서 적용할 도구 실행 상한이다. 스트리밍 경로와 비스트리밍 경로가
  * 같은 값을 쓰도록 한곳에서 정의한다.
  */
-export const MAX_TOOL_EXECUTIONS = 8;
+export const MAX_TOOL_EXECUTIONS = MAX_TOOL_TASK_STEPS;
 
 /** 429 응답에서 사용자에게 보여줄 고정 문구다. */
 export const RATE_LIMITED_MESSAGE =
@@ -547,16 +547,18 @@ export function parseToolExecution(value: unknown): ChatToolExecution | null {
 /**
  * 도구 실행 배열을 검증해 적용 가능한 것만 남긴다.
  *
- * 배열이 아니면 빈 배열이고, 개별 실패는 버리며, 한 응답에서 최대
- * MAX_TOOL_EXECUTIONS개까지만 적용한다. 서버가 많은 지시를 한 번에 보내
- * 화면이 계속 바뀌는 상황을 막는다.
+ * 배열이 아니면 빈 배열이고 개별 실패는 버린다. 전체 상한 초과는 일부만
+ * 실행하지 않고 명시적으로 거부한다. 레거시에는 source가 없어 native/자동
+ * 조회의 출처를 추측하지 않으며, 각 예산은 task-v1 manifest에서 검증한다.
  */
 export function parseToolExecutions(value: unknown): ChatToolExecution[] {
   if (!Array.isArray(value)) return [];
+  if (value.length > MAX_TOOL_EXECUTIONS) {
+    throw new ChatApiError("화면 도구 응답의 실행 개수가 허용 범위를 넘었어요.", { code: "invalid_response" });
+  }
   return value
     .map(parseToolExecution)
-    .filter((execution): execution is ChatToolExecution => execution !== null)
-    .slice(0, MAX_TOOL_EXECUTIONS);
+    .filter((execution): execution is ChatToolExecution => execution !== null);
 }
 
 /**
