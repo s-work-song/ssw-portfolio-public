@@ -70,6 +70,25 @@ test('legacy 응답과 ordinary 응답은 이전 user/assistant 이력 그대로
   ]);
 });
 
+test('폐기한 색상 순회는 빈 객체 인수의 완결된 과거 이력만 원문 그대로 보존한다', () => {
+  for (const name of ['cycle_portfolio_accent', 'cycle-portfolio-accent']) {
+    const native = [...batch('historic_cycle', name, '  { }\n'), { role: 'assistant', content: '공개 최종 답변' }];
+    assert.equal(parseModelHistory(native), native);
+    const parsed = parseChatResponse(response({ modelHistory: native }));
+    assert.equal(parsed.modelHistory, native);
+    assert.deepEqual(historyFromMessages([
+      message('historic_user', 'user', '예전 색상 순회 요청'),
+      message('historic_assistant', 'assistant', parsed.answer, { generationState: 'complete', modelHistory: native }),
+    ]), [{ role: 'user', content: '예전 색상 순회 요청' }, ...native]);
+    assert.equal(parseModelHistory(batch('bad_cycle', name, '{"accent":"rose"}')), undefined);
+    assert.equal(verifiedToolHistory(batch('historic_cycle', name, '{}'), [{
+      toolCallId: 'historic_cycle', toolName: 'cycle_portfolio_accent', status: 'applied', elapsedMs: 500,
+    }], browser), undefined, '과거 이력 호환은 신규 브라우저 실행 영수증 허용이 아니다');
+    assert.equal(verifiedToolHistory([...batch('historic_cycle', name, '{}'), ...batch()], verification, browser),
+      undefined, '현재 호출에 폐기한 호출을 섞어 검증 allowlist 필터 뒤에 숨길 수 없다');
+  }
+});
+
 test('상태 전용 완료는 실제 native 호출/결과만 보존하고 고정 완료 문장과 빈 assistant를 만들지 않는다', () => {
   const native = verifiedToolHistory(batch(), verification, browser);
   const payload = response({ mode: 'tool_status', generated: false, answer: '', modelHistory: native });

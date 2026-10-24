@@ -527,11 +527,19 @@ SI 단계별 제목과 설명은 본문 데이터를 재사용하며, 이전·�
 
 ### WebMCP 도구
 
-WebMCP에는 채팅 모델과 이름이 같은 **UI 도구 12개**만 등록합니다. 기록 목차 조회·열기
+WebMCP에는 채팅 모델과 이름이 같은 **UI 도구 11개**만 등록합니다. 기록 목차 조회·열기
 도구는 등록하지 않으며, 기록 페이지의 직접 검색·상세 이동 API와 기본 RAG는 유지합니다.
-색상 순회는 한 번의 도구 호출 안에서 다섯 색을 차례로 보여 주고 시작 색으로 돌아옵니다.
-채팅과 WebMCP가 같은 중단·원복 로직을 씁니다. 브라우저가 공유하는 도구 실행 경로는
+전용 색상 순회 도구는 제거했습니다. 여러 설정값을 보여 달라는 요청은 개별 setter 호출을
+순서대로 적용하고 각 호출을 확인합니다. 전체 색상은 `blue → indigo → emerald → amber → rose → violet`,
+글자 크기는 `small → medium → large → xlarge` 순서이며 마지막 값이 유지됩니다.
+시작값으로 자동 복귀하지 않으며, 복귀를 명시한 요청에는 마지막 setter 호출이 별도로 필요합니다.
+중단하면 아직 시작하지 않은 setter는 실행하지 않고 이미 적용한 값을 유지합니다.
+브라우저가 공유하는 도구 실행 경로는
 [`docs/chatbot-architecture.md`](docs/chatbot-architecture.md#3-도구-실행이-한곳으로-모이는-길)를 참고하세요.
+
+과거 `cycle_portfolio_accent`·`cycle-portfolio-accent` 호출/결과는 빈 객체 인수의 완결된
+공개 대화 이력으로만 원문을 보존합니다. 새 도구 지시·task manifest·브라우저 검증 영수증·
+telemetry에는 허용하지 않으며 과거 기록을 다시 실행하지 않습니다.
 
 툴 이름은 챗봇·WebMCP·모델 API 모두 snake_case로 통일합니다. 이전 서버에서 온
 하이픈 이름은 응답 파서에서만 정규화하며, WebMCP에는 언더스코어 이름만 등록합니다.
@@ -546,7 +554,6 @@ URL·앵커·action 식별자와 글꼴 값 등은 이 이름 변경의 대상�
 | `get_portfolio_view_state` | ✅ | 현재 페이지·앵커·연구 탭·연구 연도·상세 펼침 상태를 읽습니다. |
 | `set_portfolio_theme` | ❌ | 라이트·다크 모드를 바꿉니다. |
 | `set_portfolio_accent` | ❌ | 포인트 색상을 바꿉니다. |
-| `cycle_portfolio_accent` | ❌ | 포인트 색상 다섯 가지를 차례로 보여 주고 시작 색으로 복귀합니다. 중단되면 원복합니다. |
 | `set_portfolio_chat_layout` | ❌ | 채팅 패널을 플로팅·오른쪽 고정으로 바꿉니다. |
 | `set_portfolio_chat_font` | ❌ | 채팅 글꼴을 바꿉니다. |
 | `set_portfolio_chat_font_size` | ❌ | 채팅 글자 크기를 바꿉니다. |

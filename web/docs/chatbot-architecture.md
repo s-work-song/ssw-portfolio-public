@@ -315,14 +315,14 @@ generation을 높여 실행을 재시도한다. done 없는 부분 발행, 계�
 
 ## 3. 도구 실행이 한곳으로 모이는 길
 
-채팅 모델은 서버가 제공하는 **UI 도구 12개**를 사용한다. 테마·포인트 색상·채팅
+채팅 모델은 서버가 제공하는 **UI 도구 11개**를 사용한다. 테마·포인트 색상·채팅
 배치·글꼴·글자 크기·연출 변경, UI/화면 상태 조회, 페이지 이동·연구 상세 제어,
-설정 페이지 열기, 색상 순회가 해당한다. 기록 검색은 모델 도구가 아니라 기본 RAG와
+설정 페이지 열기가 해당한다. 기록 검색은 모델 도구가 아니라 기본 RAG와
 기록 페이지 API가 담당한다. 전체 이름·허용 인자는 비공개 서버의
 `backend/src/tools/portfolio-log-search.js`가 정본이다.
 
 WebMCP는 `document.modelContext`를 제공하는 환경에서만 **채팅 모델과 같은 이름의
-UI 도구 12개**를 등록한다. 기록 목차 조회·열기는 등록하지 않고, 기록 페이지 API와
+UI 도구 11개**를 등록한다. 기록 목차 조회·열기는 등록하지 않고, 기록 페이지 API와
 기본 RAG는 유지한다. 공개 프런트에서 등록하는 정확한 목록은
 [`web/README.md`](../README.md#webmcp-도구)와
 `src/features/webmcp/PortfolioWebMcpTools.tsx`에서 확인한다.
@@ -347,8 +347,6 @@ flowchart TD
   ViewCtl["runPortfolioViewAction<br/>action 전용 화면 이동"]
   Details["runPortfolioResearchDetailsControl<br/>action·target 상세 제어와 실제 도착 확인"]
 
-  Cycle["cycle_portfolio_accent<br/>공통 비동기 순회·중단 시 원복"]
-
   ModelTool --> Parse
   Parse --> Adapter
   Adapter --> Command
@@ -369,16 +367,11 @@ flowchart TD
   Executor --> Details
   Details --> Router
 
-  Parse --> Cycle
-  Register --> Cycle
-  Cycle --> Runtime
 ```
 
 - 동기 UI 도구 10개와 비동기 연구 상세 제어는 출발지가 달라도 `PortfolioUiToolCommand`가
   되어 같은 실행기를 지난다. 화면 이동은 `control_portfolio_view({action})`, 상세는
   `control_portfolio_research_details({action,target})`로 나누며 추가 인자는 거부한다.
-  색상 순회는 취소 가능한 비동기 도구라 두 경로 모두 ChatProvider의
-  공통 순회 함수를 거친다.
 - 검증도 한곳이다. 도메인 입력 정의가 SSE 응답 파서와 WebMCP 등록·실행 양쪽에
   쓰여, "챗봇으로는 되는데 도구로는 안 되는" 차이가 생기지 않는다.
 - 앵커 도착은 URL뿐 아니라 활성 패널·포커스·실제 상단 정렬로 확인한다. Swiper의
@@ -402,8 +395,14 @@ flowchart TD
 - 도구 큐는 순서를 유지해 앞선 이동·상세 제어의 관측을 기다린다. 큐 항목 시작과
   실제 UI 실행 직전에 요청의 유효성·취소를 확인하므로, 기다리던 요청을 중단하거나
   새 대화를 시작한 뒤 옛 큐의 설정이 뒤늦게 적용되지 않는다.
-- 포인트 색상 순회는 브라우저가 순서대로 다섯 색을 적용하고, 중단 시 시작 색으로
-  되돌린다. WebMCP도 한 번의 도구 호출로 같은 동작을 실행한다.
+- 색상·글자 크기 순회는 전용 도구 없이 개별 setter를 순차 실행한다. 전체 색상은
+  `blue → indigo → emerald → amber → rose → violet`, 글자 크기는
+  `small → medium → large → xlarge`다. 같은 setter의 반복을 합치지 않고 각 적용을
+  관측하며 마지막 값을 유지한다. 복귀를 명시한 요청만 마지막 setter를 추가한다.
+  중단하면 남은 호출을 실행하지 않으며 이미 적용한 값을 자동 원복하지 않는다.
+- 폐기한 색상 순회 이름은 빈 객체 인수의 완결된 과거 native 이력에서만 읽는다.
+  신규 실행·task manifest·검증 영수증·telemetry는 받지 않으며, 과거 ID·인수·결과를
+  바꿔 현재 setter 호출로 재작성하거나 다시 실행하지 않는다.
 - 모델 로그 검색과 검색 결과 자동 이동은 제거했다. 기록 페이지의 직접 검색과 기본 RAG는 유지한다.
 
 ---
@@ -518,6 +517,6 @@ flowchart TD
 | 공개 native 대화·원문 이력·사용자 턴 단위 예산 | `src/features/chat/modelHistory.ts`, `chatHistory.ts`, `modelHistory.test.mjs` |
 | 대화 · 입력별 추적 ID 수명과 HTTP LAN UUID | `src/features/chat/chatRequestIdentity.ts`, `chatRequestIdentity.test.mjs`, `types.ts` |
 | 도구 실행기 | `src/features/portfolio-tools/portfolioUiToolExecutor.ts` |
-| 공통 색상 순회 | `src/features/portfolio-tools/accentCycle.ts`, `src/features/chat/ChatProvider.tsx` |
+| 중단 가능한 UI 관측 대기 | `src/features/portfolio-tools/abortableDelay.ts`, `src/features/chat/ChatProvider.tsx` |
 | WebMCP 등록과 게이트 | `src/features/webmcp/PortfolioWebMcp.tsx`, `PortfolioWebMcpTools.tsx` |
 | 화면 상태 읽기와 제어 · 이동 목적지 표 | `src/features/webmcp/portfolioView.ts` |

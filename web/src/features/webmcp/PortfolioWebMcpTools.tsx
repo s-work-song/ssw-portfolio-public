@@ -8,8 +8,7 @@
  *
  * 화면을 바꾸는 도구는 스스로 구현하지 않고 챗봇과 같은 실행기
  * (`executePortfolioUiTool`)에 넘긴다. 허용값·검증·부작용이 한 곳에 모여야
- * 두 경로가 같은 결과를 내기 때문이다. 비동기 색상 순회는 ChatProvider의
- * 공통 순회 경로로 보낸다.
+ * 두 경로가 같은 결과를 내기 때문이다.
  */
 import { useEffect } from 'react';
 import { useChat } from '@/features/chat';
@@ -71,11 +70,6 @@ const UI_TOOL_PRESENTATION: Readonly<
     description:
       '사용자가 명시적으로 요청한 accent으로 버튼과 강조 요소의 색을 변경합니다. blue(로얄블루, 기본), indigo(인디고), emerald(에메랄드), amber(앰버), rose(로즈), violet(바이올렛) 중 하나를 사용합니다.',
   },
-  'cycle_portfolio_accent': {
-    title: '포트폴리오 포인트 색상 순회',
-    description:
-      '포인트 색상을 하나씩 보여 준 뒤 시작 색상으로 돌아옵니다. 사용자가 색상 순회를 명시적으로 요청한 경우에만 호출합니다.',
-  },
   'set_portfolio_chat_layout': {
     title: '포트폴리오 채팅 레이아웃 변경',
     description:
@@ -124,12 +118,12 @@ const UI_TOOL_PRESENTATION: Readonly<
  *
  * 등록은 순차적으로 한 개씩 진행하고, 하나가 실패해도 나머지를 계속 등록한다
  * (지원 범위가 브라우저마다 달라 일부만 거부될 수 있다). 언마운트되면
- * AbortController로 남은 등록과 진행 중인 색상 순회를 함께 취소한다.
+ * AbortController로 남은 등록과 진행 중인 비동기 UI 도구를 함께 취소한다.
  *
  * 화면에 그리는 것은 없다.
  */
 export function PortfolioWebMcpTools() {
-  const { executePortfolioUiTool, cyclePortfolioAccent } = useChat();
+  const { executePortfolioUiTool } = useChat();
 
   useEffect(() => {
     const modelContext = document.modelContext;
@@ -137,7 +131,7 @@ export function PortfolioWebMcpTools() {
 
     const controller = new AbortController();
     const executeUiTool = async (
-      name: Exclude<PortfolioUiToolName, 'cycle_portfolio_accent'>,
+      name: PortfolioUiToolName,
       input: Record<string, unknown>,
     ): Promise<WebMcpToolResult> => {
       try {
@@ -147,7 +141,7 @@ export function PortfolioWebMcpTools() {
       }
     };
     /** 스키마와 표현을 합쳐 UI 도구 하나의 등록 정의를 만든다. */
-    const uiTool = (name: Exclude<PortfolioUiToolName, 'cycle_portfolio_accent'>): WebMcpTool => {
+    const uiTool = (name: PortfolioUiToolName): WebMcpTool => {
       const presentation = UI_TOOL_PRESENTATION[name];
       return {
         name,
@@ -162,23 +156,7 @@ export function PortfolioWebMcpTools() {
         },
       };
     };
-    const cycleTool: WebMcpTool = {
-      name: 'cycle_portfolio_accent',
-      title: UI_TOOL_PRESENTATION.cycle_portfolio_accent.title,
-      description: UI_TOOL_PRESENTATION.cycle_portfolio_accent.description,
-      inputSchema: PORTFOLIO_UI_TOOLS.cycle_portfolio_accent.inputSchema,
-      async execute(input) {
-        try {
-          PORTFOLIO_UI_TOOLS.cycle_portfolio_accent.parse(input);
-          return toolResult(await cyclePortfolioAccent(controller.signal));
-        } catch (error) {
-          return toolError(error);
-        }
-      },
-    };
-
-    const tools: WebMcpTool[] = PORTFOLIO_UI_TOOL_NAMES.map((name) =>
-      name === 'cycle_portfolio_accent' ? cycleTool : uiTool(name));
+    const tools: WebMcpTool[] = PORTFOLIO_UI_TOOL_NAMES.map(uiTool);
 
     const registerTools = async () => {
       for (const tool of tools) {
@@ -195,7 +173,7 @@ export function PortfolioWebMcpTools() {
 
     void registerTools();
     return () => controller.abort();
-  }, [cyclePortfolioAccent, executePortfolioUiTool]);
+  }, [executePortfolioUiTool]);
 
   return null;
 }

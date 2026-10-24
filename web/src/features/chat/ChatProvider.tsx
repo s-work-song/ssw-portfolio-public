@@ -19,7 +19,6 @@ import { usePathname, useRouter } from "next/navigation";
 import {
   useIsomorphicLayoutEffect,
   useTheme,
-  type Accent,
 } from "../../context/ThemeContext";
 import { chatSettingsDataset } from "../../context/settingsDataset";
 import {
@@ -92,12 +91,7 @@ import { useGuidedTour } from "./useGuidedTour";
 import { useChatAvailability } from "./useChatAvailability";
 import { canSendUnverifiedExplanation, chatFailureAvailability } from "./chatAvailability";
 import { readPortfolioViewState } from "../webmcp/portfolioView";
-import {
-  ACCENT_CYCLE_STEP_MS,
-  accentCycleOrder,
-  runPortfolioAccentCycle,
-  waitForAbortableDelay,
-} from "../portfolio-tools/accentCycle";
+import { waitForAbortableDelay } from "../portfolio-tools/abortableDelay";
 import {
   executePortfolioUiTool as runPortfolioUiTool,
   portfolioUiCommandFromChatExecution,
@@ -162,14 +156,6 @@ const RETRY_WAIT_TICK_MS = 250;
 /** UI 도구 실행 직후의 낡은 React/DOM 상태를 읽지 않도록 보장하는 최소 대기다. */
 const TOOL_VERIFICATION_MIN_DELAY_MS = 500;
 
-/**
- * 포인트 색상 순회의 한 칸을 기다린다. 중단 신호가 오면 즉시 거부한다.
- *
- * 단순한 setTimeout이 아니라 중단 가능한 대기여야 한다. 사용자가 응답 생성을
- * 멈췄는데 색이 계속 바뀌면 화면이 제멋대로 움직이는 것처럼 보이기 때문이다.
- * 이미 중단된 신호로 들어오면 기다리지 않고 바로 거부하며, 어느 경로로 끝나든
- * 타이머와 리스너를 남기지 않는다.
- */
 /** 실행 시작 시각부터 최소 확인 대기가 지날 때까지 기다린다. */
 async function waitForMinimumToolObservation(
   startedAt: number,
@@ -187,7 +173,6 @@ function requiresBrowserToolVerification(
   return (
     execution.type === "set_portfolio_theme" ||
     execution.type === "set_portfolio_accent" ||
-    execution.type === "cycle_portfolio_accent" ||
     execution.type === "set_portfolio_chat_layout" ||
     execution.type === "set_portfolio_chat_font" ||
     execution.type === "set_portfolio_chat_font_size" ||
@@ -262,18 +247,13 @@ function fallbackToolResultLabel(execution: ChatToolExecution): string {
   return settingToolResultLabel(execution) ?? execution.toolName;
 }
 
-/**
- * 설정 도구가 요청한 값을 꺼낸다. 설정 도구가 아니면 null이다.
- * 색상 순회는 마지막 색이 최종 상태라 그 값을 요청값으로 본다.
- */
+/** 설정 도구가 요청한 값을 꺼낸다. 설정 도구가 아니면 null이다. */
 function requestedSettingValue(execution: ChatToolExecution): string | null {
   switch (execution.type) {
     case "set_portfolio_theme":
       return execution.theme;
     case "set_portfolio_accent":
       return execution.accent;
-    case "cycle_portfolio_accent":
-      return execution.accents.at(-1) ?? null;
     case "set_portfolio_chat_layout":
       return execution.layout;
     case "set_portfolio_chat_font":
@@ -296,7 +276,6 @@ function appliedSettingValue(
     case "set_portfolio_theme":
       return settings.theme;
     case "set_portfolio_accent":
-    case "cycle_portfolio_accent":
       return settings.accent;
     case "set_portfolio_chat_layout":
       return settings.chatLayout;
@@ -482,9 +461,8 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
   const retryWaitDeadlineRef = useRef(0);
   /** 서버 not-before는 중단·새 대화와 독립적이며 이 Provider 마운트 동안 유지한다. */
   const requestCooldownDeadlineRef = useRef(0);
-  /** 렌더 사이클과 무관하게 최신 대화·포인트 색을 읽기 위한 참조다. */
+  /** 렌더 사이클과 무관하게 최신 대화를 읽기 위한 참조다. */
   const messagesRef = useRef<ChatMessage[]>(messages);
-  const accentCycleInProgressRef = useRef(false);
   const mobileHistoryEntryRef = useRef(false);
   const pendingActionRouteRef = useRef<{ route: string; options?: ChatActionNavigationOptions } | null>(null);
   const pendingActionAnchorRef = useRef<string | null>(null);
@@ -893,40 +871,6 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
       return runPortfolioUiTool(command, runtime);
     },
     [],
-  );
-
-  /** 모델·WebMCP가 한 번 호출하는 동일한 색상 순회. 중복 호출은 겹쳐 실행하지 않는다. */
-  const runAccentCycle = useCallback(async (
-    signal: AbortSignal,
-    requested?: { accents: readonly Accent[]; stepMs: number },
-  ) => {
-    const runtime = portfolioUiToolRuntimeRef.current;
-    if (!runtime) throw new Error('포트폴리오 UI 도구 실행기를 사용할 수 없습니다.');
-    if (accentCycleInProgressRef.current) {
-      throw new Error('포인트 색상 순회가 이미 진행 중입니다.');
-    }
-    const initialAccent = runtime.getSettings().accent;
-    const accents = requested?.accents ?? accentCycleOrder(initialAccent);
-    const stepMs = requested?.stepMs ?? ACCENT_CYCLE_STEP_MS;
-    accentCycleInProgressRef.current = true;
-    try {
-      await runPortfolioAccentCycle({
-        initialAccent, accents, stepMs, setAccent: runtime.setAccent, signal,
-      });
-      return {
-        ok: true,
-        accents: [...accents],
-        finalAccent: accents.at(-1),
-        message: '포인트 색상을 차례로 보여 주고 시작 색상으로 돌아왔습니다.',
-      };
-    } finally {
-      accentCycleInProgressRef.current = false;
-    }
-  }, []);
-
-  const cyclePortfolioAccent = useCallback(
-    (signal: AbortSignal) => runAccentCycle(signal),
-    [runAccentCycle],
   );
 
   /**
@@ -1564,8 +1508,8 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
    * 큐가 화면 재생 속도를 맡고, 네트워크 읽기는 그와 무관하게 계속 진행된다.
    *
    * 도구 실행은 순차 큐에서 처리한다. 하나가 실패해도 답변 전체를 실패로
-   * 만들지 않는다. 색상 순회처럼 시간이 걸리는 도구가 오면 그동안 도착한
-   * 텍스트를 잠시 보류했다가 순회가 끝난 뒤 이어서 그린다. 연출과 글자가
+   * 만들지 않는다. 화면 이동처럼 시간이 걸리는 도구가 오면 그동안 도착한
+   * 텍스트를 잠시 보류했다가 검증이 끝난 뒤 이어서 그린다. 조작과 글자가
    * 동시에 쏟아지면 어느 쪽도 눈에 들어오지 않기 때문이다.
    *
    * 끝맺음은 세 갈래다. 정상 완료면 말풍선을 완성본으로 교체하고, 사용자가
@@ -1877,14 +1821,6 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
             ? appliedSettingValue(execution, uiSettingsRef.current)
             : null;
           try {
-            if (execution.type === "cycle_portfolio_accent") {
-              await runAccentCycle(controller.signal, {
-                accents: execution.accents,
-                stepMs: execution.stepMs,
-              });
-              await recordSettingToolResult(execution, executionStartedAt, settingBefore);
-              return;
-            }
             const uiCommand = portfolioUiCommandFromChatExecution(execution);
             if (uiCommand) {
               const navigating =
@@ -2341,7 +2277,6 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
       pathname,
       reasoningEnabled,
       reportAvailability,
-      runAccentCycle,
       streamAnimation,
       streamingEnabled,
       tone,
@@ -2817,7 +2752,6 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
       retry,
       navigateRoute: stableNavigateRoute,
       executePortfolioUiTool,
-      cyclePortfolioAccent,
       navigateAction,
       startGuidedTour,
       advanceGuidedTour,
@@ -2849,7 +2783,6 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
       navigateAction,
       stableNavigateRoute,
       executePortfolioUiTool,
-      cyclePortfolioAccent,
       startGuidedTour,
       advanceGuidedTour,
       previousGuidedTourStep,

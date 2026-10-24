@@ -96,8 +96,6 @@ export interface ChatContextValue {
   navigateRoute: (route: string) => void;
   /** 챗봇 명령과 WebMCP가 함께 사용하는 포트폴리오 UI 도구 실행기다. */
   executePortfolioUiTool: PortfolioUiToolExecutor;
-  /** WebMCP가 한 번 호출하는 취소 가능한 포인트 색상 순회다. */
-  cyclePortfolioAccent: (signal: AbortSignal) => Promise<Record<string, unknown>>;
   /** 답변에 붙은 이동 버튼과 안내 투어가 함께 쓰는 액션 단위 이동이다. 식별자를 실제 경로로 푸는 일은 Provider가 맡는다. */
   navigateAction: (id: ActionId) => void;
   startGuidedTour: () => void;

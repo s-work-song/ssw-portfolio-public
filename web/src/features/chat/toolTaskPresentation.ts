@@ -15,7 +15,7 @@ export function toolTaskSummary(task: ChatToolTaskProgress): string {
 
 const TOOL_NAMES: Record<string, string> = {
   set_portfolio_theme: "화면 모드", set_portfolio_accent: "포인트 색상",
-  cycle_portfolio_accent: "색상 순회", set_portfolio_chat_layout: "채팅 배치",
+  set_portfolio_chat_layout: "채팅 배치",
   set_portfolio_chat_font: "글꼴", set_portfolio_chat_font_size: "글자 크기",
   set_portfolio_stream_animation: "텍스트 연출", control_portfolio_view: "화면 이동",
   control_portfolio_research_details: "연구 상세", open_portfolio_settings: "설정 화면",

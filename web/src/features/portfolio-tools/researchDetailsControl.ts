@@ -11,7 +11,7 @@ import {
   type ChatActionTargetArrivedDetail,
 } from '../chat/navigation.ts';
 import { navigationPathMatches } from '../chat/toolNavigationObservation.ts';
-import { waitForAbortableDelay } from './accentCycle.ts';
+import { waitForAbortableDelay } from './abortableDelay.ts';
 
 export interface ResearchDetailsSnapshot {
   pathname: string;

@@ -261,22 +261,20 @@ import {
   emptyInputDefinition,
   normalizePortfolioToolName,
 } from '../portfolio-tools/schema.ts';
-import {
-  accentCycleOrder,
-  runPortfolioAccentCycle,
-} from '../portfolio-tools/accentCycle.ts';
+import { waitForAbortableDelay } from '../portfolio-tools/abortableDelay.ts';
 
-test('WebMCP UI 목록은 내장 모델 도구 12개와 같은 이름만 등록한다', () => {
+test('WebMCP UI 목록은 전용 순회 없이 내장 모델 도구 11개와 같은 이름만 등록한다', () => {
   assert.deepEqual([...PORTFOLIO_UI_TOOL_NAMES].sort(), [
     'get_portfolio_ui_settings', 'set_portfolio_theme', 'set_portfolio_accent',
-    'cycle_portfolio_accent', 'set_portfolio_chat_layout',
+    'set_portfolio_chat_layout',
     'set_portfolio_chat_font', 'set_portfolio_chat_font_size',
     'set_portfolio_stream_animation', 'control_portfolio_view',
     'control_portfolio_research_details',
     'get_portfolio_view_state', 'open_portfolio_settings',
   ].sort());
-  assert.deepEqual(PORTFOLIO_UI_TOOLS.cycle_portfolio_accent.parse({}), {});
-  assert.throws(() => PORTFOLIO_UI_TOOLS.cycle_portfolio_accent.parse({ accent: 'rose' }));
+  assert.equal(Object.hasOwn(PORTFOLIO_UI_TOOLS, 'cycle_portfolio_accent'), false);
+  const source = readFileSync(new URL('../webmcp/PortfolioWebMcpTools.tsx', import.meta.url), 'utf8');
+  assert.doesNotMatch(source, /cycle_portfolio_accent|cyclePortfolioAccent/u);
 });
 
 test('WebMCP 설명은 학습되지 않은 외부 에이전트에도 독립적인 enum 의미와 이동/상세 경계를 제공한다', () => {
@@ -299,28 +297,13 @@ test('해시 없는 연구 이동도 설정 DOM 대신 실제 연구 본문 준�
   assert.match(viewer, /id="research-experiments"/u);
 });
 
-test('포인트 색상 순회는 시작 색으로 돌아오고 중단되면 원복한다', async () => {
-  const accents = accentCycleOrder('rose');
-  assert.deepEqual(accents, ['violet', 'blue', 'indigo', 'emerald', 'amber', 'rose']);
-  const completed = [];
-  await runPortfolioAccentCycle({
-    initialAccent: 'rose', accents, stepMs: 1,
-    setAccent: (accent) => completed.push(accent),
-    signal: new AbortController().signal,
-  });
-  assert.deepEqual(completed, accents);
-
+test('공통 UI 관측 대기는 완료·진행 중 취소·이미 취소된 신호를 처리한다', async () => {
+  await waitForAbortableDelay(1, new AbortController().signal);
   const controller = new AbortController();
-  const interrupted = [];
-  await assert.rejects(runPortfolioAccentCycle({
-    initialAccent: 'rose', accents, stepMs: 1,
-    setAccent: (accent) => {
-      interrupted.push(accent);
-      if (interrupted.length === 1) controller.abort();
-    },
-    signal: controller.signal,
-  }), (error) => error?.name === 'AbortError');
-  assert.deepEqual(interrupted, ['violet', 'rose']);
+  const pending = waitForAbortableDelay(10_000, controller.signal);
+  controller.abort();
+  await assert.rejects(pending, (error) => error?.name === 'AbortError');
+  await assert.rejects(waitForAbortableDelay(10_000, controller.signal), (error) => error?.name === 'AbortError');
 });
 
 /** 형식은 통과하되 본문만 바꿔 쓰는 최소 응답 골격이다. */
@@ -732,35 +715,11 @@ test('도구: 포인트 색상은 허용 목록 안에서만 통과한다', () =
   );
 });
 
-test('도구: 색상 순회는 다섯 색이 모두 한 번씩, 간격이 범위 안일 때만 통과한다', () => {
+test('도구: 폐기한 색상 순회 지시는 레거시 이름도 새 실행으로 받지 않는다', () => {
   const accents = ['blue', 'indigo', 'emerald', 'amber', 'rose', 'violet'];
-  assert.equal(
-    parseToolExecution(
-      execution('cycle_portfolio_accent', 'cycle_portfolio_accent', {
-        accents,
-        stepMs: 300,
-      }),
-    ).stepMs,
-    300,
-  );
-  assert.equal(
-    parseToolExecution(
-      execution('cycle_portfolio_accent', 'cycle_portfolio_accent', {
-        accents: ['indigo', 'indigo', 'amber', 'rose', 'violet'],
-        stepMs: 300,
-      }),
-    ),
-    null,
-  );
-  assert.equal(
-    parseToolExecution(
-      execution('cycle_portfolio_accent', 'cycle_portfolio_accent', {
-        accents,
-        stepMs: 50,
-      }),
-    ),
-    null,
-  );
+  for (const name of ['cycle_portfolio_accent', 'cycle-portfolio-accent']) {
+    assert.equal(parseToolExecution(execution('cycle_portfolio_accent', name, { accents, stepMs: 650 })), null);
+  }
 });
 
 test('도구: 이동은 action만 받고 상세 제어는 별도 action,target 계약을 따른다', () => {

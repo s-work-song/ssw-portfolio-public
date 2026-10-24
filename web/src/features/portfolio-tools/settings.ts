@@ -35,7 +35,6 @@ export const PORTFOLIO_SETTINGS_TOOL_DEFINITIONS = [
   new ToolDefinition('get_portfolio_ui_settings', emptyInputDefinition('현재 UI 설정 조회')),
   new ToolDefinition('set_portfolio_theme', enumInputDefinition('theme', THEMES, 'light, dark, system 중 하나', '화면 모드')),
   new ToolDefinition('set_portfolio_accent', enumInputDefinition('accent', ACCENTS, '지원하는 포인트 색상', '포인트 색상')),
-  new ToolDefinition('cycle_portfolio_accent', emptyInputDefinition('포인트 색상 순회')),
   new ToolDefinition('set_portfolio_chat_layout', enumInputDefinition('layout', CHAT_LAYOUTS, 'floating 또는 dock 중 하나', '채팅 레이아웃')),
   new ToolDefinition('set_portfolio_chat_font', enumInputDefinition('font', CHAT_FONTS, '지원하는 채팅 글꼴', '채팅 글꼴')),
   new ToolDefinition('set_portfolio_chat_font_size', enumInputDefinition('size', CHAT_FONT_SIZES, 'small, medium, large, xlarge 중 하나', '채팅 글자 크기')),

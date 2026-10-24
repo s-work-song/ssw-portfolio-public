@@ -91,6 +91,19 @@ test('task-v1은 legacy 별칭·unknown 필드를 버리거나 정규화하지 �
   assert.throws(() => parseExecution({ ...execution(), type: 'show_portfolio_log_results', toolName: 'search_portfolio_logs' }), ToolTaskProtocolError);
 });
 
+test('폐기한 색상 순회는 task manifest·새 실행·브라우저 telemetry에서 거부한다', () => {
+  const retired = { type: 'cycle_portfolio_accent', toolName: 'cycle_portfolio_accent', toolCallId: 'retired_cycle',
+    accents: ['blue', 'indigo', 'emerald', 'amber', 'rose', 'violet'], stepMs: 650,
+    toolTask: { ...scope, stepIndex: 0, source: 'native', dispatchStatus: 'accepted' } };
+  assert.throws(() => parseExecution(retired), ToolTaskProtocolError);
+  assert.throws(() => parseToolTaskSteps([stepFromExecution(retired)]), ToolTaskProtocolError);
+  assert.throws(() => chatParse.parseChatResponse(response([retired]), request()), ToolTaskProtocolError);
+  assert.equal(isSafeBrowserToolTaskEvents({ version: 1, conversationId: scope.conversationId,
+    turnId: scope.turnId, taskId: scope.taskId, generation: 1, events: [{ eventId: 'retired_event', sequence: 0,
+      source: 'browser', agentRole: 'verifier', kind: 'tool', status: 'applied', stepIndex: 0,
+      toolCallId: retired.toolCallId, toolName: retired.toolName, callSource: 'native' }] }), false);
+});
+
 test('manifest는 연속 순서·고유 ID·native/aux·accepted/reported와 실행 배열에 1:1 일치한다', () => {
   const executions = [execution(), getter()];
   assert.deepEqual(parseToolTaskSteps(executions.map(stepFromExecution)), executions.map(stepFromExecution));

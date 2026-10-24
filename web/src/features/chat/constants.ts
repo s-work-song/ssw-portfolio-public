@@ -57,7 +57,7 @@ export const SETTINGS_WEBMCP_GUIDE = `### 설정과 WebMCP 기능
 - “채팅을 옆으로 붙여줘”
 - “채팅을 옆에서 떼줘”
 
-WebMCP를 지원하는 브라우저에서는 현재 화면 상태 확인, 설정 페이지 열기, 포인트 색상 순회, 포트폴리오 페이지·연구 연도 이동, 특정 연도 상세 펼치기·접기와 스트리밍 연출 변경 같은 화면 기능도 도구로 사용할 수 있습니다. 기록 검색과 상세 열기는 기록 페이지에서 직접 이용할 수 있습니다.
+WebMCP를 지원하는 브라우저에서는 현재 화면 상태 확인, 설정 페이지 열기, 포인트 색상 변경, 포트폴리오 페이지·연구 연도 이동, 특정 연도 상세 펼치기·접기와 스트리밍 연출 변경 같은 화면 기능도 도구로 사용할 수 있습니다. 기록 검색과 상세 열기는 기록 페이지에서 직접 이용할 수 있습니다.
 
 WebMCP 자체뿐 아니라 이를 호출하는 에이전트 하네스와 브라우저 지원도 모두 실험 단계입니다. 따라서 환경에 따라 도구가 노출되지 않거나 일부 기능이 동작하지 않을 수 있어요.
 
@@ -220,11 +220,6 @@ export function settingToolResultLabel(
       return `화면 모드 · ${displayName(THEME_LABELS, execution.theme)}`;
     case "set_portfolio_accent":
       return `포인트 색상 · ${ACCENT_PALETTE[execution.accent].label}`;
-    case "cycle_portfolio_accent": {
-      const last = execution.accents.at(-1);
-      const lastLabel = last ? ACCENT_PALETTE[last].label : "";
-      return `포인트 색상 순회 · ${lastLabel}`;
-    }
     case "set_portfolio_chat_layout":
       return `채팅 배치 · ${displayName(CHAT_LAYOUT_LABELS, execution.layout)}`;
     case "set_portfolio_chat_font":

@@ -470,33 +470,6 @@ export function parseToolExecution(value: unknown): ChatToolExecution | null {
         accent: value.accent,
       };
     }
-    case "cycle_portfolio_accent": {
-      if (toolName !== "cycle_portfolio_accent") return null;
-      // 색을 하나씩 훑는 연출이라 "모든 색이 한 번씩" 들어와야 의미가 있다.
-      if (
-        !Array.isArray(value.accents) ||
-        value.accents.length !== ACCENTS.length ||
-        !value.accents.every((accent) => isAllowed(accent, ACCENTS)) ||
-        new Set(value.accents).size !== ACCENTS.length
-      ) {
-        return null;
-      }
-      // 너무 짧으면 깜빡임, 너무 길면 답변이 멈춘 것처럼 보인다.
-      if (
-        !Number.isInteger(value.stepMs) ||
-        Number(value.stepMs) < 100 ||
-        Number(value.stepMs) > 2_000
-      ) {
-        return null;
-      }
-      return {
-        type: "cycle_portfolio_accent",
-        toolCallId,
-        toolName: "cycle_portfolio_accent",
-        accents: value.accents as Array<(typeof ACCENTS)[number]>,
-        stepMs: Number(value.stepMs),
-      };
-    }
     case "set_portfolio_chat_layout": {
       if (toolName !== "set_portfolio_chat_layout") return null;
       if (!isAllowed(value.layout, CHAT_LAYOUTS)) return null;

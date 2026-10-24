@@ -581,7 +581,6 @@ function providerToolQueueFixture() {
     uiSettingsRef: { current: null }, appliedSettingValue: () => null,
     recordSettingToolResult: async execution => results.push(execution.toolCallId),
     recordToolResult: result => results.push(result.callId),
-    runAccentCycle: () => assert.fail('이 fixture는 순회 요청을 만들지 않는다'),
     portfolioUiCommandFromChatExecution,
     executePortfolioUiTool: command => executePortfolioUiTool(command, runtime),
     pendingChatNavigationFocusRef: { current: false }, fallbackToolResultLabel: execution => execution.toolName,

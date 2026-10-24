@@ -4,7 +4,7 @@ import type {
 } from "./types";
 import { ChatApiError } from "./parse.ts";
 import { parseModelHistory } from "./modelHistory.ts";
-import { normalizePortfolioToolName } from "../portfolio-tools/schema.ts";
+import { normalizePortfolioToolName, PORTFOLIO_UI_TOOL_NAMES } from "../portfolio-tools/schema.ts";
 import { expectedToolTaskScope, parseToolTaskResponse, parseToolTaskSteps, ToolTaskProtocolError } from "./toolTaskRuntime.ts";
 import { ToolReportPreparationError } from "./toolReport.ts";
 import { immutableChatRequest } from "./chatRequestSnapshot.ts";
@@ -12,10 +12,10 @@ import { immutableChatRequest } from "./chatRequestSnapshot.ts";
 type BrowserSnapshot = Pick<ChatRequest,
   "pageContext" | "uiSettings" | "uiSettingChanges" | "viewState">;
 
+const CURRENT_PUBLIC_TOOL_NAMES = new Set<string>(PORTFOLIO_UI_TOOL_NAMES);
 const BROWSER_VERIFICATION_TOOL_NAMES = new Set<ChatToolVerificationResult["toolName"]>([
   "set_portfolio_theme",
   "set_portfolio_accent",
-  "cycle_portfolio_accent",
   "set_portfolio_chat_layout",
   "set_portfolio_chat_font",
   "set_portfolio_chat_font_size",
@@ -50,6 +50,10 @@ function buildVerifiedToolHistory(
   if (!native || native.at(-1)?.role !== "tool") return { failure: "history_invalid" };
   const calls = new Map(native.flatMap((item) => item.role === "assistant"
     ? (item.tool_calls ?? []).map((call) => [call.id, call] as const) : []));
+  // 과거 이력 호환으로 읽은 폐기 도구를 새 검증 보고의 호출로 승격하지 않는다.
+  if ([...calls.values()].some(call => !CURRENT_PUBLIC_TOOL_NAMES.has(
+    normalizePortfolioToolName(call.function.name) ?? "",
+  ))) return { failure: "history_invalid" };
   const observations = new Map(results.map((result) => [result.toolCallId, result]));
   const expected = new Map([...calls].flatMap(([id, call]) => {
     const toolName = normalizePortfolioToolName(call.function.name);

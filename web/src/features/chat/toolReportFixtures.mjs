@@ -231,6 +231,7 @@ export function providerReportFixture(t, options = {}) {
     portfolioUiCommandFromChatExecution, executePortfolioUiTool: async command => {
       if (command.signal.aborted) throw new DOMException('Aborted', 'AbortError');
       state.effects.push([command.name, structuredClone(command.input)]);
+      if (options.executeUiTool) return options.executeUiTool(command, state);
       if (command.name === 'set_portfolio_theme') state.uiSettings.theme = command.input.theme;
       if (command.name === 'set_portfolio_accent') state.uiSettings.accent = command.input.accent;
       if (command.name === 'set_portfolio_chat_layout') state.uiSettings.chatLayout = command.input.layout;
@@ -247,7 +248,6 @@ export function providerReportFixture(t, options = {}) {
     waitForMinimumToolObservation: async (_started, signal) => { if (signal.aborted) throw new DOMException('Aborted', 'AbortError'); },
     waitForSettingApplied: async (read, expected) => read() === expected,
     settingToolResultLabel, appendUiSettingChange, createUiSettingChange, UI_SETTING_CHANGE_STORAGE_KEY: 'fixture',
-    runAccentCycle: () => assert.fail('색상 순회는 이 fixture 범위가 아니다'),
     TOOL_VERIFICATION_MIN_DELAY_MS: 500, TOOL_ARRIVAL_TIMEOUT_MS: 8000,
     ChatApiError, failedChatMessage, messagesForChatRetry, chatFailureRetryAfterMs, nextChatToolTaskGeneration,
     chatRetryFailureKind, chatRecoveryDelayMs, exhaustChatRecoveryPhase, historyForCapacityRetry,

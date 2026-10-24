@@ -4,8 +4,8 @@
  * 포트폴리오 UI 도구를 실제로 실행하는 단일 진입점이다.
  *
  * 챗봇 응답의 동기 UI 도구 지시와 WebMCP 호출은 출발지가 다르지만 여기로
- * 모여 같은 검증과 같은 부작용을 거친다. 비동기 색상 순회는 공통
- * accentCycle 유틸리티를 거친다. 두 경로가 각자 화면을 만지면
+ * 모여 같은 검증과 같은 부작용을 거친다. 여러 설정을 차례로 적용할 때도
+ * 각 setter 호출을 같은 실행기로 보낸다. 두 경로가 각자 화면을 만지면
  * "챗봇으로는 되는데 WebMCP로는 안 되는" 종류의 어긋남이 생기기 때문이다.
  *
  * 실행에 필요한 setter는 런타임 객체로 주입받는다(DIP). 덕분에 이 모듈은
@@ -40,12 +40,9 @@ import type { ChatActionNavigationOptions } from '../chat/navigation.ts';
 export { PORTFOLIO_UI_TOOL_NAMES };
 export type { PortfolioUiToolName };
 
-/** 색상 순회는 ChatProvider의 전용 경로로 보내고 나머지는 이 실행기에서 처리한다. */
-type DirectUiToolName = Exclude<PortfolioUiToolName, 'cycle_portfolio_accent'>;
-
 /** 실행기가 받는 도구 호출 하나다. 입력은 아직 검증되지 않은 원본이다. */
 export interface PortfolioUiToolCommand {
-  name: DirectUiToolName;
+  name: PortfolioUiToolName;
   input: Record<string, unknown>;
   signal?: AbortSignal;
 }
@@ -172,6 +169,7 @@ export function executePortfolioUiTool(
       };
     }
   }
+  throw new TypeError('지원하지 않는 포트폴리오 UI 도구입니다.');
 }
 
 /**
@@ -179,8 +177,8 @@ export function executePortfolioUiTool(
  *
  * 서버가 보낸 실행 지시(`ChatToolExecution`)와 WebMCP 도구 호출은 필드
  * 이름이 다르다. 이 어댑터가 그 차이를 흡수해 두 경로가 같은 실행기에
- * 도달하게 한다. UI 도구가 아닌 지시(기록 검색 결과 표시, 읽기 전용 보고,
- * 색상 순회 연출)는 null을 돌려 호출한 쪽이 따로 처리하게 한다.
+ * 도달하게 한다. UI 도구가 아닌 지시(기록 검색 결과 표시, 읽기 전용 보고)는
+ * null을 돌려 호출한 쪽이 따로 처리하게 한다.
  */
 export function portfolioUiCommandFromChatExecution(
   execution: ChatToolExecution,

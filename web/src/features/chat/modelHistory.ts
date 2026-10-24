@@ -1,7 +1,9 @@
 import { PORTFOLIO_UI_TOOL_NAMES, isRecord } from "../portfolio-tools/schema.ts";
 import type { ChatHistoryItem } from "./types";
 
-const PUBLIC_HISTORY_TOOLS = new Set<string>(PORTFOLIO_UI_TOOL_NAMES.flatMap((name) =>
+// 폐기한 도구의 완결된 과거 기록만 읽는다. 신규 실행·검증 allowlist와 공유하지 않는다.
+const LEGACY_HISTORY_TOOLS = new Set(["cycle_portfolio_accent", "cycle-portfolio-accent"]);
+const PUBLIC_HISTORY_TOOLS = new Set<string>([...PORTFOLIO_UI_TOOL_NAMES, ...LEGACY_HISTORY_TOOLS].flatMap((name) =>
   [name, name.replaceAll("_", "-")]));
 const onlyKeys = (value: Record<string, unknown>, allowed: readonly string[]) =>
   Object.keys(value).every((key) => allowed.includes(key));
@@ -36,6 +38,7 @@ export function parseModelHistory(value: unknown): ChatHistoryItem[] | undefined
           try {
             const argumentsValue: unknown = JSON.parse(call.function.arguments);
             if (!isRecord(argumentsValue) || Array.isArray(argumentsValue)) return undefined;
+            if (LEGACY_HISTORY_TOOLS.has(call.function.name) && Object.keys(argumentsValue).length) return undefined;
           } catch { return undefined; }
           seen.add(call.id);
           pending.add(call.id);

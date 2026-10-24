@@ -12,7 +12,7 @@ const SCOPE_KEYS = ["schemaVersion", "conversationId", "turnId", "taskId", "gene
 const STEP_KEYS = ["stepIndex", "toolCallId", "toolName", "source", "dispatchStatus"];
 const READ_TOOLS = new Set(["get_portfolio_ui_settings", "get_portfolio_view_state"]);
 const WRITE_TOOLS = new Set([
-  "set_portfolio_theme", "set_portfolio_accent", "cycle_portfolio_accent",
+  "set_portfolio_theme", "set_portfolio_accent",
   "set_portfolio_chat_layout", "set_portfolio_chat_font", "set_portfolio_chat_font_size",
   "set_portfolio_stream_animation", "control_portfolio_view",
   "control_portfolio_research_details", "open_portfolio_settings",

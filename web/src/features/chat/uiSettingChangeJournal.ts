@@ -61,7 +61,7 @@ export function appendUiSettingChange(
   return [...changes, normalized].slice(-MAX_UI_SETTING_CHANGES);
 }
 
-/** 실제 반영이 확인된 설정 도구만 기록한다. 순회와 제자리 설정은 제외한다. */
+/** 실제 반영이 확인된 설정 도구만 기록한다. 미지원 도구와 제자리 설정은 제외한다. */
 export function createUiSettingChange(
   execution: ChatToolExecution,
   before: string | null,

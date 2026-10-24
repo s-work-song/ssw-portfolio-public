@@ -213,15 +213,6 @@ export interface ChatAccentToolExecution {
   accent: (typeof ACCENTS)[number];
 }
 
-/** 포인트 색상을 순서대로 훑어 보여 주는 연출 지시다. */
-export interface ChatAccentCycleToolExecution {
-  type: "cycle_portfolio_accent";
-  toolCallId: string;
-  toolName: "cycle_portfolio_accent";
-  accents: Array<(typeof ACCENTS)[number]>;
-  stepMs: number;
-}
-
 /** 채팅 패널 배치 변경 지시다. */
 export interface ChatLayoutToolExecution {
   type: "set_portfolio_chat_layout";
@@ -313,7 +304,6 @@ export type ChatToolExecution = (
   | ChatLogSearchToolExecution
   | ChatThemeToolExecution
   | ChatAccentToolExecution
-  | ChatAccentCycleToolExecution
   | ChatLayoutToolExecution
   | ChatFontToolExecution
   | ChatFontSizeToolExecution
@@ -418,7 +408,6 @@ export interface ChatToolVerificationResult {
   toolName:
     | "set_portfolio_theme"
     | "set_portfolio_accent"
-    | "cycle_portfolio_accent"
     | "set_portfolio_chat_layout"
     | "set_portfolio_chat_font"
     | "set_portfolio_chat_font_size"
