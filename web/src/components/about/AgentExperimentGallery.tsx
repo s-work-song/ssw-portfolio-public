@@ -208,7 +208,7 @@ function ExperimentAudioPreviews({ title, previews }: { title: string; previews:
       </header>
       <div className={styles.audioAlbums}>
         {groupAudioPreviews(previews).map(({ album, tracks }) => (
-          <fieldset key={album} className={styles.audioAlbum}>
+          <fieldset key={album} className={tracks.length > 3 ? `${styles.audioAlbum} ${styles.audioAlbumWide}` : styles.audioAlbum}>
             <legend>{album}</legend>
             <div className={styles.audioTracks}>
               {tracks.map((track) => (

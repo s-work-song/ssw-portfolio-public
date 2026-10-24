@@ -1,13 +1,13 @@
 import type { AgentExperimentAudioPreview } from '../../data/agentExperiments.ts';
 
-const albumOrder = ['Opus 5.5', 'Lyria 3.5', 'Lyria 3.5 보컬', 'Lyria 3.0 보컬 메들리 · 밈 가사', 'GPT Dots 리메이크'];
+const albumOrder = ['Opus 5.5', 'Lyria 3.5', 'Lyria 3.5 보컬', 'GPT Dots 리메이크', 'Lyria 3.0 보컬 메들리 · 밈 가사'];
 
 /** 사이트 내부의 루트 경로에만 basePath를 붙이고 외부 음원 URL은 보존한다. */
 export function audioPreviewSource(src: string, basePath: string): string {
   return src.startsWith('/') && !src.startsWith('//') ? `${basePath.replace(/\/$/u, '')}${src}` : src;
 }
 
-/** 곡 순서는 원본 그대로, 앨범은 소개에 사용하는 순서로 묶는다. */
+/** 앨범 안의 곡 순서는 보존하고, 앨범은 소개 화면의 배치 순서로 묶는다. */
 export function groupAudioPreviews(previews: readonly AgentExperimentAudioPreview[]) {
   const groups = new Map<string, AgentExperimentAudioPreview[]>();
   for (const preview of previews) {

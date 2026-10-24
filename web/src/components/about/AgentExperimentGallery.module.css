@@ -96,8 +96,10 @@
 .audioPreviewHeader > p:not(.eyebrow) { margin: 0; color: var(--text-dim); font-size: .82rem; line-height: 1.6; word-break: keep-all; overflow-wrap: anywhere; }
 .audioAlbums { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin-top: 20px; }
 .audioAlbum { min-width: 0; margin: 0; padding: 12px; border: 1px solid var(--border-strong); border-radius: 10px; background: var(--bg-elev); }
+.audioAlbumWide { grid-column: span 2; }
 .audioAlbum legend { max-width: 100%; padding: 0 6px; color: var(--text); font-size: .85rem; font-weight: 700; overflow-wrap: anywhere; }
 .audioTracks { display: grid; gap: 8px; }
+.audioAlbumWide .audioTracks { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .audioTracks button { display: flex; width: 100%; min-width: 0; min-height: 44px; align-items: center; justify-content: space-between; gap: 10px; padding: 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg-elev-2); color: var(--text-dim); font: inherit; font-size: .8rem; line-height: 1.5; text-align: left; cursor: pointer; }
 .audioTracks button > span:first-child { min-width: 0; overflow-wrap: anywhere; }
 .audioTracks button[aria-pressed='true'] { border-color: var(--accent, #6366f1); background: color-mix(in srgb, var(--accent, #6366f1) 10%, var(--bg-elev)); color: var(--accent, #6366f1); font-weight: 700; }
@@ -173,6 +175,8 @@
 @media (max-width: 600px) {
   .filters { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .audioAlbums { grid-template-columns: minmax(0, 1fr); }
+  .audioAlbumWide { grid-column: auto; }
+  .audioAlbumWide .audioTracks { grid-template-columns: minmax(0, 1fr); }
 }
 @media (max-width: 480px) {
   .section { padding: 18px; }
