@@ -341,15 +341,16 @@ test('연구 본문의 제목과 AI 질문을 맞추고 측정 수치는 유지�
   assert.ok(runner.includes('DeterministicByteData.Create(1_048_576)'), '러너 입력 크기');
 });
 
-test('최적화 개요 아래 주의점 카드는 명령어 지원 위험을 차분하게 안내하고 숨겨 둔 기록 깨기는 드러내지 않는다', async () => {
+test('최적화 탭의 주의점 카드는 벤치마크 목록 뒤에서 명령어 지원 위험을 차분하게 안내하고 숨겨 둔 기록 깨기는 드러내지 않는다', async () => {
   const panels = await readFile(new URL('../../../../src/features/research/ui/ResearchPanels.tsx', import.meta.url), 'utf8');
   const viewer = await readFile(new URL('../../../../src/features/research/ui/ResearchViewer.tsx', import.meta.url), 'utf8');
   const tab = panels.slice(panels.indexOf("activeTab === 'optimization'"), panels.indexOf("activeTab === 'cpu'"));
   const overview = tab.indexOf('id="research-optimization-overview"');
   const caution = tab.indexOf('id="research-optimization-caution"');
-  assert.ok(overview >= 0 && caution > overview, '개요 바로 다음에 둔다');
-  assert.ok(caution < tab.indexOf('<BenchmarkCatalog />'), '벤치마크 목록보다 앞에 둔다');
-  const card = tab.slice(caution, tab.indexOf('<BenchmarkCatalog />'));
+  const catalog = tab.indexOf('<BenchmarkCatalog />');
+  // 개요가 "아래에 연결했다"고 한 벤치마크 목록을 바로 다음에 두고, 주의점은 그 뒤에 둔다.
+  assert.ok(overview >= 0 && catalog > overview && caution > catalog, '개요, 벤치마크 목록, 주의점 순서');
+  const card = tab.slice(caution);
   for (const phrase of [
     '에이전트로 성능을 끌어올릴 때 주의할 점', 'PlatformNotSupportedException', 'illegal instruction',
     'CPU 세대가 다른 일부 노드', '대체 경로(fallback)', '조용히 느린 경로', 'AVX-512의 파편화', 'AVX10', 'AVX2까지만',
@@ -374,13 +375,18 @@ test('SIMD 카드의 기록 깨기는 접힌 채 두 트랙·규칙·연락처�
     'MultiplyAddAvx2RangeSumCalculator', 'PrefetchMultiplyAddAvx2RangeSumCalculator', 'DeterministicByteData.Create(1_048_576)',
     '100 이상 200 이하', '벡터 폭의 배수가 아니거나 시작 주소가 정렬되지 않아도', 'AVX-512 제외', 'x86-64-v3', 'AVX-VNNI', '단일 스레드', '10% 이상 빠르면',
     '절대적인 기준이 아닙니다', '에이전트와 함께 한계까지', '에이전트를 써도 좋습니다', '프리페치 거리(2048바이트)', '5% 이내',
-    'mailto:sworksong@gmail.com', '문턱에 못 미치더라도',
-    // 참고 수치는 공개 러너(i5-9600K)로 잰 값이다.
-    'i5-9600K에서 약 20 μs', 'i5-9600K에서 약 15.5 μs',
+    'mailto:sworksong@gmail.com', '문턱에 못 미치더라도', '이 실험의 차별점은',
+    // 기준 수치는 공개 러너(i5-9600K)로 잰 값이고, 측정 환경을 함께 밝힌다.
+    '기준 측정 결과', '트랙 1 기준 (Avx2MultiplyAdd): 19.92 μs', '트랙 2 기준 (Avx2PrefetchMultiplyAdd): 15.53 μs', '(Avx2Unrolled): 36.94 μs',
+    'Intel Core i5-9600K', '.NET 8.0.23', 'BenchmarkDotNet 0.15.8', '같은 실행 안에서',
   ]) {
     assert.ok(egg.includes(rule), rule);
   }
   assert.doesNotMatch(egg, /__TRACK\d__/u, '빈칸이 남지 않는다');
+  // 참가 이야기 전에 기록 깨기가 무엇인지부터 설명한다.
+  const explained = egg.indexOf('기록으로 걸어 두었습니다');
+  assert.ok(explained >= 0 && explained < egg.indexOf('누구나 참가할 수 있습니다'));
+  assert.ok(egg.indexOf('누구나 참가할 수 있습니다') < egg.indexOf('참가하실 때도'));
   const runner = await readFile(new URL('../../../../../benchmarks/simd-avx2/bench/SSW.Benchmarks.SimdAvx2.Benchmarks/RangeSumBenchmarks.cs', import.meta.url), 'utf8');
   assert.ok(runner.includes('new MultiplyAddAvx2RangeSumCalculator()') && runner.includes('new PrefetchMultiplyAddAvx2RangeSumCalculator()'), '두 기준 코드를 러너에서 함께 잰다');
   // 기준 코드 링크는 main이 아니라 기준 코드를 넣은 커밋 해시에 고정한다.
@@ -389,7 +395,9 @@ test('SIMD 카드의 기록 깨기는 접힌 채 두 트랙·규칙·연락처�
   // 토발즈 인용과 출처는 기록 깨기에만 두고, 자세한 주의점은 최적화 개요 카드로 보낸다.
   assert.ok(egg.includes('I hope AVX512 dies a painful death'));
   assert.ok(egg.includes('https://www.phoronix.com/news/Linus-Torvalds-On-AVX-512'));
-  assert.ok(egg.includes('href="#research-optimization-caution"'));
+  // 다른 탭의 카드라 해시 링크로는 스크롤되지 않으므로, 탭 전환과 스크롤을 맡는 ResearchLink로 잇는다.
+  assert.ok(egg.includes('<ResearchLink href="/about-me/research#research-optimization-caution" arrow={false}'));
+  assert.doesNotMatch(egg, /<a href="#research-/u);
   // 위 비교 카드의 수치를 그대로 인용한다.
   assert.ok(cpu.indexOf('>34.5 μs<') < cpu.indexOf('<details'));
   assert.ok(egg.includes('C++ 구현(34.5 μs)과 C# SIMD 구현(37 μs)'));
@@ -397,7 +405,8 @@ test('SIMD 카드의 기록 깨기는 접힌 채 두 트랙·규칙·연락처�
   assert.doesNotMatch(egg.slice(egg.indexOf('<summary'), egg.indexOf('</summary>')), /C\+\+|어셈블리|C#/u);
   assert.doesNotMatch(egg, /도전/u);
   // 처우를 약속하는 문구 대신 의지 표명만 둔다.
-  assert.ok(egg.includes('처우보다 배움을 우선해 합류를 진지하게 검토하겠습니다'));
+  // 지금 구직 중이라는 뜻으로 읽히지 않게 가정을 먼저 깐다.
+  assert.ok(egg.includes('만약 제가 구직 중이라면 처우보다 배움을 우선해 합류를 진지하게 검토하겠습니다'));
   assert.doesNotMatch(egg, /처우에 맞춰|근로기준법|수습/u);
   // 트랙 1 기준 코드는 unsafe 키워드와 포인터 없이 작성한다(주석은 빼고 본다).
   const track1 = await readFile(new URL('../../../../../benchmarks/simd-avx2/src/SSW.Benchmarks.SimdAvx2/Implementations/Simd/MultiplyAddAvx2RangeSumCalculator.cs', import.meta.url), 'utf8');
@@ -406,7 +415,7 @@ test('SIMD 카드의 기록 깨기는 접힌 채 두 트랙·규칙·연락처�
   // 소개 페이지·미리보기·최적화 개요에는 드러내지 않는다.
   const overview = await readFile(new URL('../../../../src/app/about-me/page.tsx', import.meta.url), 'utf8');
   const preview = await readFile(new URL('../../../../src/features/research/ui/OptimizationPreview.tsx', import.meta.url), 'utf8');
-  const caution = panels.slice(panels.indexOf('id="research-optimization-caution"'), panels.indexOf('<BenchmarkCatalog />'));
+  const caution = panels.slice(panels.indexOf('id="research-optimization-caution"'), panels.indexOf("activeTab === 'cpu'"));
   for (const source of [overview, preview, caution]) assert.doesNotMatch(source, /🥚|기록 깨기|MultiplyAdd/u);
 });
 
@@ -431,7 +440,7 @@ test('AVX-512 파편화 표는 확인한 지원 현황을 담고, 나중 제품�
     assert.ok(item.note.length > 0, name);
   }
   const panels = await readFile(new URL('../../../../src/features/research/ui/ResearchPanels.tsx', import.meta.url), 'utf8');
-  const caution = panels.slice(panels.indexOf('id="research-optimization-caution"'), panels.indexOf('<BenchmarkCatalog />'));
+  const caution = panels.slice(panels.indexOf('id="research-optimization-caution"'), panels.indexOf("activeTab === 'cpu'"));
   assert.ok(caution.includes('<Avx512SupportTable />'));
   assert.ok(caution.includes('Cooper Lake의 BF16') && caution.includes('Tiger Lake의 VP2INTERSECT'));
   const table = await readFile(new URL('../../../../src/features/research/ui/Avx512SupportTable.tsx', import.meta.url), 'utf8');

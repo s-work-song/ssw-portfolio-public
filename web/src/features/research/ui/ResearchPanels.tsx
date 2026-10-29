@@ -11,6 +11,7 @@ import {
   BenchmarkEvidence,
 } from '@/features/research/ui/BenchmarkEvidence';
 import Avx512SupportTable from '@/features/research/ui/Avx512SupportTable';
+import ResearchLink from '@/features/research/ui/ResearchLink';
 import ChatbotArchitectureDetails from '@/features/research/ui/ChatbotArchitectureDetails';
 import { researchTimelineItems, type ResearchTabId } from '@/features/research/data/research';
 import {
@@ -91,7 +92,10 @@ export default function ResearchPanels({ activeTab }: { activeTab: ResearchTabId
               </div>
             </section>
 
-            {/* 에이전트로 극한 최적화를 할 때의 주의점. 차분한 안내만 두고 강한 표현·인용은 넣지 않는다. */}
+            <BenchmarkCatalog />
+
+            {/* 에이전트로 극한 최적화를 할 때의 주의점. 차분한 안내만 두고 강한 표현·인용은 넣지 않는다.
+                개요가 "아래에 연결했다"고 한 벤치마크 목록을 먼저 보이고, 이 참고는 그 뒤에 둔다. */}
             <section
               id="research-optimization-caution"
               tabIndex={-1}
@@ -152,8 +156,6 @@ export default function ResearchPanels({ activeTab }: { activeTab: ResearchTabId
                 </p>
               </div>
             </section>
-
-            <BenchmarkCatalog />
           </div>
         )}
 
@@ -456,11 +458,15 @@ return Vector256.Sum(accumulator) + ScalarSum(src[남은_청크..]);`}
                 </summary>
                 <div style={{ marginTop: '12px', padding: '16px 18px', background: 'var(--bg-elev-2)', borderRadius: '12px', border: '1px dashed var(--border-strong)', lineHeight: 1.7, wordBreak: 'keep-all' }}>
                   <p style={{ margin: 0 }}>
-                    이 실험에서 가장 자신 있는 부분은 메모리 관리 언어인 C#의 안정성을 지키면서 비관리 언어인 C++ 수준의 성능을 내는 것입니다.
+                    이 실험의 차별점은 메모리 관리 언어인 C#의 안정성을 지키면서 비관리 언어인 C++ 수준의 성능을 내는 것입니다.
                     위 비교에서도 C++ 구현(34.5 μs)과 C# SIMD 구현(37 μs)의 처리 시간은 비슷했습니다.
                   </p>
                   <p style={{ margin: '10px 0 0' }}>
-                    다만 위 수치는 예전에 손으로 짠 코드의 결과입니다. 기록 깨기의 기준 코드는 그 코드를 에이전트와 함께 한계까지 다듬은 버전입니다.
+                    그래서 지금까지 만든 가장 빠른 구현을 기록으로 걸어 두었습니다. 같은 문제를 이 기록보다 빠르게 푸는 코드를 만들면 기록을 깬 것입니다.
+                    자기 PC에서 재 보고 결과를 보내 주시면 누구나 참가할 수 있습니다.
+                  </p>
+                  <p style={{ margin: '10px 0 0' }}>
+                    다만 이 기록은 위 비교의 수치가 아닙니다. 위 수치는 예전에 손으로 짠 코드의 결과이고, 기록으로 건 기준 코드는 그 코드를 에이전트와 함께 한계까지 다듬은 버전입니다.
                     그러니 참가하실 때도 에이전트를 써도 좋습니다. 더 좋은 방식으로 기록을 넘으면 인정합니다.
                   </p>
 
@@ -469,14 +475,26 @@ return Vector256.Sum(accumulator) + ScalarSum(src[남은_청크..]);`}
                     <li>
                       <strong style={{ color: 'var(--text)' }}>트랙 1 · <code>unsafe</code> 없는 C#</strong>: 기준 코드는{' '}
                       <a href={`${SIMD_RECORD_BASELINE_SOURCE_URL}/MultiplyAddAvx2RangeSumCalculator.cs`} target="_blank" rel="noreferrer" style={{ color: 'var(--accent, #6366f1)' }}><code>MultiplyAddAvx2RangeSumCalculator</code></a>입니다.
-                      <code>unsafe</code> 키워드와 포인터 없이 C#만으로 넘어야 합니다. i5-9600K에서 약 20 μs입니다.
+                      <code>unsafe</code> 키워드와 포인터 없이 C#만으로 넘어야 합니다.
                     </li>
                     <li>
                       <strong style={{ color: 'var(--text)' }}>트랙 2 · 제한 없음</strong>: 기준 코드는{' '}
                       <a href={`${SIMD_RECORD_BASELINE_SOURCE_URL}/PrefetchMultiplyAddAvx2RangeSumCalculator.cs`} target="_blank" rel="noreferrer" style={{ color: 'var(--accent, #6366f1)' }}><code>PrefetchMultiplyAddAvx2RangeSumCalculator</code></a>입니다.
-                      언어와 <code>unsafe</code> 모두 자유입니다. i5-9600K에서 약 15.5 μs입니다.
+                      언어와 <code>unsafe</code> 모두 자유입니다.
                     </li>
                   </ul>
+
+                  <div style={{ marginTop: '14px', fontWeight: 700, color: 'var(--text)' }}>기준 측정 결과</div>
+                  <div style={{ marginTop: '6px', fontSize: '0.8125rem', display: 'flex', flexDirection: 'column', gap: '4px', fontFamily: 'monospace', color: 'var(--text)' }}>
+                    <div>• 트랙 1 기준 (Avx2MultiplyAdd): 19.92 μs (표준편차 1.86)</div>
+                    <div>• 트랙 2 기준 (Avx2PrefetchMultiplyAdd): 15.53 μs (표준편차 0.86)</div>
+                    <div>• 참고 · 위 C# SIMD의 공개 재구성 (Avx2Unrolled): 36.94 μs (표준편차 1.74)</div>
+                  </div>
+                  <p style={{ margin: '8px 0 0', fontSize: '0.75rem', lineHeight: 1.5, color: 'var(--text-mute)' }}>
+                    측정 환경: Intel Core i5-9600K(Coffee Lake, 3.7 GHz, 코어당 L2 256 KB), Windows 11, .NET 8.0.23(x64 RyuJIT, x86-64-v3),
+                    BenchmarkDotNet 0.15.8 기본 설정입니다. 입력은 아래 규칙과 같은 1 MiB 데이터에서 100 이상 200 이하 범위입니다.
+                    같은 PC에서도 실행마다 몇 %씩 흔들리므로, 비교는 기준 코드와 같은 실행 안에서 합니다.
+                  </p>
 
                   <div style={{ marginTop: '14px', fontWeight: 700, color: 'var(--text)' }}>규칙</div>
                   <ul style={{ margin: '6px 0 0', paddingLeft: '18px' }}>
@@ -508,7 +526,7 @@ return Vector256.Sum(accumulator) + ScalarSum(src[남은_청크..]);`}
                     {' '}&ldquo;I hope AVX512 dies a painful death&rdquo;라고까지 말했습니다(
                     <a href="https://www.phoronix.com/news/Linus-Torvalds-On-AVX-512" target="_blank" rel="noreferrer" style={{ color: 'var(--accent, #6366f1)' }}>Phoronix 기사</a>).
                     에이전트로 최적화할 때 주의할 점은{' '}
-                    <a href="#research-optimization-caution" style={{ color: 'var(--accent, #6366f1)' }}>성능 최적화 개요</a>에 정리했습니다.
+                    <ResearchLink href="/about-me/research#research-optimization-caution" arrow={false} style={{ color: 'var(--accent, #6366f1)' }}>성능 최적화 개요</ResearchLink>에 정리했습니다.
                   </p>
 
                   <p style={{ margin: '14px 0 0' }}>
@@ -517,7 +535,7 @@ return Vector256.Sum(accumulator) + ScalarSum(src[남은_청크..]);`}
                     문턱에 못 미치더라도 새로운 관점이 담긴 시도라면 보내 주세요. 이 기록 깨기는 더 빠른 코드만큼이나, 이런 문제를 재미있어하는 분을 만나고 싶어서 열어 둔 것입니다.
                   </p>
                   <p style={{ margin: '10px 0 0', color: 'var(--text)', fontWeight: 600 }}>
-                    이 기록을 깨는 분이 계신 팀이라면 제가 배울 사람이 있는 곳입니다. 처우보다 배움을 우선해 합류를 진지하게 검토하겠습니다.
+                    이 기록을 깨는 분이 계신 팀이라면 제가 배울 사람이 있는 곳입니다. 만약 제가 구직 중이라면 처우보다 배움을 우선해 합류를 진지하게 검토하겠습니다.
                   </p>
                 </div>
               </details>
