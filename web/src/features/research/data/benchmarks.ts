@@ -34,7 +34,7 @@ export const BENCHMARK_ROOT_URL = `${GITHUB_REPOSITORY}/tree/main/benchmarks`;
  * 저장소 코드가 나중에 바뀌어도 기준이 흔들리지 않도록 기준 코드를 넣은 커밋의 해시로 링크한다.
  * 공개 히스토리를 커밋 하나로 합치면 이 해시가 사라지므로, 합친 뒤에는 합친 커밋의 해시로 바꾼다.
  */
-export const SIMD_RECORD_BASELINE_COMMIT = '2c92d10bbfd0a3f07a537aa9d0b03b91320840e4';
+export const SIMD_RECORD_BASELINE_COMMIT = '8879a3c4d0a70e5d61ded23a1ee7a66015a35818';
 
 export const SIMD_RECORD_BASELINE_ROOT_URL =
   `${GITHUB_REPOSITORY}/tree/${SIMD_RECORD_BASELINE_COMMIT}/benchmarks/simd-avx2`;
