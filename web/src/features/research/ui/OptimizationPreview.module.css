@@ -1,0 +1,31 @@
+.preview {
+  padding: clamp(24px, 5vw, 40px);
+  border: 1px solid var(--panel-border);
+  border-radius: 24px;
+  background: var(--panel-bg);
+  box-shadow: var(--shadow);
+  scroll-margin-top: 96px;
+}
+:global(:root:not([data-theme='dark'])) .preview { border-top: 3px solid var(--accent); }
+.eyebrow { margin: 0; color: var(--accent); font-size: 0.75rem; letter-spacing: 0.14em; font-weight: 700; }
+.preview h3 { margin: 15px 0 14px; color: var(--text); font-size: clamp(1.4rem, 3vw, 1.8rem); letter-spacing: -0.03em; }
+.intro { max-width: 780px; margin: 0; color: var(--text-dim); font-size: var(--font-size-body); line-height: 1.8; word-break: keep-all; overflow-wrap: anywhere; }
+.cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; list-style: none; padding: 0; margin: 28px 0; }
+.cards li { min-width: 0; }
+.card { position: relative; display: flex; flex-direction: column; height: 100%; gap: 8px; padding: 17px 15px; border: 1px solid var(--panel-border); border-radius: 13px; background: var(--panel-card-bg); color: var(--text); text-decoration: none; transition: border-color 160ms ease, transform 160ms ease; }
+.card:hover { border-color: var(--accent); transform: translateY(-3px); }
+.card:focus-visible, .more:focus-visible { outline: 3px solid var(--accent); outline-offset: 4px; }
+/* ResearchLink가 마지막에 붙이는 화살표를 카드 오른쪽 위로 옮긴다. */
+.card > span:last-child { position: absolute; top: 15px; right: 14px; color: var(--text-mute); font-size: 0.86rem; }
+.label { padding-right: 20px; color: var(--accent); font-size: 0.78rem; font-weight: 700; letter-spacing: 0.02em; }
+.title { font-size: var(--font-size-description); line-height: 1.5; word-break: keep-all; overflow-wrap: anywhere; }
+.metric { margin-top: 6px; color: var(--text); font-size: 1.15rem; font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: -0.01em; overflow-wrap: anywhere; }
+.note { color: var(--text-dim); font-size: var(--font-size-description); line-height: 1.6; word-break: keep-all; overflow-wrap: anywhere; }
+.footer { border-top: 1px solid var(--border); padding-top: 22px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 15px; }
+.footer p { margin: 0; color: var(--text-dim); font-size: var(--font-size-description); line-height: 1.6; word-break: keep-all; }
+.more { display: inline-flex; gap: 14px; align-items: center; min-height: 42px; padding: 11px 17px; border-radius: 10px; background: var(--accent); color: var(--accent-contrast, #fff); text-decoration: none; font-size: 0.84rem; font-weight: 700; }
+@media (max-width: 700px) {
+  .cards { grid-template-columns: 1fr; }
+  .footer { align-items: flex-start; flex-direction: column; }
+}
+@media (prefers-reduced-motion: reduce) { .card { transition: none; } .card:hover { transform: none; } }

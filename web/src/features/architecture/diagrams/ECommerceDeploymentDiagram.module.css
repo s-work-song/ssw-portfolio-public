@@ -1,0 +1,14 @@
+.diagram { color: var(--text); font-family: Pretendard, 'Noto Sans KR', system-ui, sans-serif; }
+.diagram text { text-anchor: middle; dominant-baseline: middle; fill: var(--text); }
+.group rect { fill: color-mix(in srgb, var(--accent) 3%, var(--bg-elev)); stroke: var(--border-strong, var(--border)); stroke-width: 1.4; }
+.group text { font-size: 16px; font-weight: 600; }
+.connections path { fill: none; stroke: var(--text-dim); stroke-width: 1.3; stroke-linejoin: round; }
+.arrow { fill: var(--text-dim); }
+.linkLabel rect { fill: var(--bg-elev); }
+.linkLabel text { font-size: 14px; }
+.node rect { fill: var(--bg-elev-2, var(--bg-elev)); stroke: var(--accent); stroke-width: 1.2; }
+.node text { font-size: 15px; }
+.nodeTitle { font-weight: 600; }
+.service text { font-size: 13px; }
+.database rect { stroke-width: 1.6; }
+.note { font-size: 14px; fill: var(--text-dim) !important; }

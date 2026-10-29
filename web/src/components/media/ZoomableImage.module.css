@@ -1,0 +1,28 @@
+.root { position: relative; display: grid; grid-template-rows: auto minmax(0, 1fr) auto; width: 100%; height: 100%; min-width: 0; overflow: hidden; container-type: inline-size; }
+.viewport { position: relative; grid-row: 2; min-width: 0; min-height: 0; overflow: hidden; touch-action: none; outline-offset: -4px; }
+.viewport:focus-visible { outline: 3px solid var(--accent); }
+.zoomed { cursor: grab; }
+.zoomed:active { cursor: grabbing; }
+.transform { position: absolute; inset: 0; transform-origin: center; pointer-events: none; }
+.image { object-fit: contain; pointer-events: none; user-select: none; }
+.controls { position: relative; grid-row: 1; justify-self: center; display: flex; align-items: center; gap: 4px; margin: 8px 54px 8px 8px; padding: 4px; border: 1px solid rgb(255 255 255 / 24%); border-radius: 10px; background: rgb(15 23 42 / 88%); color: #fff; }
+.controls button { display: grid; min-width: 34px; min-height: 34px; place-items: center; border: 0; border-radius: 6px; color: inherit; background: transparent; font-size: 1.15rem; cursor: pointer; }
+.controls button:hover:not(:disabled) { background: rgb(255 255 255 / 18%); }
+.controls button:disabled { opacity: .35; cursor: default; }
+.controls button:focus-visible { outline: 2px solid #fff; outline-offset: -2px; }
+.controls output { min-width: 48px; font-size: .82rem; text-align: center; font-variant-numeric: tabular-nums; }
+.controls .reset { padding: 0 9px; font-size: .82rem; }
+.hint { position: relative; grid-row: 3; justify-self: center; max-width: calc(100% - 24px); margin: 8px; padding: 5px 10px; border-radius: 7px; background: rgb(15 23 42 / 82%); color: #fff; font-size: .75rem; line-height: 1.5; text-align: center; pointer-events: none; }
+@media (max-width: 640px) {
+  .controls { justify-self: start; gap: 1px; }
+  .controls button { min-width: 30px; min-height: 34px; }
+  .controls output { min-width: 42px; }
+  .hint { font-size: .7rem; }
+}
+@container (max-width: 320px) {
+  .controls { justify-self: start; margin: 6px; gap: 1px; }
+  .controls button { min-width: 28px; min-height: 30px; }
+  .controls output { min-width: 38px; font-size: .75rem; }
+  .controls .reset { padding: 0 6px; font-size: .75rem; }
+  .hint { margin: 6px; padding: 4px 6px; font-size: .65rem; }
+}
