@@ -89,9 +89,9 @@ export default function OverviewPage() {
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                 <span aria-hidden="true" style={{ fontSize: '2rem' }}>{section.emoji}</span>
-                <h4 style={{ fontSize: '1.25rem', fontWeight: 700, margin: 0, color: 'var(--text)' }}>
+                <h3 style={{ fontSize: '1.25rem', fontWeight: 700, margin: 0, color: 'var(--text)' }}>
                   {section.title}
-                </h4>
+                </h3>
               </div>
               <p style={{ 
                 margin: 0, 

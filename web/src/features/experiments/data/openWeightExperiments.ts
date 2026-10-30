@@ -16,9 +16,9 @@ export const openWeightExperiments: AboutProject[] = [
           caption: '런타임 자원과 모델별 실행 옵션을 한 화면에서 조절하는 Colab 런처',
         },
         {
-          src: '/images/projects/colab-llm-launcher/portfolio-chat-ui-tools.png',
-          alt: '포트폴리오 AI 챗봇이 도구 호출로 채팅을 오른쪽에 고정하고 글자 크기를 키운 뒤 2024년 연구 경험으로 이동한 화면',
-          caption: '포트폴리오 AI 도구 호출 · 채팅 배치·글자 크기 변경과 연구 연도 이동',
+          src: '/images/projects/colab-llm-launcher/portfolio-chat-ui-tools.webp',
+          alt: '포트폴리오의 오픈웨이트 모델 챗봇이 도구 호출로 채팅을 오른쪽에 고정하고 글자 크기를 키운 뒤 2024년 연구 경험으로 이동한 화면',
+          caption: '오픈웨이트 모델 챗봇 도구 호출 · 채팅 배치·글자 크기 변경과 연구 연도 이동',
         },
         {
           src: '/images/projects/colab-llm-launcher/opencode-provider-settings.png',
@@ -60,7 +60,7 @@ export const openWeightExperiments: AboutProject[] = [
           caption: '시스템 관리 웹 · 모델 로드·자원 사용량·연결 상태',
         },
         {
-          src: '/images/projects/colab-comfyui/03-comfyui-image-workflow.png',
+          src: '/images/projects/colab-comfyui/03-comfyui-image-workflow.webp',
           alt: 'Qwen-Image 2512 이미지 생성을 위한 모델 로드·LoRA·CLIP·프롬프트·샘플링 노드가 연결된 ComfyUI 그래프 화면',
           caption: 'ComfyUI 이미지 워크플로 · 모델·프롬프트·샘플링 노드 구성',
         },

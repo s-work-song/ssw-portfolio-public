@@ -23,15 +23,15 @@ import {
 
 test('연구 카드는 확인된 경험과 진행 중인 실험 주제를 안내하고 결과 수록을 주장하지 않는다', () => {
   const card = aboutDestinations.find((item) => item.href === '/about-me/research');
-  assert.equal(card.desc, '하드웨어 구성과 소프트웨어 최적화, 두 영역을 함께 고려한 SIMD·AVX2 활용 경험을 정리했습니다. 실험중인 내용도 소개합니다.');
-  assert.ok(card.desc.endsWith('실험중인 내용도 소개합니다.'));
+  assert.equal(card.desc, '하드웨어 구성과 소프트웨어 최적화, 두 영역을 함께 고려한 SIMD·AVX2 활용 경험을 정리했습니다. 실험 중인 내용도 소개합니다.');
+  assert.ok(card.desc.endsWith('실험 중인 내용도 소개합니다.'));
   assert.doesNotMatch(card.desc, /실험 과정|결과/u);
   assert.doesNotMatch(card.desc, /CPU 오버클럭/);
-  const topics = ['하드웨어 구성', '소프트웨어 최적화', 'SIMD·AVX2', '실험중인 내용'];
+  const topics = ['하드웨어 구성', '소프트웨어 최적화', 'SIMD·AVX2', '실험 중인 내용'];
   const positions = topics.map((topic) => card.desc.indexOf(topic));
   assert.ok(positions.every((position, index) => position >= 0 && (!index || position > positions[index - 1])));
   assert.deepEqual(researchPrimaryTabs.map((item) => item.label), [
-    '연구·실험 이력 (Timeline)', '성능 최적화', '개발 도구 및 AI 활용',
+    '연구·실험 이력 (Timeline)', '성능 최적화', '개발 도구 및 SI 활용',
   ]);
 });
 
@@ -73,18 +73,18 @@ test('소개 페이지의 성능 최적화 카드는 하위 탭으로 바로 가
   }
 });
 
-test('도구 & AI 접목 탭 이동은 다른 하위 탭처럼 탭의 첫 카드로 간다', async () => {
+test('도구 & SI 접목 탭 이동은 다른 하위 탭처럼 탭의 첫 카드로 간다', async () => {
   const panels = await readFile(new URL('../../../../src/features/research/ui/ResearchPanels.tsx', import.meta.url), 'utf8');
   const tab = panels.slice(panels.indexOf("activeTab === 'meta'"));
   assert.match(tab, /^[^]*?<div id="research-tools-ai" tabIndex=\{-1\}[^]*?Roslyn 컴파일러 기반 메타 프로그래밍/u);
-  assert.ok(tab.indexOf('id="research-tools-ai"') < tab.indexOf('생성형 AI 기반 개발 및 검증 실험'));
+  assert.ok(tab.indexOf('id="research-tools-ai"') < tab.indexOf('LLM 기반 개발 및 검증 실험'));
 });
 
 test('챗봇 구조 실험 카드로 바로 이동하고, 도착한 앵커를 개발 도구 탭 위치로 읽는다', async () => {
   const viewer = await readFile(new URL('../../../../src/features/research/ui/ResearchViewer.tsx', import.meta.url), 'utf8');
   const target = resolvePortfolioViewTarget('research-chatbot-architecture');
   assert.equal(target.route, '/about-me/research#research-chatbot-architecture');
-  assert.equal(target.label, '도구 & AI 접목 탭의 오픈웨이트 모델 챗봇 구조 실험 카드');
+  assert.equal(target.label, '도구 & SI 접목 탭의 오픈웨이트 모델 챗봇 구조 실험 카드');
   assert.match(viewer, /'research-chatbot-architecture': 'meta'/u);
   const view = await readFile(new URL('../../../../src/features/webmcp/portfolioView.ts', import.meta.url), 'utf8');
   assert.match(view, /'research-chatbot-architecture': 'tools'/u);
@@ -272,25 +272,25 @@ test('학창 시절 이동은 타임라인 탭·두 카드·실제로 보이는 
 test('장기 세션 기반 에이전트 협업과 게임·리소스 제작 실험을 별도 카드로 표시한다', () => {
   const current = researchTimelineItems.filter((item) => item.period === '2026–현재');
   assert.deepEqual(current.map((item) => item.role), [
-    '오픈 웨이트 AI 모델 실행 환경 구성', 'AI 에이전트 오케스트레이션', 'AI 활용 실험',
+    '오픈웨이트 모델 실행 환경 구성', 'SI 에이전트 오케스트레이션', 'SI 활용 실험',
   ]);
   const orchestration = current[1];
-  assert.match(orchestration.desc, /장기간.*세션.*복수의 AI 에이전트.*일상 업무/u);
+  assert.match(orchestration.desc, /장기간.*세션.*복수의 SI 에이전트.*일상 업무/u);
   assert.match(orchestration.desc, /일상생활.*병행.*계속 실험/u);
   assert.doesNotMatch(orchestration.desc, /저수준|성능 최적화|포트폴리오 문서/u);
-  assert.deepEqual(orchestration.tags, ['AI Agent', 'Orchestration']);
+  assert.deepEqual(orchestration.tags, ['SI Agent', 'Orchestration']);
   const experiments = current[2];
   assert.ok(Array.isArray(experiments.desc));
   const paragraphs = experiments.desc.map(({ summary }) => summary);
   assert.deepEqual(paragraphs, [
-    'AI 관련 업데이트를 꾸준히 살펴보며, 새로운 프론티어 모델을 포함하여 다양한 기능을 직접 사용하고 여러 MCP와 플러그인을 연결해 활용하는 실험을 진행하고 있습니다.',
+    'SI 관련 업데이트를 꾸준히 살펴보며, 새로운 프론티어 모델을 포함하여 다양한 기능을 직접 사용하고 여러 MCP와 플러그인을 연결해 활용하는 실험을 진행하고 있습니다.',
     '이미지·3D 모델 등 리소스 제작과 바이브 코딩을 통한 2D·3D 게임 제작 실험을 진행하며, 활용 범위를 넓혀 가고 있습니다.',
   ]);
   const description = paragraphs.join('\n');
-  const topics = ['AI 관련 업데이트', '새로운 프론티어 모델', '다양한 기능', '여러 MCP와 플러그인', '이미지·3D 모델', '바이브 코딩', '2D·3D 게임'];
+  const topics = ['SI 관련 업데이트', '새로운 프론티어 모델', '다양한 기능', '여러 MCP와 플러그인', '이미지·3D 모델', '바이브 코딩', '2D·3D 게임'];
   const positions = topics.map((topic) => description.indexOf(topic));
   assert.ok(positions.every((position, index) => position >= 0 && (!index || position > positions[index - 1])));
-  assert.deepEqual(experiments.tags, ['Vibe Coding', '2D / 3D Game', 'AI Resources']);
+  assert.deepEqual(experiments.tags, ['Vibe Coding', '2D / 3D Game', 'SI Resources']);
   assert.equal(experiments.color, orchestration.color);
   assert.equal(new Set(current.map((item) => item.role)).size, current.length);
 });
@@ -303,7 +303,7 @@ test('연구 본문의 제목과 AI 질문을 맞추고 측정 수치는 유지�
   for (const heading of [
     '조건 분기와 SIMD 벡터화 성능 비교',
     'AoS·SoA 메모리 배치와 캐시 활용 비교',
-    '생성형 AI 기반 개발 및 검증 실험',
+    'LLM 기반 개발 및 검증 실험',
     '오픈웨이트 모델 챗봇 구조 실험',
   ]) {
     assert.ok(panels.includes(`「${heading}」`), `AI 질문: ${heading}`);

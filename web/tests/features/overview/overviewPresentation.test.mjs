@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import test from 'node:test';
+import test from 'node:test';
+import { readImageHeader } from '../../support/imageHeader.mjs';
 import { aboutArchiveProjects, aboutDestinations, aboutProjects } from '../../../src/features/overview/data/about.ts';
 import { openWeightExperiments } from '../../../src/features/experiments/data/openWeightExperiments.ts';
 import { agentExperiments } from '../../../src/features/experiments/data/agentExperiments.ts';
@@ -12,7 +13,7 @@ test('소개 카드는 실제 본문 주제를 요약하고 기존 이동 경로
   assert.deepEqual(aboutDestinations.map(({ href, desc }) => [href, desc]), [
     ['/about-me/resume', '실무 경력과 핵심 기술, 주요 업무에서 맡은 역할을 정리했습니다. 웹·앱 개발과 시스템 운영 경험을 바탕으로 쌓아 온 역량을 확인할 수 있습니다.'],
     ['/about-me/cover-letter', '개발을 대하는 관점과 학습 과정, 경력의 전환점과 앞으로의 방향을 소개합니다.'],
-    ['/about-me/research', '하드웨어 구성과 소프트웨어 최적화, 두 영역을 함께 고려한 SIMD·AVX2 활용 경험을 정리했습니다. 실험중인 내용도 소개합니다.'],
+    ['/about-me/research', '하드웨어 구성과 소프트웨어 최적화, 두 영역을 함께 고려한 SIMD·AVX2 활용 경험을 정리했습니다. 실험 중인 내용도 소개합니다.'],
     ['/about-me/log', '개발과 일상에서 얻은 기술적 배움, 문제 해결 과정의 고민, 프로젝트 회고를 기록합니다.'],
   ]);
   const coverLetter = await readFile(new URL('../../../src/app/about-me/cover-letter/page.tsx', import.meta.url), 'utf8');
@@ -102,7 +103,7 @@ test('새 프로젝트 소개 이미지는 실제 로컬 파일이며 테스트 
   assert.deepEqual(comfy.gallery.images.map(({ src }) => src), [
     '/images/projects/colab-comfyui/01-web-image-generation.jpg',
     '/images/projects/colab-comfyui/02-web-system.jpg',
-    '/images/projects/colab-comfyui/03-comfyui-image-workflow.png',
+    '/images/projects/colab-comfyui/03-comfyui-image-workflow.webp',
   ]);
   assert.match(comfy.gallery.images[0].caption, /이미지 생성 웹.*프롬프트.*결과 목록/u);
   assert.match(comfy.gallery.images[1].caption, /시스템.*모델.*자원.*연결/u);
@@ -112,15 +113,15 @@ test('새 프로젝트 소개 이미지는 실제 로컬 파일이며 테스트 
   const sprite = additions.find(({ id }) => id === 'project-sprite-toolkit');
   assert.deepEqual(sprite.gallery.images.map(({ src }) => src), [
     '/images/projects/sprite-toolkit/01-home.png',
-    '/images/projects/sprite-toolkit/02-castle-workspace.png',
-    '/images/projects/sprite-toolkit/03-color-change-preview.png',
+    '/images/projects/sprite-toolkit/02-castle-workspace.webp',
+    '/images/projects/sprite-toolkit/03-color-change-preview.webp',
     '/images/projects/sprite-toolkit/01-grid-workspace.jpg',
     '/images/projects/sprite-toolkit/02-quality-check.jpg',
   ]);
   assert.match(sprite.gallery.images[2].caption, /파랑.*빨강.*적용 전 미리보기/u);
   const receipt = additions.find(({ id }) => id === 'project-receipt-ocr');
   assert.deepEqual(receipt.gallery.images.map(({ src }) => src), [
-    '/images/projects/receipt-ocr/01-receipt-review-trimmed.png',
+    '/images/projects/receipt-ocr/01-receipt-review-trimmed.webp',
     '/images/projects/receipt-ocr/02-ai-settings-trimmed.png',
   ]);
   assert.match(receipt.gallery.images[0].caption, /검수.*일부 정보 가림/u);
@@ -129,19 +130,19 @@ test('새 프로젝트 소개 이미지는 실제 로컬 파일이며 테스트 
     [receipt.gallery.images[0], 2299, 1308],
     [receipt.gallery.images[1], 1909, 1051],
   ]) {
-    const png = await readFile(new URL(`../../../public${image.src}`, import.meta.url));
-    assert.deepEqual([png.readUInt32BE(16), png.readUInt32BE(20)], [width, height]);
+    const header = readImageHeader(await readFile(new URL(`../../../public${image.src}`, import.meta.url)));
+    assert.deepEqual([header.width, header.height], [width, height]);
   }
   assert.doesNotMatch(JSON.stringify(receipt.gallery), /01-android-library|02-desktop-review|01-receipt-review\.png|02-ai-settings\.png|0\.1\.6|합성|UI 테스트 렌더/u);
   const asset = additions.find(({ id }) => id === 'project-asset-library');
   assert.deepEqual(asset.gallery.images.map(({ src }) => src), [
-    '/images/projects/asset-library/01-military-models.png',
-    '/images/projects/asset-library/02-gym-models.png',
-    '/images/projects/asset-library/03-office-models-v2.png',
-    '/images/projects/asset-library/04-campsite-models-v2.png',
-    '/images/projects/asset-library/05-environment-models-v2.png',
-    '/images/projects/asset-library/04-food-library.png',
-    '/images/projects/asset-library/07-music-library.png',
+    '/images/projects/asset-library/01-military-models.webp',
+    '/images/projects/asset-library/02-gym-models.webp',
+    '/images/projects/asset-library/03-office-models-v2.webp',
+    '/images/projects/asset-library/04-campsite-models-v2.webp',
+    '/images/projects/asset-library/05-environment-models-v2.webp',
+    '/images/projects/asset-library/04-food-library.webp',
+    '/images/projects/asset-library/07-music-library.webp',
   ]);
   assert.doesNotMatch(JSON.stringify(asset.gallery), /02-gym-library|03-gym-equipment-detail|reference-map|mobile-library|05-environment-library\.png|랫풀다운|합성 테스트/u);
 });
@@ -254,7 +255,7 @@ test('SI 실험 안내는 오픈웨이트 모델과 프론티어 SI로 표현하
   assert.doesNotMatch(openWeightExperiments.find(({ id }) => id === 'project-colab-llm-launcher').desc, /오픈웨이트\s+(?:AI|SI)/u);
 });
 
-test('소개 설명은 SI 에이전트로 통일하되 실제 UI명과 기존 모델 크레딧은 보존한다', () => {
+test('소개 설명은 SI 에이전트로 통일하되 실제 UI명과 기존 모델 크레딧은 보존하고 챗봇은 오픈웨이트 모델로 부른다', () => {
   const archive = aboutProjects.find(({ id }) => id === 'project-code-archive');
   const sprite = aboutProjects.find(({ id }) => id === 'project-sprite-toolkit');
   const asset = aboutProjects.find(({ id }) => id === 'project-asset-library');
@@ -268,7 +269,7 @@ test('소개 설명은 SI 에이전트로 통일하되 실제 UI명과 기존 �
   assert.match(comfy.description, /^SI 에이전트와 함께 ComfyUI/u);
   assert.ok(comfy.modelCredits.some(({ models }) => models.includes('GPT-6 Sol')));
   assert.match(aboutProjects.find(({ id }) => id === 'project-receipt-ocr').gallery.images[1].caption, /AI 설정.*OpenAI/u);
-  assert.match(openWeightExperiments.find(({ id }) => id === 'project-colab-llm-launcher').gallery.images[1].caption, /포트폴리오 AI/u);
+  assert.match(openWeightExperiments.find(({ id }) => id === 'project-colab-llm-launcher').gallery.images[1].caption, /^오픈웨이트 모델 챗봇 도구 호출/u);
 });
 
 test('오픈웨이트 실험은 독립 데이터로 이동하고 공통 카드 렌더러로 한 번씩 표시한다', async () => {

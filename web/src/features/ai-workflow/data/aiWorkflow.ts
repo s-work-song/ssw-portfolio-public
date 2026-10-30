@@ -102,6 +102,48 @@ export const aiWorkflowOrchestrationReview = {
   ],
 } as const;
 
+/** 다섯 단계와 별개로, 어느 단계에서든 SI를 학습에 쓰는 방식을 설명합니다. */
+export const aiWorkflowLearning = {
+  title: '어느 단계에서든, 가장 중요한 건 배우는 데 쓰는 것',
+  intro: '다섯 단계는 SI에게 얼마나 맡기는지를 나눈 것입니다. 그런데 단계와 상관없이 제가 가장 중요하게 생각하는 활용법은 SI를 학습에 쓰는 것입니다.',
+  practices: [
+    { title: '궁금하면 바로 묻습니다', description: '모르는 개념이나 낯선 코드는 그 자리에서 묻고 설명을 듣습니다.' },
+    { title: '답을 그대로 믿지 않고 되묻습니다', description: '왜 그런지 다시 묻고, 직접 실행하고 측정해서 확인합니다.' },
+    { title: '맡긴 결과는 이해할 때까지 읽습니다', description: '에이전트가 만든 코드도 제가 설명할 수 있어야 다음 판단을 제가 내릴 수 있습니다.' },
+  ],
+  examplesTitle: '제가 배워 온 방식',
+  /** 챗봇(01 단계)과 에이전트(02~05 단계) 사례를 하나씩 두어 "어느 단계에서든"을 보여 준다. */
+  examples: [
+    {
+      mode: '챗봇으로 배울 때',
+      stages: '01 단계',
+      title: 'SIMD 독학',
+      description: 'SIMD를 독학할 때 유료 결제 없이 ChatGPT 무료 채팅만 썼습니다. 그럼에도 검색으로는 잘 나오지 않고 공식 문서에서도 찾기 어려웠던 내용을 빠르게 알아볼 수 있었습니다.',
+      steps: [
+        'SIMD 명령어 함수(인트린직, intrinsic)와 동작 방식, 예제 코드를 묻습니다.',
+        '빈틈이 많은 답변 코드를 읽고 고치고 조합합니다.',
+        '로그를 찍어 가며 실제 동작을 하나씩 확인합니다.',
+      ],
+      repeats: false,
+      relatedLink: { href: '/about-me/research#research-cpu-simd', label: '연구 경험의 CPU·SIMD 실험 보기' },
+    },
+    {
+      mode: '에이전트와 작업하며 배울 때',
+      stages: '02~05 단계',
+      title: '작업 중 생긴 궁금증을 바로 실험으로',
+      description: '에이전트와 작업할 때는 정해 둔 주제가 따로 없습니다. 궁금한 것이 생기면 그 자리에서 아래 과정을 반복합니다.',
+      steps: [
+        '궁금한 것은 무엇이든 묻고, 표준이 무엇인지 확인합니다.',
+        '떠오른 생각은 바로 PoC(개념 증명) 브랜치나 새 프로젝트로 나눠 실험합니다.',
+        '결과를 시각화하고, 이해가 안 가는 부분은 모두 묻습니다.',
+      ],
+      repeats: true,
+      relatedLink: null,
+    },
+  ],
+  closing: 'SI를 잘 쓰는 힘은 도구보다 알고자 하는 마음, 스스로 묻고 찾아가는 자기주도 학습에서 나온다고 생각합니다.',
+} as const;
+
 export interface AiWorkflowCapture {
   title: string;
   detail: string;

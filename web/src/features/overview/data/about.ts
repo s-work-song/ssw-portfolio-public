@@ -130,7 +130,7 @@ export const aboutDestinations: AboutDestination[] = [
   {
     title: '연구 경험 (Research)',
     href: '/about-me/research',
-    desc: '하드웨어 구성과 소프트웨어 최적화, 두 영역을 함께 고려한 SIMD·AVX2 활용 경험을 정리했습니다. 실험중인 내용도 소개합니다.',
+    desc: '하드웨어 구성과 소프트웨어 최적화, 두 영역을 함께 고려한 SIMD·AVX2 활용 경험을 정리했습니다. 실험 중인 내용도 소개합니다.',
     emoji: '🔬',
     linkText: '연구 경험 보러 가기 →',
   },
@@ -201,8 +201,8 @@ export const aboutArchiveProjects: AboutArchiveProject[] = [
     id: 'archive-android-ar-campfire',
     title: 'Android AR 캠프파이어 앱',
     category: 'Android AR',
-    desc: 'VR 게임 학원 수강 중 제작한 Android AR 앱입니다. 현실 공간에 가상의 캠프파이어를 배치하고 점화하는 과정을 시연 영상과 이미지로 담았습니다.',
-    status: 'VR 게임 학원 제작 · 시연 영상·화면 보관',
+    desc: 'VR/AR 콘텐츠 개발 과정(메디치이앤에스) 수강 중 제작한 Android AR 앱입니다. 현실 공간에 가상의 캠프파이어를 배치하고 점화하는 과정을 시연 영상과 이미지로 담았습니다.',
+    status: 'VR/AR 콘텐츠 개발 과정 제작 · 시연 영상·화면 보관',
     tags: ['Android', 'AR', 'Mobile'],
     wide: true,
     preview: {
@@ -375,7 +375,7 @@ export const aboutProjects: AboutProject[] = [
     gallery: {
       images: [
         {
-          src: '/images/projects/receipt-ocr/01-receipt-review-trimmed.png',
+          src: '/images/projects/receipt-ocr/01-receipt-review-trimmed.webp',
           alt: '일부 정보를 가린 영수증 사진과 추출 원문·수정 값·항목별 확인 상태를 나란히 보여 주는 데스크톱 검수 화면',
           caption: '영수증 원본과 추출 값을 비교·수정하는 검수 화면 · 일부 정보 가림',
         },
@@ -402,12 +402,12 @@ export const aboutProjects: AboutProject[] = [
           caption: '스프라이트 파일 열기와 작업 흐름을 안내하는 홈 화면',
         },
         {
-          src: '/images/projects/sprite-toolkit/02-castle-workspace.png',
+          src: '/images/projects/sprite-toolkit/02-castle-workspace.webp',
           alt: '파란 지붕·깃발·배너의 성 이미지를 불러와 프레임과 격자를 확인하는 스프라이트 툴킷 작업 공간',
           caption: '파란 성 원본을 확인하는 프레임·격자 작업 공간',
         },
         {
-          src: '/images/projects/sprite-toolkit/03-color-change-preview.png',
+          src: '/images/projects/sprite-toolkit/03-color-change-preview.webp',
           alt: '성 이미지의 파란 지붕·깃발·배너를 빨간색으로 바꾼 적용 전 미리보기와 색상 변경 도구',
           caption: '색상 변경 · 파랑→빨강 적용 전 미리보기',
         },
@@ -434,37 +434,37 @@ export const aboutProjects: AboutProject[] = [
     gallery: {
       images: [
         {
-          src: '/images/projects/asset-library/01-military-models.png',
+          src: '/images/projects/asset-library/01-military-models.webp',
           alt: '군용기·차량 에셋 목록과 자주포 색상 변형을 보여 주는 에셋 상세 패널',
           caption: '군용기·차량 에셋 목록과 자주포 색상 변형 미리보기',
         },
         {
-          src: '/images/projects/asset-library/02-gym-models.png',
+          src: '/images/projects/asset-library/02-gym-models.webp',
           alt: '헬스장 프로젝트의 운동 기구 모델 목록과 페이지 번호·직접 이동 입력란이 표시된 화면',
           caption: '헬스장 운동 기구 에셋 목록과 페이지 이동',
         },
         {
-          src: '/images/projects/asset-library/03-office-models-v2.png',
+          src: '/images/projects/asset-library/03-office-models-v2.webp',
           alt: '사무실·도심·아파트·지하철 환경 에셋 목록과 사무실 내부 샘플의 상세 미리보기',
           caption: '건축·실내 환경 모델 목록과 사무실 상세 미리보기',
         },
         {
-          src: '/images/projects/asset-library/04-campsite-models-v2.png',
+          src: '/images/projects/asset-library/04-campsite-models-v2.webp',
           alt: '캠핑장·지하철·세탁소 등 환경 에셋 목록과 텐트·모닥불이 배치된 캠핑장 상세 미리보기',
           caption: '환경 에셋 목록과 캠핑장 상세 미리보기',
         },
         {
-          src: '/images/projects/asset-library/05-environment-models-v2.png',
+          src: '/images/projects/asset-library/05-environment-models-v2.webp',
           alt: '시대별 탐험 환경 모델 목록과 구석기 동굴 야영지 상세 미리보기',
           caption: '시대별 환경 에셋 목록과 동굴 야영지 상세 미리보기',
         },
         {
-          src: '/images/projects/asset-library/04-food-library.png',
+          src: '/images/projects/asset-library/04-food-library.webp',
           alt: '피자·치즈버거·아이스크림 등 음식 에셋 목록과 치즈버거 재료 구성표를 함께 보여 주는 화면',
           caption: '음식 에셋 목록과 치즈버거 재료 구성표',
         },
         {
-          src: '/images/projects/asset-library/07-music-library.png',
+          src: '/images/projects/asset-library/07-music-library.webp',
           alt: '음원 에셋 목록과 선택한 트랙의 커버 이미지 및 오디오 플레이어가 표시된 상세 화면',
           caption: '음원 에셋 목록과 커버 이미지·오디오 재생 패널',
         },

@@ -63,7 +63,8 @@ function Diagram({ layout }: { layout: EnvironmentLayout }) {
       <svg className={styles.diagram} viewBox={`0 0 ${drawing.width} ${drawing.height}`} role="img"
         data-environment-layout={layout} aria-labelledby={`${prefix}-title ${prefix}-description`}>
         <title id={`${prefix}-title`}>기기 · 앱 · 실행 환경 연결도</title>
-        <desc id={`${prefix}-description`}>{environmentDiagramNotes.join(' ')}</desc>
+        {/* 자세한 설명은 그림 아래 목록이 맡는다. 같은 글을 화면 낭독기가 두 번 읽지 않게 요약만 둔다. */}
+        <desc id={`${prefix}-description`}>내 기기 4대와 외부 실행 환경 4개의 연결 관계입니다. 선의 의미는 그림 아래 목록에 정리했습니다.</desc>
         <defs>
           {(['remote', 'service', 'lan'] as const).map(kind => (
             <marker key={kind} id={`${prefix}-${kind}-arrow`} viewBox="0 0 10 10" refX={9} refY={5}

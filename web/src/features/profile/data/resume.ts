@@ -24,10 +24,10 @@ export interface ResumeFact {
 export const workExperiences: WorkExperience[] = [
   {
     title: '프리랜서 개발자',
-    organization: '라이트소프트 (웹 SI)',
+    organization: '라이트소프트 (웹 SI(시스템 통합))',
     period: '2021.02 ~ 2022.01',
     bullets: [
-      '웹 SI 프로젝트(주식회사 디티스페이스)의 Swagger 문서화가 적용된 Spring Boot REST API 서버 구축',
+      '주식회사 디티스페이스의 웹 SI(시스템 통합) 프로젝트에서 Swagger 문서화가 적용된 Spring Boot REST API 서버 구축',
       'Vue.js (Element UI) 및 Axios 기반의 비동기 통신을 적용한 백오피스 어드민 콘솔 개발',
       'KB금융그룹 프로젝트 계약 파견을 통한 증권 앱 클라이언트 스펙 개발 (SpiderGen 프레임워크 활용)',
     ],
@@ -46,7 +46,7 @@ export const workExperiences: WorkExperience[] = [
     organization: '너울정보 (R&D 연구소)',
     period: '2019.04 ~ 2019.08',
     bullets: [
-      '안드로이드 네이티브 앱 개발을 주도적으로 담당 및 서비스 출시',
+      '안드로이드 네이티브 앱 개발을 주도하고 서비스를 출시',
       'Java/Spring 백엔드 아키텍처의 보일러플레이트 레이어 설계 및 개발 기여',
     ],
   },
@@ -55,7 +55,7 @@ export const workExperiences: WorkExperience[] = [
     organization: '씨엔티테크 (시스템 운영)',
     period: '2012.08 ~ 2014.09',
     bullets: [
-      '호스팅 및 사내 네트워크 인프라 운영 및 모니터링, SQL 기반 서버/네트워크 점검 및 데이터 집계 자동화',
+      '호스팅과 사내 네트워크 인프라 운영·모니터링, SQL 기반 서버/네트워크 점검과 데이터 집계 자동화',
       '원인 불명의 정산 데이터 불일치 이슈를 로그 테이블 상세 분석을 통해 파악하고, 수천만 원 규모의 부정 결제 결함을 규명해 근본 원인 조치 및 재발 방지책 마련에 기여',
     ],
   },

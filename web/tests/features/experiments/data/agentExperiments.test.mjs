@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { readFile, stat } from 'node:fs/promises';
 import test from 'node:test';
 import { Script } from 'node:vm';
+import { readImageHeader } from '../../../support/imageHeader.mjs';
 import { agentExperiments } from '../../../../src/features/experiments/data/agentExperiments.ts';
 import {
   AGENT_EXPERIMENT_CATEGORY_ANCHORS,
@@ -454,16 +455,16 @@ test('Blender 작업 이미지와 사무실의 참고 이미지 및 구현 렌�
   assert.equal(blender[1].title, '음식·가전');
   assert.deepEqual(blender[1].focus, ['음식', '가전', 'Blender 3D']);
   assert.deepEqual(blender[1].images?.map((image) => image.src), [
-    '/images/agent-experiments/blender-food/01-mixer.png',
-    '/images/agent-experiments/blender-food/02-waffle-maker.png',
-    '/images/agent-experiments/blender-food/03-toaster.png',
-    '/images/agent-experiments/blender-food/04-donut-gpt-6-astra.png',
-    '/images/agent-experiments/blender-food/05-waffle-grok-4-6.png',
-    '/images/agent-experiments/blender-food/06-macaron-opus-5-5.png',
+    '/images/agent-experiments/blender-food/01-mixer.webp',
+    '/images/agent-experiments/blender-food/02-waffle-maker.webp',
+    '/images/agent-experiments/blender-food/03-toaster.webp',
+    '/images/agent-experiments/blender-food/04-donut-gpt-6-astra.webp',
+    '/images/agent-experiments/blender-food/05-waffle-grok-4-6.webp',
+    '/images/agent-experiments/blender-food/06-macaron-opus-5-5.webp',
   ]);
   for (const image of blender[1].images) {
     const bytes = await readFile(new URL(`../../../../public${image.src}`, import.meta.url));
-    assert.deepEqual([...bytes.subarray(0, 8)], [137, 80, 78, 71, 13, 10, 26, 10]);
+    assert.equal(readImageHeader(bytes).format, 'webp');
   }
   assert.deepEqual(blender[1].images.slice(3).map((image) => image.caption), [
     '도넛 · GPT-6 Astra',
@@ -477,31 +478,29 @@ test('Blender 작업 이미지와 사무실의 참고 이미지 및 구현 렌�
     { purpose: '음식 · 마카롱', models: ['Opus 5.5'] },
   ]);
   assert.deepEqual(blender[2].images?.map((image) => image.src), [
-    '/images/agent-experiments/blender-subway/01-station-cutaway.png',
-    '/images/agent-experiments/blender-subway/02-platform.png',
-    '/images/agent-experiments/blender-subway/03-ticket-gates.png',
+    '/images/agent-experiments/blender-subway/01-station-cutaway.webp',
+    '/images/agent-experiments/blender-subway/02-platform.webp',
+    '/images/agent-experiments/blender-subway/03-ticket-gates.webp',
   ]);
   for (const image of blender[2].images) {
     const bytes = await readFile(new URL(`../../../../public${image.src}`, import.meta.url));
-    assert.deepEqual([...bytes.subarray(0, 8)], [137, 80, 78, 71, 13, 10, 26, 10]);
-    assert.equal(bytes.readUInt32BE(16), 1600);
-    assert.equal(bytes.readUInt32BE(20), 900);
+    assert.deepEqual(readImageHeader(bytes), { format: 'webp', width: 1600, height: 900 });
   }
   assert.deepEqual(blender[2].modelCredits, [{ models: ['GPT-6 Astra'] }]);
   const city = blender[3];
   assert.equal(city.title, '도시 거리');
   assert.deepEqual(city.modelCredits, [{ models: ['GPT-6 Astra'] }]);
   assert.deepEqual(city.images.map((image) => image.src), [
-    '/images/agent-experiments/blender-city/01_city_overview.jpg',
-    '/images/agent-experiments/blender-city/02_boulevard_hero.jpg',
-    '/images/agent-experiments/blender-city/03_road_intersection.jpg',
-    '/images/agent-experiments/blender-city/04_sidewalk_west.jpg',
-    '/images/agent-experiments/blender-city/05_sidewalk_east.jpg',
-    '/images/agent-experiments/blender-city/06_crosswalk_corner.jpg',
+    '/images/agent-experiments/blender-city/01_city_overview.webp',
+    '/images/agent-experiments/blender-city/02_boulevard_hero.webp',
+    '/images/agent-experiments/blender-city/03_road_intersection.webp',
+    '/images/agent-experiments/blender-city/04_sidewalk_west.webp',
+    '/images/agent-experiments/blender-city/05_sidewalk_east.webp',
+    '/images/agent-experiments/blender-city/06_crosswalk_corner.webp',
   ]);
   for (const image of city.images) {
     const bytes = await readFile(new URL(`../../../../public${image.src}`, import.meta.url));
-    assert.deepEqual([...bytes.subarray(0, 3)], [255, 216, 255]);
+    assert.equal(readImageHeader(bytes).format, 'webp');
     assert.ok(bytes.length > 20_000 && bytes.length < 1_000_000);
     assert.ok(image.alt.length > 0 && image.caption.length > 0);
   }
@@ -512,20 +511,21 @@ test('Blender 작업 이미지와 사무실의 참고 이미지 및 구현 렌�
   assert.deepEqual(office.imageGroups.map((group) => group.images.length), [1, 4]);
   const officeImages = office.imageGroups.flatMap((group) => group.images);
   assert.deepEqual(officeImages.map((image) => image.src), [
-    '/images/agent-experiments/blender-office/01-reference.png',
-    '/images/agent-experiments/blender-office/02-entrance.jpg',
-    '/images/agent-experiments/blender-office/03-workstation-detail.jpg',
-    '/images/agent-experiments/blender-office/04-reverse-aisle.jpg',
-    '/images/agent-experiments/blender-office/05-meeting-room.jpg',
+    '/images/agent-experiments/blender-office/01-reference.webp',
+    '/images/agent-experiments/blender-office/02-entrance.webp',
+    '/images/agent-experiments/blender-office/03-workstation-detail.webp',
+    '/images/agent-experiments/blender-office/04-reverse-aisle.webp',
+    '/images/agent-experiments/blender-office/05-meeting-room.webp',
   ]);
   assert.match(office.description, /이미지를 먼저 생성하고.*Blender로 모델링/);
   assert.match(officeImages[0].caption, /참고 이미지.*Blender 구현 결과 아님/);
   const reference = await readFile(new URL(`../../../../public${officeImages[0].src}`, import.meta.url));
-  assert.deepEqual([...reference.subarray(0, 8)], [137, 80, 78, 71, 13, 10, 26, 10]);
-  assert.ok(reference.readUInt32BE(16) >= 1600);
+  const referenceHeader = readImageHeader(reference);
+  assert.equal(referenceHeader.format, 'webp');
+  assert.ok(referenceHeader.width >= 1600);
   for (const image of officeImages.slice(1)) {
     const bytes = await readFile(new URL(`../../../../public${image.src}`, import.meta.url));
-    assert.deepEqual([...bytes.subarray(0, 3)], [255, 216, 255]);
+    assert.equal(readImageHeader(bytes).format, 'webp');
     assert.ok(bytes.length > 20_000 && bytes.length < 1_000_000);
     assert.match(image.caption, /^Blender 구현 — /);
     assert.ok(image.alt.length > 0);
@@ -849,14 +849,12 @@ test('ComfyUI 활용 첫 사례는 이미지와 5초 영상을 함께 표시하�
     { purpose: '영상', models: ['Wan 2.2 I2V 14B FP8'] },
   ]);
   assert.deepEqual(item.images.map((image) => image.src), [
-    '/images/agent-experiments/comfyui/cafe-qwen-image-2512.png',
+    '/images/agent-experiments/comfyui/cafe-qwen-image-2512.webp',
   ]);
   assert.equal(item.video.src, '/media/agent-experiments/comfyui-qwen-wan/cafe-i2v-5s.mp4');
   assert.equal(item.video.poster, item.images[0].src);
   const imageBytes = await readFile(new URL(`../../../../public${item.images[0].src}`, import.meta.url));
-  assert.deepEqual([...imageBytes.subarray(0, 8)], [137, 80, 78, 71, 13, 10, 26, 10]);
-  assert.equal(imageBytes.readUInt32BE(16), 1280);
-  assert.equal(imageBytes.readUInt32BE(20), 720);
+  assert.deepEqual(readImageHeader(imageBytes), { format: 'webp', width: 1280, height: 720 });
   const videoPath = new URL(`../../../../public${item.video.src}`, import.meta.url);
   const videoBytes = await readFile(videoPath);
   assert.equal(videoBytes.toString('ascii', 4, 8), 'ftyp');
@@ -873,14 +871,12 @@ test('ComfyUI 활용 두 번째 사례는 GPT Image 2 이미지와 같은 Wan I2
     { purpose: '영상', models: ['Wan 2.2 I2V 14B FP8'] },
   ]);
   assert.deepEqual(item.images.map((image) => image.src), [
-    '/images/agent-experiments/comfyui/astronaut-gpt-image-2.png',
+    '/images/agent-experiments/comfyui/astronaut-gpt-image-2.webp',
   ]);
   assert.equal(item.video.src, '/media/agent-experiments/comfyui-gpt-image2-wan/astronaut-i2v-5s.mp4');
   assert.equal(item.video.poster, item.images[0].src);
   const imageBytes = await readFile(new URL(`../../../../public${item.images[0].src}`, import.meta.url));
-  assert.deepEqual([...imageBytes.subarray(0, 8)], [137, 80, 78, 71, 13, 10, 26, 10]);
-  assert.equal(imageBytes.readUInt32BE(16), 1672);
-  assert.equal(imageBytes.readUInt32BE(20), 941);
+  assert.deepEqual(readImageHeader(imageBytes), { format: 'webp', width: 1672, height: 941 });
   const videoPath = new URL(`../../../../public${item.video.src}`, import.meta.url);
   const videoBytes = await readFile(videoPath);
   assert.equal(videoBytes.toString('ascii', 4, 8), 'ftyp');
@@ -894,17 +890,16 @@ test('공성전은 3D 게임 탭에서 발리스타와 성벽 파괴 캡처 및 
   assert.equal(siege.images.length, 2);
   assert.deepEqual(siege.images.map((image) => image.src), [
     '/images/agent-experiments/siege-warfare/01-ballista-wide.jpg',
-    '/images/agent-experiments/siege-warfare/02-trebuchet-impact.png',
+    '/images/agent-experiments/siege-warfare/02-trebuchet-impact.webp',
   ]);
   for (const image of siege.images) {
     const bytes = await readFile(new URL(`../../../../public${image.src}`, import.meta.url));
-    if (image.src.endsWith('.png')) {
-      assert.deepEqual([...bytes.subarray(0, 8)], [137, 80, 78, 71, 13, 10, 26, 10]);
-      const width = bytes.readUInt32BE(16);
-      const height = bytes.readUInt32BE(20);
-      assert.ok(Math.abs(width / height - 16 / 9) < 0.04);
+    const header = readImageHeader(bytes);
+    if (image.src.endsWith('.webp')) {
+      assert.equal(header.format, 'webp');
+      assert.ok(Math.abs(header.width / header.height - 16 / 9) < 0.04);
     } else {
-      assert.deepEqual([...bytes.subarray(0, 3)], [255, 216, 255]);
+      assert.equal(header.format, 'jpeg');
     }
     assert.ok(bytes.length >= 50_000);
   }

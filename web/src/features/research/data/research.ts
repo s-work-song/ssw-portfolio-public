@@ -24,7 +24,7 @@ export interface ResearchTab {
 export const researchPrimaryTabs: readonly ResearchTab[] = [
   { id: 'overview', label: '연구·실험 이력 (Timeline)', emoji: '⏱️' },
   { id: 'optimization', label: '성능 최적화', emoji: '⚡' },
-  { id: 'meta', label: '개발 도구 및 AI 활용', emoji: '🛠️' },
+  { id: 'meta', label: '개발 도구 및 SI 활용', emoji: '🛠️' },
 ];
 
 export const researchOptimizationTabs: readonly ResearchTab[] = [
@@ -79,7 +79,7 @@ export const researchTimelineItems: CareerItem[] = [
     color: '#f97316',
     role: 'C# 저수준 문법 및 비동기 처리 분석',
     org: '',
-    desc: 'Java와의 구조체 메모리 동작 차이(in/out/ref 키워드, 방어적 복사)를 분석하고, async/await 비동기 처리 및 취소 토큰 관리 방법을 학습했습니다.',
+    desc: 'Java 참조형과 비교한 C# 구조체(값 타입)의 메모리 동작(in/out/ref 키워드, 방어적 복사)을 분석하고, async/await 비동기 처리 및 취소 토큰 관리 방법을 학습했습니다.',
     tags: ['C#', 'Async / Await']
   },
   {
@@ -95,15 +95,15 @@ export const researchTimelineItems: CareerItem[] = [
     color: '#ef4444',
     role: '단위 테스트 환경 및 프로파일링 연구',
     org: '',
-    desc: 'Visual Studio 테스트 탐색기와 연동하는 XUnit, MSTest 단위 테스트 설계법을 연구하고, 유니티 프로파일러를 활용한 어셈블리 성능 프로파일링을 설계했습니다.',
-    tags: ['XUnit', 'MSTest', 'Profiling']
+    desc: 'Visual Studio 테스트 탐색기와 연동하는 xUnit, MSTest 단위 테스트 설계법을 연구하고, 유니티 프로파일러를 활용한 어셈블리 성능 프로파일링을 설계했습니다.',
+    tags: ['xUnit', 'MSTest', 'Profiling']
   },
   {
     period: '2023년',
     color: '#ef4444',
     role: '데이터 지향 설계(DoD) 및 Unity ECS 적용',
     org: '',
-    desc: '기존 OOP 설계의 성능 한계를 확인하고 개선하기 위해 SoA(Struct of Arrays) 메모리 레이아웃을 도입하고, Unity ECS/DOTS를 적용하여 캐시 지역성 및 성능 효율을 실험했습니다.',
+    desc: '기존 OOP 설계의 성능 한계를 확인하고 개선하기 위해 SoA(Structure of Arrays) 메모리 레이아웃을 도입하고, Unity ECS/DOTS를 적용하여 캐시 지역성 및 성능 효율을 실험했습니다.',
     tags: ['Unity ECS', 'Structure of Arrays', 'DoD']
   },
   {
@@ -173,28 +173,28 @@ export const researchTimelineItems: CareerItem[] = [
   {
     period: '2026–현재',
     color: '#6366f1',
-    role: '오픈 웨이트 AI 모델 실행 환경 구성',
+    role: '오픈웨이트 모델 실행 환경 구성',
     org: '',
-    desc: 'Semantic Kernel을 활용해 오픈 웨이트 모델을 로컬 GPU에서 직접 구동하는 환경과 Google Colab GPU에서 추론 서버로 제공하는 환경을 각각 구성하고 테스트했습니다.',
+    desc: 'Semantic Kernel을 활용해 오픈웨이트 모델을 로컬 GPU에서 직접 구동하는 환경과 Google Colab GPU에서 추론 서버로 제공하는 환경을 각각 구성하고 테스트했습니다.',
     tags: ['Open Weight', 'Semantic Kernel']
   },
   {
     period: '2026–현재',
     color: '#6366f1',
-    role: 'AI 에이전트 오케스트레이션',
+    role: 'SI 에이전트 오케스트레이션',
     org: '',
-    desc: '장기간 유지되는 세션에서 복수의 AI 에이전트와 다양한 일상 업무를 진행하며, 일상생활과 에이전트 작업을 병행하는 방식을 계속 실험하고 있습니다.',
-    tags: ['AI Agent', 'Orchestration']
+    desc: '장기간 유지되는 세션에서 복수의 SI 에이전트와 다양한 일상 업무를 진행하며, 일상생활과 에이전트 작업을 병행하는 방식을 계속 실험하고 있습니다.',
+    tags: ['SI Agent', 'Orchestration']
   },
   {
     period: '2026–현재',
     color: '#6366f1',
-    role: 'AI 활용 실험',
+    role: 'SI 활용 실험',
     org: '',
     desc: [
-      { summary: 'AI 관련 업데이트를 꾸준히 살펴보며, 새로운 프론티어 모델을 포함하여 다양한 기능을 직접 사용하고 여러 MCP와 플러그인을 연결해 활용하는 실험을 진행하고 있습니다.' },
+      { summary: 'SI 관련 업데이트를 꾸준히 살펴보며, 새로운 프론티어 모델을 포함하여 다양한 기능을 직접 사용하고 여러 MCP와 플러그인을 연결해 활용하는 실험을 진행하고 있습니다.' },
       { summary: '이미지·3D 모델 등 리소스 제작과 바이브 코딩을 통한 2D·3D 게임 제작 실험을 진행하며, 활용 범위를 넓혀 가고 있습니다.' },
     ],
-    tags: ['Vibe Coding', '2D / 3D Game', 'AI Resources']
+    tags: ['Vibe Coding', '2D / 3D Game', 'SI Resources']
   }
 ];

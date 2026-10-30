@@ -411,7 +411,8 @@ export default function SettingsPage() {
           padding: "clamp(28px, 5vw, 52px) clamp(18px, 5vw, 32px) 80px",
         }}
       >
-        <div style={{ marginBottom: "clamp(28px, 4vw, 40px)" }}>
+        {/* 둘러보기·채팅 이동이 도착할 수 있도록 페이지 머리에 앵커를 둔다. */}
+        <div id="settings-overview" tabIndex={-1} style={{ marginBottom: "clamp(28px, 4vw, 40px)", scrollMarginTop: "96px" }}>
           <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "12px", letterSpacing: ".18em", textTransform: "uppercase", color: "var(--accent, #6366f1)", marginBottom: "12px" }}>
             SITE SETTINGS
           </div>

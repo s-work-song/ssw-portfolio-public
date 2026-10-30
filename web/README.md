@@ -408,7 +408,7 @@ Blender의 중세 무기 항목에는 캡처 다섯 장, 음식·가전에는 �
 PNG 원본과 Blender 씬은 공개 폴더에 포함하지 않습니다.
 사무실은 GPT-6 Astra로 프롬프트를 작성해 GPT Image 2.5로 참고 이미지를 먼저 생성한 뒤,
 이를 기준으로 GPT-6 Astra가 Blender 모델링을 진행한 작업입니다.
-`imageGroups`를 통해 참고 이미지 `01-reference.png`와 실제 Blender 렌더를 위아래 별도 블록으로 표시합니다.
+`imageGroups`를 통해 참고 이미지 `01-reference.webp`와 실제 Blender 렌더를 위아래 별도 블록으로 표시합니다.
 각 블록 헤더에 제작 단계와 모델을 표시하고, Blender 결과는 입구 전경·책상 상세·반대편 전경·회의실 순서의 슬라이더로 탐색합니다.
 렌더는 2560×1440 고품질 JPEG를 재압축 없이 사용하며, PNG 렌더 원본과 Blender 씬은 공개 폴더에 포함하지 않습니다.
 
@@ -466,12 +466,12 @@ Astra의 내장 벡터 글자·UI 폰트·음원과 `asset-credits`의 원본 �
 | 키보드 분해도 (MP4 다운로드 잠금) | `media/agent-experiments/keyboard-exploded-view/main.mp4` | GPT-6 Astra |
 | 모션 도감 (HTML 재생 전용) | `media/agent-experiments/motion-atlas/main.html` | Opus 5.5 |
 
-ComfyUI 활용 첫 사례는 `images/agent-experiments/comfyui/cafe-qwen-image-2512.png`의
+ComfyUI 활용 첫 사례는 `images/agent-experiments/comfyui/cafe-qwen-image-2512.webp`의
 생성 이미지와 `media/agent-experiments/comfyui-qwen-wan/cafe-i2v-5s.mp4`의
 5초 영상을 나란히 표시합니다. 워크플로우와 프롬프트는 GPT-6 Sol, 이미지는 Qwen Image 2512
 FP8 E4M3FN, 영상은 Wan 2.2 I2V 14B FP8을 사용했습니다. 공개용 영상은 브라우저
 호환성을 위해 H.264로 변환했고, 사용자가 준 HEVC 원본은 다운로드 폴더에 남겨뒀습니다.
-두 번째 사례는 `images/agent-experiments/comfyui/astronaut-gpt-image-2.png`의
+두 번째 사례는 `images/agent-experiments/comfyui/astronaut-gpt-image-2.webp`의
 GPT Image 2 이미지와 `media/agent-experiments/comfyui-gpt-image2-wan/astronaut-i2v-5s.mp4`의
 Wan 2.2 I2V 14B FP8 5초 영상을 함께 표시합니다. 두 번째 영상은 이미 H.264라
 원본을 그대로 복사했으며, 확인되지 않은 워크플로우·프롬프트 제작 모델은 표기하지 않습니다.

@@ -5,7 +5,7 @@ import styles from "./AiWorkflowPreview.module.css";
 /** 개인과 팀·조직이 자신의 SI 활용 단계를 살펴보는 페이지의 진입점입니다. */
 export default function AiWorkflowPreview() {
   return (
-    <section id="ai-workflow-preview" className={styles.preview} aria-labelledby="ai-workflow-preview-title">
+    <section id="ai-workflow-preview" tabIndex={-1} className={styles.preview} aria-labelledby="ai-workflow-preview-title">
       <p className={styles.eyebrow}>SI ADOPTION LEVELS</p>
       <h3 id="ai-workflow-preview-title">SI 활용 단계</h3>
       <p className={styles.intro}>

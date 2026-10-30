@@ -7,7 +7,7 @@ export const deploymentProjects = [
     label: '포트폴리오',
     role: '정적 화면 · 별도 백엔드',
     hosting: 'GitHub Pages / Raspberry Pi',
-    description: '화면은 Pages에서, 챗봇·공개 기록 API는 Raspberry Pi에서 제공합니다. AI 실험 데모는 외부 정적 웹 링크로 연결합니다.',
+    description: '화면은 Pages에서, 챗봇·공개 기록 API는 Raspberry Pi에서 제공합니다. SI 실험 데모는 외부 정적 웹 링크로 연결합니다.',
   },
   {
     id: 'shared-infrastructure',
@@ -62,7 +62,7 @@ export const portfolioLinkedExperiments = [
 const portfolioDeploymentSource = `flowchart TB
     PortfolioPages["GitHub Pages<br/>포트폴리오 화면"]
     Browser["브라우저"]
-    GPTSites["GPT Sites · AI 활용 실험<br/>${portfolioLinkedExperiments[0].experiments.map(experiment => experiment.label).join('<br/>')}"]
+    GPTSites["GPT Sites · SI 활용 실험<br/>${portfolioLinkedExperiments[0].experiments.map(experiment => experiment.label).join('<br/>')}"]
     PiApi["Raspberry Pi<br/>챗봇 · 공개 기록 API"]
     StaticDemo["Cloudflare 정적 웹<br/>${portfolioLinkedExperiments[1].experiments.map(experiment => experiment.label).join('<br/>')}<br/>등록된 실행 링크 · Workers"]
     ColabTunnel["Cloudflare<br/>Tunnel"]
@@ -79,7 +79,7 @@ export const deploymentDiagrams = [
     id: 'portfolio',
     title: '포트폴리오',
     description:
-      '화면은 GitHub Pages, 챗봇·기록 API는 Cloudflare Tunnel 뒤 Raspberry Pi에서 제공합니다.\n추론 요청은 Pi API → Tunnel → Colab으로 이어집니다.\nAI 활용 실험은 브라우저에서 GPT Sites·Cloudflare 정적 웹 링크로 열며, 챗봇 API를 거치지 않습니다.',
+      '화면은 GitHub Pages, 챗봇·기록 API는 Cloudflare Tunnel 뒤 Raspberry Pi에서 제공합니다.\n추론 요청은 Pi API → Tunnel → Colab으로 이어집니다.\nSI 활용 실험은 브라우저에서 GPT Sites·Cloudflare 정적 웹 링크로 열며, 챗봇 API를 거치지 않습니다.',
     source: portfolioDeploymentSource,
     compactSource: portfolioDeploymentSource,
   },

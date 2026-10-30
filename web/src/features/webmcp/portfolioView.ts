@@ -50,10 +50,13 @@ const RESEARCH_TAB_BY_ANCHOR: Readonly<Record<string, ChatPortfolioResearchTab>>
   'research-counting-sort': 'cpu',
   'research-panel-cpu': 'cpu',
   'research-memory-layout': 'memory',
+  'research-memory-mmf': 'memory',
   'research-panel-memory': 'memory',
   'research-serialization-packing': 'serialization',
+  'research-serialization-bandwidth': 'serialization',
   'research-panel-serialization': 'serialization',
   'research-tools-ai': 'tools',
+  'research-ai-verification': 'tools',
   'research-chatbot-architecture': 'tools',
   'research-panel-meta': 'tools',
 };
@@ -172,14 +175,14 @@ const VIEW_TARGETS: Readonly<Record<PortfolioViewAction, PortfolioViewTarget>> =
   'research-tools': {
     action: 'research-tools',
     route: ACTION_ROUTES.research_tools,
-    message: '연구 경험의 도구 & AI 접목 탭으로 이동을 시작했습니다.',
-    label: '연구 경험의 도구 & AI 접목 탭',
+    message: '연구 경험의 도구 & SI 접목 탭으로 이동을 시작했습니다.',
+    label: '연구 경험의 도구 & SI 접목 탭',
   },
   'research-chatbot-architecture': {
     action: 'research-chatbot-architecture',
     route: ACTION_ROUTES.research_chatbot_architecture,
-    message: '도구 & AI 접목 탭의 챗봇 구조 실험 카드로 이동을 시작했습니다.',
-    label: '도구 & AI 접목 탭의 오픈웨이트 모델 챗봇 구조 실험 카드',
+    message: '도구 & SI 접목 탭의 챗봇 구조 실험 카드로 이동을 시작했습니다.',
+    label: '도구 & SI 접목 탭의 오픈웨이트 모델 챗봇 구조 실험 카드',
   },
   'research-2011': {
     action: 'research-2011',
@@ -321,8 +324,8 @@ const VIEW_TARGETS: Readonly<Record<PortfolioViewAction, PortfolioViewTarget>> =
     action: 'ai-collaboration-projects',
     route: ACTION_ROUTES.project_overview,
     message:
-      '소개 페이지의 AI 에이전트 협업 프로젝트 섹션으로 이동을 시작했습니다.',
-    label: '소개 페이지의 AI 에이전트 협업 프로젝트 섹션',
+      '소개 페이지의 SI 에이전트 협업 프로젝트 섹션으로 이동을 시작했습니다.',
+    label: '소개 페이지의 SI 에이전트 협업 프로젝트 섹션',
   },
   'archive-canvas-dodge-game': {
     action: 'archive-canvas-dodge-game',
@@ -345,20 +348,20 @@ const VIEW_TARGETS: Readonly<Record<PortfolioViewAction, PortfolioViewTarget>> =
   'project-common-infrastructure': {
     action: 'project-common-infrastructure',
     route: ACTION_ROUTES.project_common_infrastructure,
-    message: 'AI 협업 프로젝트 · 공용 인프라 프로젝트군으로 이동을 시작했습니다.',
-    label: 'AI 협업 프로젝트 · 공용 인프라 프로젝트군',
+    message: 'SI 협업 프로젝트 · 공용 인프라 프로젝트군으로 이동을 시작했습니다.',
+    label: 'SI 협업 프로젝트 · 공용 인프라 프로젝트군',
   },
   'project-ecommerce-demo': {
     action: 'project-ecommerce-demo',
     route: ACTION_ROUTES.project_ecommerce_demo,
-    message: 'AI 협업 프로젝트 · 이커머스 데모로 이동을 시작했습니다.',
-    label: 'AI 협업 프로젝트 · 이커머스 데모',
+    message: 'SI 협업 프로젝트 · 이커머스 데모로 이동을 시작했습니다.',
+    label: 'SI 협업 프로젝트 · 이커머스 데모',
   },
   'project-code-archive': {
     action: 'project-code-archive',
     route: ACTION_ROUTES.project_code_archive,
-    message: 'AI 협업 프로젝트 · 코드 아카이브로 이동을 시작했습니다.',
-    label: 'AI 협업 프로젝트 · 코드 아카이브',
+    message: 'SI 협업 프로젝트 · 코드 아카이브로 이동을 시작했습니다.',
+    label: 'SI 협업 프로젝트 · 코드 아카이브',
   },
 };
 
@@ -605,7 +608,8 @@ export function readPortfolioViewState(pathname: string): ChatPortfolioViewState
     const panel = document.querySelector<HTMLElement>('[id^="workflow-"][role="tabpanel"][aria-hidden="false"]');
     const target = anchor ? document.getElementById(anchor) : null;
     const insidePanel = panel && target && panel.contains(target);
-    anchor = insidePanel ? anchor : target?.id === 'ai-workflow-intro' ? target.id : panel?.id ?? null;
+    const standalone = target?.id === 'ai-workflow-intro' || target?.id === 'ai-workflow-learning';
+    anchor = insidePanel ? anchor : standalone ? target.id : panel?.id ?? null;
   }
 
   if (page === 'research') {

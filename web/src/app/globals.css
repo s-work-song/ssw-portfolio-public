@@ -569,9 +569,13 @@ input, select, textarea, button {
 }
 
 #research-cpu-simd,
+#research-counting-sort,
 #research-memory-layout,
+#research-memory-mmf,
 #research-serialization-packing,
+#research-serialization-bandwidth,
 #research-tools-ai,
+#research-ai-verification,
 #research-chatbot-architecture {
   scroll-margin-top: 96px;
 }

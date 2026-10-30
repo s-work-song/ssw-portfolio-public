@@ -26,7 +26,7 @@ function layout(compact: boolean): Layout {
     { id: 'PiApi', title: 'Raspberry Pi', lines: compact ? ['챗봇 · 기록 API'] : ['챗봇 · 공개 기록 API'], x: mainX, y: 335, width: mainWidth, height: 88 },
     { id: 'ColabTunnel', title: 'Cloudflare', lines: ['Tunnel'], x: mainX, y: compact ? 608 : 535, width: mainWidth, height: 80 },
     { id: 'Colab', title: compact ? 'Google Colab' : 'Google Colab · GPU', lines: compact ? ['GPU · LLM', '추론 서버'] : ['LLM 추론 서버'], x: mainX, y: compact ? 791 : 680, width: mainWidth, height: 80 },
-    { id: 'GPTSites', title: 'GPT Sites', lines: ['AI 활용 실험', ...portfolioLinkedExperiments[0].experiments.map(item => item.label)], x: demoX, y: 274, width: demoWidth, height: 242 },
+    { id: 'GPTSites', title: 'GPT Sites', lines: ['SI 활용 실험', ...portfolioLinkedExperiments[0].experiments.map(item => item.label)], x: demoX, y: 274, width: demoWidth, height: 242 },
     { id: 'StaticDemo', title: compact ? 'Cloudflare' : 'Cloudflare 정적 웹', lines: compact ? ['정적 웹', ...portfolioLinkedExperiments[1].experiments.map(item => item.label), '실행 링크 · Workers'] : [...portfolioLinkedExperiments[1].experiments.map(item => item.label), '등록된 실행 링크', 'Workers'], x: demoX, y: compact ? 626 : 570, width: demoWidth, height: staticDemoHeight },
   ];
   const node = (id: string) => nodes.find(item => item.id === id)!;

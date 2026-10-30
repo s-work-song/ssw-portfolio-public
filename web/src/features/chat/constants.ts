@@ -43,16 +43,16 @@ export const GUIDED_TOUR_CHAT_GUIDE =
  * 온보딩과 투어 종료 화면에서 보여 주는 설정·WebMCP 안내 답변이다.
  * 서버를 거치지 않고 프런트가 직접 말풍선으로 삽입하는 고정 마크다운이다.
  */
-export const SETTINGS_WEBMCP_GUIDE = `### 설정과 WebMCP 기능
+export const SETTINGS_WEBMCP_GUIDE = `### 설정과 챗봇·WebMCP 도구
 
 별도의 설정 페이지에서 테마, 포인트 색상, 채팅 글꼴과 글자 크기, 패널 배치, 답변 스트리밍 연출을 직접 조정할 수 있어요.
 
-채팅에 다음처럼 말하면 설정 도구가 요청을 반영합니다.
+채팅에 다음처럼 말하면 사이트 안내용 오픈웨이트 모델 챗봇이 도구를 호출해 요청을 처리해요.
 
 - “설정 페이지 열어줘”
 - “지금 내가 어떤 페이지를 보고 있어?”
 - “자기소개서 페이지로 이동해줘”
-- “소개 페이지의 AI 협업 프로젝트로 이동”
+- “소개 페이지의 SI 협업 프로젝트로 이동”
 - “개발 환경 탭 열어줘”
 - “배포 구성 보여줘”
 - “Rust 전환 메모리 비교로 이동해줘”
@@ -63,7 +63,9 @@ export const SETTINGS_WEBMCP_GUIDE = `### 설정과 WebMCP 기능
 - “채팅을 옆으로 붙여줘”
 - “채팅을 옆에서 떼줘”
 
-WebMCP를 지원하는 브라우저에서는 현재 화면 상태 확인, 설정 페이지 열기, 포인트 색상 변경, 포트폴리오 페이지·연구 연도 이동, 특정 연도 상세 펼치기·접기와 스트리밍 연출 변경 같은 화면 기능도 도구로 사용할 수 있습니다. 기록 검색과 상세 열기는 기록 페이지에서 직접 이용할 수 있습니다.
+자료 검색은 서버에서, 화면 상태 읽기·페이지 이동·설정 변경 도구는 지금 보고 계신 브라우저에서 실행돼요. 그래서 챗봇의 도구는 WebMCP를 지원하지 않는 브라우저에서도 동작합니다.
+
+WebMCP를 지원하는 브라우저에서는 브라우저에 연결된 에이전트도 현재 화면 상태 확인, 설정 페이지 열기, 포인트 색상 변경, 포트폴리오 페이지·연구 연도 이동, 특정 연도 상세 펼치기·접기와 스트리밍 연출 변경 같은 화면 기능도 도구로 사용할 수 있습니다. 기록 검색과 상세 열기는 기록 페이지에서 직접 이용할 수 있습니다.
 
 WebMCP 자체뿐 아니라 이를 호출하는 에이전트 하네스와 브라우저 지원도 모두 실험 단계입니다. 따라서 환경에 따라 도구가 노출되지 않거나 일부 기능이 동작하지 않을 수 있어요.
 
@@ -369,6 +371,7 @@ export const ACTION_ROUTES: Readonly<Record<ActionId, string>> = {
   migration_memory_history: "/about-me/architecture#migration-memory-history",
   infrastructure_optimization: "/about-me/architecture#infrastructure-migration",
   settings: "/settings",
+  settings_overview: "/settings#settings-overview",
   resume: "/about-me/resume#resume-overview",
   cover_letter: "/about-me/cover-letter#cover-letter-overview",
   cover_letter_story: "/about-me/cover-letter#cover-letter-story",
@@ -385,6 +388,10 @@ export const ACTION_ROUTES: Readonly<Record<ActionId, string>> = {
   agent_experiments_videos: `/about-me#${AGENT_EXPERIMENT_CATEGORY_ANCHORS['영상물']}`,
   agent_experiments_comfyui: `/about-me#${AGENT_EXPERIMENT_CATEGORY_ANCHORS['ComfyUI 활용']}`,
   past_work_archive: "/about-me#past-work-archive",
+  open_weight_experiments: "/about-me#open-weight-experiments",
+  optimization_preview: "/about-me#optimization-preview",
+  architecture_preview: "/about-me#architecture-preview",
+  si_levels_preview: "/about-me#ai-workflow-preview",
   project_common_infrastructure: "/about-me#project-common-infrastructure",
   project_ecommerce_demo: "/about-me#project-ecommerce-demo",
   project_code_archive: "/about-me#project-code-archive",
@@ -396,10 +403,16 @@ export const ACTION_ROUTES: Readonly<Record<ActionId, string>> = {
   research_year_2025: "/about-me/research#research-year-2025",
   research_year_2026: "/about-me/research#research-year-2026",
   research_optimization: "/about-me/research#research-optimization-overview",
+  research_benchmark_code: "/about-me/research#research-benchmark-code",
+  research_optimization_caution: "/about-me/research#research-optimization-caution",
   research_cpu: "/about-me/research#research-cpu-simd",
+  research_counting_sort: "/about-me/research#research-counting-sort",
   research_memory: "/about-me/research#research-memory-layout",
+  research_memory_mmf: "/about-me/research#research-memory-mmf",
   research_serialization: "/about-me/research#research-serialization-packing",
+  research_serialization_bandwidth: "/about-me/research#research-serialization-bandwidth",
   research_tools: "/about-me/research#research-tools-ai",
+  research_ai_verification: "/about-me/research#research-ai-verification",
   research_chatbot_architecture: "/about-me/research#research-chatbot-architecture",
   si_levels: "/about-me/ai-workflow#ai-workflow-intro",
   si_terminology: "/about-me#si-terminology-notice",
@@ -408,6 +421,7 @@ export const ACTION_ROUTES: Readonly<Record<ActionId, string>> = {
   si_level_implementation: "/about-me/ai-workflow#workflow-header-implementation",
   si_level_tools: "/about-me/ai-workflow#workflow-header-tools",
   si_level_orchestration: "/about-me/ai-workflow#workflow-header-orchestration",
+  si_learning: "/about-me/ai-workflow#ai-workflow-learning",
   si_tools_ffmpeg: "/about-me/ai-workflow#example-tools",
   si_session_messaging: "/about-me/ai-workflow#story-orchestration",
   log_ambiguous_support:
@@ -469,6 +483,7 @@ export const ACTION_LABELS: Readonly<Record<ActionId, string>> = {
   migration_memory_history: "Rust 전환 메모리 비교 보기",
   infrastructure_optimization: "인프라 최적화 보기",
   settings: "설정 페이지 보기",
+  settings_overview: "사이트 설정 보기",
   resume: "경력·기술 보기",
   cover_letter: "자기소개서 보기",
   cover_letter_story: "탐구심과 개발 경험 보기",
@@ -476,7 +491,7 @@ export const ACTION_LABELS: Readonly<Record<ActionId, string>> = {
   research: "연구·기술 탐구 보기",
   log: "작업 기록 보기",
   project_overview: "공개용 프로젝트 보기",
-  agent_experiments: "AI 에이전트 성능·활용 실험 보기",
+  agent_experiments: "SI 에이전트 성능·활용 실험 보기",
   agent_experiments_svg: "SVG 제작 실험 보기",
   agent_experiments_webgl: "WebGL 실험 보기",
   agent_experiments_2d_games: "2D 게임 실험 보기",
@@ -485,6 +500,10 @@ export const ACTION_LABELS: Readonly<Record<ActionId, string>> = {
   agent_experiments_videos: "영상물 실험 보기",
   agent_experiments_comfyui: "ComfyUI 활용 실험 보기",
   past_work_archive: "과거 작업 아카이브 보기",
+  open_weight_experiments: "오픈웨이트 모델 실험 보기",
+  optimization_preview: "성능 최적화 연구 미리보기",
+  architecture_preview: "개발·배포 환경 미리보기",
+  si_levels_preview: "SI 활용 단계 미리보기",
   project_common_infrastructure: "공용 인프라 보기",
   project_ecommerce_demo: "이커머스 데모 보기",
   project_code_archive: "코드 아카이브 보기",
@@ -496,10 +515,16 @@ export const ACTION_LABELS: Readonly<Record<ActionId, string>> = {
   research_year_2025: "2025년 연구 보기",
   research_year_2026: "2026년부터 현재까지 연구 보기",
   research_optimization: "최적화 개요 보기",
+  research_benchmark_code: "공개 벤치마크 코드 보기",
+  research_optimization_caution: "최적화 주의점 보기",
   research_cpu: "CPU·SIMD 연구 보기",
+  research_counting_sort: "계수 정렬·레지스터 스필 연구 보기",
   research_memory: "메모리·파일 I/O 연구 보기",
+  research_memory_mmf: "메모리 매핑 파일 비교 보기",
   research_serialization: "직렬화·전송 연구 보기",
-  research_tools: "도구·AI 연구 보기",
+  research_serialization_bandwidth: "물리 계층 대역폭 비교 보기",
+  research_tools: "도구·SI 연구 보기",
+  research_ai_verification: "LLM 개발·검증 실험 보기",
   research_chatbot_architecture: "챗봇 구조 실험 보기",
   si_levels: "SI 활용 단계 소개 보기",
   si_terminology: "SI 표기 안내 보기",
@@ -508,6 +533,7 @@ export const ACTION_LABELS: Readonly<Record<ActionId, string>> = {
   si_level_implementation: "SI 활용 03단계 보기",
   si_level_tools: "SI 활용 04단계 보기",
   si_level_orchestration: "SI 활용 05단계 보기",
+  si_learning: "SI 학습 활용 보기",
   si_tools_ffmpeg: "FFmpeg·컨택트 시트 사례 보기",
   si_session_messaging: "대표 세션 메시지 협업 보기",
   log_ambiguous_support: "AI 지원 조건 기록 보기",
@@ -543,6 +569,7 @@ export const ACTION_IDS: readonly ActionId[] = [
   "migration_memory_history",
   "infrastructure_optimization",
   "settings",
+  "settings_overview",
   "resume",
   "cover_letter",
   "cover_letter_story",
@@ -559,6 +586,10 @@ export const ACTION_IDS: readonly ActionId[] = [
   "agent_experiments_videos",
   "agent_experiments_comfyui",
   "past_work_archive",
+  "open_weight_experiments",
+  "optimization_preview",
+  "architecture_preview",
+  "si_levels_preview",
   "project_common_infrastructure",
   "project_ecommerce_demo",
   "project_code_archive",
@@ -570,10 +601,16 @@ export const ACTION_IDS: readonly ActionId[] = [
   "research_year_2025",
   "research_year_2026",
   "research_optimization",
+  "research_benchmark_code",
+  "research_optimization_caution",
   "research_cpu",
+  "research_counting_sort",
   "research_memory",
+  "research_memory_mmf",
   "research_serialization",
+  "research_serialization_bandwidth",
   "research_tools",
+  "research_ai_verification",
   "research_chatbot_architecture",
   "si_levels",
   "si_terminology",
@@ -582,6 +619,7 @@ export const ACTION_IDS: readonly ActionId[] = [
   "si_level_implementation",
   "si_level_tools",
   "si_level_orchestration",
+  "si_learning",
   "si_tools_ffmpeg",
   "si_session_messaging",
   "log_ambiguous_support",

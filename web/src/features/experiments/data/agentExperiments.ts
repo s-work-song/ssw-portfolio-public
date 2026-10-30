@@ -310,7 +310,7 @@ export const agentExperiments: AgentExperiment[] = [
         caption: '발리스타로 성문을 공략하는 레벨 1',
       },
       {
-        src: '/images/agent-experiments/siege-warfare/02-trebuchet-impact.png',
+        src: '/images/agent-experiments/siege-warfare/02-trebuchet-impact.webp',
         alt: '트레뷰셋 포탄에 맞은 본성 성벽의 블록이 무너지고 흩어지는 레벨 3 플레이 화면',
         caption: '트레뷰셋 포격으로 본성 성벽이 무너지는 장면',
       },
@@ -474,42 +474,42 @@ export const agentExperiments: AgentExperiment[] = [
     ],
     images: [
       {
-        src: '/images/agent-experiments/blender-food/01-mixer.png',
+        src: '/images/agent-experiments/blender-food/01-mixer.webp',
         title: '믹서',
         modelCreditPurpose: '가전',
         alt: '투명한 유리 용기와 금속 조작부가 보이는 믹서 렌더',
         caption: '믹서 · GPT-6 Astra',
       },
       {
-        src: '/images/agent-experiments/blender-food/02-waffle-maker.png',
+        src: '/images/agent-experiments/blender-food/02-waffle-maker.webp',
         title: '와플 메이커',
         modelCreditPurpose: '가전',
         alt: '원형 격자판을 열어 둔 와플 메이커 렌더',
         caption: '와플 메이커 · GPT-6 Astra',
       },
       {
-        src: '/images/agent-experiments/blender-food/03-toaster.png',
+        src: '/images/agent-experiments/blender-food/03-toaster.webp',
         title: '토스터',
         modelCreditPurpose: '가전',
         alt: '두 개의 투입구와 측면 레버가 보이는 금속 토스터 렌더',
         caption: '토스터 · GPT-6 Astra',
       },
       {
-        src: '/images/agent-experiments/blender-food/04-donut-gpt-6-astra.png',
+        src: '/images/agent-experiments/blender-food/04-donut-gpt-6-astra.webp',
         title: '도넛',
         modelCreditPurpose: '음식 · 도넛',
         alt: '분홍색 아이싱과 스프링클이 올라간 도넛 렌더',
         caption: '도넛 · GPT-6 Astra',
       },
       {
-        src: '/images/agent-experiments/blender-food/05-waffle-grok-4-6.png',
+        src: '/images/agent-experiments/blender-food/05-waffle-grok-4-6.webp',
         title: '와플',
         modelCreditPurpose: '음식 · 와플',
         alt: '흰 접시에 올린 둥근 와플 렌더',
         caption: '와플 · Grok 4.6',
       },
       {
-        src: '/images/agent-experiments/blender-food/06-macaron-opus-5-5.png',
+        src: '/images/agent-experiments/blender-food/06-macaron-opus-5-5.webp',
         title: '마카롱',
         modelCreditPurpose: '음식 · 마카롱',
         alt: '흰 접시에 담긴 여러 색상의 마카롱 렌더',
@@ -531,17 +531,17 @@ export const agentExperiments: AgentExperiment[] = [
     modelCredits: [{ models: ['GPT-6 Astra'] }],
     images: [
       {
-        src: '/images/agent-experiments/blender-subway/01-station-cutaway.png',
+        src: '/images/agent-experiments/blender-subway/01-station-cutaway.webp',
         alt: '승강장과 열차, 개찰구가 한눈에 보이는 지하철역의 등각 단면 이미지',
         caption: '지하철역 구조와 열차를 한눈에 보는 단면',
       },
       {
-        src: '/images/agent-experiments/blender-subway/02-platform.png',
+        src: '/images/agent-experiments/blender-subway/02-platform.webp',
         alt: '스크린도어와 기둥, 대기 공간이 길게 이어지는 지하철 승강장 내부',
         caption: '스크린도어가 설치된 승강장 내부',
       },
       {
-        src: '/images/agent-experiments/blender-subway/03-ticket-gates.png',
+        src: '/images/agent-experiments/blender-subway/03-ticket-gates.webp',
         alt: '여러 개의 개찰구와 휠체어용 통로가 보이는 지하철역 입구',
         caption: '일반 개찰구와 접근성 통로',
       },
@@ -556,32 +556,32 @@ export const agentExperiments: AgentExperiment[] = [
     modelCredits: [{ models: ['GPT-6 Astra'] }],
     images: [
       {
-        src: '/images/agent-experiments/blender-city/01_city_overview.jpg',
+        src: '/images/agent-experiments/blender-city/01_city_overview.webp',
         alt: '6차선 대로 양쪽으로 서로 다른 높이의 고층 건물이 배치된 가상 한국 도심의 조감도',
         caption: '전체 조감도 — 도로와 고층 업무지구의 배치',
       },
       {
-        src: '/images/agent-experiments/blender-city/02_boulevard_hero.jpg',
+        src: '/images/agent-experiments/blender-city/02_boulevard_hero.webp',
         alt: '고층 빌딩과 한글 상가 간판 사이로 왕복 6차선 도로와 차량이 이어지는 한빛대로 전경',
         caption: '한빛대로 전경 — 고층 빌딩과 왕복 6차선 도로',
       },
       {
-        src: '/images/agent-experiments/blender-city/03_road_intersection.jpg',
+        src: '/images/agent-experiments/blender-city/03_road_intersection.webp',
         alt: '한국 도심 교차로의 신호등과 횡단보도, 파란 시내버스와 주황색 택시가 보이는 도로 시점',
         caption: '교차로와 도로 — 횡단보도·신호등·차량',
       },
       {
-        src: '/images/agent-experiments/blender-city/04_sidewalk_west.jpg',
+        src: '/images/agent-experiments/blender-city/04_sidewalk_west.webp',
         alt: '은행과 커피숍의 한글 간판을 왼쪽에 두고 가로수가 늘어선 서측 인도를 바라보는 시점',
         caption: '서측 인도 — 눈높이 1.7m의 보행자 시점',
       },
       {
-        src: '/images/agent-experiments/blender-city/05_sidewalk_east.jpg',
+        src: '/images/agent-experiments/blender-city/05_sidewalk_east.webp',
         alt: '한글 상가와 가로수, 버스정류장과 파란 시내버스가 보이는 동측 인도',
         caption: '동측 인도 — 상가와 가로수·버스정류장',
       },
       {
-        src: '/images/agent-experiments/blender-city/06_crosswalk_corner.jpg',
+        src: '/images/agent-experiments/blender-city/06_crosswalk_corner.webp',
         alt: '한빛대로 도로명판과 보행 신호등, 점자블록과 횡단보도 너머의 고층 건물이 보이는 교차로 모서리',
         caption: '횡단보도 모서리 — 도로명판과 보행 시설물',
       },
@@ -607,7 +607,7 @@ export const agentExperiments: AgentExperiment[] = [
           { purpose: '이미지', models: ['GPT Image 2.5'] },
         ],
         images: [{
-          src: '/images/agent-experiments/blender-office/01-reference.png',
+          src: '/images/agent-experiments/blender-office/01-reference.webp',
           alt: '낮은 파티션과 책상, 서류장·복합기·정수기와 안쪽 회의실이 있는 사무실의 사전 생성 참고 이미지',
           caption: '먼저 생성한 참고 이미지 · Blender 구현 결과 아님',
         }],
@@ -618,22 +618,22 @@ export const agentExperiments: AgentExperiment[] = [
         modelCredits: [{ purpose: 'Blender 모델링', models: ['GPT-6 Astra'] }],
         images: [
           {
-            src: '/images/agent-experiments/blender-office/02-entrance.jpg',
+            src: '/images/agent-experiments/blender-office/02-entrance.webp',
             alt: '입구에서 바라본 Blender 사무실 모델링의 책상·회색 파티션과 서류장·복합기·정수기, 안쪽 회의실',
             caption: 'Blender 구현 — 참고 이미지의 구도를 따른 입구 전경',
           },
           {
-            src: '/images/agent-experiments/blender-office/03-workstation-detail.jpg',
+            src: '/images/agent-experiments/blender-office/03-workstation-detail.webp',
             alt: 'Blender로 모델링한 사무실의 모니터·키보드·파일철과 낮은 파티션, 메시 의자 상세',
             caption: 'Blender 구현 — 책상·파티션·사무용 의자 상세',
           },
           {
-            src: '/images/agent-experiments/blender-office/04-reverse-aisle.jpg',
+            src: '/images/agent-experiments/blender-office/04-reverse-aisle.webp',
             alt: 'Blender 사무실 안쪽에서 입구를 바라본 업무 공간과 중앙 통로, 블라인드 창 전경',
             caption: 'Blender 구현 — 안쪽에서 입구 방향으로 바라본 전경',
           },
           {
-            src: '/images/agent-experiments/blender-office/05-meeting-room.jpg',
+            src: '/images/agent-experiments/blender-office/05-meeting-room.webp',
             alt: 'Blender로 모델링한 사무실 안쪽의 유리 칸막이와 테이블·의자·화이트보드가 있는 작은 회의실',
             caption: 'Blender 구현 — 사무실 안쪽의 작은 회의실',
           },
@@ -727,14 +727,14 @@ export const agentExperiments: AgentExperiment[] = [
     ],
     images: [
       {
-        src: '/images/agent-experiments/comfyui/cafe-qwen-image-2512.png',
+        src: '/images/agent-experiments/comfyui/cafe-qwen-image-2512.webp',
         alt: '비 오는 저녁 거리의 S-WORK COFFEE 카페 이미지',
         caption: '비 오는 저녁 거리의 카페 이미지',
       },
     ],
     video: {
       src: '/media/agent-experiments/comfyui-qwen-wan/cafe-i2v-5s.mp4',
-      poster: '/images/agent-experiments/comfyui/cafe-qwen-image-2512.png',
+      poster: '/images/agent-experiments/comfyui/cafe-qwen-image-2512.webp',
       caption: '이미지에서 생성한 5초 영상',
     },
   },
@@ -750,14 +750,14 @@ export const agentExperiments: AgentExperiment[] = [
     ],
     images: [
       {
-        src: '/images/agent-experiments/comfyui/astronaut-gpt-image-2.png',
+        src: '/images/agent-experiments/comfyui/astronaut-gpt-image-2.webp',
         alt: '우주비행사가 외계 행성의 암석 지형에서 우주선과 고리 행성을 바라보는 이미지',
         caption: '외계 행성을 탐사하는 우주비행사 이미지',
       },
     ],
     video: {
       src: '/media/agent-experiments/comfyui-gpt-image2-wan/astronaut-i2v-5s.mp4',
-      poster: '/images/agent-experiments/comfyui/astronaut-gpt-image-2.png',
+      poster: '/images/agent-experiments/comfyui/astronaut-gpt-image-2.webp',
       caption: '이미지에서 생성한 5초 영상',
     },
   },

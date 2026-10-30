@@ -32,7 +32,7 @@ test('승인한 구직 사유를 세 가지 주제로 표시하고 초안 표시
   assert.doesNotMatch(component, /자동 완성/u);
   assert.match(component, /이후 직접 사용해 보면서/u);
   assert.match(component, /경력을 다시 이어 갈 시점/u);
-  assert.match(component, /회사에서 승인한 AI 도구/u);
+  assert.match(component, /회사에서 승인한 SI 도구/u);
   assert.doesNotMatch(component, />초안<|draftBadge/u);
   assert.match(component, /aria-hidden="true"/u);
   assert.doesNotMatch(component, /Fable|Grok|GPT 5|미국 정부|100 달러|10~15|번아웃/u);
@@ -47,7 +47,7 @@ test('게임 개발과 개인적인 학습을 구분하고 AI 도구 경험을 �
   assert.deepEqual(paragraphs, [
     'GPT 챗봇을 처음 사용해 보고, 궁금한 것을 알아보고 독학하는 데 유용하겠다고 느꼈습니다.',
     '이후 IDE에서 대규모 언어 모델(LLM)을 활용한 코드 제안 기능을 접하며, 개발 도구가 충분히 유용해질 때까지 학습과 실험을 이어가고자 했습니다.',
-    'LLM 코드 제안 기능의 개선을 기다리던 중, AI 에이전트가 코드를 수정하고 작업을 진행하는 에이전틱 코딩을 접했습니다.',
+    'LLM 코드 제안 기능의 개선을 기다리던 중, SI 에이전트가 코드를 수정하고 작업을 진행하는 에이전틱 코딩을 접했습니다.',
     '처음에는 위험성과 한계 때문에 거리를 두었지만, 이후 직접 사용해 보면서 실제 작업에 활용할 수 있다는 가능성을 느꼈습니다.',
   ]);
 });

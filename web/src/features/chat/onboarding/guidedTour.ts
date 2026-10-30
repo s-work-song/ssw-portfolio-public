@@ -14,7 +14,7 @@ import { aiWorkflowStages } from "../../ai-workflow/data/aiWorkflow.ts";
  * 단계 구성을 바꿀 때 이 숫자를 올린다. 아래 두 저장 키에 그대로 섞여 들어가므로,
  * 예전 판에서 저장한 진행 상태가 새 단계 목록에 잘못 적용되는 일 없이 버려진다.
  */
-export const GUIDED_TOUR_VERSION = 8;
+export const GUIDED_TOUR_VERSION = 9;
 /** 투어를 안내한 적이 있는지 기억하는 localStorage 키다. 값은 started·completed·dismissed 중 하나다. */
 export const GUIDED_TOUR_VISIT_KEY = `portfolio-guided-tour:v${GUIDED_TOUR_VERSION}:visit`;
 /** 진행 중인 투어 상태를 탭 단위로 이어 붙이는 sessionStorage 키다. 페이지 이동으로 훅이 다시 마운트돼도 단계가 유지된다. */
@@ -58,6 +58,10 @@ export interface GuidedTourStep {
     | "past-work"
     | "si-terminology"
     | "projects"
+    | "open-weight-experiments"
+    | "optimization-preview"
+    | "architecture-preview"
+    | "si-levels-preview"
     | "agent-experiments"
     | "experiments-svg"
     | "experiments-webgl"
@@ -78,13 +82,25 @@ export interface GuidedTourStep {
     | "research-year-2025"
     | "research-year-2026"
     | "research-optimization"
+    | "research-benchmark-code"
+    | "research-optimization-caution"
     | "research-cpu"
+    | "research-counting-sort"
     | "research-memory"
+    | "research-memory-mmf"
     | "research-serialization"
+    | "research-serialization-bandwidth"
     | "research-tools"
+    | "research-ai-verification"
+    | "research-chatbot-architecture"
+    | "development-environment"
+    | "deployment-overview"
+    | "infrastructure-optimization"
     | "si-levels"
     | `si-level-${(typeof aiWorkflowStages)[number]["id"]}`
-    | "log";
+    | "si-learning"
+    | "log"
+    | "settings";
   title: string;
   message: string;
   actionId: ActionId;
@@ -119,7 +135,7 @@ const SI_STAGE_ACTIONS = {
 /**
  * 방문자를 데려갈 단계 목록이다. 배열 순서가 곧 진행 순서다.
  *
- * 소개에서 시작해 이력서·자기소개서·연구 경험·SI 활용 단계를 거쳐 기록으로 끝나는 흐름이며,
+ * 소개에서 시작해 이력서·자기소개서·연구 경험·개발·배포 환경·SI 활용 단계·기록을 거쳐 설정으로 끝나는 흐름이며,
  * 질문 체험은 자기소개서 단계 하나에만 걸어 투어가 중간에 막히는 지점을 최소화했다.
  * 단계를 더하거나 순서를 바꾸면 GUIDED_TOUR_VERSION도 함께 올려야 저장된
  * stepIndex가 엉뚱한 단계를 가리키지 않는다.
@@ -129,7 +145,7 @@ export const GUIDED_TOUR_STEPS: readonly GuidedTourStep[] = [
     id: "overview",
     title: "소개 페이지",
     message:
-      "포트폴리오의 전체 구성을 먼저 살펴볼게요. 소개, 이력서, 자기소개서, 연구 경험, SI 활용 단계와 기록을 순서대로 둘러봅니다.",
+      "포트폴리오의 전체 구성을 먼저 살펴볼게요. 소개, 이력서, 자기소개서, 연구 경험, 개발·배포 환경, SI 활용 단계, 기록과 설정을 순서대로 둘러봅니다.",
     actionId: "overview",
   },
   {
@@ -149,57 +165,81 @@ export const GUIDED_TOUR_STEPS: readonly GuidedTourStep[] = [
   },
   {
     id: "projects",
-    title: "AI 에이전트들과 협업한 프로젝트",
+    title: "SI 에이전트들과 협업한 프로젝트",
     message:
-      "요구사항과 운영 조건에 맞춰 구조를 선택하고, AI 에이전트의 구현 결과를 직접 리뷰하고 검증하며 진행한 공개 프로젝트를 살펴봅니다.",
+      "요구사항과 운영 조건에 맞춰 구조를 선택하고, SI 에이전트의 구현 결과를 직접 리뷰하고 검증하며 진행한 공개 프로젝트를 살펴봅니다.",
     actionId: "project_overview",
   },
   {
+    id: "open-weight-experiments",
+    title: "오픈웨이트 모델 실험",
+    message: "오픈웨이트 모델을 직접 실행해 서비스에 연결하고, 이미지·영상 생성과 파인튜닝을 실험한 작업입니다.",
+    actionId: "open_weight_experiments",
+  },
+  {
+    id: "optimization-preview",
+    title: "성능 최적화 연구",
+    message: "CPU·SIMD, 메모리·파일 I/O, 직렬화·전송으로 나눈 성능 최적화 연구의 대표 결과입니다. 자세한 실험은 연구 경험에서 다시 살펴볼게요.",
+    actionId: "optimization_preview",
+  },
+  {
+    id: "architecture-preview",
+    title: "개발·배포 환경 구성",
+    message: "프로젝트별 배포 구조와 개발 환경의 연결 관계를 정리한 페이지로 이어지는 입구입니다. 화면·API·LLM의 역할과 인프라 전환 이력을 담았어요.",
+    actionId: "architecture_preview",
+  },
+  {
+    id: "si-levels-preview",
+    title: "SI 활용 단계 미리보기",
+    message: "SI 활용 수준을 다섯 단계로 나눈 페이지의 입구입니다. 단계별 내용은 둘러보기 끝부분에서 차례로 살펴봅니다.",
+    actionId: "si_levels_preview",
+  },
+  {
     id: "agent-experiments",
-    title: "AI 에이전트 성능·활용 실험",
+    title: "SI 에이전트 성능·활용 실험",
     message:
-      "AI 활용과 모델 성능을 취미로 실험하며 얻은 결과를 모은 공간입니다. 먼저 실험의 목적과 작업 방식을 읽고, 다음 단계부터 일곱 대분류를 차례로 살펴볼게요.",
+      "SI 활용과 모델 성능을 취미로 실험하며 얻은 결과를 모은 공간입니다. 먼저 실험의 목적과 작업 방식을 읽고, 다음 단계부터 일곱 대분류를 차례로 살펴볼게요.",
     actionId: "agent_experiments",
   },
   {
     id: "experiments-svg",
-    title: "AI 실험 · SVG 제작",
+    title: "SI 실험 · SVG 제작",
     message: "SVG 일러스트와 자전거 타는 펠리컨 애니메이션을 살펴보세요. 같은 프롬프트로 얻은 모델별 결과도 비교할 수 있어요.",
     actionId: "agent_experiments_svg",
   },
   {
     id: "experiments-webgl",
-    title: "AI 실험 · WebGL",
+    title: "SI 실험 · WebGL",
     message: "기계 장치를 살펴보는 분해도 도감과 얼음 동동 라떼의 시각효과 실험입니다. 실행 화면을 보거나 연결된 샘플을 직접 열어 보세요.",
     actionId: "agent_experiments_webgl",
   },
   {
     id: "experiments-2d-games",
-    title: "AI 활용 · 2D 게임 실험",
+    title: "SI 활용 · 2D 게임 실험",
     message: "Planet Defense와 물고기 키우기 등 2D 게임 작업물입니다. 코드·이미지·음악에 활용한 모델과 결과를 확인해 보세요.",
     actionId: "agent_experiments_2d_games",
   },
   {
     id: "experiments-3d-games",
-    title: "AI 활용 · 3D 게임 실험",
+    title: "SI 활용 · 3D 게임 실험",
     message: "비행 시뮬레이터와 공성전처럼 공간과 물리 동작을 다룬 3D 게임 작업물입니다. 캡처를 보거나 연결된 게임을 직접 실행해 볼 수 있어요.",
     actionId: "agent_experiments_3d_games",
   },
   {
     id: "experiments-blender",
-    title: "AI 실험 · Blender",
+    title: "SI 실험 · Blender",
     message: "무기·음식과 가전·지하철·도시·사무실 모델링을 모았습니다. 제작 모델과 렌더 이미지를 확인하고, 사무실의 참고 이미지와 구현 결과도 비교해 보세요.",
     actionId: "agent_experiments_blender",
   },
   {
     id: "experiments-videos",
-    title: "AI 실험 · 영상물",
+    title: "SI 실험 · 영상물",
     message: "모션그래픽, 우주선 시뮬레이션, 키보드 분해도와 모션 도감입니다. 관심 있는 작업을 선택해 재생하고 제작 모델을 확인해 보세요.",
     actionId: "agent_experiments_videos",
   },
   {
     id: "experiments-comfyui",
-    title: "AI 실험 · ComfyUI 활용",
+    title: "SI 실험 · ComfyUI 활용",
     message: "Qwen Image와 GPT Image로 만든 이미지를 Wan I2V 모델로 5초 영상으로 확장한 사례입니다. 원본 이미지와 생성 영상을 함께 살펴보세요.",
     actionId: "agent_experiments_comfyui",
   },
@@ -235,7 +275,7 @@ export const GUIDED_TOUR_STEPS: readonly GuidedTourStep[] = [
     id: "research-timeline",
     title: "연구 여정",
     message:
-      "하드웨어 탐구에서 소프트웨어 최적화와 AI 에이전트 활용으로 이어진 연구 흐름을 먼저 살펴봅니다.",
+      "하드웨어 탐구에서 소프트웨어 최적화와 SI 에이전트 활용으로 이어진 연구 흐름을 먼저 살펴봅니다.",
     actionId: "research_timeline",
   },
   {
@@ -271,7 +311,7 @@ export const GUIDED_TOUR_STEPS: readonly GuidedTourStep[] = [
   {
     id: "research-year-2026",
     title: "연구 여정 · 2026년부터 현재",
-    message: "오픈 웨이트 모델 실행 환경을 구성하고, 장기간 세션과 여러 에이전트의 협업을 실험하는 시기입니다. MCP·플러그인과 리소스·게임 제작으로 활용 범위를 넓히고 있습니다.",
+    message: "오픈웨이트 모델 실행 환경을 구성하고, 장기간 세션과 여러 에이전트의 협업을 실험하는 시기입니다. MCP·플러그인과 리소스·게임 제작으로 활용 범위를 넓히고 있습니다.",
     actionId: "research_year_2026",
   },
   {
@@ -283,6 +323,18 @@ export const GUIDED_TOUR_STEPS: readonly GuidedTourStep[] = [
     targetId: "research-optimization-ask-ai",
   },
   {
+    id: "research-benchmark-code",
+    title: "성능 최적화 · 공개 벤치마크 코드",
+    message: "공개할 수 있는 실험을 독립 실행 가능한 코드와 테스트, 벤치마크 러너로 다시 구성한 목록입니다. 원하는 실험의 코드를 직접 열어 보세요.",
+    actionId: "research_benchmark_code",
+  },
+  {
+    id: "research-optimization-caution",
+    title: "성능 최적화 · 주의할 점",
+    message: "에이전트로 저수준 최적화를 할 때 주의할 점입니다. CPU마다 다른 명령어 지원 범위와 AVX-512 파편화 사례를 정리했어요.",
+    actionId: "research_optimization_caution",
+  },
+  {
     id: "research-cpu",
     title: "성능 최적화 · CPU와 SIMD",
     message:
@@ -290,11 +342,23 @@ export const GUIDED_TOUR_STEPS: readonly GuidedTourStep[] = [
     actionId: "research_cpu",
   },
   {
+    id: "research-counting-sort",
+    title: "성능 최적화 · 계수 정렬과 레지스터 스필",
+    message: "바이트 배열을 계수 정렬로 구현하고, 버퍼를 나눈 수에 따라 레지스터 스필이 언제 생기는지 다시 측정한 실험입니다.",
+    actionId: "research_counting_sort",
+  },
+  {
     id: "research-memory",
     title: "성능 최적화 · 메모리와 파일 I/O",
     message:
-      "데이터 배치와 캐시 효율, 메모리 매핑 파일과 스트림 I/O를 비교한 실험을 살펴봅니다.",
+      "AoS와 SoA 메모리 배치에 따라 캐시를 얼마나 효율적으로 쓰는지 비교한 실험을 살펴봅니다.",
     actionId: "research_memory",
+  },
+  {
+    id: "research-memory-mmf",
+    title: "성능 최적화 · 메모리 매핑 파일과 Stream",
+    message: "10MB 텍스트 파일 비교에서 메모리 매핑 파일과 일반 스트림 방식의 처리 시간을 비교하고, 어떤 경우에 어느 쪽을 고를지 정리했습니다.",
+    actionId: "research_memory_mmf",
   },
   {
     id: "research-serialization",
@@ -304,11 +368,47 @@ export const GUIDED_TOUR_STEPS: readonly GuidedTourStep[] = [
     actionId: "research_serialization",
   },
   {
+    id: "research-serialization-bandwidth",
+    title: "성능 최적화 · 물리 계층별 대역폭",
+    message: "L1 캐시부터 블루투스까지 계층별 전송 속도 차이를 비교하고, 대역폭이 병목일 때 압축 비용과 전송량 감소를 어떻게 저울질하는지 살펴봅니다.",
+    actionId: "research_serialization_bandwidth",
+  },
+  {
     id: "research-tools",
-    title: "도구와 AI 접목",
+    title: "도구와 SI 접목 · Roslyn 코드 생성기",
     message:
-      "업무용 도구 제작과 AI 모델·에이전트 오케스트레이션을 실제 작업에 접목한 경험을 확인합니다.",
+      "반복되는 데이터 바인딩 코드의 수작업 오류를 줄이려고 만든 Roslyn 기반 소스 생성기입니다. 이 탭에서 도구 제작과 SI 접목 경험을 차례로 살펴봅니다.",
     actionId: "research_tools",
+  },
+  {
+    id: "research-ai-verification",
+    title: "도구와 SI 접목 · LLM 개발·검증 실험",
+    message: "로컬 경량 모델과 클라우드 모델을 개발·검증 과정에 활용한 실험입니다. 모델에 맡긴 역할과 직접 검증한 범위를 확인해 보세요.",
+    actionId: "research_ai_verification",
+  },
+  {
+    id: "research-chatbot-architecture",
+    title: "오픈웨이트 모델 챗봇 구조 실험",
+    message: "이 사이트의 챗봇을 어떤 구조로 실험하며 다듬었는지 단계별 흐름도로 정리했습니다. 단계를 펼쳐 지침과 세션 구성의 변화를 살펴보세요.",
+    actionId: "research_chatbot_architecture",
+  },
+  {
+    id: "development-environment",
+    title: "개발·배포 환경 · 개발 환경",
+    message: "어느 기기에서 어떤 도구에 접속하는지와 기기 간 연결을 한 그림에 정리했습니다. 폰에서 조작하는 앱과 실제 작업이 실행되는 PC를 구분해 보세요.",
+    actionId: "development_environment",
+  },
+  {
+    id: "deployment-overview",
+    title: "개발·배포 환경 · 배포 구성",
+    message: "포트폴리오·공용 인프라·이커머스·에셋 라이브러리를 정적 웹 화면, API, LLM 추론 역할로 나눠 배포한 구성입니다.",
+    actionId: "deployment_overview",
+  },
+  {
+    id: "infrastructure-optimization",
+    title: "개발·배포 환경 · 인프라 최적화",
+    message: "클라우드 비용 절감에서 시작해 백엔드를 Rust로 다시 만들고 라즈베리파이로 옮긴 과정입니다. 메모리 최적화와 이관 과정을 살펴보세요.",
+    actionId: "infrastructure_optimization",
   },
   {
     id: "si-levels",
@@ -323,6 +423,12 @@ export const GUIDED_TOUR_STEPS: readonly GuidedTourStep[] = [
     actionId: SI_STAGE_ACTIONS[stage.id],
   })),
   {
+    id: "si-learning",
+    title: "SI 활용 · 배우는 데 쓰기",
+    message: "단계와 별개로 가장 중요하게 생각하는 활용법입니다. 챗봇으로 SIMD를 독학한 방식과, 에이전트와 작업하며 궁금한 것을 바로 실험해 보는 방식을 살펴보세요.",
+    actionId: "si_learning",
+  },
+  {
     id: "log",
     title: "기록",
     message:
@@ -330,6 +436,12 @@ export const GUIDED_TOUR_STEPS: readonly GuidedTourStep[] = [
     actionId: "log",
     targetId: "log-overview",
     highlightDurationMs: 1_800,
+  },
+  {
+    id: "settings",
+    title: "사이트 설정",
+    message: "테마, 포인트 색상, 채팅 글꼴·글자 크기, 패널 배치와 답변 연출을 바꿀 수 있어요. 채팅에 ‘다크 모드로 바꿔줘’처럼 말해도 챗봇이 바로 바꿔 줍니다.",
+    actionId: "settings_overview",
   },
 ] as const;
 

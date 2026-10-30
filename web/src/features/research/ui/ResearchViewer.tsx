@@ -41,8 +41,11 @@ const RESEARCH_ACTION_TARGET_TABS: Readonly<
   'research-cpu-simd': 'cpu',
   'research-counting-sort': 'cpu',
   'research-memory-layout': 'memory',
+  'research-memory-mmf': 'memory',
   'research-serialization-packing': 'serialization',
+  'research-serialization-bandwidth': 'serialization',
   'research-tools-ai': 'meta',
+  'research-ai-verification': 'meta',
   'research-chatbot-architecture': 'meta',
 };
 

@@ -39,7 +39,7 @@ export const environmentGroups: readonly {
   { id: 'personal', title: '내 기기 · 4', mobileTitle: '내 기기 · 4', nodeIds: ['Home', 'Laptop', 'Android', 'Pi'], desktop: [24, 44, 912, 772], mobile: [2, 44, 356, 772], titleAnchor: 'end' },
   { id: 'access', title: '접속 수단 · 머신 아님', mobileTitle: '접속 수단', nodeIds: ['CloudTunnel', 'CodexTool'], desktop: [24, 964, 628, 174], mobile: [2, 956, 176, 346], titleAnchor: 'end' },
   { id: 'externalTailnet', title: '외부 머신 · 1', mobileTitle: '외부 머신 · 1', nodeIds: ['Grok'], desktop: [672, 964, 264, 174], mobile: [194, 956, 164, 196], titleAnchor: 'end' },
-  { id: 'external', title: '외부 실행 환경 · 3', mobileTitle: '외부 머신 · 3', nodeIds: ['CodexCloud', 'OpenAIDots', 'Colab'], desktop: [24, 1228, 912, 190], mobile: [2, 1468, 356, 346], titleAnchor: 'end' },
+  { id: 'external', title: '외부 실행 환경 · 3', mobileTitle: '외부 실행 환경 · 3', nodeIds: ['CodexCloud', 'OpenAIDots', 'Colab'], desktop: [24, 1228, 912, 190], mobile: [2, 1468, 356, 346], titleAnchor: 'end' },
 ];
 
 /** Membership outline extends only around the external Grok machine, not access tools. */
@@ -177,7 +177,7 @@ export const environmentLayouts: Record<EnvironmentLayout, {
 export const environmentDiagramNotes = [
   '내 기기는 집 PC·노트북·안드로이드폰·라즈베리파이 4대입니다. 외부 실행 환경 4개 중 그록봇은 접속 수단 옆의 별도 머신 영역에, Codex 클라우드·OpenAI Dots·Google Colab은 아래에 표시합니다. 접속 수단은 머신과 따로 구분합니다.',
   '스마트폰의 Codex 앱·Claude 앱으로 집 PC와 노트북의 실행 세션을 원격 조작합니다. 코드는 해당 PC에서 실행되며, Codex 클라우드·Dots 작업과는 별도 경로입니다.',
-  '회색 점선은 세 기기가 각각 서비스를 이용한다는 논리적 관계이며, 선이 만나는 점은 네트워크 장비나 프록시가 아닙니다. 내 기기 영역 안에서 세 기기의 선을 합친 뒤, 접속 수단 쪽 선은 카드 위에서 갈라져 Cloudflare Tunnel과 Codex에 연결됩니다. 그록봇 앱 접속은 세 기기의 선이 합쳐진 뒤 한 줄로 이어지며, 내 기기 영역의 오른쪽 합류선에서 별도로 내려옵니다. 아래쪽에서 접속 수단의 분기선과 연결하지 않습니다. Pi의 서비스 제공 경로는 별도이며, Pi와 Colab의 실제 Cloudflare Tunnel은 각각 별개입니다.',
+  '회색 점선은 세 기기가 각각 서비스를 이용한다는 논리적 관계이며, 선이 만나는 점은 네트워크 장비나 프록시가 아닙니다. 세 기기의 선은 내 기기 영역에서 합쳐진 뒤 Cloudflare Tunnel·Codex 쪽으로 갈라지고, 그록봇 앱 접속선은 오른쪽 합류선에서 따로 내려옵니다. Pi의 서비스 제공 경로와 Pi·Colab의 실제 Cloudflare Tunnel은 각각 별개입니다.',
   '집 PC ↔ 노트북은 RustDesk, 집 PC와 Pi는 내부망(LAN)으로 연결됩니다. 에셋 라이브러리는 Tunnel 공개 대상이 아닌 LAN·Tailscale 전용입니다.',
   'Google Colab은 LLM 추론 서버와 ComfyUI 이미지·영상 생성 작업에 사용합니다. ComfyUI는 별도 머신이 아닌 Colab 카드 안의 작업 용도로 표시합니다.',
   '초록 실선은 내부망(LAN) 연결, 초록 점선 테두리는 Tailscale VPN 가입 범위입니다. 내 기기 4대와 외부 그록봇만 VPN 범위에 포함하고, Cloudflare Tunnel·Codex 도구와 나머지 외부 실행 환경은 범위 밖에 둡니다. 모든 선이 Tailscale을 거치거나 현재 서비스가 가동 중임을 뜻하지 않습니다.',

@@ -3,7 +3,7 @@ import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 import sharp from 'sharp';
-import { aiWorkflowExamples, aiWorkflowStories, aiWorkflowStages, aiWorkflowTools, aiWorkflowCliTools, aiWorkflowToolGroups, aiWorkflowOrchestrationReview, aiWorkflowOrchestrationConnections } from '../../../../src/features/ai-workflow/data/aiWorkflow.ts';
+import { aiWorkflowExamples, aiWorkflowLearning, aiWorkflowStories, aiWorkflowStages, aiWorkflowTools, aiWorkflowCliTools, aiWorkflowToolGroups, aiWorkflowOrchestrationReview, aiWorkflowOrchestrationConnections } from '../../../../src/features/ai-workflow/data/aiWorkflow.ts';
 import { aboutTabPathFromPath } from '../../../../src/features/chat/navigation.ts';
 import { workflowStageFromHash, workflowStageIndexFromHash, workflowStageIndexForKey } from '../../../../src/features/ai-workflow/navigation/workflowStageNavigation.ts';
 import { scrollToWorkflowStageNav } from '../../../../src/features/ai-workflow/navigation/workflowStageScroll.ts';
@@ -648,7 +648,7 @@ test('SI 안내는 백악관 지침·개인적 동의·사용 경험·개인적 
   for (const text of ['SI 표기 안내', 'SI(Super Intelligence, 초지능)', '참고해', '용어를 사용합니다']) {
     assert.ok(notice.includes(text), text);
   }
-  const references = ['백악관의 지침', '개인적으로도 이 방향에 동의하며', '페이블 5의 사용 경험'].map((text) => notice.indexOf(text));
+  const references = ['백악관의 지침', '개인적으로도 이 방향에 동의하며', 'Fable 5의 사용 경험'].map((text) => notice.indexOf(text));
   assert.ok(references.every((position, index) => position >= 0 && (!index || position > references[index - 1])));
   assert.ok(!notice.includes('기존 AI 기술과 도구를 가리킵니다'));
   assert.ok(notice.includes('<time dateTime="2026-07-01">2026년 7월 1일</time> 서비스가 재개된'));
@@ -674,4 +674,47 @@ test('SI 안내는 백악관 지침·개인적 동의·사용 경험·개인적 
   }
   const layout = await readFile(new URL('../../../../src/app/about-me/layout.tsx', import.meta.url), 'utf8');
   assert.ok(layout.includes('shortLabel: "SI 활용 단계"'));
+});
+
+test('SI 학습 활용은 단계와 별개 섹션으로 마무리 카드 뒤, 기록 안내 앞에 놓인다', async () => {
+  assert.match(aiWorkflowLearning.title, /어느 단계에서든/);
+  assert.equal(aiWorkflowLearning.practices.length, 3);
+  for (const practice of aiWorkflowLearning.practices) {
+    assert.ok(practice.title.trim() && practice.description.trim(), practice.title);
+  }
+  assert.match(aiWorkflowLearning.closing, /자기주도 학습/);
+  const page = await readFile(new URL('../../../../src/app/about-me/ai-workflow/page.tsx', import.meta.url), 'utf8');
+  const tabs = page.indexOf('<WorkflowStageTabs');
+  const closing = page.indexOf('id="workflow-try-title"');
+  const learning = page.indexOf('id="ai-workflow-learning"');
+  const next = page.indexOf('id="workflow-next-title"');
+  assert.ok(tabs >= 0 && tabs < closing && closing < learning && learning < next, '단계 탭 → 마무리 카드 → 학습 섹션 → 기록 안내 순서');
+});
+
+test('SI 학습 활용 예시는 챗봇(01 단계)과 에이전트(02~05 단계) 방식을 하나씩 보여 준다', async () => {
+  const [chat, agent] = aiWorkflowLearning.examples;
+  assert.deepEqual(aiWorkflowLearning.examples.map(({ stages }) => stages), ['01 단계', '02~05 단계']);
+  assert.match(chat.mode, /챗봇/);
+  assert.match(chat.title, /SIMD/);
+  assert.match(chat.description, /무료 채팅/);
+  assert.equal(chat.repeats, false);
+  assert.match(agent.mode, /에이전트/);
+  assert.equal(agent.repeats, true);
+  assert.equal(agent.relatedLink, null);
+  for (const example of aiWorkflowLearning.examples) assert.equal(example.steps.length, 3, example.mode);
+  const { ACTION_ROUTES } = await import('../../../../src/features/chat/constants.ts');
+  assert.equal(chat.relatedLink.href, ACTION_ROUTES.research_cpu);
+});
+
+test('둘러보기는 SI 05단계 다음에 학습 섹션을 들른 뒤 기록으로 넘어간다', async () => {
+  const { GUIDED_TOUR_STEPS } = await import('../../../../src/features/chat/onboarding/guidedTour.ts');
+  const { ACTION_ROUTES, ACTION_IDS } = await import('../../../../src/features/chat/constants.ts');
+  const ids = GUIDED_TOUR_STEPS.map(({ id }) => id);
+  const index = ids.indexOf('si-learning');
+  assert.equal(ids[index - 1], 'si-level-orchestration');
+  assert.equal(ids[index + 1], 'log');
+  const step = GUIDED_TOUR_STEPS[index];
+  assert.equal(step.actionId, 'si_learning');
+  assert.ok(ACTION_IDS.includes('si_learning'));
+  assert.equal(ACTION_ROUTES.si_learning, '/about-me/ai-workflow#ai-workflow-learning');
 });

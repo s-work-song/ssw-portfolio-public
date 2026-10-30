@@ -42,7 +42,7 @@ export default function ResearchPanels({ activeTab }: { activeTab: ResearchTabId
               </h3>
               <p style={{ margin: 0, fontSize: '1rem', lineHeight: 1.7, color: 'var(--text-dim)', wordBreak: 'keep-all' }}>
                 하드웨어와 소프트웨어의 계층별 성능 특성을 측정하고 병목 요인을 분석하는 것을 목적으로 수행한 개인 학습 및 실험 기록입니다.
-                웹 SI 실무 이후 CPU 파이프라인(분기 예측), SIMD 명령어(AVX2), 메모리·파일 입출력(Memory Mapped File),
+                웹 SI(시스템 통합) 실무 이후 CPU 파이프라인(분기 예측), SIMD 명령어(AVX2), 메모리·파일 입출력(Memory Mapped File),
                 비트 수준 직렬화와 무선 전송 대역폭을 대상으로 구현 방식과 측정 결과를 비교했습니다.
               </p>
               <div style={{ marginTop: '16px' }}>
@@ -651,14 +651,14 @@ for (; index < blockLength; index += 4)
                 </span>
               </div>
               <p style={{ margin: 0, fontSize: '0.95rem', lineHeight: 1.6, color: 'var(--text-dim)', wordBreak: 'keep-all' }}>
-                Unity ECS/DOTS 환경 설계 및 C# 고성능 처리를 분석하며 AoS(Array of Structs, 구조체의 배열)와
-                SoA(Struct of Arrays, 배열의 구조체) 레이아웃에 따른 하드웨어 L1/L2 캐시 라인(64바이트) 충전 효율을 비교 분석했습니다.
+                Unity ECS/DOTS 환경 설계 및 C# 고성능 처리를 분석하며 AoS(Array of Structures, 구조체의 배열)와
+                SoA(Structure of Arrays, 배열의 구조체) 레이아웃에 따른 하드웨어 L1/L2 캐시 라인(64바이트) 충전 효율을 비교 분석했습니다.
               </p>
               <AskAiButton align="end" question="「AoS·SoA 메모리 배치와 캐시 활용 비교」 실험을 객체지향 구조와 데이터 지향 설계의 차이 중심으로 설명해 주세요." />
 
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px' }}>
                 <div style={{ padding: '16px', background: 'var(--bg-elev-2)', borderRadius: '12px', border: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                  <div style={{ fontSize: '0.875rem', fontWeight: 700, color: 'var(--text)', marginBottom: '4px' }}>AoS (Array of Structs)</div>
+                  <div style={{ fontSize: '0.875rem', fontWeight: 700, color: 'var(--text)', marginBottom: '4px' }}>AoS (Array of Structures)</div>
                   <pre style={{ margin: 0, fontSize: '0.75rem' }}>
                     {`struct Entity {
     float x, y, z;
@@ -672,7 +672,7 @@ Entity[] entities = new Entity[N];`}
                 </div>
 
                 <div style={{ padding: '16px', background: 'var(--bg-elev-2)', borderRadius: '12px', border: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                  <div style={{ fontSize: '0.875rem', fontWeight: 700, color: 'var(--text)', marginBottom: '4px' }}>SoA (Struct of Arrays)</div>
+                  <div style={{ fontSize: '0.875rem', fontWeight: 700, color: 'var(--text)', marginBottom: '4px' }}>SoA (Structure of Arrays)</div>
                   <pre style={{ margin: 0, fontSize: '0.75rem' }}>
                     {`float[] xs = new float[N];
 float[] ys = new float[N];
@@ -686,7 +686,7 @@ float[] vxs = new float[N];`}
             </div>
 
             {/* Memory Mapped Files */}
-            <div style={{
+            <div id="research-memory-mmf" tabIndex={-1} style={{
               padding: '28px',
               background: 'var(--bg-elev)',
               borderRadius: '20px',
@@ -990,7 +990,7 @@ ulong restored = Bmi2.X64.ParallelBitDeposit(bits, mask);`}
             </div>
 
             {/* Network bandwidth & Bluetooth SPP */}
-            <div style={{
+            <div id="research-serialization-bandwidth" tabIndex={-1} style={{
               padding: '28px',
               background: 'var(--bg-elev)',
               borderRadius: '20px',
@@ -1111,7 +1111,7 @@ ulong restored = Bmi2.X64.ParallelBitDeposit(bits, mask);`}
             </div>
 
             {/* AI agentic workflows */}
-            <div style={{
+            <div id="research-ai-verification" tabIndex={-1} style={{
               padding: '28px',
               background: 'var(--bg-elev)',
               borderRadius: '20px',
@@ -1123,20 +1123,20 @@ ulong restored = Bmi2.X64.ParallelBitDeposit(bits, mask);`}
             }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
                 <h3 style={{ fontSize: '1.25rem', fontWeight: 700, margin: 0, color: 'var(--text)' }}>
-                  생성형 AI 기반 개발 및 검증 실험
+                  LLM 기반 개발 및 검증 실험
                 </h3>
                 <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--accent, #6366f1)', border: '1px solid var(--border)', borderRadius: '99px', padding: '3px 10px', background: 'var(--bg-elev-2)' }}>
-                  AI Orchestration
+                  LLM Orchestration
                 </span>
               </div>
               <p style={{ margin: 0, fontSize: '0.95rem', lineHeight: 1.6, color: 'var(--text-dim)', wordBreak: 'keep-all' }}>
                 로컬 경량 LLM(Gemma, Llama) 실행 환경과 클라우드 기반 모델 연동을 구성하고, 대형 언어 모델을 개발·검증 과정에 활용하는 방법을 실험했습니다.
               </p>
-              <AskAiButton align="end" question="「생성형 AI 기반 개발 및 검증 실험」에서 AI에 맡긴 역할과 사람이 검증한 범위를 설명해 주세요." />
+              <AskAiButton align="end" question="「LLM 기반 개발 및 검증 실험」에서 모델에 맡긴 역할과 사람이 검증한 범위를 설명해 주세요." />
 
               <ul style={{ paddingLeft: '20px', margin: 0, color: 'var(--text-dim)', lineHeight: 1.7, fontSize: '0.95rem' }}>
-                <li><strong>단위 테스트 생성 및 검증</strong>: 저수준 최적화 및 BCL 함수의 경계 조건을 대상으로, 생성형 AI 프롬프트 체인을 활용해 단위 테스트(Unit Test)를 생성하고 검증하는 절차를 구성했습니다.</li>
-                <li><strong>에이전트 역할 분담</strong>: Claude Code 등의 터미널 기반 AI 도구를 활용해 성능 병목 분석을 위한 가설 수립 ➔ 테스트 코드 생성 ➔ 벤치마크 측정 ➔ 결과에 따른 리팩터링을 반복하는 개발 절차를 운영했습니다.</li>
+                <li><strong>단위 테스트 생성 및 검증</strong>: 저수준 최적화 및 BCL 함수의 경계 조건을 대상으로, LLM 프롬프트 체인을 활용해 단위 테스트(Unit Test)를 생성하고 검증하는 절차를 구성했습니다.</li>
+                <li><strong>에이전트 역할 분담</strong>: Claude Code 등의 터미널 기반 SI 도구를 활용해 성능 병목 분석을 위한 가설 수립 ➔ 테스트 코드 생성 ➔ 벤치마크 측정 ➔ 결과에 따른 리팩터링을 반복하는 개발 절차를 운영했습니다.</li>
               </ul>
             </div>
 

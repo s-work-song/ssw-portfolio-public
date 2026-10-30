@@ -251,7 +251,7 @@ test('그록봇은 세 기기에서 합쳐진 단일 앱 접속 선으로 연결
     assert.ok(environmentGrokGroup.sourceRouteIds.every(id => drawing.routes.some(route => route.id === id)));
     assert.equal(drawing.routes.some(route => route.id === 'shared-grok'), false);
   }
-  assert.match(environmentDiagramNotes.join(' '), /그록봇 앱 접속은 세 기기의 선이 합쳐진 뒤 한 줄/u);
+  assert.match(environmentDiagramNotes.join(' '), /그록봇 앱 접속선은 오른쪽 합류선에서 따로 내려옵니다/u);
 });
 
 test('소유·접속 영역의 제목은 모두 오른쪽 위로 정렬한다', () => {
@@ -340,8 +340,9 @@ test('영역 경계와 서비스 분기선 사이에 세로 여유를 두고 LAN
 
 test('세 기기의 서비스 이용선은 내 기기 안에서 합치고 접속 수단과 그록봇으로 따로 내보낸다', () => {
   assert.deepEqual(environmentServiceGroup.clients, ['Home', 'Laptop', 'Android']);
-  assert.match(environmentDiagramNotes.join(' '), /내 기기 영역 안에서 세 기기의 선을 합친 뒤/u);
-  assert.match(environmentDiagramNotes.join(' '), /아래쪽에서 접속 수단의 분기선과 연결하지 않습니다/u);
+  // 설명은 2~3문장으로 줄였다. 합류 뒤 접속 수단과 그록봇 선이 따로 나간다는 요지만 고정한다.
+  assert.match(environmentDiagramNotes.join(' '), /세 기기의 선은 내 기기 영역에서 합쳐진 뒤 Cloudflare Tunnel·Codex 쪽으로 갈라지고/u);
+  assert.match(environmentDiagramNotes.join(' '), /그록봇 앱 접속선은 오른쪽 합류선에서 따로 내려옵니다/u);
   for (const layout of ['desktop', 'mobile']) {
     const drawing = environmentLayouts[layout];
     const personal = environmentGroups.find(group => group.id === 'personal')[layout];

@@ -3,7 +3,7 @@ import styles from './ArchitecturePreview.module.css';
 
 export default function ArchitecturePreview() {
   return (
-    <section id="architecture-preview" className={styles.preview} aria-labelledby="architecture-preview-title">
+    <section id="architecture-preview" tabIndex={-1} className={styles.preview} aria-labelledby="architecture-preview-title">
       <p className={styles.eyebrow}>DEVELOPMENT &amp; DEPLOYMENT</p>
       <h3 id="architecture-preview-title">개발·배포 환경 구성</h3>
       <p className={styles.intro}>

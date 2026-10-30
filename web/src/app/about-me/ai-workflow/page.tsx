@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { aiWorkflowStages } from '@/features/ai-workflow/data/aiWorkflow';
+import { aiWorkflowLearning, aiWorkflowStages } from '@/features/ai-workflow/data/aiWorkflow';
 import WorkflowStageTabs from '../../../features/ai-workflow/ui/WorkflowStageTabs';
 import WorkflowStageContent from '../../../features/ai-workflow/ui/WorkflowStageContent';
 import styles from './AiWorkflow.module.css';
@@ -41,6 +41,43 @@ export default function AiWorkflowPage() {
         <h3 id="workflow-try-title">정답은 하나가 아닙니다</h3>
         <p>더 높은 단계나 더 많은 도구가 항상 더 좋은 결과를 뜻하지는 않습니다. 작업의 성격과 복잡도, 팀의 환경, 검토에 드는 노력을 함께 고려해 상황에 맞는 활용 방식을 고르는 것이 중요합니다.</p>
       </aside>
+
+      {/* 단계 구분과 별개인 내용이라 단계 이야기를 마무리 카드까지 끝낸 뒤에 둔다. */}
+      <section className={styles.learning} id="ai-workflow-learning" aria-labelledby="workflow-learning-title" tabIndex={-1}>
+        <p className={styles.eyebrow}>LEARN WITH SI</p>
+        <h3 id="workflow-learning-title">{aiWorkflowLearning.title}</h3>
+        <p className={styles.learningIntro}>{aiWorkflowLearning.intro}</p>
+        <ul className={styles.learningPractices}>
+          {aiWorkflowLearning.practices.map(({ title, description }) => (
+            <li key={title}>
+              <strong>{title}</strong>
+              <span>{description}</span>
+            </li>
+          ))}
+        </ul>
+        <h4 className={styles.learningExamplesTitle}>{aiWorkflowLearning.examplesTitle}</h4>
+        <div className={styles.learningExamples}>
+          {aiWorkflowLearning.examples.map((example) => (
+            <article key={example.mode} className={styles.learningExample}>
+              <p className={styles.learningMode}>
+                {example.mode} <span>· {example.stages}</span>
+              </p>
+              <h5>{example.title}</h5>
+              <p className={styles.learningExampleDescription}>{example.description}</p>
+              <ol className={styles.learningSteps}>
+                {example.steps.map((step) => <li key={step}>{step}</li>)}
+              </ol>
+              {example.repeats && <p className={styles.learningRepeat}><span aria-hidden="true">↻</span> 이 과정을 반복합니다.</p>}
+              {example.relatedLink && (
+                <Link className={styles.captureLink} href={example.relatedLink.href}>
+                  {example.relatedLink.label} <span aria-hidden="true">→</span>
+                </Link>
+              )}
+            </article>
+          ))}
+        </div>
+        <p className={styles.learningClosing}>{aiWorkflowLearning.closing}</p>
+      </section>
 
       <section className={styles.nextSection} aria-labelledby="workflow-next-title">
         <h3 id="workflow-next-title">관련 개발 기록 및 회고</h3>

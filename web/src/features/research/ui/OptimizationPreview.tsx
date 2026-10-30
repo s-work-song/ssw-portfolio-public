@@ -12,7 +12,7 @@ const optimizationHighlights = [
     href: ACTION_ROUTES.research_cpu,
     title: '분기 예측과 SIMD 벡터화',
     metric: '5,341 μs → 37 μs',
-    note: '1M 바이트 범위 합산 · AVX2 SIMD 단독 약 143배',
+    note: '1 MiB 범위 합산 · AVX2 SIMD 단독 약 143배',
   },
   {
     tab: 'memory',
@@ -33,7 +33,7 @@ const optimizationHighlights = [
 /** 연구 페이지 성능 최적화 탭의 진입점이다. 카드는 각 하위 탭으로 바로 이동한다. */
 export default function OptimizationPreview() {
   return (
-    <section id="optimization-preview" className={styles.preview} aria-labelledby="optimization-preview-title">
+    <section id="optimization-preview" tabIndex={-1} className={styles.preview} aria-labelledby="optimization-preview-title">
       <p className={styles.eyebrow}>PERFORMANCE OPTIMIZATION</p>
       <h3 id="optimization-preview-title">성능 최적화 연구</h3>
       <p className={styles.intro}>
