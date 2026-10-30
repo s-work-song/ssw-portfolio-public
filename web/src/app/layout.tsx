@@ -11,13 +11,26 @@ import { ChatProvider } from "../features/chat";
 import { ChatApiPreconnect } from "./ChatApiPreconnect";
 import { PortfolioWebMcp } from "../features/webmcp/PortfolioWebMcp";
 
+/**
+ * 링크 미리보기 이미지는 같은 폴더의 opengraph-image.png 파일 규칙으로 붙는다.
+ * 이미지 경로에는 Next가 basePath를 이미 넣으므로 metadataBase는 출처(origin)만 둔다.
+ */
 export const metadata: Metadata = {
+  metadataBase: new URL("https://s-work-song.github.io"),
   title: {
     default: "SSW 소개페이지",
     template: "SSW 소개페이지",
   },
   description:
     "컴퓨팅 스택의 원리를 탐구하고 측정 가능한 개선을 제품으로 연결하는 소프트웨어 엔지니어 송상운의 포트폴리오입니다.",
+  openGraph: {
+    type: "website",
+    siteName: "SSW 소개페이지",
+    locale: "ko_KR",
+  },
+  twitter: {
+    card: "summary_large_image",
+  },
 };
 
 /**
