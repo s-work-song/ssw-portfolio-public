@@ -718,3 +718,14 @@ test('둘러보기는 SI 05단계 다음에 학습 섹션을 들른 뒤 기록�
   assert.ok(ACTION_IDS.includes('si_learning'));
   assert.equal(ACTION_ROUTES.si_learning, '/about-me/ai-workflow#ai-workflow-learning');
 });
+
+test('채팅의 화면 이동 도구도 학습 섹션을 목적지로 받는다', async () => {
+  const { ACTION_ROUTES } = await import('../../../../src/features/chat/constants.ts');
+  const { resolvePortfolioViewTarget } = await import('../../../../src/features/webmcp/portfolioView.ts');
+  const { PORTFOLIO_CHAT_TOOL_REGISTRY } = await import('../../../../src/features/portfolio-tools/schema.ts');
+  const view = PORTFOLIO_CHAT_TOOL_REGISTRY.definitions.find(({ name }) => name === 'control_portfolio_view');
+  assert.ok(view.inputSchema.properties.action.enum.includes('si-learning'));
+  const target = resolvePortfolioViewTarget('si-learning');
+  assert.equal(target.route, ACTION_ROUTES.si_learning);
+  assert.equal(target.label, 'SI 활용 · 배우는 데 쓰기');
+});

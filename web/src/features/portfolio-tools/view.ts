@@ -16,7 +16,7 @@ export const PORTFOLIO_VIEW_ACTIONS = [
   'research-2024', 'research-2025', 'research-2026', 'log',
   'architecture', 'development-environment', 'deployment-overview', 'migration-memory-history',
   'infrastructure-optimization', 'si-levels', 'si-level-chat', 'si-level-read-only',
-  'si-level-implementation', 'si-level-tools', 'si-level-orchestration',
+  'si-level-implementation', 'si-level-tools', 'si-level-orchestration', 'si-learning',
   'si-tools-ffmpeg', 'si-session-messaging',
   'past-work-archive', 'ai-collaboration-projects', 'archive-canvas-dodge-game',
   'archive-wpf-excel-row-mapper', 'archive-android-ar-campfire',
@@ -64,7 +64,7 @@ export const portfolioViewControlInput: InputDefinition<PortfolioViewControlInpu
   schema: enumObjectSchema({
     action: {
       values: PORTFOLIO_VIEW_ACTIONS,
-      description: '화면 이동 전용. 연구 경험 성능 최적화 탭의 research-optimization은 최적화 개요, research-cpu는 CPU & SIMD, research-memory는 메모리 & 파일 I/O, research-serialization은 직렬화 & 전송. research-chatbot-architecture는 도구 & SI 접목 탭의 오픈웨이트 모델 챗봇 구조 실험 카드. architecture는 개발·배포 환경, development-environment는 개발 환경, deployment-overview는 배포 구성, infrastructure-optimization은 인프라 최적화, migration-memory-history는 공용 인프라의 Rust 전환 메모리 비교(연구의 메모리 최적화가 아님). 번호 없는 SI 활용 단계 소개는 si-levels, 명시한 01~05단계만 si-level-*, si-tools-ffmpeg는 컨택트 시트, si-session-messaging은 대표 세션 협업 사례. agent-experiments는 SI 실험 소개, agent-experiments-*는 7분류, agent-experiment-*는 공개 개별 실험 소개 카드다. 외부 게임 실행이나 음원 재생은 하지 않는다. research-2011은 학창 시절 연구 경험. 상세 펼침·접기는 control_portfolio_research_details를 사용한다.',
+      description: '화면 이동 전용. 연구 경험 성능 최적화 탭의 research-optimization은 최적화 개요, research-cpu는 CPU & SIMD, research-memory는 메모리 & 파일 I/O, research-serialization은 직렬화 & 전송. research-chatbot-architecture는 도구 & SI 접목 탭의 오픈웨이트 모델 챗봇 구조 실험 카드. architecture는 개발·배포 환경, development-environment는 개발 환경, deployment-overview는 배포 구성, infrastructure-optimization은 인프라 최적화, migration-memory-history는 공용 인프라의 Rust 전환 메모리 비교(연구의 메모리 최적화가 아님). 번호 없는 SI 활용 단계 소개는 si-levels, 명시한 01~05단계만 si-level-*, si-learning은 단계와 별개인 SI 학습 활용(배우는 데 쓰기) 섹션, si-tools-ffmpeg는 컨택트 시트, si-session-messaging은 대표 세션 협업 사례. agent-experiments는 SI 실험 소개, agent-experiments-*는 7분류, agent-experiment-*는 공개 개별 실험 소개 카드다. 외부 게임 실행이나 음원 재생은 하지 않는다. research-2011은 학창 시절 연구 경험. 상세 펼침·접기는 control_portfolio_research_details를 사용한다.',
     },
   }, ['action']),
   parse(input) {

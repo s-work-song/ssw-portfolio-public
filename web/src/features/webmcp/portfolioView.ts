@@ -278,6 +278,10 @@ const VIEW_TARGETS: Readonly<Record<PortfolioViewAction, PortfolioViewTarget>> =
     action: 'si-level-orchestration', route: ACTION_ROUTES.si_level_orchestration,
     label: 'SI 활용 05단계 · 여러 에이전트 협업 조율', message: 'SI 활용 05단계 · 여러 에이전트 협업 조율로 이동을 시작했습니다.',
   },
+  'si-learning': {
+    action: 'si-learning', route: ACTION_ROUTES.si_learning,
+    label: 'SI 활용 · 배우는 데 쓰기', message: 'SI 활용 · 배우는 데 쓰기로 이동을 시작했습니다.',
+  },
   'si-tools-ffmpeg': {
     action: 'si-tools-ffmpeg', route: ACTION_ROUTES.si_tools_ffmpeg,
     label: 'FFmpeg·컨택트 시트 활용 사례', message: 'FFmpeg·컨택트 시트 활용 사례로 이동을 시작했습니다.',
