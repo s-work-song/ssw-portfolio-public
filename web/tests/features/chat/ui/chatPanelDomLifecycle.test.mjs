@@ -31,6 +31,21 @@ function effectRunner(marker) {
   };
 }
 
+/** 실제 Widget의 useCallback 본문을 꺼내 주어진 값으로 묶는다. */
+function callbackOf(marker, context) {
+  let selected;
+  function visit(node) {
+    if (ts.isCallExpression(node) && node.expression.getText(ast) === 'useCallback'
+      && node.arguments[0]?.getText(ast).includes(marker)) selected = node;
+    ts.forEachChild(node, visit);
+  }
+  visit(ast); assert.ok(selected, marker);
+  const code = ts.transpileModule(`const selected = ${selected.arguments[0].getText(ast)};`, { compilerOptions: {
+    target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS,
+  } }).outputText;
+  return new Function(...Object.keys(context), `${code}\nreturn selected;`)(...Object.values(context));
+}
+
 function environment() {
   let sequence = 0;
   const frames = new Map(); const timers = new Map(); const listeners = new Map();
@@ -90,6 +105,7 @@ test('새 목록 DOM은 열림 여부가 같아도 바닥 고정을 초기화하
   const calls = []; const nextList = {};
   const context = { isOpen: true, error: null, isLoading: false, messages: [], lastMessageLength: 0, panelGeneration: 1,
     wasOpenForScrollRef: { current: true }, scrollPanelGenerationRef: { current: 1 }, isBottomPinnedRef: { current: false },
+    userMessageCount: 0, userMessageCountRef: { current: 0 }, lastListScrollTopRef: { current: 0 }, messageListRef: { current: null },
     schedulePinnedScroll: () => calls.push(nextList),
   };
   const runner = effectRunner('const justOpened ='); runner.render(context); assert.equal(calls.length, 0);
@@ -97,6 +113,38 @@ test('새 목록 DOM은 열림 여부가 같아도 바닥 고정을 초기화하
   assert.equal(context.isBottomPinnedRef.current, true); assert.deepEqual(calls, [nextList]);
   context.isBottomPinnedRef.current = false; context.lastMessageLength++;
   runner.render(context); assert.equal(context.isBottomPinnedRef.current, false); assert.equal(calls.length, 1);
+  context.userMessageCount++; context.messages = [{}]; runner.render(context);
+  assert.equal(context.isBottomPinnedRef.current, true, '새 질문을 보내면 다시 바닥에 붙는다'); assert.equal(calls.length, 2);
+});
+
+test('목록을 위로 움직이면 문턱 안쪽이어도 바닥 고정을 풀고, 내용이 줄어 깎인 scrollTop은 풀지 않는다', () => {
+  let cancels = 0; const list = { scrollHeight: 1000, clientHeight: 100, scrollTop: 900 };
+  const context = { messageListRef: { current: list }, lastListScrollTopRef: { current: 0 }, isBottomPinnedRef: { current: true },
+    preservePinUntilRef: { current: 0 }, cancelPinnedScroll: () => cancels++, BOTTOM_PIN_THRESHOLD_PX: 64 };
+  const onScroll = callbackOf('const movedUp =', context);
+  onScroll(); assert.equal(context.isBottomPinnedRef.current, true);
+  list.scrollTop = 880; onScroll(); assert.equal(context.isBottomPinnedRef.current, false); assert.equal(cancels, 1);
+  list.scrollTop = 890; onScroll(); assert.equal(context.isBottomPinnedRef.current, true, '바닥 근처로 내려오면 다시 고정');
+  list.scrollHeight = 950; list.scrollTop = 850; onScroll(); assert.equal(context.isBottomPinnedRef.current, true);
+});
+
+test('휠을 위로 굴리거나 손가락을 아래로 끌면 scroll 이벤트 전에 고정을 풀고, 맨 위에서는 풀지 않는다', () => {
+  const list = { scrollTop: 0 }; let intents = 0;
+  const context = { messageListRef: { current: list }, isBottomPinnedRef: { current: true }, handleUserScrollIntent: () => intents++ };
+  const release = callbackOf('list.scrollTop > 0', context);
+  release(); assert.equal(context.isBottomPinnedRef.current, true); assert.equal(intents, 1);
+  list.scrollTop = 300; release(); assert.equal(context.isBottomPinnedRef.current, false);
+
+  const seen = [];
+  const wheel = callbackOf('event.ctrlKey', { releasePinForUpwardScroll: () => seen.push('up'), handleUserScrollIntent: () => seen.push('intent') });
+  wheel({ deltaY: -40, ctrlKey: false }); wheel({ deltaY: 40, ctrlKey: false }); wheel({ deltaY: -40, ctrlKey: true });
+  assert.deepEqual(seen, ['up', 'intent', 'intent']);
+
+  let releases = 0;
+  const touchMove = callbackOf('TOUCH_SCROLL_UP_SLOP_PX', { touchStartYRef: { current: 100 }, TOUCH_SCROLL_UP_SLOP_PX: 6,
+    releasePinForUpwardScroll: () => releases++ });
+  touchMove({ touches: [{ clientY: 104 }] }); touchMove({ touches: [{ clientY: 60 }] }); assert.equal(releases, 0);
+  touchMove({ touches: [{ clientY: 130 }] }); assert.equal(releases, 1);
 });
 
 test('외부투어 스크롤은 이전 목록을 붙잡은 frame/timer를 취소하고 새 목록만 조정한다', () => {

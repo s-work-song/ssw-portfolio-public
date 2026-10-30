@@ -21,6 +21,8 @@ import {
   type FormEvent,
   type KeyboardEvent,
   type PointerEvent as ReactPointerEvent,
+  type TouchEvent,
+  type WheelEvent,
 } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -56,6 +58,8 @@ import styles from "./ChatWidget.module.css";
 const MOBILE_QUERY = "(max-width: 720px) and (pointer: coarse)";
 /** 목록 하단에서 이만큼 안쪽이면 "바닥을 보고 있다"고 판단한다. */
 const BOTTOM_PIN_THRESHOLD_PX = 64;
+/** 손가락을 이만큼 아래로 끌면 위로 올리려는 것으로 본다. 탭할 때의 떨림은 넘기지 않는다. */
+const TOUCH_SCROLL_UP_SLOP_PX = 6;
 /** 모바일 키보드가 뷰포트를 줄인 뒤 안정될 때까지 기다리는 시간이다. */
 const KEYBOARD_SETTLE_DELAY_MS = 220;
 /** 빠른 메뉴가 접히는 연출 길이다. 이후 DOM에서 제거한다. */
@@ -351,6 +355,9 @@ export function ChatWidget() {
   const firstPinFrameRef = useRef(0);
   const secondPinFrameRef = useRef(0);
   const pinSettleTimerRef = useRef(0);
+  const lastListScrollTopRef = useRef(0);
+  const touchStartYRef = useRef(0);
+  const userMessageCountRef = useRef(0);
   const quickMenuCloseTimerRef = useRef(0);
   const chatVm = useMemo(() => projectChatViewModel({
     messages, availability, guidedTourStatus: guidedTour.status, isLoading, retryWaitSeconds,
@@ -358,6 +365,7 @@ export function ChatWidget() {
   }), [messages, availability, guidedTour.status, isLoading, retryWaitSeconds,
     usedSuggestedQuestionKeys, error]);
   const { canSend, inputHistory, onboarding, lastMessageLength, streamingContentLength } = chatVm;
+  const userMessageCount = inputHistory.length;
   const { showCheckingScreen, showOfflineScreen, showOfflineBanner, composerVisible } = chatVm.availability;
   const {
     changeValue: changeDraft,
@@ -815,17 +823,28 @@ export function ChatWidget() {
    * 목록 스크롤을 보고 바닥 고정 여부를 갱신한다.
    * 키보드 전환처럼 우리가 일으킨 스크롤 동안에는(보존 기간) 판단을 미룬다.
    * 그 사이의 좌표로 판단하면 사용자가 올린 것으로 잘못 읽는다.
+   *
+   * 바닥 근처인지만 보면 문턱(64px) 안쪽으로 조금 올린 것은 고정으로 남아, 답변이
+   * 자랄 때마다 다시 끌려 내려간다. 그래서 위로 움직였으면 문턱 안쪽이어도 푼다.
+   * 답변이 짧아져 브라우저가 scrollTop을 깎은 경우는 여전히 바닥이라 풀지 않는다.
    */
   const handleMessageScroll = useCallback(() => {
+    const list = messageListRef.current;
+    if (!list) return;
+    const previousScrollTop = lastListScrollTopRef.current;
+    lastListScrollTopRef.current = list.scrollTop;
     if (
       isBottomPinnedRef.current &&
       Date.now() < preservePinUntilRef.current
     ) {
       return;
     }
-    isBottomPinnedRef.current = isMessageListNearBottom();
+    const distance = list.scrollHeight - list.scrollTop - list.clientHeight;
+    const movedUp = list.scrollTop < previousScrollTop - 1 && distance > 1;
+    isBottomPinnedRef.current =
+      !movedUp && distance <= BOTTOM_PIN_THRESHOLD_PX;
     if (!isBottomPinnedRef.current) cancelPinnedScroll();
-  }, [cancelPinnedScroll, isMessageListNearBottom]);
+  }, [cancelPinnedScroll]);
 
   /** 입력창에 포커스가 들어올 때, 키보드가 올라오기 전의 위치를 보존한다. */
   const handleInputFocus = useCallback(() => {
@@ -845,6 +864,47 @@ export function ChatWidget() {
     preservePinUntilRef.current = 0;
     cancelPinnedScroll();
   }, [cancelPinnedScroll]);
+
+  /**
+   * 사용자가 위로 올리기 시작하면 scroll 이벤트를 기다리지 않고 바닥 고정을 푼다.
+   * 답변이 자라는 동안에는 delta마다 바닥 맞춤이 다시 예약되어, 올리기 시작한 첫
+   * 몇 프레임 사이에 목록이 바닥으로 되돌아가고 브라우저의 부드러운 스크롤도 끊긴다.
+   * 이미 맨 위면 풀지 않는다. 짧은 대화에서 휠만 굴렸는데 고정이 풀리면 뒤이은
+   * 답변이 길어져도 따라 내려가지 않는다.
+   */
+  const releasePinForUpwardScroll = useCallback(() => {
+    handleUserScrollIntent();
+    const list = messageListRef.current;
+    if (list && list.scrollTop > 0) isBottomPinnedRef.current = false;
+  }, [handleUserScrollIntent]);
+
+  /** 휠을 위로 굴리면 고정을 푼다. Ctrl+휠은 화면 확대라 목록 스크롤이 아니다. */
+  const handleMessageWheel = useCallback(
+    (event: WheelEvent<HTMLDivElement>) => {
+      if (event.deltaY < 0 && !event.ctrlKey) releasePinForUpwardScroll();
+      else handleUserScrollIntent();
+    },
+    [handleUserScrollIntent, releasePinForUpwardScroll],
+  );
+
+  const handleMessageTouchStart = useCallback(
+    (event: TouchEvent<HTMLDivElement>) => {
+      touchStartYRef.current = event.touches[0]?.clientY ?? 0;
+      handleUserScrollIntent();
+    },
+    [handleUserScrollIntent],
+  );
+
+  /** 손가락을 아래로 끌면 목록은 위로 올라가므로 고정을 푼다. */
+  const handleMessageTouchMove = useCallback(
+    (event: TouchEvent<HTMLDivElement>) => {
+      const y = event.touches[0]?.clientY;
+      if (y !== undefined && y - touchStartYRef.current > TOUCH_SCROLL_UP_SLOP_PX) {
+        releasePinForUpwardScroll();
+      }
+    },
+    [releasePinForUpwardScroll],
+  );
 
   /** 키보드가 접히며 늘어난 영역만큼 다시 바닥으로 맞춘다. */
   const handleInputBlur = useCallback(() => {
@@ -955,10 +1015,17 @@ export function ChatWidget() {
   }, [availability, isClosing, isOpen, panelGeneration]);
 
   // 새 답변·오류가 생기거나 패널이 열릴 때 목록을 바닥에 붙인다.
+  // 방문자가 새 질문을 보냈으면 위로 올려 둔 상태여도 다시 붙인다. 보낸 질문과
+  // 답변이 시작되는 자리를 보여 줘야 한다.
   useLayoutEffect(() => {
     const justOpened = isOpen && (!wasOpenForScrollRef.current
       || scrollPanelGenerationRef.current !== panelGeneration);
-    if (justOpened) isBottomPinnedRef.current = true;
+    const sentQuestion = userMessageCount > userMessageCountRef.current;
+    userMessageCountRef.current = userMessageCount;
+    if (justOpened) {
+      lastListScrollTopRef.current = messageListRef.current?.scrollTop ?? 0;
+    }
+    if (justOpened || sentQuestion) isBottomPinnedRef.current = true;
     if (isOpen && isBottomPinnedRef.current) schedulePinnedScroll();
     wasOpenForScrollRef.current = isOpen;
     scrollPanelGenerationRef.current = panelGeneration;
@@ -972,6 +1039,7 @@ export function ChatWidget() {
     lastMessageLength,
     panelGeneration,
     schedulePinnedScroll,
+    userMessageCount,
   ]);
 
   // 고정 패널과 플로팅을 오가면 목록 폭이 바뀌어 줄바꿈과 전체 높이가 달라진다. 이때
@@ -1496,8 +1564,9 @@ export function ChatWidget() {
                 className={styles.body}
                 aria-busy={availability === "checking"}
                 onScroll={handleMessageScroll}
-                onTouchStart={handleUserScrollIntent}
-                onWheel={handleUserScrollIntent}
+                onTouchStart={handleMessageTouchStart}
+                onTouchMove={handleMessageTouchMove}
+                onWheel={handleMessageWheel}
               >
                 {showCheckingScreen ? (
                   <ChatAvailabilityCheckingScreen onStartGuidedTour={startGuidedTourFromChat} />
