@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import test from 'node:test';
+import test from 'node:test';
 import { readImageHeader } from '../../support/imageHeader.mjs';
 import { aboutArchiveProjects, aboutDestinations, aboutProjects } from '../../../src/features/overview/data/about.ts';
 import { openWeightExperiments } from '../../../src/features/experiments/data/openWeightExperiments.ts';
@@ -321,7 +321,8 @@ test('미세조정은 정규 교육이 아닌 SI 협업 독학 실험과 전문�
   assert.doesNotMatch(finetuning.learningContext.paragraphs.join(' '), /통제 실험|일요인 실험|OFAT|인과관계.*입증/u);
   assert.doesNotMatch(finetuning.desc, /정규 교육과정|전문지식|SI 에이전트와 함께/u);
   assert.match(finetuning.desc, /LoRA.*도구 호출을 학습/u);
-  assert.match(finetuning.desc, /현재 테스트와 적용은 이 포트폴리오 사이트의 채팅 챗봇에서 사용하는 도구 호출 기능에 한정/u);
+  assert.match(finetuning.desc, /현재 테스트와 적용은 이 포트폴리오 사이트의 채팅 챗봇에 한정/u);
+  assert.match(finetuning.desc, /검색해 답하는 메인 세션과.*작업 세션을 대상으로/u);
   assert.match(finetuning.desc, /테마·채팅 설정 변경, 페이지 이동/u);
   assert.equal(finetuning.desc.split('\n\n').length, 3);
   assert.match(finetuning.desc, /많은 컴퓨팅 자원과 시간.*비용/u);
@@ -365,52 +366,53 @@ test('미세조정 학습 배경 카드는 같은 탭에서 학습 관점 기록
   assert.match(css, /\.learningContextLink:focus-visible\s*\{/u);
 });
 
-test('도구 설명 축약은 문자 수 범위와 유지 항목 및 체감 관찰의 한계를 명시한다', () => {
+test('메인 지침 축약은 문자 수 범위와 유지 항목 및 기반 모델 관찰의 한계를 명시한다', () => {
   const finetuning = openWeightExperiments.find(({ id }) => id === 'project-open-weight-finetuning');
   const experiment = finetuning.experiment;
-  assert.equal(experiment.before, '이전 · 전체 도구 설명 제공');
-  assert.equal(experiment.after, '현재 · 도구 LoRA 사용 + 축약 설명 제공');
-  assert.equal(experiment.result, '5,669자 → 4,310자 · 1,359자 감소 (24.0%)');
-  assert.equal(5669 - 4310, 1359);
-  assert.equal(((5669 - 4310) / 5669 * 100).toFixed(1), '24.0');
-  assert.match(experiment.scope, /동일한 11개 도구.*이름·설명·인자.*JSON.*문자 수/u);
+  assert.equal(experiment.title, '실험 예시 · 메인 지침 축약');
+  assert.equal(experiment.before, '이전 · 기반 모델용 전체 지침');
+  assert.equal(experiment.after, '현재 · 메인 LoRA용 간결 지침');
+  assert.equal(experiment.result, '11,339자 → 1,562자 · 9,777자 감소 (86.2%)');
+  assert.equal(11339 - 1562, 9777);
+  assert.equal(((11339 - 1562) / 11339 * 100).toFixed(1), '86.2');
+  assert.match(experiment.scope, /메인 세션 시스템 지침의 문자 수/u);
+  assert.match(experiment.scope, /86자 상기 문구는 포함하지 않았고/u);
   assert.match(experiment.scope, /전체 입력 토큰의 감소율은 아닙니다/u);
-  assert.match(experiment.retained, /시스템 지침·도구명·인자 구조.*실행 전후 검증/u);
-  assert.equal(experiment.observation, '사용 체감상 기능 수행 품질은 유사하고 응답은 비슷하거나 더 빠르게 느껴졌습니다. 품질·응답 시간의 정량 비교는 수행하지 않았습니다.');
-  assert.match(experiment.limitation, /같은 도구 LoRA.*LoRA 단독의 효과를 입증한 결과는 아닙니다/u);
+  assert.match(experiment.retained, /고정 답변 문장, 도구 정의와 실행 전후 검증/u);
+  assert.match(experiment.observation, /기반 모델에 간결 지침만 주면.*검색하는 경우가 크게 줄었습니다/u);
+  assert.match(experiment.limitation, /LoRA를 적용한 뒤의 품질은 아직 검증 중입니다/u);
   assert.doesNotMatch(JSON.stringify(finetuning), /https?:\/\/|localhost|127\.0\.0\.1|192\.168\.|[A-Z]:[\\/]|정책 LoRA|품질 향상|속도 개선/u);
 });
 
-test('학습 데이터 예시는 작업 세션의 지시·호출·결과·보고로 된 네 예시만 표시한다', async () => {
+test('학습 데이터 예시는 메인 세션의 질문·호출·결과·답변으로 된 두 예시만 표시한다', async () => {
   const data = openWeightExperiments.find(({ id }) => id === 'project-open-weight-finetuning').trainingExamples;
-  assert.deepEqual(data.items.map(({ title, instruction, steps }) => ({ title, instruction, calls: steps.map(({ call }) => call) })), [
-    { title: '테마 변경', instruction: '다크 모드로 바꿔 줘',
-      calls: [{ name: 'set_portfolio_theme', arguments: { theme: 'dark' } }] },
-    { title: '상대 날짜로 연구 이동', instruction: '작년 연구로 이동',
-      calls: [{ name: 'get_current_datetime', arguments: {} },
-        { name: 'control_portfolio_view', arguments: { action: 'research-2025' } }] },
-    { title: '값 없는 설정 변경', instruction: '포인트 색상 바꿔 줘',
-      calls: [{ name: 'choose_portfolio_setting', arguments: { setting: 'accent' } }] },
-    { title: '이어지는 위임 · 되돌리기', instruction: '원래대로',
-      calls: [{ name: 'set_portfolio_theme', arguments: { theme: 'light' } }] },
+  assert.deepEqual(data.items.map(({ title, question, steps }) => ({ title, question, calls: steps.map(({ call }) => call) })), [
+    { title: '일반 질문 · 검색 후 답변', question: '연구 경험 한 줄 요약해줘',
+      calls: [{ name: 'search_portfolio', arguments: { query: '연구 경험 요약' } }] },
+    { title: '화면 조작 요청 · 작업 세션 위임', question: '작년 연구로 가고 다크 모드로 바꿔줘',
+      calls: [{ name: 'site_task', arguments: { instruction: '작년 연구로 이동하고 다크 모드로 바꿔 줘' } }] },
   ]);
-  assert.equal(new Set(data.items.map(({ id }) => id)).size, 4);
-  // 예시의 호출은 실제 채팅 도구 계약을 통과해야 한다. 서버 시계는 브라우저 도구가 아니다.
+  assert.equal(new Set(data.items.map(({ id }) => id)).size, 2);
+  const [general, screen] = data.items;
+  assert.equal(general.steps[0].result.ok, true);
+  assert.ok(general.steps[0].result.results.every(({ section, content }) => section && content));
+  // 작업 세션이 실제로 부른 화면 도구는 채팅 도구 계약을 통과해야 한다. 서버 시계는 브라우저 도구가 아니다.
   const { PORTFOLIO_CHAT_TOOLS } = await import('../../../src/features/portfolio-tools/schema.ts');
-  for (const { history = [], steps } of data.items) {
-    for (const { call } of [...history, ...steps]) {
-      if (call.name === 'get_current_datetime') continue;
-      assert.doesNotThrow(() => PORTFOLIO_CHAT_TOOLS[call.name].parse(call.arguments), call.name);
-    }
+  const delegated = screen.steps[0].result;
+  assert.equal(delegated.status, 'completed');
+  for (const action of delegated.actions) {
+    assert.equal(action.ok, true);
+    if (action.tool === 'get_current_datetime') continue;
+    assert.doesNotThrow(() => PORTFOLIO_CHAT_TOOLS[action.tool].parse(action.arguments), action.tool);
   }
-  const revert = data.items[3];
-  assert.equal(revert.history[0].result.previous, revert.steps[0].call.arguments.theme);
   for (const item of data.items) {
-    assert.deepEqual(Object.keys(item).filter((key) => key !== 'history').sort(),
-      ['id', 'instruction', 'intent', 'report', 'steps', 'title']);
-    assert.ok(item.steps.every(({ result }) => result.ok === true));
-    assert.match(item.report, /니다\.$/u);
+    assert.deepEqual(Object.keys(item).filter((key) => key !== 'note').sort(), ['answer', 'id', 'intent', 'question', 'steps', 'title']);
+    assert.match(item.answer, /니다\.$/u);
   }
+  // 상대 날짜 예시는 기록 시점을 강조 문장으로 밝히고, 서버 시계 결과도 같은 연도를 보여 준다.
+  assert.equal(screen.note, '이 예시는 2026년 기준이라 2025년입니다.');
+  assert.deepEqual(delegated.actions[0].observed, { year: 2026, relativeYears: { 작년: 2025 } });
+  assert.equal(general.note, undefined);
   assert.match(data.description, /학습 데이터 예시/u);
   assert.doesNotMatch(JSON.stringify(data), /주십시오|소개용|재구성|실제 학습에 사용한/u);
   assert.match(data.description, /방문자 대화 기록이 아니며/u);
@@ -426,7 +428,7 @@ test('학습 데이터 예시는 작업 세션의 지시·호출·결과·보고
   assert.doesNotMatch(cards, /dangerouslySetInnerHTML/u);
 });
 
-test('학습 예시의 지시·도구 호출·보고·설명은 두 열에서 줄바꿈과 무관하게 고정 높이를 유지한다', async () => {
+test('학습 예시의 질문·도구 호출·답변·설명은 두 열에서 줄바꿈과 무관하게 고정 높이를 유지한다', async () => {
   const cards = await readFile(new URL('../../../src/features/projects/ui/ProjectCardGrid.tsx', import.meta.url), 'utf8');
   const css = await readFile(new URL('../../../src/features/projects/ui/ProjectCardGrid.module.css', import.meta.url), 'utf8');
   assert.match(css, /\.trainingGrid\s*\{[^}]*grid-template-columns: repeat\(2, minmax\(0, 1fr\)\);/u);
@@ -444,12 +446,11 @@ test('학습 예시의 지시·도구 호출·보고·설명은 두 열에서 �
 test('학습 예시 JSON은 읽기 쉬운 글꼴로 확대하고 긴 줄도 카드 안에서 줄바꿈한다', async () => {
   const cards = await readFile(new URL('../../../src/features/projects/ui/ProjectCardGrid.tsx', import.meta.url), 'utf8');
   const css = await readFile(new URL('../../../src/features/projects/ui/ProjectCardGrid.module.css', import.meta.url), 'utf8');
-  // 압축 JSON은 공백이 없어 토큰 중간에서 끊기므로, 최상위 키마다 줄을 나누고 `:`·`,` 뒤를 띄운다.
-  assert.match(cards, /entries\.join\(',\\n '\)/u);
-  assert.match(cards, /\$\{JSON\.stringify\(key\)\}: \$\{inlineJson\(item\)\}/u);
-  assert.match(cards, /join\(', '\)/u);
-  assert.match(cards, /blockJson\(call\)/u);
-  assert.match(cards, /blockJson\(result\)/u);
+  // 검색 결과처럼 중첩된 JSON도 구조가 보이도록 키마다 줄을 나누고 두 칸씩 들여 쓴다.
+  assert.match(cards, /JSON\.stringify\(value, null, 2\)/u);
+  assert.match(cards, /prettyJson\(call\)/u);
+  assert.match(cards, /prettyJson\(result\)/u);
+  assert.doesNotMatch(cards, /inlineJson|blockJson/u);
   const pre = css.match(/\.trainingExample pre\s*\{([^}]*)\}/u)?.[1];
   assert.ok(pre);
   assert.match(pre, /padding: 12px 6px;/u);
@@ -462,7 +463,7 @@ test('학습 예시 JSON은 읽기 쉬운 글꼴로 확대하고 긴 줄도 카�
   assert.match(css, /\.trainingExample code\s*\{[^}]*font-size: inherit !important;/u);
 });
 
-test('학습 데이터 제목·설명·네 예시를 하나의 바깥 카드로 묶는다', async () => {
+test('학습 데이터 제목·설명·두 예시를 하나의 바깥 카드로 묶는다', async () => {
   const cards = await readFile(new URL('../../../src/features/projects/ui/ProjectCardGrid.tsx', import.meta.url), 'utf8');
   const css = await readFile(new URL('../../../src/features/projects/ui/ProjectCardGrid.module.css', import.meta.url), 'utf8');
   const section = cards.match(/<section className=\{styles\.training\}[\s\S]*?<\/section>/u)?.[0];

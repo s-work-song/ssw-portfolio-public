@@ -6,29 +6,17 @@ import styles from './ProjectCardGrid.module.css';
 
 type TrainingExample = NonNullable<AboutProject['trainingExamples']>['items'][number];
 
-/** 중첩 값은 한 줄로 두되 `:`와 `,` 뒤를 띄워, 칸이 좁으면 토큰 중간이 아닌 공백에서 줄이 바뀌게 한다. */
-function inlineJson(value: unknown): string {
-  if (Array.isArray(value)) return `[${value.map(inlineJson).join(', ')}]`;
-  if (value && typeof value === 'object') {
-    return `{${Object.entries(value).map(([key, item]) => `${JSON.stringify(key)}: ${inlineJson(item)}`).join(', ')}}`;
-  }
-  return JSON.stringify(value);
+/** 중첩된 키마다 줄을 나누고 두 칸씩 들여 써, 검색 결과처럼 깊은 JSON도 구조가 보이게 한다. */
+function prettyJson(value: Record<string, unknown>): string {
+  return JSON.stringify(value, null, 2);
 }
 
-/** 최상위 키마다 줄을 나눈다. 여는 괄호 줄에 첫 키를 붙여 완전히 펼친 JSON보다 줄 수를 줄인다. */
-function blockJson(value: Record<string, unknown>): string {
-  const entries = Object.entries(value).map(([key, item]) => `${JSON.stringify(key)}: ${inlineJson(item)}`);
-  return `{${entries.join(',\n ')}}`;
-}
-
-/** 이력·호출·결과를 학습 대화 순서대로 한 블록에 적는다. 호출만 정답이고 결과는 입력이다. */
-function trainingTranscript({ history = [], steps }: TrainingExample): string {
-  const lines = history.flatMap(({ call, result }) => [
-    '// 이력 · 앞선 위임', blockJson(call), blockJson(result), '',
-  ]);
+/** 호출·결과를 학습 대화 순서대로 한 블록에 적는다. 호출만 정답이고 결과는 입력이다. */
+function trainingTranscript({ steps }: TrainingExample): string {
+  const lines: string[] = [];
   steps.forEach(({ call, result }, index) => {
     const order = steps.length > 1 ? ` ${index + 1}` : '';
-    lines.push(`// 호출${order} · 정답`, blockJson(call), `// 결과${order} · 입력`, blockJson(result));
+    lines.push(`// 호출${order} · 정답`, prettyJson(call), `// 결과${order} · 입력`, prettyJson(result));
   });
   return lines.join('\n');
 }
@@ -97,14 +85,17 @@ export default function ProjectCardGrid({ projects }: { projects: AboutProject[]
                   <article className={styles.trainingExample} key={example.id} aria-labelledby={`${project.id}-${example.id}`}>
                     <h6 id={`${project.id}-${example.id}`}>{example.title}</h6>
                     <dl>
-                      <dt>작업 지시</dt>
-                      <dd className={styles.trainingRequest}>{example.instruction}</dd>
+                      <dt>방문자 질문</dt>
+                      <dd className={styles.trainingRequest}>{example.question}</dd>
                       <dt>도구 호출과 결과</dt>
                       <dd className={styles.trainingOutput}><pre tabIndex={0} aria-label={`${example.title} 도구 호출과 결과`}><code>{trainingTranscript(example)}</code></pre></dd>
-                      <dt>보고 · 학습용 정답</dt>
-                      <dd className={styles.trainingReport}>{example.report}</dd>
+                      <dt>답변 · 학습용 정답</dt>
+                      <dd className={styles.trainingReport}>{example.answer}</dd>
                       <dt>학습 의도</dt>
-                      <dd className={styles.trainingIntent}>{example.intent}</dd>
+                      <dd className={styles.trainingIntent}>
+                        {example.intent}
+                        {example.note && <strong className={styles.trainingNote}>{example.note}</strong>}
+                      </dd>
                     </dl>
                   </article>
                 ))}

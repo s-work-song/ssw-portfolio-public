@@ -118,7 +118,7 @@
   font-size: 0.9rem;
 }
 
-/* 예시 네 개가 화면 너비와 관계없이 2×2로 맞도록 열 수를 고정한다. */
+/* 넓은 화면에서는 두 예시를 나란히 두도록 열 수를 고정한다. */
 .trainingGrid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -163,14 +163,24 @@
   block-size: 22rem;
 }
 
+/* 메인 세션 답변은 검색 결과를 묶은 한두 문장이라 네 줄까지 둔다. */
 .trainingReport {
-  block-size: 3.3em;
+  block-size: 6.6em;
   overflow: auto;
 }
 
+/* 학습 의도 아래에 강조 문장이 한 줄 더 붙을 수 있어 다섯 줄까지 둔다. */
 .trainingIntent {
-  block-size: 6.6em;
+  block-size: 8.25em;
   overflow: auto;
+}
+
+/* 시점에 따라 값이 달라지는 예시처럼, 읽을 때 놓치면 안 되는 한 문장을 띄운다. */
+.trainingNote {
+  display: block;
+  margin-top: 4px;
+  color: var(--accent, #6366f1);
+  font-weight: 700;
 }
 
 .trainingExample pre {

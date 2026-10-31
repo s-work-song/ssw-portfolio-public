@@ -32,7 +32,7 @@ export interface AboutProjectLearningContext {
   relatedLog?: { slug: string; label: string };
 }
 
-/** 작업 세션의 도구 호출 한 번과 브라우저·서버가 돌려준 결과. 호출만 학습용 정답이다. */
+/** 메인 세션의 도구 호출 한 번과 서버가 돌려준 결과. 호출만 학습용 정답이다. */
 export interface AboutTrainingStep {
   call: { name: string; arguments: Record<string, string> };
   result: Record<string, unknown>;
@@ -43,12 +43,12 @@ export interface AboutTrainingExamples {
   items: {
     id: string;
     title: string;
-    /** 이어지는 위임에서 이력으로 남아 있는 앞선 호출과 결과. */
-    history?: AboutTrainingStep[];
-    instruction: string;
+    question: string;
     steps: AboutTrainingStep[];
-    report: string;
+    answer: string;
     intent: string;
+    /** 학습 의도 아래에 강조해 보일 한 문장. 시점에 따라 값이 달라지는 예시의 기준을 밝힐 때 쓴다. */
+    note?: string;
   }[];
 }
 
