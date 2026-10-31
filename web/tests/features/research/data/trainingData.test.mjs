@@ -34,9 +34,9 @@ test('학습 파일 한 줄은 실제 줄과 같은 메시지 순서로 줄여 �
   const { messages, tools } = trainingLineSkeleton;
   assert.deepEqual(messages.map(({ role }) => role), ['system', 'user', 'assistant', 'tool', 'assistant']);
   const [system, user, call, result, answer] = messages;
-  assert.match(system.content, /11,339자/u);
-  assert.match(user.content, /^연구 경험 한 줄 요약해줘\n\n/u);
-  assert.match(user.content, /86자/u);
+  assert.match(system.content, /간결 지침 1,625자/u);
+  // 간결 지침으로 만든 줄에는 방문자 메시지 끝의 검색 상기 문구가 붙지 않는다.
+  assert.equal(user.content, '연구 경험 한 줄 요약해줘');
   // 실제 줄처럼 호출 인자는 JSON 문자열이고, 결과는 같은 호출 ID로 이어진다.
   const [toolCall] = call.tool_calls;
   assert.equal(typeof toolCall.function.arguments, 'string');
@@ -46,13 +46,14 @@ test('학습 파일 한 줄은 실제 줄과 같은 메시지 순서로 줄여 �
   assert.ok(trainingExamples[0].answer.startsWith(answer.content.split(', …')[0]));
   for (const name of ['search_portfolio', 'site_task', 'get_current_datetime']) assert.match(tools[0], new RegExp(name, 'u'));
 
-  assert.deepEqual(trainingLineParts.map(({ label }) => label), ['시스템 지침', '도구 정의', '호출 ID', '검색 상기 문구', '앞선 대화', '도구 결과 전체', '인자 표기']);
+  assert.deepEqual(trainingLineParts.map(({ label }) => label), ['시스템 지침', '도구 정의', '호출 ID', '앞선 대화', '도구 결과 전체', '인자 표기']);
   const parts = Object.fromEntries(trainingLineParts.map(({ label, desc }) => [label, desc]));
-  assert.match(parts['시스템 지침'], /1차 학습 데이터는 기반 모델용 전체 지침\(11,339자\)/u);
+  assert.match(parts['시스템 지침'], /지금 쓰는 메인 LoRA는 간결 지침\(1,625자\)으로 만든 학습 데이터로 학습/u);
+  assert.doesNotMatch(JSON.stringify({ trainingLineParts, trainingLossNote }), /1차|2차|3차/u, '회차 이력은 카드에 쓰지 않는다');
   assert.match(parts['도구 정의'], /학습 정답에는 들어가지 않습니다/u);
   assert.match(parts['앞선 대화'], /정답에서 뺍니다\(weight 0\)/u);
   assert.match(trainingLossNote, /마지막 턴의 assistant 메시지/u);
-  assert.match(trainingLossNote, /298줄이 579행/u);
+  assert.match(trainingLossNote, /335줄이 667행/u);
 });
 
 test('학습 데이터 예시는 메인 세션의 질문·호출·결과·답변으로 된 두 예시만 표시한다', async () => {

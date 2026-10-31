@@ -1,6 +1,6 @@
 /**
  * 연구 경험 오픈웨이트 모델 실험 탭의 학습 데이터 형식·한 줄 구성·예시 콘텐츠다.
- * 표현 계층을 알지 않으며, 예시는 1차 학습 세트의 실제 줄에서 사람이 읽을 부분만 남겼다.
+ * 표현 계층을 알지 않으며, 예시는 지금 쓰는 메인 LoRA 학습 세트의 실제 줄에서 사람이 읽을 부분만 남겼다.
  */
 
 /** 미세조정 학습 데이터를 적는 대표 형식 하나. `shape`는 한 줄의 필드 모양만 보이는 자리표시다. */
@@ -89,8 +89,8 @@ export const trainingFormatChoice = {
 /** 예시 카드 "일반 질문"의 실제 학습 줄을 생략 표시와 함께 줄인 모양이다. */
 export const trainingLineSkeleton = {
   messages: [
-    { role: 'system', content: '… 메인 세션 시스템 지침 11,339자 …' },
-    { role: 'user', content: '연구 경험 한 줄 요약해줘\n\n… 검색 상기 문구 86자 …' },
+    { role: 'system', content: '… 메인 세션 간결 지침 1,625자 …' },
+    { role: 'user', content: '연구 경험 한 줄 요약해줘' },
     {
       role: 'assistant',
       content: '',
@@ -110,7 +110,7 @@ export const trainingLineParts: readonly TrainingLinePart[] = [
   {
     label: '시스템 지침',
     location: 'messages[0]',
-    desc: '모든 줄의 맨 앞에 같은 지침이 들어갑니다. 1차 학습 데이터는 기반 모델용 전체 지침(11,339자)으로 만들었고, 지금 쓰는 메인 LoRA는 간결 지침(1,625자)으로 만든 학습 데이터로 학습했습니다.',
+    desc: '모든 줄의 맨 앞에 같은 지침이 들어갑니다. 지금 쓰는 메인 LoRA는 간결 지침(1,625자)으로 만든 학습 데이터로 학습했고, 운영에서도 이 LoRA에는 같은 간결 지침을 보냅니다.',
   },
   {
     label: '도구 정의',
@@ -121,11 +121,6 @@ export const trainingLineParts: readonly TrainingLinePart[] = [
     label: '호출 ID',
     location: 'tool_calls[].id · tool_call_id',
     desc: '어떤 결과가 어떤 호출의 응답인지 잇는 값입니다.',
-  },
-  {
-    label: '검색 상기 문구',
-    location: '방문자 메시지 끝',
-    desc: '사실을 답하기 전에 새로 검색하라는 86자 문구가 운영과 같이 붙습니다.',
   },
   {
     label: '앞선 대화',
@@ -145,7 +140,7 @@ export const trainingLineParts: readonly TrainingLinePart[] = [
 ];
 
 export const trainingLossNote =
-  '정답, 곧 손실을 계산하는 부분은 마지막 턴의 assistant 메시지(도구 호출과 답변)입니다. 학습 도구는 행마다 마지막 assistant 메시지에만 손실을 걸기 때문에, 한 줄을 호출에서 끝나는 행과 답변에서 끝나는 행으로 펼쳐 넣었습니다. 1차 메인 학습 세트는 이렇게 298줄이 579행이 되었습니다.';
+  '정답, 곧 손실을 계산하는 부분은 마지막 턴의 assistant 메시지(도구 호출과 답변)입니다. 학습 도구는 행마다 마지막 assistant 메시지에만 손실을 걸기 때문에, 한 줄을 호출에서 끝나는 행과 답변에서 끝나는 행으로 펼쳐 넣었습니다. 메인 학습 세트는 이렇게 335줄이 667행이 되었습니다.';
 
 export const trainingExamplesDescription =
   '방문자 질문을 받은 메인 세션이 도구를 부르고, 돌아온 결과를 근거로 답하는 흐름으로 구성한 학습 데이터 예시입니다. 도구 호출과 답변은 모델의 실행 결과가 아닌 학습용 정답이고, 도구 결과는 정답이 아닌 입력입니다. 방문자 대화 기록이 아니며, 시스템 지침·도구 정의·호출 ID 등은 생략하고 도구 결과는 필요한 값만 남겼습니다.';

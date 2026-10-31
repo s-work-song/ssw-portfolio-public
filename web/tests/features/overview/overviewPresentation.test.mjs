@@ -301,7 +301,7 @@ test('오픈웨이트 실험은 독립 데이터로 이동하고 공통 카드 �
 test('파인튜닝은 빈 사진 영역 없이 표시하고 기존 런처·ComfyUI 이미지는 유지한다', async () => {
   const finetuning = openWeightExperiments.find(({ id }) => id === 'project-open-weight-finetuning');
   assert.equal(finetuning.gallery, undefined);
-  assert.equal(finetuning.status, '실험·학습 진행 중');
+  assert.equal(finetuning.status, '메인 세션 운영 적용');
   for (const id of ['project-colab-llm-launcher', 'project-colab-comfyui']) {
     assert.ok(openWeightExperiments.find((project) => project.id === id).gallery.images.length > 0);
   }
@@ -321,14 +321,18 @@ test('미세조정은 정규 교육이 아닌 SI 협업 독학 실험과 전문�
   assert.doesNotMatch(finetuning.learningContext.paragraphs.join(' '), /통제 실험|일요인 실험|OFAT|인과관계.*입증/u);
   assert.doesNotMatch(finetuning.desc, /정규 교육과정|전문지식|SI 에이전트와 함께/u);
   assert.match(finetuning.desc, /LoRA.*도구 호출을 학습/u);
-  assert.match(finetuning.desc, /현재 테스트와 적용은 이 포트폴리오 사이트의 채팅 챗봇에 한정/u);
-  assert.match(finetuning.desc, /검색해 답하는 메인 세션과.*작업 세션을 대상으로/u);
+  assert.match(finetuning.desc, /현재 적용 대상은 이 포트폴리오 사이트의 채팅 챗봇/u);
+  assert.match(finetuning.desc, /검색해 답하는 메인 세션은 학습한 LoRA와 간결 지침으로 운영/u);
   assert.match(finetuning.desc, /테마·채팅 설정 변경, 페이지 이동/u);
+  // 작업 세션에 어댑터를 쓰지 않는 이유는 회차 이야기 없이 득실로만 밝힌다.
+  assert.match(finetuning.desc, /작업 세션은 기반 모델을 그대로 씁니다/u);
+  assert.match(finetuning.desc, /도구 호출 정확도가 거의 같았던 반면.*GPU 메모리를 더 쓰기 때문/u);
+  assert.doesNotMatch(finetuning.desc, /1차|2차|3차/u);
   assert.equal(finetuning.desc.split('\n\n').length, 3);
   assert.match(finetuning.desc, /많은 컴퓨팅 자원과 시간.*비용/u);
   assert.match(finetuning.desc, /다양한 조건의 테스트를 충분히 반복하지는 못했으며/u);
   assert.match(finetuning.desc, /제한된 범위에서 확인한 실험 예시/u);
-  assert.match(finetuning.status, /실험·학습 진행 중/u);
+  assert.match(finetuning.status, /메인 세션 운영 적용/u);
 });
 
 test('학습 배경과 실험 방식은 본문과 실험 예시 사이의 독립 카드로 표시한다', async () => {
@@ -380,7 +384,9 @@ test('메인 지침 축약은 문자 수 범위와 유지 항목 및 기반 모�
   assert.match(experiment.scope, /전체 입력 토큰의 감소율은 아닙니다/u);
   assert.match(experiment.retained, /고정 답변 문장, 도구 정의와 실행 전후 검증/u);
   assert.match(experiment.observation, /기반 모델에 간결 지침만 주면.*검색하는 경우가 크게 줄었습니다/u);
-  assert.match(experiment.limitation, /LoRA를 적용한 뒤의 품질은 아직 검증 중입니다/u);
+  assert.match(experiment.limitation, /행동 평가\(평가 문장마다 3회\)를 통과해 메인 세션에 적용했습니다/u);
+  assert.match(experiment.limitation, /소개 검색을 건너뛰는 경우가 많아\(12회 중 11회\) 보완이 필요합니다/u);
+  assert.doesNotMatch(experiment.limitation, /검증 중/u);
   assert.doesNotMatch(JSON.stringify(finetuning), /https?:\/\/|localhost|127\.0\.0\.1|192\.168\.|[A-Z]:[\\/]|정책 LoRA|품질 향상|속도 개선/u);
 });
 
