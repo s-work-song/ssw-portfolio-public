@@ -140,9 +140,11 @@ test('챗봇 구조 실험은 GitHub 문서 대신 카드 안에서 흐름도와
   const text = chatbotArchitectureStages.flatMap((stage) => [...stage.details, stage.outcome.text]);
   for (const sentence of text) assert.match(sentence, /니다\.$/u, sentence);
   const joined = text.join('\n');
-  for (const phrase of ['분류용 모델을 따로 두지 않고', '자기 문맥 캐시', '지침 대부분을 가중치로 옮길 계획', '시스템 지침을 통째로 다시 넣었습니다']) {
+  for (const phrase of ['분류용 모델을 따로 두지 않고', '자기 문맥 캐시', '처음에 한 번만 넣고 끝까지 바꾸지 않습니다', '시스템 지침을 통째로 다시 넣었습니다']) {
     assert.ok(joined.includes(phrase), phrase);
   }
+  // 미세조정은 소개 페이지의 오픈웨이트 실험 카드에서만 다루고 구조 실험에는 넣지 않는다.
+  assert.doesNotMatch(joined, /LoRA|미세조정/u);
   for (const sentence of text) assert.ok(!card.includes(sentence), `요약과 중복: ${sentence}`);
 });
 
