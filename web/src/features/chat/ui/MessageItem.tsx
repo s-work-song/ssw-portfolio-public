@@ -36,10 +36,22 @@ type MarkdownRenderer = MarkdownModule["default"];
 type MarkdownComponents = NonNullable<
   Parameters<MarkdownRenderer>[0]["components"]
 >;
+type MarkdownPlugins = NonNullable<
+  Parameters<MarkdownRenderer>[0]["remarkPlugins"]
+>;
 
 /** 한 번 불러온 렌더러는 모듈에 남겨 두 번째 말풍선부터는 즉시 그린다. */
 let markdownRenderer: MarkdownRenderer | null = null;
 let markdownRequest: Promise<MarkdownRenderer> | null = null;
+/**
+ * 렌더러와 함께 불러오는 remark 플러그인이다.
+ *
+ * CommonMark는 닫는 `**` 앞이 괄호 같은 문장부호이고 뒤에 글자가 붙으면
+ * 강조를 닫지 않는다. 한국어 답변의 `**LoRA(저랭크 적응)**를`처럼 조사가
+ * 바로 붙는 경우 별표가 그대로 보이므로, CJK 글자 옆에서는 강조를 닫도록
+ * 규칙을 보완하는 플러그인을 쓴다.
+ */
+let markdownPlugins: MarkdownPlugins = [];
 
 /**
  * 마크다운 렌더러를 지연 로딩한다. 이미 불렀으면 같은 약속을 돌려준다.
@@ -49,8 +61,13 @@ let markdownRequest: Promise<MarkdownRenderer> | null = null;
  * 않게 호출한 쪽이 `void`로 흘려보낸다.
  */
 export function loadMarkdownRenderer(): Promise<MarkdownRenderer> {
-  markdownRequest ??= import("react-markdown").then(
-    (module) => {
+  markdownRequest ??= Promise.all([
+    import("react-markdown"),
+    import("remark-cjk-friendly"),
+  ]).then(
+    ([module, cjkFriendly]) => {
+      // 렌더러를 내보이기 전에 플러그인부터 채워, 첫 말풍선도 같은 규칙으로 그린다.
+      markdownPlugins = [cjkFriendly.default];
       markdownRenderer = module.default;
       return module.default;
     },
@@ -102,7 +119,7 @@ function MarkdownAnswer({ markdown }: Readonly<{ markdown: string }>) {
 
   if (!Renderer) return <p>{markdown}</p>;
   return (
-    <Renderer skipHtml components={MARKDOWN_COMPONENTS}>
+    <Renderer skipHtml remarkPlugins={markdownPlugins} components={MARKDOWN_COMPONENTS}>
       {markdown}
     </Renderer>
   );
