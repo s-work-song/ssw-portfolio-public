@@ -4,23 +4,6 @@ import ResearchLink from '@/features/research/ui/ResearchLink';
 import ProjectMediaCarousel from './ProjectMediaCarousel';
 import styles from './ProjectCardGrid.module.css';
 
-type TrainingExample = NonNullable<AboutProject['trainingExamples']>['items'][number];
-
-/** 중첩된 키마다 줄을 나누고 두 칸씩 들여 써, 검색 결과처럼 깊은 JSON도 구조가 보이게 한다. */
-function prettyJson(value: Record<string, unknown>): string {
-  return JSON.stringify(value, null, 2);
-}
-
-/** 호출·결과를 학습 대화 순서대로 한 블록에 적는다. 호출만 정답이고 결과는 입력이다. */
-function trainingTranscript({ steps }: TrainingExample): string {
-  const lines: string[] = [];
-  steps.forEach(({ call, result }, index) => {
-    const order = steps.length > 1 ? ` ${index + 1}` : '';
-    lines.push(`// 호출${order} · 정답`, prettyJson(call), `// 결과${order} · 입력`, prettyJson(result));
-  });
-  return lines.join('\n');
-}
-
 /** 프로젝트 카드의 미디어·공개 상태·링크를 두 소개 섹션에서 공유한다. */
 export default function ProjectCardGrid({ projects }: { projects: AboutProject[] }) {
   return (
@@ -74,32 +57,6 @@ export default function ProjectCardGrid({ projects }: { projects: AboutProject[]
                   <span aria-hidden="true">→</span>
                 </LogReadingLink>
               )}
-            </section>
-          )}
-          {project.trainingExamples && (
-            <section className={styles.training} aria-labelledby={`${project.id}-training-examples`}>
-              <h5 id={`${project.id}-training-examples`}>학습 데이터 예시</h5>
-              <p className={styles.trainingDescription}>{project.trainingExamples.description}</p>
-              <div className={styles.trainingGrid}>
-                {project.trainingExamples.items.map((example) => (
-                  <article className={styles.trainingExample} key={example.id} aria-labelledby={`${project.id}-${example.id}`}>
-                    <h6 id={`${project.id}-${example.id}`}>{example.title}</h6>
-                    <dl>
-                      <dt>방문자 질문</dt>
-                      <dd className={styles.trainingRequest}>{example.question}</dd>
-                      <dt>도구 호출과 결과</dt>
-                      <dd className={styles.trainingOutput}><pre tabIndex={0} aria-label={`${example.title} 도구 호출과 결과`}><code>{trainingTranscript(example)}</code></pre></dd>
-                      <dt>답변 · 학습용 정답</dt>
-                      <dd className={styles.trainingReport}>{example.answer}</dd>
-                      <dt>학습 의도</dt>
-                      <dd className={styles.trainingIntent}>
-                        {example.intent}
-                        {example.note && <strong className={styles.trainingNote}>{example.note}</strong>}
-                      </dd>
-                    </dl>
-                  </article>
-                ))}
-              </div>
             </section>
           )}
           {project.experiment && (

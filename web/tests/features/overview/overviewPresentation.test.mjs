@@ -331,12 +331,12 @@ test('미세조정은 정규 교육이 아닌 SI 협업 독학 실험과 전문�
   assert.match(finetuning.status, /실험·학습 진행 중/u);
 });
 
-test('학습 배경과 실험 방식은 본문과 학습 데이터 사이의 독립 카드로 표시한다', async () => {
+test('학습 배경과 실험 방식은 본문과 실험 예시 사이의 독립 카드로 표시한다', async () => {
   const cards = await readFile(new URL('../../../src/features/projects/ui/ProjectCardGrid.tsx', import.meta.url), 'utf8');
   const css = await readFile(new URL('../../../src/features/projects/ui/ProjectCardGrid.module.css', import.meta.url), 'utf8');
   const learningIndex = cards.indexOf('project.learningContext &&');
   assert.ok(cards.indexOf('{project.desc}') < learningIndex);
-  assert.ok(learningIndex < cards.indexOf('project.trainingExamples &&'));
+  assert.ok(learningIndex < cards.indexOf('project.experiment &&'));
   assert.match(cards, /<section className=\{styles\.learningContext\} aria-labelledby=\{`\$\{project.id\}-learning-context`\}/u);
   assert.match(cards, /project\.learningContext\.paragraphs\.map/u);
   const cardStyle = css.match(/\.learningContext,\s*\.experiment\s*\{([^}]*)\}/u)?.[1];
@@ -354,7 +354,7 @@ test('미세조정 학습 배경 카드는 같은 탭에서 학습 관점 기록
   });
   assert.equal(finetuning.learningContext.paragraphs.length, 3);
   const cards = await readFile(new URL('../../../src/features/projects/ui/ProjectCardGrid.tsx', import.meta.url), 'utf8');
-  const learningCard = cards.slice(cards.indexOf('project.learningContext &&'), cards.indexOf('project.trainingExamples &&'));
+  const learningCard = cards.slice(cards.indexOf('project.learningContext &&'), cards.indexOf('project.experiment &&'));
   assert.match(cards, /import LogReadingLink from '@\/features\/logs\/navigation\/LogReadingLink'/u);
   assert.match(learningCard, /project\.learningContext\.relatedLog &&/u);
   assert.match(learningCard, /<LogReadingLink\s+slug=\{project\.learningContext\.relatedLog\.slug\}/u);
@@ -384,97 +384,28 @@ test('메인 지침 축약은 문자 수 범위와 유지 항목 및 기반 모�
   assert.doesNotMatch(JSON.stringify(finetuning), /https?:\/\/|localhost|127\.0\.0\.1|192\.168\.|[A-Z]:[\\/]|정책 LoRA|품질 향상|속도 개선/u);
 });
 
-test('학습 데이터 예시는 메인 세션의 질문·호출·결과·답변으로 된 두 예시만 표시한다', async () => {
-  const data = openWeightExperiments.find(({ id }) => id === 'project-open-weight-finetuning').trainingExamples;
-  assert.deepEqual(data.items.map(({ title, question, steps }) => ({ title, question, calls: steps.map(({ call }) => call) })), [
-    { title: '일반 질문 · 검색 후 답변', question: '연구 경험 한 줄 요약해줘',
-      calls: [{ name: 'search_portfolio', arguments: { query: '연구 경험 요약' } }] },
-    { title: '화면 조작 요청 · 작업 세션 위임', question: '작년 연구로 가고 다크 모드로 바꿔줘',
-      calls: [{ name: 'site_task', arguments: { instruction: '작년 연구로 이동하고 다크 모드로 바꿔 줘' } }] },
+test('미세조정 카드는 학습 데이터를 연구 경험 오픈웨이트 모델 실험 탭으로 넘기고 카드 안에는 예시를 두지 않는다', async () => {
+  const finetuning = openWeightExperiments.find(({ id }) => id === 'project-open-weight-finetuning');
+  assert.equal(finetuning.trainingExamples, undefined);
+  assert.deepEqual(finetuning.links, [
+    { label: '학습 데이터 형식·예시 보기', href: '/about-me/research#research-training-data', kind: 'research' },
   ]);
-  assert.equal(new Set(data.items.map(({ id }) => id)).size, 2);
-  const [general, screen] = data.items;
-  assert.equal(general.steps[0].result.ok, true);
-  assert.ok(general.steps[0].result.results.every(({ section, content }) => section && content));
-  // 작업 세션이 실제로 부른 화면 도구는 채팅 도구 계약을 통과해야 한다. 서버 시계는 브라우저 도구가 아니다.
-  const { PORTFOLIO_CHAT_TOOLS } = await import('../../../src/features/portfolio-tools/schema.ts');
-  const delegated = screen.steps[0].result;
-  assert.equal(delegated.status, 'completed');
-  for (const action of delegated.actions) {
-    assert.equal(action.ok, true);
-    if (action.tool === 'get_current_datetime') continue;
-    assert.doesNotThrow(() => PORTFOLIO_CHAT_TOOLS[action.tool].parse(action.arguments), action.tool);
-  }
-  for (const item of data.items) {
-    assert.deepEqual(Object.keys(item).filter((key) => key !== 'note').sort(), ['answer', 'id', 'intent', 'question', 'steps', 'title']);
-    assert.match(item.answer, /니다\.$/u);
-  }
-  // 상대 날짜 예시는 기록 시점을 강조 문장으로 밝히고, 서버 시계 결과도 같은 연도를 보여 준다.
-  assert.equal(screen.note, '이 예시는 2026년 기준이라 2025년입니다.');
-  assert.deepEqual(delegated.actions[0].observed, { year: 2026, relativeYears: { 작년: 2025 } });
-  assert.equal(general.note, undefined);
-  assert.match(data.description, /학습 데이터 예시/u);
-  assert.doesNotMatch(JSON.stringify(data), /주십시오|소개용|재구성|실제 학습에 사용한/u);
-  assert.match(data.description, /방문자 대화 기록이 아니며/u);
-  assert.match(data.description, /시스템 지침·도구 정의·호출 ID 등은 생략/u);
-  assert.match(data.description, /실행 결과가 아닌 학습용 정답/u);
-  assert.match(data.description, /도구 결과는 정답이 아닌 입력/u);
-  assert.doesNotMatch(JSON.stringify(data), /https?:\/\/|localhost|[A-Z]:[\\/]|\.jsonl|native94|native-setting|sourceFile|apiKey|tool_call_id/u);
-  const cards = await readFile(new URL('../../../src/features/projects/ui/ProjectCardGrid.tsx', import.meta.url), 'utf8');
-  assert.ok(cards.indexOf('project.trainingExamples &&') < cards.indexOf('project.experiment &&'));
-  assert.match(cards, /<code>\{trainingTranscript\(example\)\}<\/code>/u);
-  assert.match(cards, /호출\$\{order\} · 정답/u);
-  assert.match(cards, /결과\$\{order\} · 입력/u);
-  assert.doesNotMatch(cards, /dangerouslySetInnerHTML/u);
-});
-
-test('학습 예시의 질문·도구 호출·답변·설명은 두 열에서 줄바꿈과 무관하게 고정 높이를 유지한다', async () => {
   const cards = await readFile(new URL('../../../src/features/projects/ui/ProjectCardGrid.tsx', import.meta.url), 'utf8');
   const css = await readFile(new URL('../../../src/features/projects/ui/ProjectCardGrid.module.css', import.meta.url), 'utf8');
-  assert.match(css, /\.trainingGrid\s*\{[^}]*grid-template-columns: repeat\(2, minmax\(0, 1fr\)\);/u);
-  assert.match(css, /@media \(max-width: 860px\)\s*\{\s*\.trainingGrid\s*\{[^}]*grid-template-columns: 1fr;/u);
-  assert.match(css, /@media \(max-width: 860px\)[\s\S]*\.trainingOutput,[\s\S]*block-size: auto;/u);
-  for (const name of ['trainingRequest', 'trainingOutput', 'trainingReport', 'trainingIntent']) {
-    assert.ok(cards.includes(`className={styles.${name}}`));
-    assert.match(css, new RegExp(`\\.${name}\\s*\\{[^}]*block-size:\\s*[\\d.]+(?:em|rem);`, 'u'));
-  }
-  assert.match(css, /\.trainingExample pre\s*\{[^}]*block-size: 100%;[^}]*overflow: auto;/u);
-  assert.match(cards, /<pre tabIndex=\{0\} aria-label=/u);
-  assert.doesNotMatch(css, /line-clamp|text-overflow:\s*ellipsis/u);
+  assert.doesNotMatch(cards, /trainingExamples|trainingTranscript|prettyJson/u);
+  assert.doesNotMatch(css, /.training/u);
 });
 
-test('학습 예시 JSON은 읽기 쉬운 글꼴로 확대하고 긴 줄도 카드 안에서 줄바꿈한다', async () => {
-  const cards = await readFile(new URL('../../../src/features/projects/ui/ProjectCardGrid.tsx', import.meta.url), 'utf8');
-  const css = await readFile(new URL('../../../src/features/projects/ui/ProjectCardGrid.module.css', import.meta.url), 'utf8');
-  // 검색 결과처럼 중첩된 JSON도 구조가 보이도록 키마다 줄을 나누고 두 칸씩 들여 쓴다.
-  assert.match(cards, /JSON\.stringify\(value, null, 2\)/u);
-  assert.match(cards, /prettyJson\(call\)/u);
-  assert.match(cards, /prettyJson\(result\)/u);
-  assert.doesNotMatch(cards, /inlineJson|blockJson/u);
-  const pre = css.match(/\.trainingExample pre\s*\{([^}]*)\}/u)?.[1];
-  assert.ok(pre);
-  assert.match(pre, /padding: 12px 6px;/u);
-  assert.match(pre, /font-size: 0\.85rem !important;/u);
-  assert.match(pre, /white-space: pre-wrap !important;/u);
-  assert.match(pre, /word-break: normal;/u);
-  assert.match(pre, /overflow-wrap: anywhere;/u);
-  assert.match(pre, /max-inline-size: 100%;/u);
-  assert.match(pre, /overflow: auto;/u);
-  assert.match(css, /\.trainingExample code\s*\{[^}]*font-size: inherit !important;/u);
-});
-
-test('학습 데이터 제목·설명·두 예시를 하나의 바깥 카드로 묶는다', async () => {
-  const cards = await readFile(new URL('../../../src/features/projects/ui/ProjectCardGrid.tsx', import.meta.url), 'utf8');
-  const css = await readFile(new URL('../../../src/features/projects/ui/ProjectCardGrid.module.css', import.meta.url), 'utf8');
-  const section = cards.match(/<section className=\{styles\.training\}[\s\S]*?<\/section>/u)?.[0];
-  assert.ok(section);
-  for (const content of ['학습 데이터 예시', 'project.trainingExamples.description', 'styles.trainingGrid']) {
-    assert.ok(section.includes(content));
-  }
-  const wrapper = css.match(/\.training\s*\{([^}]*)\}/u)?.[1];
-  assert.ok(wrapper);
-  assert.match(wrapper, /padding: clamp\(12px, 2vw, 22px\);/u);
-  assert.match(wrapper, /border: 1px solid var\(--border\);/u);
-  assert.match(wrapper, /border-radius: 12px;/u);
-  assert.match(wrapper, /background: var\(--bg-elev\);/u);
+test('소개 오픈웨이트 모델 실험 섹션은 같은 이름의 연구 탭을 상세로 연결한다', async () => {
+  const page = await readFile(new URL('../../../src/app/about-me/page.tsx', import.meta.url), 'utf8');
+  const footer = await readFile(new URL('../../../src/features/experiments/ui/OpenWeightDetailFooter.tsx', import.meta.url), 'utf8');
+  const section = page.slice(page.indexOf('id="open-weight-experiments"'));
+  assert.ok(section.indexOf('<ProjectCardGrid projects={openWeightExperiments} />') < section.indexOf('<OpenWeightDetailFooter />'));
+  assert.ok(section.indexOf('<OpenWeightDetailFooter />') < section.indexOf('</AboutPanel>'));
+  assert.match(footer, /<ResearchLink href=\{ACTION_ROUTES\.research_open_weight\}/u);
+  assert.match(footer, /오픈웨이트 모델 실험 상세 보기/u);
+  const { ACTION_LABELS, ACTION_ROUTES } = await import('../../../src/features/chat/constants.ts');
+  assert.equal(ACTION_ROUTES.research_open_weight, '/about-me/research#research-chatbot-architecture');
+  // 소개 섹션과 상세 탭의 이동 문구가 겹치지 않아야 채팅 버튼에서 둘을 구분한다.
+  assert.notEqual(ACTION_LABELS.research_open_weight, ACTION_LABELS.open_weight_experiments);
 });

@@ -46,7 +46,10 @@ const RESEARCH_ACTION_TARGET_TABS: Readonly<
   'research-serialization-bandwidth': 'serialization',
   'research-tools-ai': 'meta',
   'research-ai-verification': 'meta',
-  'research-chatbot-architecture': 'meta',
+  'research-chatbot-architecture': 'open-weight',
+  'research-training-data': 'open-weight',
+  'research-training-line': 'open-weight',
+  'research-training-examples': 'open-weight',
 };
 
 function researchTabFromHash(hash: string): ResearchTabId | null {

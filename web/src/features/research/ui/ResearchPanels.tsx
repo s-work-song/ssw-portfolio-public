@@ -13,6 +13,7 @@ import {
 import Avx512SupportTable from '@/features/research/ui/Avx512SupportTable';
 import ResearchLink from '@/features/research/ui/ResearchLink';
 import ChatbotArchitectureDetails from '@/features/research/ui/ChatbotArchitectureDetails';
+import TrainingDataCards from '@/features/research/ui/TrainingDataCards';
 import { researchTimelineItems, type ResearchTabId } from '@/features/research/data/research';
 import {
   SIMD_RECORD_BASELINE_ROOT_URL,
@@ -1123,23 +1124,28 @@ ulong restored = Bmi2.X64.ParallelBitDeposit(bits, mask);`}
             }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
                 <h3 style={{ fontSize: '1.25rem', fontWeight: 700, margin: 0, color: 'var(--text)' }}>
-                  LLM 기반 개발 및 검증 실험
+                  SI 에이전트 기반 개발 및 검증 실험
                 </h3>
                 <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--accent, #6366f1)', border: '1px solid var(--border)', borderRadius: '99px', padding: '3px 10px', background: 'var(--bg-elev-2)' }}>
-                  LLM Orchestration
+                  Agent Orchestration
                 </span>
               </div>
               <p style={{ margin: 0, fontSize: '0.95rem', lineHeight: 1.6, color: 'var(--text-dim)', wordBreak: 'keep-all' }}>
-                로컬 경량 LLM(Gemma, Llama) 실행 환경과 클라우드 기반 모델 연동을 구성하고, 대형 언어 모델을 개발·검증 과정에 활용하는 방법을 실험했습니다.
+                SI 에이전트를 개발·검증 과정에 활용하는 방법을 실험했습니다.
               </p>
-              <AskAiButton align="end" question="「LLM 기반 개발 및 검증 실험」에서 모델에 맡긴 역할과 사람이 검증한 범위를 설명해 주세요." />
+              <AskAiButton align="end" question="「SI 에이전트 기반 개발 및 검증 실험」에서 에이전트에 맡긴 역할과 사람이 검증한 범위를 설명해 주세요." />
 
               <ul style={{ paddingLeft: '20px', margin: 0, color: 'var(--text-dim)', lineHeight: 1.7, fontSize: '0.95rem' }}>
                 <li><strong>단위 테스트 생성 및 검증</strong>: 저수준 최적화 및 BCL 함수의 경계 조건을 대상으로, LLM 프롬프트 체인을 활용해 단위 테스트(Unit Test)를 생성하고 검증하는 절차를 구성했습니다.</li>
                 <li><strong>에이전트 역할 분담</strong>: Claude Code 등의 터미널 기반 SI 도구를 활용해 성능 병목 분석을 위한 가설 수립 ➔ 테스트 코드 생성 ➔ 벤치마크 측정 ➔ 결과에 따른 리팩터링을 반복하는 개발 절차를 운영했습니다.</li>
               </ul>
             </div>
+          </div>
+        )}
 
+        {/* TAB 6: 오픈웨이트 모델 실험 - 이 사이트 챗봇의 구조 실험과 미세조정 학습 데이터 */}
+        {activeTab === 'open-weight' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
             {/* 포트폴리오 챗봇의 답변·도구 호출 구조 실험 */}
             <div id="research-chatbot-architecture" tabIndex={-1} style={{
               padding: '28px',
@@ -1189,6 +1195,8 @@ ulong restored = Bmi2.X64.ParallelBitDeposit(bits, mask);`}
               </p>
               <ChatbotArchitectureDetails />
             </div>
+
+            <TrainingDataCards />
           </div>
         )}
 

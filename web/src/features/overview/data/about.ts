@@ -22,7 +22,6 @@ export interface AboutProject {
   gallery?: AboutProjectGallery;
   links?: AboutProjectLink[];
   learningContext?: AboutProjectLearningContext;
-  trainingExamples?: AboutTrainingExamples;
   experiment?: AboutProjectExperiment;
 }
 
@@ -30,26 +29,6 @@ export interface AboutProjectLearningContext {
   title: string;
   paragraphs: string[];
   relatedLog?: { slug: string; label: string };
-}
-
-/** 메인 세션의 도구 호출 한 번과 서버가 돌려준 결과. 호출만 학습용 정답이다. */
-export interface AboutTrainingStep {
-  call: { name: string; arguments: Record<string, string> };
-  result: Record<string, unknown>;
-}
-
-export interface AboutTrainingExamples {
-  description: string;
-  items: {
-    id: string;
-    title: string;
-    question: string;
-    steps: AboutTrainingStep[];
-    answer: string;
-    intent: string;
-    /** 학습 의도 아래에 강조해 보일 한 문장. 시점에 따라 값이 달라지는 예시의 기준을 밝힐 때 쓴다. */
-    note?: string;
-  }[];
 }
 
 export interface AboutProjectExperiment {

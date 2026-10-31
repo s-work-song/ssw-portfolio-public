@@ -11,9 +11,10 @@ export type ResearchTabId =
   | 'cpu'
   | 'memory'
   | 'serialization'
-  | 'meta';
+  | 'meta'
+  | 'open-weight';
 
-export type ResearchPrimaryTabId = 'overview' | 'optimization' | 'meta';
+export type ResearchPrimaryTabId = 'overview' | 'optimization' | 'meta' | 'open-weight';
 
 export interface ResearchTab {
   id: ResearchTabId;
@@ -25,6 +26,7 @@ export const researchPrimaryTabs: readonly ResearchTab[] = [
   { id: 'overview', label: '연구·실험 이력 (Timeline)', emoji: '⏱️' },
   { id: 'optimization', label: '성능 최적화', emoji: '⚡' },
   { id: 'meta', label: '개발 도구 및 SI 활용', emoji: '🛠️' },
+  { id: 'open-weight', label: '오픈웨이트 모델 실험', emoji: '🤖' },
 ];
 
 export const researchOptimizationTabs: readonly ResearchTab[] = [
@@ -38,12 +40,13 @@ export const researchTabs: readonly ResearchTab[] = [
   researchPrimaryTabs[0],
   ...researchOptimizationTabs,
   researchPrimaryTabs[2],
+  researchPrimaryTabs[3],
 ];
 
 export function researchPrimaryTabFromTab(
   tabId: ResearchTabId,
 ): ResearchPrimaryTabId {
-  if (tabId === 'overview' || tabId === 'meta') return tabId;
+  if (tabId === 'overview' || tabId === 'meta' || tabId === 'open-weight') return tabId;
   return 'optimization';
 }
 

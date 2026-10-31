@@ -43,8 +43,8 @@ test('실험 이동 목록은 원문 순서·제목의 공개 27개만 담고 �
   assert.equal(PUBLIC_AGENT_EXPERIMENT_TARGETS.length, 27);
   assert.equal(AGENT_EXPERIMENT_VIEW_ACTIONS.length, 35);
   assert.equal(new Set(AGENT_EXPERIMENT_VIEW_ACTIONS).size, 35);
-  // 성능 최적화 하위 탭(CPU·메모리·직렬화) 3개, 챗봇 구조 실험 카드 1개, SI 학습 활용 섹션 1개를 더해 76개다.
-  assert.equal(PORTFOLIO_VIEW_ACTIONS.length, 76);
+  // 성능 최적화 하위 탭(CPU·메모리·직렬화) 3개, 챗봇 구조 실험 카드 1개, SI 학습 활용 섹션 1개, 오픈웨이트 모델 실험 탭과 학습 데이터 카드 3개를 더해 79개다.
+  assert.equal(PORTFOLIO_VIEW_ACTIONS.length, 79);
   for (const target of AGENT_EXPERIMENT_VIEW_TARGETS) {
     assert.deepEqual(portfolioViewControlInput.parse({ action: target.action }), { action: target.action });
     assert.throws(() => portfolioViewControlInput.parse({ action: target.action, target: 'all' }));

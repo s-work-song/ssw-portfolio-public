@@ -382,13 +382,13 @@ export const GUIDED_TOUR_STEPS: readonly GuidedTourStep[] = [
   },
   {
     id: "research-ai-verification",
-    title: "도구와 SI 접목 · LLM 개발·검증 실험",
-    message: "로컬 경량 모델과 클라우드 모델을 개발·검증 과정에 활용한 실험입니다. 모델에 맡긴 역할과 직접 검증한 범위를 확인해 보세요.",
+    title: "도구와 SI 접목 · SI 에이전트 개발·검증 실험",
+    message: "SI 에이전트를 개발·검증 과정에 활용한 실험입니다. 에이전트에 맡긴 역할과 직접 검증한 범위를 확인해 보세요.",
     actionId: "research_ai_verification",
   },
   {
     id: "research-chatbot-architecture",
-    title: "오픈웨이트 모델 챗봇 구조 실험",
+    title: "오픈웨이트 모델 실험 · 챗봇 구조 실험",
     message: "이 사이트의 챗봇을 어떤 구조로 실험하며 다듬었는지 단계별 흐름도로 정리했습니다. 단계를 펼쳐 지침과 세션 구성의 변화를 살펴보세요.",
     actionId: "research_chatbot_architecture",
   },

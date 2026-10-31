@@ -10,6 +10,7 @@ import AboutPanel from '@/components/layout/AboutPanel';
 import ArchiveProjectShowcase from '@/features/projects/ui/ArchiveProjectShowcase';
 import ProjectCardGrid from '@/features/projects/ui/ProjectCardGrid';
 import AgentExperimentGallery from '@/features/experiments/ui/AgentExperimentGallery';
+import OpenWeightDetailFooter from '@/features/experiments/ui/OpenWeightDetailFooter';
 import AiWorkflowPreview from '@/features/ai-workflow/ui/AiWorkflowPreview';
 import ArchitecturePreview from '@/features/architecture/ui/ArchitecturePreview';
 import OptimizationPreview from '@/features/research/ui/OptimizationPreview';
@@ -204,6 +205,7 @@ export default function OverviewPage() {
           </p>
         </div>
         <ProjectCardGrid projects={openWeightExperiments} />
+        <OpenWeightDetailFooter />
       </AboutPanel>
 
       <OptimizationPreview />

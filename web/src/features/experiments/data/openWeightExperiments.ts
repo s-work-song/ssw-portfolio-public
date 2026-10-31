@@ -86,45 +86,13 @@ export const openWeightExperiments: AboutProject[] = [
         label: '학습과 실험에 대한 생각',
       },
     },
-    trainingExamples: {
-      description: '방문자 질문을 받은 메인 세션이 도구를 부르고, 돌아온 결과를 근거로 답하는 흐름으로 구성한 학습 데이터 예시입니다. 도구 호출과 답변은 모델의 실행 결과가 아닌 학습용 정답이고, 도구 결과는 정답이 아닌 입력입니다. 방문자 대화 기록이 아니며, 시스템 지침·도구 정의·호출 ID 등은 생략하고 도구 결과는 필요한 값만 남겼습니다.',
-      items: [
-        {
-          id: 'general-question',
-          title: '일반 질문 · 검색 후 답변',
-          question: '연구 경험 한 줄 요약해줘',
-          steps: [
-            { call: { name: 'search_portfolio', arguments: { query: '연구 경험 요약' } },
-              result: { ok: true, results: [
-                { section: '연구 경험 타임라인과 성능 최적화 실험 > 학창 시절 하드웨어 연구 (2011년)',
-                  content: 'CPU 오버클럭 환경을 구성하고 안정화 작업을 수행하며 하드웨어 벤치마크로 성능과 안정성을 측정했어요.' },
-                { section: '현업 이력 공백기의 게임 개발과 기술 탐구 > 한 줄 요약',
-                  content: '개인 게임 개발을 출발점으로 Unity와 C#을 탐구했고, 구현 과정에서 만난 문제를 계기로 성능 최적화와 관련 개념을 학습·실험하는 방향으로 범위를 넓혔어요.' },
-                { section: 'SI 에이전트 오케스트레이션 기반 개발 > 한 줄 요약',
-                  content: '사람이 프로젝트의 방향과 구상을 결정하고, PM·PL·구현·검증 역할로 분리한 SI 에이전트 세션이 작업을 분담하고 검증하도록 구성한 개발 방식이다.' },
-              ] } },
-          ],
-          answer: '학창 시절 하드웨어 성능 측정에서 시작해, Unity·C# 개인 게임 개발을 출발점으로 성능 최적화를 학습·실험했고, 지금은 SI 에이전트 오케스트레이션으로 범위를 넓힌 개인 연구입니다.',
-          intent: '포트폴리오 사실은 먼저 검색으로 찾고, 여러 검색 결과를 한 줄로 묶되 결과에 없는 사실은 덧붙이지 않습니다.',
-        },
-        {
-          id: 'screen-task',
-          title: '화면 조작 요청 · 작업 세션 위임',
-          question: '작년 연구로 가고 다크 모드로 바꿔줘',
-          steps: [
-            { call: { name: 'site_task', arguments: { instruction: '작년 연구로 이동하고 다크 모드로 바꿔 줘' } },
-              result: { status: 'completed', report: '작년인 2025년 연구로 이동하고 테마를 다크 모드로 바꿨습니다.', actions: [
-                { tool: 'get_current_datetime', arguments: {}, ok: true, observed: { year: 2026, relativeYears: { 작년: 2025 } } },
-                { tool: 'control_portfolio_view', arguments: { action: 'research-2025' }, ok: true },
-                { tool: 'set_portfolio_theme', arguments: { theme: 'dark' }, ok: true },
-              ] } },
-          ],
-          answer: '작년인 2025년 연구로 이동하고 다크 모드로 바꿨습니다.',
-          intent: '화면 조작은 작업 세션에 한 번에 맡기고, 성공으로 기록된 조작만 했다고 답합니다. "작년"은 요청 시점에 따라 달라져 작업 세션이 서버 시계로 연도를 확인합니다.',
-          note: '이 예시는 2026년 기준이라 2025년입니다.',
-        },
-      ],
-    },
+    links: [
+      {
+        label: '학습 데이터 형식·예시 보기',
+        href: '/about-me/research#research-training-data',
+        kind: 'research',
+      },
+    ],
     experiment: {
       title: '실험 예시 · 메인 지침 축약',
       before: '이전 · 기반 모델용 전체 지침',

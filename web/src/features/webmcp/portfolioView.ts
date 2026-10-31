@@ -35,6 +35,7 @@ const RESEARCH_TAB_BY_PANEL_ID: Readonly<Record<string, ChatPortfolioResearchTab
   memory: 'memory',
   serialization: 'serialization',
   meta: 'tools',
+  'open-weight': 'open-weight',
 };
 
 /** 앵커 id에서 그 앵커가 속한 연구 탭으로 가는 표다. */
@@ -57,8 +58,12 @@ const RESEARCH_TAB_BY_ANCHOR: Readonly<Record<string, ChatPortfolioResearchTab>>
   'research-panel-serialization': 'serialization',
   'research-tools-ai': 'tools',
   'research-ai-verification': 'tools',
-  'research-chatbot-architecture': 'tools',
   'research-panel-meta': 'tools',
+  'research-chatbot-architecture': 'open-weight',
+  'research-training-data': 'open-weight',
+  'research-training-line': 'open-weight',
+  'research-training-examples': 'open-weight',
+  'research-panel-open-weight': 'open-weight',
 };
 
 /** 내부 레거시 UI 어댑터만 예전 상세 액션을 해석한다. 공개 스키마와 분리한다. */
@@ -178,11 +183,29 @@ const VIEW_TARGETS: Readonly<Record<PortfolioViewAction, PortfolioViewTarget>> =
     message: '연구 경험의 도구 & SI 접목 탭으로 이동을 시작했습니다.',
     label: '연구 경험의 도구 & SI 접목 탭',
   },
+  'research-open-weight': {
+    action: 'research-open-weight',
+    route: ACTION_ROUTES.research_open_weight,
+    message: '연구 경험의 오픈웨이트 모델 실험 탭으로 이동을 시작했습니다.',
+    label: '연구 경험의 오픈웨이트 모델 실험 탭',
+  },
   'research-chatbot-architecture': {
     action: 'research-chatbot-architecture',
     route: ACTION_ROUTES.research_chatbot_architecture,
-    message: '도구 & SI 접목 탭의 챗봇 구조 실험 카드로 이동을 시작했습니다.',
-    label: '도구 & SI 접목 탭의 오픈웨이트 모델 챗봇 구조 실험 카드',
+    message: '오픈웨이트 모델 실험 탭의 챗봇 구조 실험 카드로 이동을 시작했습니다.',
+    label: '오픈웨이트 모델 실험 탭의 챗봇 구조 실험 카드',
+  },
+  'research-training-data': {
+    action: 'research-training-data',
+    route: ACTION_ROUTES.research_training_data,
+    message: '오픈웨이트 모델 실험 탭의 학습 데이터 형식 카드로 이동을 시작했습니다.',
+    label: '오픈웨이트 모델 실험 탭의 학습 데이터 형식 카드',
+  },
+  'research-training-examples': {
+    action: 'research-training-examples',
+    route: ACTION_ROUTES.research_training_examples,
+    message: '오픈웨이트 모델 실험 탭의 학습 데이터 예시 카드로 이동을 시작했습니다.',
+    label: '오픈웨이트 모델 실험 탭의 학습 데이터 예시 카드',
   },
   'research-2011': {
     action: 'research-2011',

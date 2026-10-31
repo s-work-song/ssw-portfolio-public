@@ -31,16 +31,17 @@ test('연구 카드는 확인된 경험과 진행 중인 실험 주제를 안내
   const positions = topics.map((topic) => card.desc.indexOf(topic));
   assert.ok(positions.every((position, index) => position >= 0 && (!index || position > positions[index - 1])));
   assert.deepEqual(researchPrimaryTabs.map((item) => item.label), [
-    '연구·실험 이력 (Timeline)', '성능 최적화', '개발 도구 및 SI 활용',
+    '연구·실험 이력 (Timeline)', '성능 최적화', '개발 도구 및 SI 활용', '오픈웨이트 모델 실험',
   ]);
 });
 
 test('표현 변경 후에도 연구 탭 식별자와 분류 계약을 유지한다', () => {
-  assert.deepEqual(researchPrimaryTabs.map((item) => item.id), ['overview', 'optimization', 'meta']);
+  assert.deepEqual(researchPrimaryTabs.map((item) => item.id), ['overview', 'optimization', 'meta', 'open-weight']);
   assert.deepEqual(researchOptimizationTabs.map((item) => item.id), ['optimization', 'cpu', 'memory', 'serialization']);
   for (const item of researchOptimizationTabs) assert.equal(researchPrimaryTabFromTab(item.id), 'optimization');
   assert.equal(researchPrimaryTabFromTab('overview'), 'overview');
   assert.equal(researchPrimaryTabFromTab('meta'), 'meta');
+  assert.equal(researchPrimaryTabFromTab('open-weight'), 'open-weight');
 });
 
 test('성능 최적화 하위 탭 이동은 각 탭의 첫 앵커로 가고, 그 앵커가 해당 탭을 연다', async () => {
@@ -77,25 +78,58 @@ test('도구 & SI 접목 탭 이동은 다른 하위 탭처럼 탭의 첫 카드
   const panels = await readFile(new URL('../../../../src/features/research/ui/ResearchPanels.tsx', import.meta.url), 'utf8');
   const tab = panels.slice(panels.indexOf("activeTab === 'meta'"));
   assert.match(tab, /^[^]*?<div id="research-tools-ai" tabIndex=\{-1\}[^]*?Roslyn 컴파일러 기반 메타 프로그래밍/u);
-  assert.ok(tab.indexOf('id="research-tools-ai"') < tab.indexOf('LLM 기반 개발 및 검증 실험'));
+  assert.ok(tab.indexOf('id="research-tools-ai"') < tab.indexOf('SI 에이전트 기반 개발 및 검증 실험'));
 });
 
-test('챗봇 구조 실험 카드로 바로 이동하고, 도착한 앵커를 개발 도구 탭 위치로 읽는다', async () => {
+test('SI 에이전트 개발·검증 실험 카드는 경량 모델 설명 없이 에이전트 활용을 소개한다', async () => {
+  const panels = await readFile(new URL('../../../../src/features/research/ui/ResearchPanels.tsx', import.meta.url), 'utf8');
+  const card = panels.slice(panels.indexOf('id="research-ai-verification"'), panels.indexOf("activeTab === 'open-weight'"));
+  assert.ok(card.length > 0);
+  assert.match(card, /SI 에이전트 기반 개발 및 검증 실험/u);
+  assert.match(card, /SI 에이전트를 개발·검증 과정에 활용하는 방법을 실험했습니다./u);
+  assert.match(card, /「SI 에이전트 기반 개발 및 검증 실험」에서 에이전트에 맡긴 역할/u);
+  assert.doesNotMatch(card, /경량|Gemma|Llama|LLM 기반 개발/u);
+  for (const item of ['단위 테스트 생성 및 검증', '에이전트 역할 분담']) assert.ok(card.includes(item), item);
+});
+
+test('챗봇 구조 실험 카드로 바로 이동하고, 도착한 앵커를 오픈웨이트 모델 실험 탭 위치로 읽는다', async () => {
   const viewer = await readFile(new URL('../../../../src/features/research/ui/ResearchViewer.tsx', import.meta.url), 'utf8');
   const target = resolvePortfolioViewTarget('research-chatbot-architecture');
   assert.equal(target.route, '/about-me/research#research-chatbot-architecture');
-  assert.equal(target.label, '도구 & SI 접목 탭의 오픈웨이트 모델 챗봇 구조 실험 카드');
-  assert.match(viewer, /'research-chatbot-architecture': 'meta'/u);
+  assert.equal(target.label, '오픈웨이트 모델 실험 탭의 챗봇 구조 실험 카드');
+  assert.match(viewer, /'research-chatbot-architecture': 'open-weight'/u);
   const view = await readFile(new URL('../../../../src/features/webmcp/portfolioView.ts', import.meta.url), 'utf8');
-  assert.match(view, /'research-chatbot-architecture': 'tools'/u);
+  assert.match(view, /'research-chatbot-architecture': 'open-weight'/u);
 });
 
-test('챗봇 구조 실험 카드는 개발 도구 탭에 있고 다섯 단계와 관찰 범위를 함께 보여 준다', async () => {
+test('오픈웨이트 모델 실험 탭과 학습 데이터 카드로 바로 이동하고, 각 앵커가 오픈웨이트 모델 실험 탭을 연다', async () => {
+  const viewer = await readFile(new URL('../../../../src/features/research/ui/ResearchViewer.tsx', import.meta.url), 'utf8');
+  const view = await readFile(new URL('../../../../src/features/webmcp/portfolioView.ts', import.meta.url), 'utf8');
+  const cards = await readFile(new URL('../../../../src/features/research/ui/TrainingDataCards.tsx', import.meta.url), 'utf8');
+  for (const [action, anchor] of [
+    ['research-open-weight', 'research-chatbot-architecture'],
+    ['research-training-data', 'research-training-data'],
+    ['research-training-examples', 'research-training-examples'],
+  ]) {
+    assert.equal(resolvePortfolioViewTarget(action).route, `/about-me/research#${anchor}`, action);
+    assert.match(viewer, new RegExp(`'${anchor}': 'open-weight'`, 'u'), anchor);
+    assert.match(view, new RegExp(`'${anchor}': 'open-weight'`, 'u'), anchor);
+  }
+  for (const anchor of ['research-training-data', 'research-training-line', 'research-training-examples']) {
+    assert.ok(cards.includes(`id="${anchor}" tabIndex={-1}`), anchor);
+  }
+  assert.match(view, /'open-weight': 'open-weight',/u);
+});
+
+test('챗봇 구조 실험 카드는 오픈웨이트 모델 실험 탭에 있고 다섯 단계와 관찰 범위를 함께 보여 준다', async () => {
   const panels = await readFile(new URL('../../../../src/features/research/ui/ResearchPanels.tsx', import.meta.url), 'utf8');
   const viewer = await readFile(new URL('../../../../src/features/research/ui/ResearchViewer.tsx', import.meta.url), 'utf8');
-  assert.match(viewer, /'research-chatbot-architecture': 'meta'/u);
+  assert.match(viewer, /'research-chatbot-architecture': 'open-weight'/u);
   const card = panels.slice(panels.indexOf('id="research-chatbot-architecture"'));
-  assert.ok(panels.indexOf("activeTab === 'meta'") < panels.indexOf('id="research-chatbot-architecture"'));
+  assert.ok(panels.indexOf("activeTab === 'open-weight'") < panels.indexOf('id="research-chatbot-architecture"'));
+  assert.ok(panels.indexOf("activeTab === 'meta'") < panels.indexOf("activeTab === 'open-weight'"));
+  // 같은 탭에서 구조 실험 다음에 학습 데이터 카드가 온다.
+  assert.ok(card.indexOf('<ChatbotArchitectureDetails />') < card.indexOf('<TrainingDataCards />'));
   const stages = ['통합 시스템 지침', '지침 전환', '분류 강제', '세션 분리 + 분류 강제', '메인과 서브에이전트 (현재)'];
   const positions = stages.map((stage) => card.indexOf(`<li><strong>${stage}</strong>`));
   assert.ok(positions.every((position, index) => position >= 0 && (!index || position > positions[index - 1])));
@@ -305,7 +339,7 @@ test('연구 본문의 제목과 AI 질문을 맞추고 측정 수치는 유지�
   for (const heading of [
     '조건 분기와 SIMD 벡터화 성능 비교',
     'AoS·SoA 메모리 배치와 캐시 활용 비교',
-    'LLM 기반 개발 및 검증 실험',
+    'SI 에이전트 기반 개발 및 검증 실험',
     '오픈웨이트 모델 챗봇 구조 실험',
   ]) {
     assert.ok(panels.includes(`「${heading}」`), `AI 질문: ${heading}`);
