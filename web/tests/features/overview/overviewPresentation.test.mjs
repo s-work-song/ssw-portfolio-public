@@ -372,9 +372,9 @@ test('메인 지침 축약은 문자 수 범위와 유지 항목 및 기반 모�
   assert.equal(experiment.title, '실험 예시 · 메인 지침 축약');
   assert.equal(experiment.before, '이전 · 기반 모델용 전체 지침');
   assert.equal(experiment.after, '현재 · 메인 LoRA용 간결 지침');
-  assert.equal(experiment.result, '11,339자 → 1,562자 · 9,777자 감소 (86.2%)');
-  assert.equal(11339 - 1562, 9777);
-  assert.equal(((11339 - 1562) / 11339 * 100).toFixed(1), '86.2');
+  assert.equal(experiment.result, '11,339자 → 1,625자 · 9,714자 감소 (85.7%)');
+  assert.equal(11339 - 1625, 9714);
+  assert.equal(((11339 - 1625) / 11339 * 100).toFixed(1), '85.7');
   assert.match(experiment.scope, /메인 세션 시스템 지침의 문자 수/u);
   assert.match(experiment.scope, /86자 상기 문구는 포함하지 않았고/u);
   assert.match(experiment.scope, /전체 입력 토큰의 감소율은 아닙니다/u);
