@@ -441,7 +441,7 @@ test('실제 Provider: 모바일 닫기 대기에도 준비 조건·signal을 �
   assert.equal(f.tasks.size, 0);
 });
 
-test('실제 Provider + Gallery: 공개 27항목·7분류·소개를 선택·정렬·핑한 뒤 원래 앵커로 도착을 보고한다', async t => {
+test('실제 Provider + Gallery: 공개 29항목·7분류·소개를 선택·정렬·핑한 뒤 원래 앵커로 도착을 보고한다', async t => {
   const f = providerNavigationFixture(t, { pathname: '/about-me', hash: '', experimentId: 'svg-illustrations' });
   const hook = installGallerySelectionEffect(f.window, id => f.experiment.commit(id));
   t.after(hook.cleanup);
@@ -465,7 +465,7 @@ test('실제 Provider + Gallery: 공개 27항목·7분류·소개를 선택·정
     await f.tick(startAt + 2_000);
     assert.equal(target.getAttribute('data-chat-action-target'), null);
   }
-  assert.equal(f.arrivals.length, 35);
+  assert.equal(f.arrivals.length, 37);
   assert.equal(f.tasks.size, 0);
 });
 

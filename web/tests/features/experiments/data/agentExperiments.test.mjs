@@ -19,7 +19,7 @@ test('2D·3D 게임 분류는 실험으로 표시하고 기존 직접 링크를 
     'planet-defense', 'aqua-guardian', 'oscillo-rhythm-game',
   ]);
   assert.deepEqual(visible.filter((item) => item.category === '3D 게임 실험').map((item) => item.id), [
-    'flight-simulator-experiment', 'siege-warfare', 'noeul-circuit', 'hand-joint-rigging', 'first-person-hand-sword', 'frostpass-fantasy-rpg', 'modern-warfare-sample',
+    'flight-simulator-experiment', 'siege-warfare', 'noeul-circuit', 'hand-joint-rigging', 'first-person-hand-sword', 'frostpass-fantasy-rpg', 'modern-warfare-sample', 'limen-portal',
   ]);
   assert.ok(agentExperiments.every((item) => !['2D 게임 제작', '3D 게임 제작'].includes(item.category)));
 });
@@ -81,12 +81,13 @@ test('실험 선택 목록은 가로 스크롤 없이 줄바꿈하고 키보드 
   assert.match(component, /translate3d\(\$\{filterIndicator\.x\}px/);
 });
 
-test('WebGL은 SVG 다음에 세 샘플·실행 링크·실제 캡처를 제공하고 미확인 모델은 표시하지 않는다', async () => {
+test('WebGL은 SVG 다음에 네 샘플·실행 링크를 제공하고 기존 세 샘플의 실제 캡처를 유지한다', async () => {
   const samples = visible.filter(({ category }) => category === 'WebGL');
   assert.deepEqual(samples.map(({ id, title, demoUrl }) => ({ id, title, demoUrl })), [
     { id: 'exploded-atlas', title: '분해도 도감', demoUrl: 'https://pf-samples.sworksong.workers.dev/exploded-atlas/' },
     { id: 'iced-latte', title: '얼음 동동 라떼', demoUrl: 'https://pf-samples.sworksong.workers.dev/iced-latte/' },
     { id: 'dot-board', title: '전광판 시뮬레이터', demoUrl: 'https://pf-samples.sworksong.workers.dev/dot-board/' },
+    { id: 'phase-smoke', title: 'PHASE — 연기 순간이동', demoUrl: 'https://pf-samples.sworksong.workers.dev/phase-smoke/' },
   ]);
   assert.equal(AGENT_EXPERIMENT_CATEGORY_ANCHORS.WebGL, 'agent-experiments-webgl');
   assert.equal(agentExperimentForAnchor(agentExperiments, 'agent-experiments-webgl'), samples[0]);
@@ -108,6 +109,8 @@ test('WebGL은 SVG 다음에 세 샘플·실행 링크·실제 캡처를 제공�
     assert.equal(sample.audio, undefined);
     assert.equal(sample.audioPreviews, undefined);
     assert.doesNotMatch(sample.description, /200|CFD|전산유체|물리적으로 정확|검증된/u);
+  }
+  for (const sample of samples.slice(0, 3)) {
     assert.equal(sample.images.length, sample.id === 'dot-board' ? 2 : 1);
     for (const image of sample.images) {
       assert.ok(image.src.startsWith(`/images/agent-experiments/${sample.id}/`));
@@ -119,6 +122,38 @@ test('WebGL은 SVG 다음에 세 샘플·실행 링크·실제 캡처를 제공�
   }
   const component = await readFile(new URL('../../../../src/features/experiments/ui/AgentExperimentGallery.tsx', import.meta.url), 'utf8');
   assert.match(component, /active\.category === 'WebGL' \? 'WebGL 실행 화면'/u);
+});
+
+test('PHASE와 LIMEN은 지정 분류·공개 실행 링크를 제공하고 미확인 캡처·제작 모델은 등록하지 않는다', async () => {
+  const phase = visible.find(({ id }) => id === 'phase-smoke');
+  const limen = visible.find(({ id }) => id === 'limen-portal');
+  assert.equal(phase.category, 'WebGL');
+  assert.equal(phase.title, 'PHASE — 연기 순간이동');
+  assert.equal(phase.demoUrl, 'https://pf-samples.sworksong.workers.dev/phase-smoke/');
+  assert.match(phase.description, /사람 캐릭터.*연기.*목적지.*재구성.*WebGL2/u);
+  assert.match(phase.description, /클릭·터치.*좌표 입력.*연기·바람 흩날림·디졸브.*흐름·밀도·색·속도/u);
+  assert.match(phase.description, /입자 기반 유체 근사.*PC WASD.*모바일 스틱/u);
+  assert.match(phase.description, /WebGL2 지원 브라우저/u);
+  assert.doesNotMatch(phase.description, /정밀 유체|완전한 유체|압력 해석|CFD 검증/u);
+  assert.equal(limen.category, '3D 게임 실험');
+  assert.equal(limen.title, 'LIMEN — 포탈 실험실');
+  assert.equal(limen.demoUrl, 'https://pf-samples.sworksong.workers.dev/limen-portal/');
+  assert.match(limen.description, /두 포탈.*Three\.js.*1인칭/u);
+  assert.match(limen.description, /벽·바닥·천장.*시선과 속도의 보존.*중첩 뷰/u);
+  assert.match(limen.description, /PC WASD·마우스.*터치/u);
+  assert.equal(visible.filter(({ category }) => category === '3D 게임 실험').at(-1), limen);
+  for (const sample of [phase, limen]) {
+    assert.equal(agentExperimentForAnchor(agentExperiments, sample.id), sample);
+    assert.equal(sample.images, undefined);
+    assert.equal(sample.modelCredits, undefined);
+    assert.equal(sample.models, undefined);
+    assert.equal(sample.htmlPreview, undefined);
+    assert.equal(sample.downloads, undefined);
+    assert.ok(sample.focus.length > 0);
+  }
+  const component = await readFile(new URL('../../../../src/features/experiments/ui/AgentExperimentGallery.tsx', import.meta.url), 'utf8');
+  assert.match(component, /kind === 'image' \? '사진 준비 중'/u);
+  assert.match(component, /<CapturePlaceholder label=\{active\.title\} kind=\{active\.category === '영상물' \? 'video' : 'image'\}/u);
 });
 
 test('펠리컨 애니메이션은 9개 결과와 공통 프롬프트를 3열 그리드로 표시한다', async () => {
@@ -291,7 +326,7 @@ test('3D 게임의 네 번째 손 관절 실험과 다섯 번째 손·검 훈련
   const games = visible.filter((item) => item.category === '3D 게임 실험');
   assert.deepEqual(games.map(({ id }) => id), [
     'flight-simulator-experiment', 'siege-warfare', 'noeul-circuit', 'hand-joint-rigging',
-    'first-person-hand-sword', 'frostpass-fantasy-rpg', 'modern-warfare-sample',
+    'first-person-hand-sword', 'frostpass-fantasy-rpg', 'modern-warfare-sample', 'limen-portal',
   ]);
   assert.equal(new Set(visible.map(({ id }) => id)).size, visible.length);
   const rigging = games[3];
@@ -339,7 +374,7 @@ test('3D 게임의 네 번째 손 관절 실험과 다섯 번째 손·검 훈련
 test('노을서킷은 3D 게임 세 번째에 레이싱 링크·실제 캡처를 제공하고 미확인 모델·수량을 표시하지 않는다', async () => {
   const games = visible.filter(({ category }) => category === '3D 게임 실험');
   const racing = games[2];
-  assert.equal(games.length, 7);
+  assert.equal(games.length, 8);
   assert.equal(racing.id, 'noeul-circuit');
   assert.equal(racing.title, '노을서킷 · 3D 레이싱 게임');
   assert.equal(racing.demoUrl, 'https://pf-samples.sworksong.workers.dev/racing-game-noeul-circuit/');
@@ -368,7 +403,7 @@ test('노을서킷은 3D 게임 세 번째에 레이싱 링크·실제 캡처를
 test('서리고개는 3D 게임 여섯 번째에 판타지 RPG 링크·실제 캡처·확인된 제작 모델을 제공한다', async () => {
   const games = visible.filter(({ category }) => category === '3D 게임 실험');
   const frostpass = games[5];
-  assert.equal(games.length, 7);
+  assert.equal(games.length, 8);
   assert.equal(frostpass.id, 'frostpass-fantasy-rpg');
   assert.equal(frostpass.title, '서리고개 · 1인칭 판타지 RPG');
   assert.equal(frostpass.demoUrl, 'https://pf-samples.sworksong.workers.dev/fantasy-rpg-frostpass/');
