@@ -1,4 +1,4 @@
-.diagram { color: var(--text); font-family: 'Pretendard Variable', 'Noto Sans KR', system-ui, sans-serif; }
+.diagram { color: var(--text); font-family: var(--font-sans); }
 .diagram text { text-anchor: middle; dominant-baseline: middle; fill: var(--text); }
 .group rect { fill: color-mix(in srgb, var(--accent) 3%, var(--bg-elev)); stroke: var(--border-strong, var(--border)); stroke-width: 1.4; }
 .group text { font-size: 16px; font-weight: 600; }

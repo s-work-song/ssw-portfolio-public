@@ -112,7 +112,7 @@ const CHAT_FONT_OPTIONS: ReadonlyArray<{
     value: "pretendard",
     label: "Pretendard",
     description: "현재 사이트와 같은 기본 글꼴",
-    previewFamily: "'Pretendard Variable', system-ui, sans-serif",
+    previewFamily: "var(--font-sans)",
   },
   {
     value: "noto-sans-kr",
@@ -329,7 +329,7 @@ export default function SettingsPage() {
         minHeight: "100vh",
         background: "var(--bg, #0a0b12)",
         color: "var(--text, #eef0f6)",
-        fontFamily: "'Pretendard Variable', system-ui, sans-serif",
+        fontFamily: "var(--font-sans)",
       }}
     >
       {/* Header */}

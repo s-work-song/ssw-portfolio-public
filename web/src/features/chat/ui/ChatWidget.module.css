@@ -5,13 +5,7 @@
   --chat-text: var(--text, #14161f);
   --chat-dim: var(--text-dim, #525872);
   --chat-border: var(--border-strong, rgba(18, 20, 45, 0.15));
-  font-family: var(
-    --chat-font-family,
-    'Pretendard Variable',
-    system-ui,
-    -apple-system,
-    sans-serif
-  );
+  font-family: var(--chat-font-family, var(--font-sans));
   position: fixed;
   inset: auto 0 0 auto;
   z-index: 200;
@@ -1539,13 +1533,7 @@
   border-radius: 11px;
   background: var(--chat-bg-soft);
   color: var(--chat-text);
-  font-family: var(
-    --chat-font-family,
-    'Pretendard Variable',
-    system-ui,
-    -apple-system,
-    sans-serif
-  );
+  font-family: var(--chat-font-family, var(--font-sans));
   font-size: var(--chat-body-font-size, 14px);
   line-height: 1.4;
 }

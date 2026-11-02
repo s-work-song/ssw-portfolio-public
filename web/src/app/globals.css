@@ -5,11 +5,31 @@
 @import '../assets/fonts/noto-sans-kr.css';
 @import '../assets/fonts/jetbrains-mono.css';
 
+/*
+ * Pretendard는 첫 화면을 그린 뒤에 받아 한 번에 바꾼다(app/layout.tsx의 로더).
+ * 그 전까지 쓰는 대체 글꼴은 폭을 맞춰 교체 때 줄바꿈이 덜 달라지게 한다.
+ * 비율은 Windows 맑은 고딕에서 잰 값이고, 다른 OS는 system-ui로 넘어간다.
+ */
+@font-face {
+  font-family: 'Pretendard Fallback';
+  src: local('Malgun Gothic');
+  font-weight: 400;
+  size-adjust: 86%;
+}
+
+@font-face {
+  font-family: 'Pretendard Fallback';
+  src: local('Malgun Gothic Bold');
+  font-weight: 700;
+  size-adjust: 85%;
+}
+
 * {
   box-sizing: border-box;
 }
 
 :root {
+  --font-sans: 'Pretendard Fallback', system-ui, -apple-system, sans-serif;
   --accent-text: color-mix(in srgb, var(--accent, #6366f1) 70%, var(--text, #eef0f6));
   --font-noto-sans-kr: 'Noto Sans KR', system-ui, sans-serif;
   --bg: #f4f5fb;
@@ -48,6 +68,10 @@
   --accent-contrast: #ffffff;
 }
 
+:root[data-fonts='ready'] {
+  --font-sans: 'Pretendard Variable', 'Pretendard Fallback', system-ui, -apple-system, sans-serif;
+}
+
 [data-theme='dark'] {
   --bg: #111315;
   --bg-elev: #1b1e22;
@@ -81,7 +105,7 @@ body {
   margin: 0;
   background: var(--bg, #0a0b12);
   color: var(--text, #eef0f6);
-  font-family: 'Pretendard Variable', system-ui, -apple-system, sans-serif;
+  font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   transition: background 0.3s ease, color 0.3s ease, padding-right 0.22s ease;
 }

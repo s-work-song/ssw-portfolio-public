@@ -14,7 +14,11 @@ import { PortfolioWebMcp } from "../features/webmcp/PortfolioWebMcp";
 /** 전체 굵기 파일 대신 쓰는 글자 범위만 받는 가변 하위 집합이다. @import와 달리 첫 화면을 막지 않는다. */
 const PRETENDARD_CSS =
   "https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css";
-const PRETENDARD_LOADER = `(function(){var l=document.createElement("link");l.rel="stylesheet";l.href=${JSON.stringify(PRETENDARD_CSS)};document.head.appendChild(l)})()`;
+/**
+ * 글꼴 조각을 기다리느라 본문이 늦게 그려지거나 조각마다 레이아웃을 다시 계산하지 않도록,
+ * load 뒤에 필요한 조각을 모두 받아 한 번에 바꾼다. 같은 탭에서는 캐시가 있으니 바로 쓴다.
+ */
+const PRETENDARD_LOADER = `(function(){var r=document.documentElement,k="pretendard-ready";function g(){var l=document.createElement("link");l.rel="stylesheet";l.href=${JSON.stringify(PRETENDARD_CSS)};return l}function s(){try{return sessionStorage.getItem(k)}catch(e){}}function d(){r.dataset.fonts="ready";try{sessionStorage.setItem(k,"1")}catch(e){}}if(s()){r.dataset.fonts="ready";document.head.appendChild(g());return}function a(){var l=g();l.onload=function(){document.fonts.load("400 1em 'Pretendard Variable'",document.body.innerText).then(d,d)};document.head.appendChild(l)}document.readyState==="complete"?a():window.addEventListener("load",a,{once:true})})()`;
 
 /**
  * 링크 미리보기 이미지는 같은 폴더의 opengraph-image.png 파일 규칙으로 붙는다.
@@ -68,7 +72,6 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: THEME_BOOT_SCRIPT }} />
         <link rel="preconnect" href="https://cdn.jsdelivr.net" crossOrigin="anonymous" />
         <script dangerouslySetInnerHTML={{ __html: PRETENDARD_LOADER }} />
-        <noscript><link rel="stylesheet" href={PRETENDARD_CSS} /></noscript>
       </head>
       <body>
         <ChatApiPreconnect />
