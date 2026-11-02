@@ -87,7 +87,7 @@ test('WebGL은 SVG 다음에 네 샘플·실행 링크를 제공하고 기존 �
     { id: 'exploded-atlas', title: '분해도 도감', demoUrl: 'https://pf-samples.sworksong.workers.dev/exploded-atlas/' },
     { id: 'iced-latte', title: '얼음 동동 라떼', demoUrl: 'https://pf-samples.sworksong.workers.dev/iced-latte/' },
     { id: 'dot-board', title: '전광판 시뮬레이터', demoUrl: 'https://pf-samples.sworksong.workers.dev/dot-board/' },
-    { id: 'phase-smoke', title: 'PHASE — 연기 순간이동', demoUrl: 'https://pf-samples.sworksong.workers.dev/phase-smoke/' },
+    { id: 'phase-smoke', title: '연기 이동 실험', demoUrl: 'https://pf-samples.sworksong.workers.dev/phase-smoke/' },
   ]);
   assert.equal(AGENT_EXPERIMENT_CATEGORY_ANCHORS.WebGL, 'agent-experiments-webgl');
   assert.equal(agentExperimentForAnchor(agentExperiments, 'agent-experiments-webgl'), samples[0]);
@@ -128,7 +128,7 @@ test('PHASE와 LIMEN은 지정 분류·공개 실행 링크를 제공하고 미�
   const phase = visible.find(({ id }) => id === 'phase-smoke');
   const limen = visible.find(({ id }) => id === 'limen-portal');
   assert.equal(phase.category, 'WebGL');
-  assert.equal(phase.title, 'PHASE — 연기 순간이동');
+  assert.equal(phase.title, '연기 이동 실험');
   assert.equal(phase.demoUrl, 'https://pf-samples.sworksong.workers.dev/phase-smoke/');
   assert.match(phase.description, /사람 캐릭터.*연기.*목적지.*재구성.*WebGL2/u);
   assert.match(phase.description, /클릭·터치.*좌표 입력.*연기·바람 흩날림·디졸브.*흐름·밀도·색·속도/u);
@@ -136,7 +136,7 @@ test('PHASE와 LIMEN은 지정 분류·공개 실행 링크를 제공하고 미�
   assert.match(phase.description, /WebGL2 지원 브라우저/u);
   assert.doesNotMatch(phase.description, /정밀 유체|완전한 유체|압력 해석|CFD 검증/u);
   assert.equal(limen.category, '3D 게임 실험');
-  assert.equal(limen.title, 'LIMEN — 포탈 실험실');
+  assert.equal(limen.title, '포탈 실험');
   assert.equal(limen.demoUrl, 'https://pf-samples.sworksong.workers.dev/limen-portal/');
   assert.match(limen.description, /두 포탈.*Three\.js.*1인칭/u);
   assert.match(limen.description, /벽·바닥·천장.*시선과 속도의 보존.*중첩 뷰/u);

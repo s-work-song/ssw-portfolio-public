@@ -183,7 +183,7 @@ export const agentExperiments: AgentExperiment[] = [
   {
     id: 'phase-smoke',
     category: 'WebGL',
-    title: 'PHASE — 연기 순간이동',
+    title: '연기 이동 실험',
     description: '사람 캐릭터가 연기로 흩어졌다가 목적지에서 재구성되는 WebGL2 시각효과 실험입니다. 바닥 클릭·터치나 좌표 입력으로 순간이동하고, 연기·바람 흩날림·디졸브 효과와 흐름·밀도·색·속도를 비교할 수 있습니다. 입자 기반 유체 근사를 사용하며, WebGL2 지원 브라우저에서 PC WASD와 모바일 스틱 조작을 제공합니다.',
     focus: ['연기 순간이동', '입자 기반 유체 근사', '효과·흐름 조절', 'WebGL2'],
     demoUrl: 'https://pf-samples.sworksong.workers.dev/phase-smoke/',
@@ -436,7 +436,7 @@ export const agentExperiments: AgentExperiment[] = [
   {
     id: 'limen-portal',
     category: '3D 게임 실험',
-    title: 'LIMEN — 포탈 실험실',
+    title: '포탈 실험',
     description: '두 포탈로 공간을 연결하는 Three.js 기반 1인칭 실험입니다. 벽·바닥·천장 사이를 이동하며 시선과 속도의 보존, 포탈 안에 다른 포탈이 보이는 중첩 뷰를 살펴볼 수 있습니다. PC WASD·마우스와 터치 조작을 제공합니다.',
     focus: ['1인칭 포탈 이동', '시선·속도 보존', '중첩 포탈 뷰'],
     demoUrl: 'https://pf-samples.sworksong.workers.dev/limen-portal/',
