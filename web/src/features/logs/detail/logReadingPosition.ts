@@ -1,3 +1,6 @@
+/** 모바일 첫 화면의 끝 근처 문단이다. 정적 페이지가 첫 페인트를 이 문단까지 기다린다. */
+export const LOG_FIRST_SCREEN_ANCHOR = 'log-first-screen';
+
 let requestedSlug: string | null = null;
 
 export function requestLogReadingStart(slug: string): void {

@@ -10,8 +10,10 @@ import {
 import LogReadingLink from '../navigation/LogReadingLink';
 import LogListLink from '../navigation/LogListLink';
 import { captureLogDetailReturn, type LogListReturn } from '../navigation/logListReturn';
-import { scheduleLogReadingPosition } from './logReadingPosition';
+import { LOG_FIRST_SCREEN_ANCHOR, scheduleLogReadingPosition } from './logReadingPosition';
 import styles from '../../../app/about-me/log/view/page.module.css';
+
+const FIRST_SCREEN_PARAGRAPH = 3;
 
 /** initialDetail은 빌드 때 받은 본문이다. 있으면 첫 화면을 바로 그리고, 새로고침할 때만 API를 부른다. */
 export default function LogDetailClient({ slug, initialDetail = null }: { slug: string; initialDetail?: LogDetailResponse | null }) {
@@ -97,7 +99,9 @@ export default function LogDetailClient({ slug, initialDetail = null }: { slug: 
 
   const { post, relatedPosts } = detail;
   let headingIndex = 0;
+  let paragraphIndex = 0;
   const sectionAnchor = () => ({ id: `log-section-${++headingIndex}`, tabIndex: -1 });
+  const paragraphAnchor = () => (++paragraphIndex === FIRST_SCREEN_PARAGRAPH ? { id: LOG_FIRST_SCREEN_ANCHOR } : {});
 
   return (
     <article className={styles.article}>
@@ -145,7 +149,7 @@ export default function LogDetailClient({ slug, initialDetail = null }: { slug: 
               },
               p: ({ node, ...props }) => {
                 void node;
-                return <p className={styles.bodyParagraph} {...props} />;
+                return <p className={styles.bodyParagraph} {...paragraphAnchor()} {...props} />;
               },
               a: ({ node, href, children, ...props }) => {
                 void node;
