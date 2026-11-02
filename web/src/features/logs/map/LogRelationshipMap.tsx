@@ -125,7 +125,7 @@ function AllRecordsMap({ posts, selectedSlug, selectPost }: {
       sourceHandle: `source-${route.sourceSide}`,
       targetHandle: `target-${route.targetSide}`,
       data: { path: route.path },
-      markerEnd: edge.kind === "reference" ? { type: MarkerType.ArrowClosed, color: "var(--accent)" } : undefined,
+      markerEnd: edge.kind === "reference" ? { type: MarkerType.ArrowClosed, color: "var(--accent-text)" } : undefined,
       ariaLabel: edge.reason,
       className: `${styles.edge} ${edge.kind === "reference" ? styles.referenceEdge : styles.relatedEdge}`,
       style: {

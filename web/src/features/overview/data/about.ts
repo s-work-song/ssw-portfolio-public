@@ -145,7 +145,7 @@ export const aboutArchiveProjects: AboutArchiveProject[] = [
       ],
       placeholder: 'Canvas 피하기 게임 실행 화면을 추가할 자리입니다.',
     },
-    logHref: '/about-me/log/view/?slug=canvas-dodge-game-before-game-development',
+    logHref: '/about-me/log/canvas-dodge-game-before-game-development/',
     demo: {
       src: '/showcases/canvas-dodge-game/index.html?v=1',
       title: 'Canvas 피하기 게임 실행 화면',
@@ -174,7 +174,7 @@ export const aboutArchiveProjects: AboutArchiveProject[] = [
       ],
       placeholder: '엑셀 행 매핑 WPF 앱 캡처를 여기에 추가할 예정입니다.',
     },
-    logHref: '/about-me/log/view/?slug=excel-row-mapping-wpf-app',
+    logHref: '/about-me/log/excel-row-mapping-wpf-app/',
   },
   {
     id: 'archive-android-ar-campfire',
@@ -218,7 +218,7 @@ export const aboutArchiveProjects: AboutArchiveProject[] = [
       placeholder: 'Android AR 캠프파이어 앱 화면을 추가할 자리입니다.',
     },
     videoSlotCount: 4,
-    logHref: '/about-me/log/view/?slug=first-ar-project-using-real-space-and-motion',
+    logHref: '/about-me/log/first-ar-project-using-real-space-and-motion/',
   },
 ];
 
@@ -376,7 +376,7 @@ export const aboutProjects: AboutProject[] = [
     gallery: {
       images: [
         {
-          src: '/images/projects/sprite-toolkit/01-home.png',
+          src: '/images/projects/sprite-toolkit/01-home.webp',
           alt: '파일 열기와 작업 단계 안내를 제공하는 스프라이트 툴킷 홈 화면',
           caption: '스프라이트 파일 열기와 작업 흐름을 안내하는 홈 화면',
         },

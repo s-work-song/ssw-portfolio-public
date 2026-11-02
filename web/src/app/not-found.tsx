@@ -5,9 +5,10 @@
  */
 import type { Metadata } from "next";
 import Link from "next/link";
+import LogNotFoundRedirect from "../features/logs/navigation/LogNotFoundRedirect";
 
 export const metadata: Metadata = {
-  title: "SSW 소개페이지",
+  title: { absolute: "SSW 소개페이지" },
 };
 
 export default function NotFound() {
@@ -22,8 +23,9 @@ export default function NotFound() {
         color: "var(--text)",
       }}
     >
+      <LogNotFoundRedirect />
       <div style={{ maxWidth: "480px", textAlign: "center" }}>
-        <p style={{ margin: "0 0 12px", fontFamily: "'JetBrains Mono', monospace", fontSize: "12px", letterSpacing: ".18em", color: "var(--accent, #6366f1)" }}>
+        <p style={{ margin: "0 0 12px", fontFamily: "'JetBrains Mono', monospace", fontSize: "12px", letterSpacing: ".18em", color: "var(--accent-text)" }}>
           404 NOT FOUND
         </p>
         <h1 style={{ margin: "0 0 12px", fontSize: "clamp(1.5rem, 5vw, 2rem)", fontWeight: 800 }}>

@@ -27,8 +27,15 @@ function saveHistory(view: Window, key: string, value: unknown): void {
   } catch { /* 방문 기록 저장이 제한돼도 글 열기는 계속한다. */ }
 }
 
+/** 정적 주소(/about-me/log/<slug>/)와 예전 주소(view/?slug=) 어느 쪽이든 지금 보는 글의 slug를 돌려준다. */
+function detailSlug(location: Pick<Location, 'pathname' | 'search'>): string | null {
+  if (/\/about-me\/log\/view\/?$/.test(location.pathname)) return new URLSearchParams(location.search).get('slug');
+  const match = /\/about-me\/log\/([^/]+)\/?$/.exec(location.pathname);
+  return match ? decodeURIComponent(match[1]) : null;
+}
+
 function readDetailReturn(view: Window, slug: string): LogListReturn | null {
-  if (!/\/about-me\/log\/view\/?$/.test(view.location.pathname)) return null;
+  if (detailSlug(view.location) === null) return null;
   const saved = view.history.state?.[DETAIL_HISTORY_KEY];
   return saved?.slug === slug ? parseEntry(saved.entry) : null;
 }
@@ -37,7 +44,7 @@ function readDetailReturn(view: Window, slug: string): LogListReturn | null {
 export function rememberLogListReturn(view: Window, slug: string): void {
   const url = listUrl(view.location);
   const entry = url && slug ? { url, slug }
-    : readDetailReturn(view, new URLSearchParams(view.location.search).get('slug') ?? '');
+    : readDetailReturn(view, detailSlug(view.location) ?? '');
   if (url && entry) saveHistory(view, HISTORY_KEY, entry);
   if (entry) detailTransfers.set(view, { slug, entry });
   else detailTransfers.delete(view);
@@ -50,8 +57,7 @@ export function readLogListReturn(view: Window): LogListReturn | null {
 
 /** 상세 방문 기록에도 저장해 새로고침 후의 목록 버튼이 동일한 목적지를 가리키게 한다. */
 export function captureLogDetailReturn(view: Window, slug: string): LogListReturn | null {
-  if (!/\/about-me\/log\/view\/?$/.test(view.location.pathname)
-    || new URLSearchParams(view.location.search).get('slug') !== slug) return null;
+  if (detailSlug(view.location) !== slug) return null;
   const transfer = detailTransfers.get(view);
   if (transfer?.slug === slug) {
     detailTransfers.delete(view);

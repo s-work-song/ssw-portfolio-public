@@ -110,7 +110,7 @@ export const trainingLineParts: readonly TrainingLinePart[] = [
   {
     label: '시스템 지침',
     location: 'messages[0]',
-    desc: '모든 줄의 맨 앞에 같은 지침이 들어갑니다. 지금 쓰는 메인 LoRA는 간결 지침(1,625자)으로 만든 학습 데이터로 학습했고, 운영에서도 이 LoRA에는 같은 간결 지침을 보냅니다.',
+    desc: '모든 줄의 맨 앞에 같은 지침이 들어갑니다. 지금 쓰는 메인 LoRA는 간결 지침(1,625자)으로 만든 학습 데이터로 학습했고, 운영에서는 여기에 말투와 거절 규칙 몇 줄을 더한 간결 지침(1,902자)을 보냅니다.',
   },
   {
     label: '도구 정의',

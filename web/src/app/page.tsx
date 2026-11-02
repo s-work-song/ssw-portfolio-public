@@ -13,7 +13,7 @@ const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 const target = `${basePath}/about-me/`;
 
 export const metadata: Metadata = {
-  title: "SSW 소개페이지",
+  title: { absolute: "SSW 소개페이지" },
 };
 
 export default function RootRedirect() {

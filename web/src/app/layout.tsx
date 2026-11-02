@@ -11,6 +11,11 @@ import { ChatProvider } from "../features/chat";
 import { ChatApiPreconnect } from "./ChatApiPreconnect";
 import { PortfolioWebMcp } from "../features/webmcp/PortfolioWebMcp";
 
+/** 전체 굵기 파일 대신 쓰는 글자 범위만 받는 가변 하위 집합이다. @import와 달리 첫 화면을 막지 않는다. */
+const PRETENDARD_CSS =
+  "https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css";
+const PRETENDARD_LOADER = `(function(){var l=document.createElement("link");l.rel="stylesheet";l.href=${JSON.stringify(PRETENDARD_CSS)};document.head.appendChild(l)})()`;
+
 /**
  * 링크 미리보기 이미지는 같은 폴더의 opengraph-image.png 파일 규칙으로 붙는다.
  * 이미지 경로에는 Next가 basePath를 이미 넣으므로 metadataBase는 출처(origin)만 둔다.
@@ -19,7 +24,7 @@ export const metadata: Metadata = {
   metadataBase: new URL("https://s-work-song.github.io"),
   title: {
     default: "SSW 소개페이지",
-    template: "SSW 소개페이지",
+    template: "%s | SSW 소개페이지",
   },
   description:
     "컴퓨팅 스택의 원리를 탐구하고 측정 가능한 개선을 제품으로 연결하는 소프트웨어 엔지니어 송상운의 포트폴리오입니다.",
@@ -61,6 +66,9 @@ export default function RootLayout({
       <head>
         {/* 첫 페인트 전에 저장된 설정을 적용한다. 상세는 context/settingsDataset. */}
         <script dangerouslySetInnerHTML={{ __html: THEME_BOOT_SCRIPT }} />
+        <link rel="preconnect" href="https://cdn.jsdelivr.net" crossOrigin="anonymous" />
+        <script dangerouslySetInnerHTML={{ __html: PRETENDARD_LOADER }} />
+        <noscript><link rel="stylesheet" href={PRETENDARD_CSS} /></noscript>
       </head>
       <body>
         <ChatApiPreconnect />

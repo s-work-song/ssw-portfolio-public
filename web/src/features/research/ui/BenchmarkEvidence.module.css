@@ -35,7 +35,7 @@
 .eyebrow {
   display: block;
   margin-bottom: 5px;
-  color: var(--accent);
+  color: var(--accent-text);
   font-family: 'JetBrains Mono', monospace;
   font-size: 0.68rem;
   font-weight: 700;
@@ -59,7 +59,7 @@
   border: 1px solid color-mix(in srgb, var(--accent) 32%, var(--border));
   border-radius: 999px;
   background: color-mix(in srgb, var(--accent) 9%, var(--bg-elev));
-  color: var(--accent);
+  color: var(--accent-text);
   font-size: 0.72rem;
   font-weight: 700;
   padding: 4px 9px;
@@ -128,14 +128,14 @@
 .link:hover,
 .internalLink:hover {
   border-color: color-mix(in srgb, var(--accent) 52%, var(--border));
-  color: var(--accent);
+  color: var(--accent-text);
   transform: translateY(-1px);
 }
 
 .primaryLink {
   border-color: color-mix(in srgb, var(--accent) 45%, var(--border));
   background: color-mix(in srgb, var(--accent) 11%, var(--bg-elev));
-  color: var(--accent);
+  color: var(--accent-text);
 }
 
 .statusNote {

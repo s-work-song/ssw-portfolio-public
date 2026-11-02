@@ -1,4 +1,4 @@
-/** 기존 공개 URL을 새 API 기반 상세 화면으로 연결하기 위한 slug만 보관한다. */
+/** 예전 공개 주소가 깨지지 않도록 정적 페이지를 함께 만드는 slug 목록이다. slug만 보관한다. */
 export const LEGACY_LOG_SLUGS = [
   'access-modifiers-are-collaboration-documentation',
   'ambiguous-support-leaves-negative-experiences',

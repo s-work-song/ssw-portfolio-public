@@ -25,7 +25,7 @@ export default function ProjectCardGrid({ projects }: { projects: AboutProject[]
             scrollMarginTop: '96px',
           }}
         >
-          <span style={{ color: 'var(--accent, #6366f1)', fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+          <span style={{ color: 'var(--accent-text)', fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
             {project.category}
           </span>
           <h4 style={{ margin: 0, color: 'var(--text)', fontSize: '1.12rem' }}>

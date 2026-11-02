@@ -94,7 +94,7 @@
 
 /* 글자 크기 버튼은 글자색까지 포인트 컬러로 바뀝니다. */
 .optAccentText {
-  color: color-mix(in srgb, var(--accent) calc(var(--on) * 100%), var(--text-dim));
+  color: color-mix(in srgb, var(--accent-text) calc(var(--on) * 100%), var(--text-dim));
 }
 
 /*

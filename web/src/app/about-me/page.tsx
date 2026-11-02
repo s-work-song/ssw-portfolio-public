@@ -107,7 +107,7 @@ export default function OverviewPage() {
               <div style={{ 
                 fontSize: '0.9375rem', 
                 fontWeight: 600, 
-                color: 'var(--accent, #6366f1)',
+                color: 'var(--accent-text)',
                 display: 'inline-flex',
                 alignItems: 'center'
               }}>
@@ -134,7 +134,7 @@ export default function OverviewPage() {
             scrollMarginTop: '108px',
           }}
         >
-          <p style={{ margin: '0 0 8px', color: 'var(--accent, #6366f1)', fontSize: '0.78rem', fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase' }}>
+          <p style={{ margin: '0 0 8px', color: 'var(--accent-text)', fontSize: '0.78rem', fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase' }}>
             Archive
           </p>
           <h3 style={{ margin: 0, color: 'var(--text)', fontSize: 'clamp(1.35rem, 3vw, 1.75rem)' }}>
@@ -165,7 +165,7 @@ export default function OverviewPage() {
             scrollMarginTop: '108px',
           }}
         >
-          <p style={{ margin: '0 0 8px', color: 'var(--accent, #6366f1)', fontSize: '0.78rem', fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase' }}>
+          <p style={{ margin: '0 0 8px', color: 'var(--accent-text)', fontSize: '0.78rem', fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase' }}>
             Projects
           </p>
           <h3 style={{ margin: 0, color: 'var(--text)', fontSize: 'clamp(1.35rem, 3vw, 1.75rem)' }}>
@@ -194,7 +194,7 @@ export default function OverviewPage() {
             scrollMarginTop: '108px',
           }}
         >
-          <p style={{ margin: '0 0 8px', color: 'var(--accent, #6366f1)', fontSize: '0.78rem', fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase' }}>
+          <p style={{ margin: '0 0 8px', color: 'var(--accent-text)', fontSize: '0.78rem', fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase' }}>
             Open-weight Experiments
           </p>
           <h3 style={{ margin: 0, color: 'var(--text)', fontSize: 'clamp(1.35rem, 3vw, 1.75rem)' }}>

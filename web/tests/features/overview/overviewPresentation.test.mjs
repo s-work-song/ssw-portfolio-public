@@ -112,7 +112,7 @@ test('새 프로젝트 소개 이미지는 실제 로컬 파일이며 테스트 
   assert.doesNotMatch(JSON.stringify(comfy.gallery), /sf-astronaut|sf-video-input|생성 결과물|GPT 생성 입력|로컬 레이아웃 미리보기|01-video-layout|02-image-layout/u);
   const sprite = additions.find(({ id }) => id === 'project-sprite-toolkit');
   assert.deepEqual(sprite.gallery.images.map(({ src }) => src), [
-    '/images/projects/sprite-toolkit/01-home.png',
+    '/images/projects/sprite-toolkit/01-home.webp',
     '/images/projects/sprite-toolkit/02-castle-workspace.webp',
     '/images/projects/sprite-toolkit/03-color-change-preview.webp',
     '/images/projects/sprite-toolkit/01-grid-workspace.jpg',
@@ -376,9 +376,9 @@ test('메인 지침 축약은 문자 수 범위와 유지 항목 및 기반 모�
   assert.equal(experiment.title, '실험 예시 · 메인 지침 축약');
   assert.equal(experiment.before, '이전 · 기반 모델용 전체 지침');
   assert.equal(experiment.after, '현재 · 메인 LoRA용 간결 지침');
-  assert.equal(experiment.result, '11,339자 → 1,625자 · 9,714자 감소 (85.7%)');
-  assert.equal(11339 - 1625, 9714);
-  assert.equal(((11339 - 1625) / 11339 * 100).toFixed(1), '85.7');
+  assert.equal(experiment.result, '11,339자 → 1,902자 · 9,437자 감소 (83.2%)');
+  assert.equal(11339 - 1902, 9437);
+  assert.equal(((11339 - 1902) / 11339 * 100).toFixed(1), '83.2');
   assert.match(experiment.scope, /메인 세션 시스템 지침의 문자 수/u);
   assert.match(experiment.scope, /86자 상기 문구는 포함하지 않았고/u);
   assert.match(experiment.scope, /전체 입력 토큰의 감소율은 아닙니다/u);

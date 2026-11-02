@@ -82,7 +82,7 @@
 }
 
 .result {
-  color: var(--accent, #6366f1);
+  color: var(--accent-text);
   font-size: clamp(1.05rem, 2.5vw, 1.3rem);
   font-weight: 700;
   font-variant-numeric: tabular-nums;

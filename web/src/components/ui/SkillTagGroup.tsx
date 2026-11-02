@@ -12,7 +12,7 @@ export default function SkillTagGroup({
 }) {
   return (
     <div>
-      <h4 style={{ fontSize: '0.9375rem', fontWeight: 600, color: 'var(--accent, #6366f1)', margin: '0 0 10px' }}>{title}</h4>
+      <h4 style={{ fontSize: '0.9375rem', fontWeight: 600, color: 'var(--accent-text)', margin: '0 0 10px' }}>{title}</h4>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
         {skills.map((skill) => (
           <span key={skill} style={{ fontSize: '12px', fontWeight: 600, padding: '4px 8px', borderRadius: '6px', background: 'var(--bg-elev-2)', color: 'var(--text-dim)', border: '1px solid var(--border)' }}>

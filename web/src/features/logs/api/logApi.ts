@@ -161,14 +161,13 @@ async function requestJson<T>(url: URL, signal?: AbortSignal, schema?: ZodMiniTy
 /**
  * 기록 상세 화면으로 가는 내부 링크를 만든다.
  *
- * 정적 배포라 글마다 페이지가 있는 것이 아니라 하나의 뷰어 페이지가 slug를
- * 질의 문자열로 받는다. 경로 끝에 슬래시를 두는 것도 정적 내보내기 규칙에
- * 맞추기 위해서다. slug는 URLSearchParams가 인코딩하지만 sectionId는 그대로
- * 붙으므로, 특수문자가 섞인 id를 넘길 때는 호출부가 처리해야 한다.
+ * 글마다 빌드 때 만든 정적 페이지가 있고, 빌드 뒤에 올라온 글은 404 화면이
+ * `view/?slug=`로 넘겨 API로 그린다. 경로 끝에 슬래시를 두는 것은 정적 내보내기
+ * 규칙에 맞추기 위해서다. slug는 인코딩하지만 sectionId는 그대로 붙으므로,
+ * 특수문자가 섞인 id를 넘길 때는 호출부가 처리해야 한다.
  */
 export function portfolioLogHref(slug: string, sectionId?: string): string {
-  const query = new URLSearchParams({ slug });
-  return `/about-me/log/view/?${query.toString()}${sectionId ? `#${sectionId}` : ""}`;
+  return `/about-me/log/${encodeURIComponent(slug)}/${sectionId ? `#${sectionId}` : ""}`;
 }
 
 /**

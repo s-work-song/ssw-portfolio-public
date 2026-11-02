@@ -116,7 +116,7 @@ export default function ResearchPanels({ activeTab }: { activeTab: ResearchTabId
                 <h3 style={{ fontSize: '1.25rem', fontWeight: 700, margin: 0, color: 'var(--text)' }}>
                   에이전트로 성능을 끌어올릴 때 주의할 점
                 </h3>
-                <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--accent, #6366f1)', border: '1px solid var(--border)', borderRadius: '99px', padding: '3px 10px', background: 'var(--bg-elev-2)' }}>
+                <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--accent-text)', border: '1px solid var(--border)', borderRadius: '99px', padding: '3px 10px', background: 'var(--bg-elev-2)' }}>
                   Instruction Set
                 </span>
               </div>
@@ -180,7 +180,7 @@ export default function ResearchPanels({ activeTab }: { activeTab: ResearchTabId
                   <h3 style={{ fontSize: '1.25rem', fontWeight: 700, margin: 0, color: 'var(--text)' }}>
                     조건 분기와 SIMD 벡터화 성능 비교
                   </h3>
-                  <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--accent, #6366f1)', border: '1px solid var(--border)', borderRadius: '99px', padding: '3px 10px', background: 'var(--bg-elev-2)' }}>
+                  <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--accent-text)', border: '1px solid var(--border)', borderRadius: '99px', padding: '3px 10px', background: 'var(--bg-elev-2)' }}>
                     CPU Architecture
                   </span>
                 </div>
@@ -306,11 +306,11 @@ return Vector256.Sum(accumulator) + ScalarSum(src[남은_청크..]);`}
                         <div style={{ width: '80px', fontSize: '0.8rem', fontWeight: 600, fontFamily: 'monospace', textAlign: 'right' }}>973 μs</div>
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
-                        <div style={{ width: '150px', fontSize: '0.8rem', color: 'var(--accent, #6366f1)', fontWeight: 700, textAlign: 'right' }}>Case 3: AVX2 SIMD</div>
+                        <div style={{ width: '150px', fontSize: '0.8rem', color: 'var(--accent-text)', fontWeight: 700, textAlign: 'right' }}>Case 3: AVX2 SIMD</div>
                         <div style={{ flex: 1, minWidth: '150px', height: '16px', background: 'var(--bg)', borderRadius: '4px', overflow: 'hidden' }}>
                           <div style={{ width: '0.7%', height: '100%', background: 'var(--accent, #6366f1)', borderRadius: '4px', minWidth: '3px' }}></div>
                         </div>
-                        <div style={{ width: '80px', fontSize: '0.8rem', fontWeight: 700, color: 'var(--accent, #6366f1)', fontFamily: 'monospace', textAlign: 'right' }}>37 μs</div>
+                        <div style={{ width: '80px', fontSize: '0.8rem', fontWeight: 700, color: 'var(--accent-text)', fontFamily: 'monospace', textAlign: 'right' }}>37 μs</div>
                       </div>
                     </div>
                   </div>
@@ -337,11 +337,11 @@ return Vector256.Sum(accumulator) + ScalarSum(src[남은_청크..]);`}
                         <div style={{ width: '80px', fontSize: '0.8rem', fontWeight: 600, fontFamily: 'monospace', textAlign: 'right' }}>973 μs</div>
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
-                        <div style={{ width: '150px', fontSize: '0.8rem', color: 'var(--accent, #6366f1)', fontWeight: 700, textAlign: 'right' }}>Case 3: AVX2 SIMD</div>
+                        <div style={{ width: '150px', fontSize: '0.8rem', color: 'var(--accent-text)', fontWeight: 700, textAlign: 'right' }}>Case 3: AVX2 SIMD</div>
                         <div style={{ flex: 1, minWidth: '150px', height: '16px', background: 'var(--bg)', borderRadius: '4px', overflow: 'hidden' }}>
                           <div style={{ width: '0.7%', height: '100%', background: 'var(--accent, #6366f1)', borderRadius: '4px', minWidth: '3px' }}></div>
                         </div>
-                        <div style={{ width: '80px', fontSize: '0.8rem', fontWeight: 700, color: 'var(--accent, #6366f1)', fontFamily: 'monospace', textAlign: 'right' }}>38 μs</div>
+                        <div style={{ width: '80px', fontSize: '0.8rem', fontWeight: 700, color: 'var(--accent-text)', fontFamily: 'monospace', textAlign: 'right' }}>38 μs</div>
                       </div>
                     </div>
                   </div>
@@ -368,11 +368,11 @@ return Vector256.Sum(accumulator) + ScalarSum(src[남은_청크..]);`}
                         <div style={{ width: '80px', fontSize: '0.8rem', fontWeight: 600, fontFamily: 'monospace', textAlign: 'right' }}>194 μs</div>
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
-                        <div style={{ width: '150px', fontSize: '0.8rem', color: 'var(--accent, #6366f1)', fontWeight: 700, textAlign: 'right' }}>Case 3: AVX2 SIMD</div>
+                        <div style={{ width: '150px', fontSize: '0.8rem', color: 'var(--accent-text)', fontWeight: 700, textAlign: 'right' }}>Case 3: AVX2 SIMD</div>
                         <div style={{ flex: 1, minWidth: '150px', height: '16px', background: 'var(--bg)', borderRadius: '4px', overflow: 'hidden' }}>
                           <div style={{ width: '0.2%', height: '100%', background: 'var(--accent, #6366f1)', borderRadius: '4px', minWidth: '3px' }}></div>
                         </div>
-                        <div style={{ width: '80px', fontSize: '0.8rem', fontWeight: 700, color: 'var(--accent, #6366f1)', fontFamily: 'monospace', textAlign: 'right' }}>11 μs</div>
+                        <div style={{ width: '80px', fontSize: '0.8rem', fontWeight: 700, color: 'var(--accent-text)', fontFamily: 'monospace', textAlign: 'right' }}>11 μs</div>
                       </div>
                     </div>
                   </div>
@@ -399,18 +399,18 @@ return Vector256.Sum(accumulator) + ScalarSum(src[남은_청크..]);`}
                         <div style={{ width: '80px', fontSize: '0.8rem', fontWeight: 600, fontFamily: 'monospace', textAlign: 'right' }}>194 μs</div>
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
-                        <div style={{ width: '150px', fontSize: '0.8rem', color: 'var(--accent, #6366f1)', fontWeight: 700, textAlign: 'right' }}>Case 3: AVX2 SIMD</div>
+                        <div style={{ width: '150px', fontSize: '0.8rem', color: 'var(--accent-text)', fontWeight: 700, textAlign: 'right' }}>Case 3: AVX2 SIMD</div>
                         <div style={{ flex: 1, minWidth: '150px', height: '16px', background: 'var(--bg)', borderRadius: '4px', overflow: 'hidden' }}>
                           <div style={{ width: '0.2%', height: '100%', background: 'var(--accent, #6366f1)', borderRadius: '4px', minWidth: '3px' }}></div>
                         </div>
-                        <div style={{ width: '80px', fontSize: '0.8rem', fontWeight: 700, color: 'var(--accent, #6366f1)', fontFamily: 'monospace', textAlign: 'right' }}>11 μs</div>
+                        <div style={{ width: '80px', fontSize: '0.8rem', fontWeight: 700, color: 'var(--accent-text)', fontFamily: 'monospace', textAlign: 'right' }}>11 μs</div>
                       </div>
                     </div>
                   </div>
 
                 </div>
                 <div style={{ marginTop: '20px', textAlign: 'right', borderTop: '1px solid var(--border)', paddingTop: '12px' }}>
-                  <div style={{ fontSize: '0.8rem', color: 'var(--accent, #6366f1)', fontWeight: 700, wordBreak: 'keep-all' }}>
+                  <div style={{ fontSize: '0.8rem', color: 'var(--accent-text)', fontWeight: 700, wordBreak: 'keep-all' }}>
                     ← 전체 최적화 조합(SIMD + 병렬 처리 + 정렬 데이터) 기준 최대 약 485배 단축 (5,341 μs ➔ 11 μs)
                   </div>
                   <div style={{ marginTop: '6px', fontSize: '0.75rem', color: 'var(--text-mute)', lineHeight: 1.5, wordBreak: 'keep-all' }}>
@@ -429,21 +429,21 @@ return Vector256.Sum(accumulator) + ScalarSum(src[남은_청크..]);`}
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px' }}>
                   <div style={{ padding: '16px', background: 'var(--bg-elev-2)', borderRadius: '12px', border: '1px solid var(--border)' }}>
-                    <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--accent, #6366f1)' }}>C++ Google Benchmark</div>
+                    <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--accent-text)' }}>C++ Google Benchmark</div>
                     <div style={{ fontSize: '1.25rem', fontWeight: 700, margin: '6px 0', fontFamily: 'monospace' }}>34.5 μs</div>
                     <div style={{ fontSize: '0.8rem', color: 'var(--text-mute)', lineHeight: 1.4 }}>
                       해당 측정에서 C# 관리형 코드(37 μs)와 C++ 구현의 처리 시간이 유사한 수준임을 확인했습니다.
                     </div>
                   </div>
                   <div style={{ padding: '16px', background: 'var(--bg-elev-2)', borderRadius: '12px', border: '1px solid var(--border)' }}>
-                    <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--accent, #6366f1)' }}>Node.js / React Interop</div>
+                    <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--accent-text)' }}>Node.js / React Interop</div>
                     <div style={{ fontSize: '1.25rem', fontWeight: 700, margin: '6px 0', fontFamily: 'monospace' }}>33ms ➔ 1.96ms (~17x)</div>
                     <div style={{ fontSize: '0.8rem', color: 'var(--text-mute)', lineHeight: 1.4 }}>
                       C# 로직을 NativeAOT 컴파일하여 DLL 바이너리로 확보하고 Node.js(React 백엔드)에서 C-Interop 호출을 적용했습니다.
                     </div>
                   </div>
                   <div style={{ padding: '16px', background: 'var(--bg-elev-2)', borderRadius: '12px', border: '1px solid var(--border)' }}>
-                    <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--accent, #6366f1)' }}>Android Kotlin (모바일)</div>
+                    <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--accent-text)' }}>Android Kotlin (모바일)</div>
                     <div style={{ fontSize: '1.25rem', fontWeight: 700, margin: '6px 0', fontFamily: 'monospace' }}>5.3ms ➔ 1.43ms (~3.7x)</div>
                     <div style={{ fontSize: '0.8rem', color: 'var(--text-mute)', lineHeight: 1.4 }}>
                       갤럭시 S23 울트라(SM-S918N) 환경. 분기 미스로 인한 CPU 파이프라인 클리어링(낭비 연산)을 줄여 배터리 소모 및 발열을 제어하는 목적으로 검증했습니다.
@@ -475,12 +475,12 @@ return Vector256.Sum(accumulator) + ScalarSum(src[남은_청크..]);`}
                   <ul style={{ margin: '6px 0 0', paddingLeft: '18px' }}>
                     <li>
                       <strong style={{ color: 'var(--text)' }}>트랙 1 · <code>unsafe</code> 없는 C#</strong>: 기준 코드는{' '}
-                      <a href={`${SIMD_RECORD_BASELINE_SOURCE_URL}/MultiplyAddAvx2RangeSumCalculator.cs`} target="_blank" rel="noreferrer" style={{ color: 'var(--accent, #6366f1)' }}><code>MultiplyAddAvx2RangeSumCalculator</code></a>입니다.
+                      <a href={`${SIMD_RECORD_BASELINE_SOURCE_URL}/MultiplyAddAvx2RangeSumCalculator.cs`} target="_blank" rel="noreferrer" style={{ color: 'var(--accent-text)' }}><code>MultiplyAddAvx2RangeSumCalculator</code></a>입니다.
                       <code>unsafe</code> 키워드와 포인터 없이 C#만으로 넘어야 합니다.
                     </li>
                     <li>
                       <strong style={{ color: 'var(--text)' }}>트랙 2 · 제한 없음</strong>: 기준 코드는{' '}
-                      <a href={`${SIMD_RECORD_BASELINE_SOURCE_URL}/PrefetchMultiplyAddAvx2RangeSumCalculator.cs`} target="_blank" rel="noreferrer" style={{ color: 'var(--accent, #6366f1)' }}><code>PrefetchMultiplyAddAvx2RangeSumCalculator</code></a>입니다.
+                      <a href={`${SIMD_RECORD_BASELINE_SOURCE_URL}/PrefetchMultiplyAddAvx2RangeSumCalculator.cs`} target="_blank" rel="noreferrer" style={{ color: 'var(--accent-text)' }}><code>PrefetchMultiplyAddAvx2RangeSumCalculator</code></a>입니다.
                       언어와 <code>unsafe</code> 모두 자유입니다.
                     </li>
                   </ul>
@@ -507,7 +507,7 @@ return Vector256.Sum(accumulator) + ScalarSum(src[남은_청크..]);`}
                       <strong style={{ color: 'var(--text)' }}>같은 조건</strong>: AVX2까지(AVX-512 제외), 단일 스레드입니다.
                       명령어는 x86-64-v3 수준(AVX2·FMA·BMI1·BMI2 등)까지만 쓰고, AVX-VNNI·AVX-IFMA·AVX10처럼 그 뒤에 나온 확장은 쓰지 않습니다.
                       자기 PC에서{' '}
-                      <a href={SIMD_RECORD_BASELINE_ROOT_URL} target="_blank" rel="noreferrer" style={{ color: 'var(--accent, #6366f1)' }}>기준 코드의 벤치마크</a>와 같은 BenchmarkDotNet 실행으로 함께 잽니다.
+                      <a href={SIMD_RECORD_BASELINE_ROOT_URL} target="_blank" rel="noreferrer" style={{ color: 'var(--accent-text)' }}>기준 코드의 벤치마크</a>와 같은 BenchmarkDotNet 실행으로 함께 잽니다.
                     </li>
                     <li>
                       <strong style={{ color: 'var(--text)' }}>통과 기준</strong>: 기준 코드보다 10% 이상 빠르면 됩니다.
@@ -525,14 +525,14 @@ return Vector256.Sum(accumulator) + ScalarSum(src[남은_청크..]);`}
                     참가자 CPU마다 AVX-512 지원 범위가 달라 같은 조건으로 비교하기 어렵기 때문입니다.
                     리누스 토발즈(Linus Torvalds)도 2020년에 AVX-512가 전력을 많이 먹고 시장 파편화를 키웠다고 비판하며
                     {' '}&ldquo;I hope AVX512 dies a painful death&rdquo;라고까지 말했습니다(
-                    <a href="https://www.phoronix.com/news/Linus-Torvalds-On-AVX-512" target="_blank" rel="noreferrer" style={{ color: 'var(--accent, #6366f1)' }}>Phoronix 기사</a>).
+                    <a href="https://www.phoronix.com/news/Linus-Torvalds-On-AVX-512" target="_blank" rel="noreferrer" style={{ color: 'var(--accent-text)' }}>Phoronix 기사</a>).
                     에이전트로 최적화할 때 주의할 점은{' '}
-                    <ResearchLink href="/about-me/research#research-optimization-caution" arrow={false} style={{ color: 'var(--accent, #6366f1)' }}>성능 최적화 개요</ResearchLink>에 정리했습니다.
+                    <ResearchLink href="/about-me/research#research-optimization-caution" arrow={false} style={{ color: 'var(--accent-text)' }}>성능 최적화 개요</ResearchLink>에 정리했습니다.
                   </p>
 
                   <p style={{ margin: '14px 0 0' }}>
                     코드와 두 측정 결과(CPU 모델과 측정 방법 포함)를{' '}
-                    <a href="mailto:sworksong@gmail.com" style={{ color: 'var(--accent, #6366f1)' }}>sworksong@gmail.com</a>으로 보내 주세요.
+                    <a href="mailto:sworksong@gmail.com" style={{ color: 'var(--accent-text)' }}>sworksong@gmail.com</a>으로 보내 주세요.
                     문턱에 못 미치더라도 새로운 관점이 담긴 시도라면 보내 주세요. 이 기록 깨기는 더 빠른 코드만큼이나, 이런 문제를 재미있어하는 분을 만나고 싶어서 열어 둔 것입니다.
                   </p>
                   <p style={{ margin: '10px 0 0', color: 'var(--text)', fontWeight: 600 }}>
@@ -557,7 +557,7 @@ return Vector256.Sum(accumulator) + ScalarSum(src[남은_청크..]);`}
                 <h3 style={{ fontSize: '1.25rem', fontWeight: 700, margin: 0, color: 'var(--text)' }}>
                   바이트 배열 정렬 및 레지스터 스필링 연구
                 </h3>
-                <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--accent, #6366f1)', border: '1px solid var(--border)', borderRadius: '99px', padding: '3px 10px', background: 'var(--bg-elev-2)' }}>
+                <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--accent-text)', border: '1px solid var(--border)', borderRadius: '99px', padding: '3px 10px', background: 'var(--bg-elev-2)' }}>
                   Low-level Memory
                 </span>
               </div>
@@ -647,7 +647,7 @@ for (; index < blockLength; index += 4)
                 <h3 style={{ fontSize: '1.25rem', fontWeight: 700, margin: 0, color: 'var(--text)' }}>
                   AoS·SoA 메모리 배치와 캐시 활용 비교
                 </h3>
-                <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--accent, #6366f1)', border: '1px solid var(--border)', borderRadius: '99px', padding: '3px 10px', background: 'var(--bg-elev-2)' }}>
+                <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--accent-text)', border: '1px solid var(--border)', borderRadius: '99px', padding: '3px 10px', background: 'var(--bg-elev-2)' }}>
                   DoD Layout
                 </span>
               </div>
@@ -702,7 +702,7 @@ float[] vxs = new float[N];`}
                   <h3 style={{ fontSize: '1.25rem', fontWeight: 700, margin: 0, color: 'var(--text)' }}>
                     파일 비교 성능: 메모리 매핑(MMF)과 Stream
                   </h3>
-                  <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--accent, #6366f1)', border: '1px solid var(--border)', borderRadius: '99px', padding: '3px 10px', background: 'var(--bg-elev-2)' }}>
+                  <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--accent-text)', border: '1px solid var(--border)', borderRadius: '99px', padding: '3px 10px', background: 'var(--bg-elev-2)' }}>
                     File I/O
                   </span>
                 </div>
@@ -750,10 +750,10 @@ float[] vxs = new float[N];`}
                         <td style={{ padding: '8px', color: 'var(--text-mute)', fontSize: '0.8rem' }}>OS 가상 메모리 주소 매핑, 유저-커널 버퍼 복사 차단</td>
                       </tr>
                       <tr style={{ borderBottom: '1px solid var(--border)', background: 'rgba(99, 102, 241, 0.06)' }}>
-                        <td style={{ padding: '8px', fontWeight: 700, color: 'var(--accent, #6366f1)' }}>메모리 매핑(MMF) + AVX2 SIMD</td>
-                        <td style={{ padding: '8px', textAlign: 'right', fontFamily: 'monospace', fontWeight: 700, color: 'var(--accent, #6366f1)' }}>65 ms</td>
-                        <td style={{ padding: '8px', textAlign: 'right', fontFamily: 'monospace', fontWeight: 700, color: 'var(--accent, #6366f1)' }}>~14.0x</td>
-                        <td style={{ padding: '8px', color: 'var(--accent, #6366f1)', fontSize: '0.8rem', fontWeight: 600 }}>메모리 맵 포인터에 직접 접근해 32바이트(256bit) 단위 비교</td>
+                        <td style={{ padding: '8px', fontWeight: 700, color: 'var(--accent-text)' }}>메모리 매핑(MMF) + AVX2 SIMD</td>
+                        <td style={{ padding: '8px', textAlign: 'right', fontFamily: 'monospace', fontWeight: 700, color: 'var(--accent-text)' }}>65 ms</td>
+                        <td style={{ padding: '8px', textAlign: 'right', fontFamily: 'monospace', fontWeight: 700, color: 'var(--accent-text)' }}>~14.0x</td>
+                        <td style={{ padding: '8px', color: 'var(--accent-text)', fontSize: '0.8rem', fontWeight: 600 }}>메모리 맵 포인터에 직접 접근해 32바이트(256bit) 단위 비교</td>
                       </tr>
                     </tbody>
                   </table>
@@ -798,14 +798,14 @@ float[] vxs = new float[N];`}
                     <div style={{ width: '80px', fontSize: '0.85rem', fontWeight: 600, fontFamily: 'monospace' }}>~130 ms</div>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
-                    <div style={{ width: '180px', fontSize: '0.85rem', color: 'var(--accent, #6366f1)', fontWeight: 700, textAlign: 'right' }}>메모리 매핑(MMF) + AVX2</div>
+                    <div style={{ width: '180px', fontSize: '0.85rem', color: 'var(--accent-text)', fontWeight: 700, textAlign: 'right' }}>메모리 매핑(MMF) + AVX2</div>
                     <div style={{ flex: 1, minWidth: '150px', height: '20px', background: 'var(--bg)', borderRadius: '4px', overflow: 'hidden' }}>
                       <div style={{ width: '7%', height: '100%', background: 'var(--accent, #6366f1)', borderRadius: '4px' }}></div>
                     </div>
-                    <div style={{ width: '80px', fontSize: '0.85rem', fontWeight: 700, color: 'var(--accent, #6366f1)', fontFamily: 'monospace' }}>65 ms</div>
+                    <div style={{ width: '80px', fontSize: '0.85rem', fontWeight: 700, color: 'var(--accent-text)', fontFamily: 'monospace' }}>65 ms</div>
                   </div>
                 </div>
-                <div style={{ marginTop: '12px', fontSize: '0.8rem', color: 'var(--accent, #6366f1)', fontWeight: 700, textAlign: 'right' }}>
+                <div style={{ marginTop: '12px', fontSize: '0.8rem', color: 'var(--accent-text)', fontWeight: 700, textAlign: 'right' }}>
                   ← 약 14배 파일 대조 속도 향상
                 </div>
               </div>
@@ -845,7 +845,7 @@ float[] vxs = new float[N];`}
                   <h3 style={{ fontSize: '1.25rem', fontWeight: 700, margin: 0, color: 'var(--text)' }}>
                     프레임 기록 직렬화 크기 최적화
                   </h3>
-                  <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--accent, #6366f1)', border: '1px solid var(--border)', borderRadius: '99px', padding: '3px 10px', background: 'var(--bg-elev-2)' }}>
+                  <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--accent-text)', border: '1px solid var(--border)', borderRadius: '99px', padding: '3px 10px', background: 'var(--bg-elev-2)' }}>
                     Serialization
                   </span>
                 </div>
@@ -894,10 +894,10 @@ float[] vxs = new float[N];`}
                         <td style={{ padding: '8px', color: 'var(--text-mute)', fontSize: '0.8rem' }}>Varint 인코딩 후 반복 패턴 압축</td>
                       </tr>
                       <tr style={{ borderBottom: '1px solid var(--border)', background: 'rgba(99, 102, 241, 0.06)' }}>
-                        <td style={{ padding: '8px', fontWeight: 700, color: 'var(--accent, #6366f1)' }}>Protobuf + Nibble Pack + ZSTD</td>
-                        <td style={{ padding: '8px', textAlign: 'right', fontFamily: 'monospace', fontWeight: 700, color: 'var(--accent, #6366f1)' }}>74</td>
-                        <td style={{ padding: '8px', textAlign: 'right', fontFamily: 'monospace', fontWeight: 700, color: 'var(--accent, #6366f1)' }}>약 1/925로 축소</td>
-                        <td style={{ padding: '8px', color: 'var(--accent, #6366f1)', fontSize: '0.8rem', fontWeight: 700 }}>4비트 이하 변수들을 비트 시프트 결합 후 ZSTD 압축</td>
+                        <td style={{ padding: '8px', fontWeight: 700, color: 'var(--accent-text)' }}>Protobuf + Nibble Pack + ZSTD</td>
+                        <td style={{ padding: '8px', textAlign: 'right', fontFamily: 'monospace', fontWeight: 700, color: 'var(--accent-text)' }}>74</td>
+                        <td style={{ padding: '8px', textAlign: 'right', fontFamily: 'monospace', fontWeight: 700, color: 'var(--accent-text)' }}>약 1/925로 축소</td>
+                        <td style={{ padding: '8px', color: 'var(--accent-text)', fontSize: '0.8rem', fontWeight: 700 }}>4비트 이하 변수들을 비트 시프트 결합 후 ZSTD 압축</td>
                       </tr>
                     </tbody>
                   </table>
@@ -949,14 +949,14 @@ float[] vxs = new float[N];`}
                     <div style={{ width: '80px', fontSize: '0.85rem', fontWeight: 600, fontFamily: 'monospace' }}>158 B</div>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
-                    <div style={{ width: '200px', fontSize: '0.85rem', color: 'var(--accent, #6366f1)', fontWeight: 700, textAlign: 'right' }}>Nibble Pack + ZSTD</div>
+                    <div style={{ width: '200px', fontSize: '0.85rem', color: 'var(--accent-text)', fontWeight: 700, textAlign: 'right' }}>Nibble Pack + ZSTD</div>
                     <div style={{ flex: 1, minWidth: '150px', height: '20px', background: 'var(--bg)', borderRadius: '4px', overflow: 'hidden' }}>
                       <div style={{ width: '0.2%', height: '100%', background: 'var(--accent, #6366f1)', borderRadius: '4px' }}></div>
                     </div>
-                    <div style={{ width: '80px', fontSize: '0.85rem', fontWeight: 700, color: 'var(--accent, #6366f1)', fontFamily: 'monospace' }}>74 B</div>
+                    <div style={{ width: '80px', fontSize: '0.85rem', fontWeight: 700, color: 'var(--accent-text)', fontFamily: 'monospace' }}>74 B</div>
                   </div>
                 </div>
-                <div style={{ marginTop: '12px', fontSize: '0.8rem', color: 'var(--accent, #6366f1)', fontWeight: 700, textAlign: 'right' }}>
+                <div style={{ marginTop: '12px', fontSize: '0.8rem', color: 'var(--accent-text)', fontWeight: 700, textAlign: 'right' }}>
                   ← 기준 대비 데이터 크기를 약 1/925로 축소
                 </div>
               </div>
@@ -1005,7 +1005,7 @@ ulong restored = Bmi2.X64.ParallelBitDeposit(bits, mask);`}
                 <h3 style={{ fontSize: '1.25rem', fontWeight: 700, margin: 0, color: 'var(--text)' }}>
                   컴퓨팅 물리 계층별 대역폭과 전송 최적화
                 </h3>
-                <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--accent, #6366f1)', border: '1px solid var(--border)', borderRadius: '99px', padding: '3px 10px', background: 'var(--bg-elev-2)' }}>
+                <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--accent-text)', border: '1px solid var(--border)', borderRadius: '99px', padding: '3px 10px', background: 'var(--bg-elev-2)' }}>
                   Bandwidth Bottlenecks
                 </span>
               </div>
@@ -1030,7 +1030,7 @@ ulong restored = Bmi2.X64.ParallelBitDeposit(bits, mask);`}
                     <tr style={{ borderBottom: '1px solid var(--border)' }}>
                       <td style={{ padding: '8px', fontWeight: 600 }}>L1 캐시 (CPU)</td>
                       <td style={{ padding: '8px', textAlign: 'right' }}>~3.7 TB/s</td>
-                      <td style={{ padding: '8px', textAlign: 'right', fontFamily: 'monospace', color: 'var(--accent, #6366f1)', fontWeight: 600 }}>3,789 B/ns</td>
+                      <td style={{ padding: '8px', textAlign: 'right', fontFamily: 'monospace', color: 'var(--accent-text)', fontWeight: 600 }}>3,789 B/ns</td>
                       <td style={{ padding: '8px', color: 'var(--text-mute)', fontSize: '0.8rem' }}>CPU 클럭 레벨 직접 처리</td>
                     </tr>
                     <tr style={{ borderBottom: '1px solid var(--border)' }}>
@@ -1095,7 +1095,7 @@ ulong restored = Bmi2.X64.ParallelBitDeposit(bits, mask);`}
                 <h3 style={{ fontSize: '1.25rem', fontWeight: 700, margin: 0, color: 'var(--text)' }}>
                   Roslyn 컴파일러 기반 메타 프로그래밍 및 코드 생성기 (Scaffold)
                 </h3>
-                <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--accent, #6366f1)', border: '1px solid var(--border)', borderRadius: '99px', padding: '3px 10px', background: 'var(--bg-elev-2)' }}>
+                <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--accent-text)', border: '1px solid var(--border)', borderRadius: '99px', padding: '3px 10px', background: 'var(--bg-elev-2)' }}>
                   Metaprogramming
                 </span>
               </div>
@@ -1126,7 +1126,7 @@ ulong restored = Bmi2.X64.ParallelBitDeposit(bits, mask);`}
                 <h3 style={{ fontSize: '1.25rem', fontWeight: 700, margin: 0, color: 'var(--text)' }}>
                   SI 에이전트 기반 개발 및 검증 실험
                 </h3>
-                <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--accent, #6366f1)', border: '1px solid var(--border)', borderRadius: '99px', padding: '3px 10px', background: 'var(--bg-elev-2)' }}>
+                <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--accent-text)', border: '1px solid var(--border)', borderRadius: '99px', padding: '3px 10px', background: 'var(--bg-elev-2)' }}>
                   Agent Orchestration
                 </span>
               </div>
@@ -1161,7 +1161,7 @@ ulong restored = Bmi2.X64.ParallelBitDeposit(bits, mask);`}
                 <h3 style={{ fontSize: '1.25rem', fontWeight: 700, margin: 0, color: 'var(--text)' }}>
                   오픈웨이트 모델 챗봇 구조 실험
                 </h3>
-                <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--accent, #6366f1)', border: '1px solid var(--border)', borderRadius: '99px', padding: '3px 10px', background: 'var(--bg-elev-2)' }}>
+                <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--accent-text)', border: '1px solid var(--border)', borderRadius: '99px', padding: '3px 10px', background: 'var(--bg-elev-2)' }}>
                   Chat Architecture
                 </span>
               </div>

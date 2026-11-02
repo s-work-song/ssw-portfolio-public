@@ -108,7 +108,7 @@ const MOBILE_HISTORY_MARKER = "__portfolioChatOpen";
 const MOBILE_EXIT_DURATION_MS = 260;
 /**
  * 도구가 지시한 이동 경로가 이 포트폴리오 내부 경로인지 확인한다.
- * 기록 상세는 `/about-me/log/view/?slug=...#section` 형태라 질의 문자열까지
+ * 기록 상세의 예전 주소는 `/about-me/log/view/?slug=...#section` 형태라 질의 문자열까지
  * 허용하되, `//호스트`와 스킴이 붙은 절대 주소는 통과시키지 않는다.
  */
 const SAFE_ROUTE_PATTERN =

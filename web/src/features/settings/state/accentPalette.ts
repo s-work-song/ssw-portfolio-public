@@ -97,7 +97,7 @@ export function normalizeChatDockWidth(width: number): number {
 
 /** 채팅 글꼴 선택값에서 실제 font-family 문자열로 가는 표다. */
 export const CHAT_FONT_FAMILIES = {
-  pretendard: "'Pretendard', system-ui, -apple-system, sans-serif",
+  pretendard: "'Pretendard Variable', system-ui, -apple-system, sans-serif",
   "noto-sans-kr":
     "var(--font-noto-sans-kr), 'Noto Sans KR', system-ui, -apple-system, sans-serif",
   system: "system-ui, -apple-system, 'Segoe UI', sans-serif",

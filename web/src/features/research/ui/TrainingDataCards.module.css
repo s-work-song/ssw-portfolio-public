@@ -34,7 +34,7 @@
   border: 1px solid var(--border);
   border-radius: 99px;
   background: var(--bg-elev-2);
-  color: var(--accent, #6366f1);
+  color: var(--accent-text);
   font-size: 0.8rem;
   font-weight: 600;
 }
@@ -261,7 +261,7 @@
 .trainingNote {
   display: block;
   margin-top: 4px;
-  color: var(--accent, #6366f1);
+  color: var(--accent-text);
   font-weight: 700;
 }
 

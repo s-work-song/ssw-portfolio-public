@@ -88,7 +88,7 @@ export default function CoverLetterPage() {
         <div style={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', gap: '40px' }}>
           
           <div style={{ display: 'grid', gridTemplateColumns: 'minmax(40px, auto) 1fr', gap: '24px', alignItems: 'start' }}>
-            <div style={{ fontFamily: 'monospace', fontSize: '1.75rem', fontWeight: 800, color: 'var(--accent, #6366f1)', opacity: 0.8, lineHeight: 1 }}>01</div>
+            <div style={{ fontFamily: 'monospace', fontSize: '1.75rem', fontWeight: 800, color: 'var(--accent-text)', opacity: 0.8, lineHeight: 1 }}>01</div>
             <div>
               <h3 style={{ fontSize: '1.35rem', fontWeight: 700, margin: '0 0 12px', color: 'var(--text)', lineHeight: 1.2 }}>학창 시절부터 이어진 탐구심</h3>
               <p style={{ margin: 0, fontSize: '1.03125rem', color: 'var(--text-dim)', lineHeight: 1.7, wordBreak: 'keep-all' }}>
@@ -106,7 +106,7 @@ export default function CoverLetterPage() {
           <div style={{ height: '1px', background: 'var(--border)', opacity: 0.7 }} />
 
           <div style={{ display: 'grid', gridTemplateColumns: 'minmax(40px, auto) 1fr', gap: '24px', alignItems: 'start' }}>
-            <div style={{ fontFamily: 'monospace', fontSize: '1.75rem', fontWeight: 800, color: 'var(--accent, #6366f1)', opacity: 0.8, lineHeight: 1 }}>02</div>
+            <div style={{ fontFamily: 'monospace', fontSize: '1.75rem', fontWeight: 800, color: 'var(--accent-text)', opacity: 0.8, lineHeight: 1 }}>02</div>
             <div>
               <h3 style={{ fontSize: '1.35rem', fontWeight: 700, margin: '0 0 12px', color: 'var(--text)', lineHeight: 1.2 }}>로우레벨에서 하이레벨까지</h3>
               <p style={{ margin: 0, fontSize: '1.03125rem', color: 'var(--text-dim)', lineHeight: 1.7, wordBreak: 'keep-all' }}>
@@ -121,7 +121,7 @@ export default function CoverLetterPage() {
           <div style={{ height: '1px', background: 'var(--border)', opacity: 0.7 }} />
 
           <div style={{ display: 'grid', gridTemplateColumns: 'minmax(40px, auto) 1fr', gap: '24px', alignItems: 'start' }}>
-            <div style={{ fontFamily: 'monospace', fontSize: '1.75rem', fontWeight: 800, color: 'var(--accent, #6366f1)', opacity: 0.8, lineHeight: 1 }}>03</div>
+            <div style={{ fontFamily: 'monospace', fontSize: '1.75rem', fontWeight: 800, color: 'var(--accent-text)', opacity: 0.8, lineHeight: 1 }}>03</div>
             <div>
               <h3 style={{ fontSize: '1.35rem', fontWeight: 700, margin: '0 0 12px', color: 'var(--text)', lineHeight: 1.2 }}>스스로 문제를 정의하는 메이커</h3>
               <p style={{ margin: 0, fontSize: '1.03125rem', color: 'var(--text-dim)', lineHeight: 1.7, wordBreak: 'keep-all' }}>

@@ -2,7 +2,6 @@
  * 전역 디자인 토큰·접근성 기본값·공용 인터랙션·About 레이아웃·채팅 패널을 정의합니다.
  * 페이지 고유 배치는 CSS Module에 두고, 여러 라우트가 공유하는 규칙만 이 파일에서 관리합니다.
  */
-@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css');
 @import '../assets/fonts/noto-sans-kr.css';
 @import '../assets/fonts/jetbrains-mono.css';
 
@@ -11,13 +10,14 @@
 }
 
 :root {
+  --accent-text: color-mix(in srgb, var(--accent, #6366f1) 70%, var(--text, #eef0f6));
   --font-noto-sans-kr: 'Noto Sans KR', system-ui, sans-serif;
   --bg: #f4f5fb;
   --bg-elev: #ffffff;
   --bg-elev-2: #f3f4fa;
   --text: #14161f;
   --text-dim: #525872;
-  --text-mute: #666d85;
+  --text-mute: #5d6479;
   --border: rgba(18,20,45,0.09);
   --border-strong: rgba(18,20,45,0.15);
   --shadow: 0 22px 50px -28px rgba(20,24,60,0.20);
@@ -81,7 +81,7 @@ body {
   margin: 0;
   background: var(--bg, #0a0b12);
   color: var(--text, #eef0f6);
-  font-family: 'Pretendard', system-ui, -apple-system, sans-serif;
+  font-family: 'Pretendard Variable', system-ui, -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
   transition: background 0.3s ease, color 0.3s ease, padding-right 0.22s ease;
 }
@@ -551,7 +551,7 @@ input, select, textarea, button {
 }
 
 .about-subnav-link[data-chat-action-tab-target="true"] {
-  color: var(--accent);
+  color: var(--accent-text);
   background: color-mix(in srgb, var(--accent) 10%, var(--bg-elev));
   border-color: color-mix(in srgb, var(--accent) 58%, var(--border));
   box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 12%, transparent);
@@ -560,7 +560,7 @@ input, select, textarea, button {
 }
 
 [data-chat-action-research-tab-target="true"] {
-  color: var(--accent) !important;
+  color: var(--accent-text) !important;
   border-color: color-mix(in srgb, var(--accent) 58%, var(--border)) !important;
   background: color-mix(in srgb, var(--accent) 10%, var(--bg-elev)) !important;
   box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 12%, transparent);
@@ -637,7 +637,7 @@ input, select, textarea, button {
 .hover-btn-secondary:hover {
   transform: translateY(-3px);
   border-color: var(--accent) !important;
-  color: var(--accent) !important;
+  color: var(--accent-text) !important;
   background: color-mix(in srgb, var(--accent) 12%, transparent) !important;
 }
 
@@ -668,7 +668,7 @@ input, select, textarea, button {
   transition: color 0.2s;
 }
 .hover-footer-link:hover {
-  color: var(--accent) !important;
+  color: var(--accent-text) !important;
 }
 
 .hover-fab-sub-btn {
@@ -677,7 +677,7 @@ input, select, textarea, button {
 .hover-fab-sub-btn:hover {
   transform: translateY(-2px) scale(1.05);
   border-color: var(--accent) !important;
-  color: var(--accent) !important;
+  color: var(--accent-text) !important;
 }
 
 .hover-fab-main-btn {
@@ -761,7 +761,7 @@ input, select, textarea, button {
 }
 .chat-header h2 {
   font-size: 1.2rem;
-  color: var(--accent);
+  color: var(--accent-text);
   margin: 0;
 }
 .close-btn {
@@ -963,7 +963,7 @@ input, select, textarea, button {
 }
 
 .markdown-link {
-  color: var(--accent, #6366f1);
+  color: var(--accent-text);
   text-decoration: underline;
   text-decoration-thickness: 0.08em;
   text-underline-offset: 0.18em;
@@ -1323,7 +1323,7 @@ code {
 }
 
 .about-title-link:hover .about-title {
-  color: var(--accent, #6366f1) !important;
+  color: var(--accent-text) !important;
 }
 
 /* 탭은 제목·설정 아래에서 전체 너비를 같은 크기로 나눕니다. */

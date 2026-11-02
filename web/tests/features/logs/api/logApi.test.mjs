@@ -382,7 +382,7 @@ test('API: 이번 범위 밖 검색·목차·이동·연관 조회와 링크 계
   assert.equal(requests[1].pathname, '/api/logs/test-log/outline');
   assert.equal(requests[2].searchParams.get('sectionId'), 'log-section-1');
   assert.equal(requests[3].searchParams.get('limit'), '2');
-  assert.equal(portfolioLogHref('한글/기록', 'log-section-1'), '/about-me/log/view/?slug=%ED%95%9C%EA%B8%80%2F%EA%B8%B0%EB%A1%9D#log-section-1');
+  assert.equal(portfolioLogHref('한글/기록', 'log-section-1'), '/about-me/log/%ED%95%9C%EA%B8%80%2F%EA%B8%B0%EB%A1%9D/#log-section-1');
 });
 
 test('Zod 직접 의존성·lockfile 버전·공개 MIT 고지를 함께 고정한다', async () => {

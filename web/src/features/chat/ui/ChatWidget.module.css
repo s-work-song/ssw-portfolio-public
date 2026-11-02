@@ -7,7 +7,7 @@
   --chat-border: var(--border-strong, rgba(18, 20, 45, 0.15));
   font-family: var(
     --chat-font-family,
-    'Pretendard',
+    'Pretendard Variable',
     system-ui,
     -apple-system,
     sans-serif
@@ -1541,7 +1541,7 @@
   color: var(--chat-text);
   font-family: var(
     --chat-font-family,
-    'Pretendard',
+    'Pretendard Variable',
     system-ui,
     -apple-system,
     sans-serif

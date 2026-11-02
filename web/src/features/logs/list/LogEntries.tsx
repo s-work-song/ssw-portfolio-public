@@ -5,6 +5,7 @@ import dynamic from "next/dynamic";
 import {
   listPortfolioLogs,
   clearPortfolioLogCache,
+  type LogListResponse,
   type LogSummary,
 } from "@/features/logs/api/logApi";
 import { AskAiButton } from "@/features/chat";
@@ -37,9 +38,10 @@ const ENTER_ONLY_SLIDE_MS = 300;
 const MIXED_FADE_MS = 150;
 const MIXED_SLIDE_MS = 200;
 
-export default function LogEntries() {
-  const [posts, setPosts] = useState<LogSummary[]>([]);
-  const [tags, setTags] = useState<string[]>([]);
+/** initialList는 빌드 때 받은 목록이다. 첫 화면에 바로 그려 뒤늦게 도착한 목록이 화면을 밀지 않게 한다. */
+export default function LogEntries({ initialList = null }: { initialList?: LogListResponse | null }) {
+  const [posts, setPosts] = useState<LogSummary[]>(initialList?.posts ?? []);
+  const [tags, setTags] = useState<string[]>(initialList?.availableTags ?? []);
   const [viewMode, setViewMode] = useState<LogViewMode>("all");
   const [displayMode, setDisplayMode] = useState<LogDisplayMode>("list");
   const [mapFilterRevision, setMapFilterRevision] = useState(0);

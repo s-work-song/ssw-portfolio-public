@@ -43,7 +43,7 @@ export default function ResumePage() {
               <h2 style={{ fontSize: 'clamp(1.5rem, 5vw, 2.25rem)', fontWeight: 800, margin: 0, color: 'var(--text)' }}>
                 송상운
               </h2>
-              <p style={{ fontSize: 'clamp(1rem, 3vw, 1.125rem)', fontWeight: 600, color: 'var(--accent, #6366f1)', margin: '8px 0 0' }}>
+              <p style={{ fontSize: 'clamp(1rem, 3vw, 1.125rem)', fontWeight: 600, color: 'var(--accent-text)', margin: '8px 0 0' }}>
                 Software Engineer
               </p>
             </div>
@@ -62,7 +62,7 @@ export default function ResumePage() {
                 <span aria-hidden="true">📍</span> <span>Seoul, South Korea</span>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span aria-hidden="true">✉️</span> <a href="mailto:sworksong@gmail.com" style={{ color: 'var(--accent, #6366f1)', textDecoration: 'none' }}>sworksong@gmail.com</a>
+                <span aria-hidden="true">✉️</span> <a href="mailto:sworksong@gmail.com" style={{ color: 'var(--accent-text)', textDecoration: 'none' }}>sworksong@gmail.com</a>
               </div>
             </div>
           </div>

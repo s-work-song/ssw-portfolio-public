@@ -116,7 +116,7 @@ export default function MermaidDiagram({
           suppressErrorRendering: true,
           theme: 'base',
           look: 'classic',
-          fontFamily: 'Pretendard, Noto Sans KR, system-ui, sans-serif',
+          fontFamily: 'Pretendard Variable, Noto Sans KR, system-ui, sans-serif',
           htmlLabels: false,
           themeVariables: {
             darkMode: document.documentElement.dataset.theme === 'dark',

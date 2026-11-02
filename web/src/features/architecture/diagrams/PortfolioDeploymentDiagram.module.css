@@ -1,4 +1,4 @@
-.diagram { color: var(--text); font-family: Pretendard, 'Noto Sans KR', system-ui, sans-serif; }
+.diagram { color: var(--text); font-family: 'Pretendard Variable', 'Noto Sans KR', system-ui, sans-serif; }
 .diagram text { fill: var(--text); text-anchor: middle; dominant-baseline: middle; }
 .connections path { fill: none; stroke: var(--text-dim); stroke-width: 1.5; stroke-linejoin: round; }
 .arrow { fill: var(--text-dim); }

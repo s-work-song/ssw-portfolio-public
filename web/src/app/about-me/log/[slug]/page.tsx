@@ -1,22 +1,24 @@
-import LegacyLogRedirect from '../../../../features/logs/navigation/LegacyLogRedirect';
-import { LEGACY_LOG_SLUGS } from '@/features/logs/navigation/legacyLogSlugs';
+import type { Metadata } from 'next';
+import LogDetailClient from '../../../../features/logs/detail/LogDetailClient';
+import { loadStaticLogDetail, loadStaticLogSlugs } from '@/features/logs/api/logStatic';
 
 export const dynamicParams = false;
 
-export function generateStaticParams() {
-  return LEGACY_LOG_SLUGS.map((slug) => ({ slug }));
+export async function generateStaticParams() {
+  return (await loadStaticLogSlugs()).map((slug) => ({ slug }));
 }
 
-export const metadata = {
-  title: '기록 | Log',
-  description: '개인 기록',
-};
+type Props = { params: Promise<{ slug: string }> };
 
-export default async function LegacyPostPage({
-  params,
-}: {
-  params: Promise<{ slug: string }>;
-}) {
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const detail = await loadStaticLogDetail((await params).slug);
+  return {
+    title: detail?.post.title ?? '기록',
+    description: detail?.post.summary ?? '개인 기록',
+  };
+}
+
+export default async function LogPostPage({ params }: Props) {
   const { slug } = await params;
-  return <LegacyLogRedirect slug={slug} />;
+  return <LogDetailClient key={slug} slug={slug} initialDetail={await loadStaticLogDetail(slug)} />;
 }

@@ -217,7 +217,7 @@
 
 .eyebrow {
   margin: 0 0 6px;
-  color: var(--accent, #6366f1);
+  color: var(--accent-text);
   font-family: "JetBrains Mono", ui-monospace, monospace;
   font-size: 0.68rem;
   font-weight: 700;
@@ -263,7 +263,7 @@
   transform: translateY(-1px);
   border-color: color-mix(in srgb, var(--accent, #6366f1) 60%, var(--border));
   background: color-mix(in srgb, var(--accent, #6366f1) 10%, var(--bg-elev));
-  color: var(--accent, #6366f1);
+  color: var(--accent-text);
 }
 
 .filter:disabled,
@@ -295,7 +295,7 @@
 
 .recommendedIntro span {
   flex: 0 0 auto;
-  color: var(--accent, #6366f1);
+  color: var(--accent-text);
   font-family: "JetBrains Mono", ui-monospace, monospace;
   font-size: 0.68rem;
   font-weight: 700;
@@ -407,7 +407,7 @@
   border: 1px solid color-mix(in srgb, var(--accent, #6366f1) 24%, var(--border));
   border-radius: 999px;
   background: color-mix(in srgb, var(--accent, #6366f1) 7%, transparent);
-  color: var(--accent, #6366f1);
+  color: var(--accent-text);
   font-size: 0.7rem;
   font-weight: 700;
   line-height: 1.2;
@@ -415,7 +415,7 @@
 
 .recommendedOrder {
   flex: 0 0 auto;
-  color: var(--accent, #6366f1);
+  color: var(--accent-text);
   font-family: "JetBrains Mono", ui-monospace, monospace;
   font-size: 0.72rem;
   font-weight: 800;
@@ -472,7 +472,7 @@
 
 .readLink:hover {
   border-color: var(--accent, #6366f1);
-  color: var(--accent, #6366f1);
+  color: var(--accent-text);
 }
 
 .empty {
@@ -509,7 +509,7 @@
 
 .empty button:hover {
   border-color: var(--accent, #6366f1);
-  color: var(--accent, #6366f1);
+  color: var(--accent-text);
 }
 
 @media (max-width: 900px) {

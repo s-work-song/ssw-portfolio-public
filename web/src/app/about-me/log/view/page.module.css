@@ -81,7 +81,7 @@ button.listButton:disabled { opacity: 0.55; cursor: wait; transform: none; }
   border: 1px solid color-mix(in srgb, var(--accent, #6366f1) 26%, var(--border));
   border-radius: 999px;
   background: color-mix(in srgb, var(--accent, #6366f1) 8%, transparent);
-  color: var(--accent, #6366f1);
+  color: var(--accent-text);
   font-size: 0.72rem;
   font-weight: 700;
   line-height: 1.2;
@@ -114,7 +114,7 @@ button.listButton:disabled { opacity: 0.55; cursor: wait; transform: none; }
   transform: translateY(-2px);
   border-color: var(--accent, #6366f1);
   background: color-mix(in srgb, var(--accent, #6366f1) 8%, var(--bg-elev));
-  color: var(--accent, #6366f1);
+  color: var(--accent-text);
 }
 
 .markdownBody {
@@ -198,7 +198,7 @@ button.listButton:disabled { opacity: 0.55; cursor: wait; transform: none; }
 }
 
 .markdownLink {
-  color: var(--accent, #6366f1);
+  color: var(--accent-text);
   text-decoration: underline;
   text-decoration-thickness: 0.08em;
   text-underline-offset: 0.18em;
@@ -232,7 +232,7 @@ button.listButton:disabled { opacity: 0.55; cursor: wait; transform: none; }
 
 .relatedEyebrow {
   margin: 0 0 7px;
-  color: var(--accent, #6366f1);
+  color: var(--accent-text);
   font-family: "JetBrains Mono", ui-monospace, monospace;
   font-size: 0.68rem;
   font-weight: 700;
@@ -258,7 +258,7 @@ button.listButton:disabled { opacity: 0.55; cursor: wait; transform: none; }
 }
 
 .footerListLink:hover {
-  color: var(--accent, #6366f1);
+  color: var(--accent-text);
 }
 
 .relatedGrid {

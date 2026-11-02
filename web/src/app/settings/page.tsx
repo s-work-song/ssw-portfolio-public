@@ -112,7 +112,7 @@ const CHAT_FONT_OPTIONS: ReadonlyArray<{
     value: "pretendard",
     label: "Pretendard",
     description: "현재 사이트와 같은 기본 글꼴",
-    previewFamily: "'Pretendard', system-ui, sans-serif",
+    previewFamily: "'Pretendard Variable', system-ui, sans-serif",
   },
   {
     value: "noto-sans-kr",
@@ -329,7 +329,7 @@ export default function SettingsPage() {
         minHeight: "100vh",
         background: "var(--bg, #0a0b12)",
         color: "var(--text, #eef0f6)",
-        fontFamily: "'Pretendard', system-ui, sans-serif",
+        fontFamily: "'Pretendard Variable', system-ui, sans-serif",
       }}
     >
       {/* Header */}
@@ -360,7 +360,6 @@ export default function SettingsPage() {
           <Link
             href="/about-me"
             className="hover-footer-link"
-            aria-label="소개 페이지로 돌아가기"
             style={{
               display: "flex",
               alignItems: "center",
@@ -413,7 +412,7 @@ export default function SettingsPage() {
       >
         {/* 둘러보기·채팅 이동이 도착할 수 있도록 페이지 머리에 앵커를 둔다. */}
         <div id="settings-overview" tabIndex={-1} style={{ marginBottom: "clamp(28px, 4vw, 40px)", scrollMarginTop: "96px" }}>
-          <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "12px", letterSpacing: ".18em", textTransform: "uppercase", color: "var(--accent, #6366f1)", marginBottom: "12px" }}>
+          <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "12px", letterSpacing: ".18em", textTransform: "uppercase", color: "var(--accent-text)", marginBottom: "12px" }}>
             SITE SETTINGS
           </div>
           <h1 style={{ margin: "0 0 12px", fontSize: "clamp(28px, 4.4vw, 40px)", fontWeight: 800, letterSpacing: "-.02em" }}>사이트 설정</h1>
@@ -530,7 +529,7 @@ export default function SettingsPage() {
               <span id="page-transition-title" style={{ fontSize: "16px", fontWeight: 700 }}>
                 페이지 이동 애니메이션
               </span>
-              <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "12.5px", color: "var(--accent, #6366f1)", whiteSpace: "nowrap" }}>
+              <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "12.5px", color: "var(--accent-text)", whiteSpace: "nowrap" }}>
                 <ValueCaption option="page-transition" options={PAGE_TRANSITION_OPTIONS} />
               </span>
             </div>
@@ -594,7 +593,7 @@ export default function SettingsPage() {
           <section style={{ background: "var(--bg-elev)", border: "1px solid var(--border)", borderRadius: "18px", padding: "clamp(20px, 3vw, 28px)" }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "12px", marginBottom: "4px" }}>
               <span style={{ fontSize: "16px", fontWeight: 700 }}>포인트 컬러</span>
-              <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "12.5px", color: "var(--accent, #6366f1)", whiteSpace: "nowrap" }}>
+              <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "12.5px", color: "var(--accent-text)", whiteSpace: "nowrap" }}>
                 <ValueCaption
                   option="accent"
                   options={accentKeys.map((key) => ({
@@ -645,7 +644,7 @@ export default function SettingsPage() {
           <section style={{ background: "var(--bg-elev)", border: "1px solid var(--border)", borderRadius: "18px", padding: "clamp(20px, 3vw, 28px)" }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px", marginBottom: "4px" }}>
               <span style={{ fontSize: "16px", fontWeight: 700 }}>플로팅 버튼</span>
-              <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "12.5px", color: "var(--accent, #6366f1)", whiteSpace: "nowrap" }}>
+              <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "12.5px", color: "var(--accent-text)", whiteSpace: "nowrap" }}>
                 <ValueCaption option="fab-mode" options={fabModes} />
               </span>
             </div>
@@ -756,7 +755,7 @@ export default function SettingsPage() {
                           data-fab-item
                           style={{ display: "flex", alignItems: "center", gap: "8px", padding: "6px 10px 6px 7px", borderRadius: "999px", background: "var(--bg-elev)", border: "1px solid var(--border-strong)", boxShadow: "var(--shadow)", fontSize: "12px", fontWeight: 700 }}
                         >
-                          <span style={{ width: "25px", height: "25px", borderRadius: "50%", background: "var(--accent-soft, rgba(99,102,241,.14))", color: "var(--accent, #6366f1)", display: "grid", placeItems: "center", fontSize: "9px", fontWeight: 800 }}>
+                          <span style={{ width: "25px", height: "25px", borderRadius: "50%", background: "var(--accent-soft, rgba(99,102,241,.14))", color: "var(--accent-text)", display: "grid", placeItems: "center", fontSize: "9px", fontWeight: 800 }}>
                             {icon}
                           </span>
                           {label}
@@ -802,7 +801,7 @@ export default function SettingsPage() {
                   <span id="fab-animation-title" style={{ fontSize: "14.5px", fontWeight: 700 }}>
                     빠른 메뉴 애니메이션
                   </span>
-                  <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "12px", color: "var(--accent, #6366f1)", whiteSpace: "nowrap" }}>
+                  <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "12px", color: "var(--accent-text)", whiteSpace: "nowrap" }}>
                     <ValueCaption
                       option="quick-menu-animation"
                       options={FAB_ANIMATION_OPTIONS}
@@ -915,7 +914,7 @@ export default function SettingsPage() {
               <span id="chat-layout-title" style={{ fontSize: "16px", fontWeight: 700 }}>
                 PC 채팅 레이아웃
               </span>
-              <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "12.5px", color: "var(--accent, #6366f1)", whiteSpace: "nowrap" }}>
+              <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "12.5px", color: "var(--accent-text)", whiteSpace: "nowrap" }}>
                 <ValueCaption option="chat-layout" options={CHAT_LAYOUT_OPTIONS} />
               </span>
             </div>
@@ -990,7 +989,7 @@ export default function SettingsPage() {
                   </label>
                   <span
                     style={{
-                      color: "var(--accent, #6366f1)",
+                      color: "var(--accent-text)",
                       fontFamily: "'JetBrains Mono', monospace",
                       fontSize: "12.5px",
                     }}
@@ -1067,7 +1066,7 @@ export default function SettingsPage() {
               <span id="chat-font-title" style={{ fontSize: "16px", fontWeight: 700 }}>
                 채팅 글꼴과 크기
               </span>
-              <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "12.5px", color: "var(--accent, #6366f1)", whiteSpace: "nowrap" }}>
+              <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "12.5px", color: "var(--accent-text)", whiteSpace: "nowrap" }}>
                 <ValueCaption option="chat-font" options={CHAT_FONT_OPTIONS} />
               </span>
             </div>
@@ -1148,7 +1147,7 @@ export default function SettingsPage() {
                     }}
                   >
                     <span>{option.label}</span>
-                    <span style={{ fontSize: "10px", opacity: 0.72 }}>
+                    <span style={{ fontSize: "10px" }}>
                       {option.pixels}px
                     </span>
                   </SettingsRadioItem>
@@ -1238,7 +1237,7 @@ export default function SettingsPage() {
           <section style={{ background: "var(--bg-elev)", border: "1px solid var(--border)", borderRadius: "18px", padding: "clamp(20px, 3vw, 28px)" }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px", marginBottom: "4px" }}>
               <span id="stream-animation-title" style={{ fontSize: "16px", fontWeight: 700 }}>응답 텍스트 애니메이션</span>
-              <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "12.5px", color: "var(--accent, #6366f1)", whiteSpace: "nowrap" }}>
+              <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "12.5px", color: "var(--accent-text)", whiteSpace: "nowrap" }}>
                 <ValueCaption
                   option="chat-text-animation"
                   options={CHAT_STREAM_ANIMATION_OPTIONS}
@@ -1470,7 +1469,7 @@ export default function SettingsPage() {
           <section style={{ background: "var(--bg-elev)", border: "1px solid var(--border)", borderRadius: "18px", padding: "clamp(20px, 3vw, 28px)" }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px", marginBottom: "4px" }}>
               <span id="chat-animation-title" style={{ fontSize: "16px", fontWeight: 700 }}>채팅창 애니메이션</span>
-              <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "12.5px", color: "var(--accent, #6366f1)", whiteSpace: "nowrap" }}>
+              <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "12.5px", color: "var(--accent-text)", whiteSpace: "nowrap" }}>
                 <ValueCaption
                   option="chat-panel-animation"
                   options={CHAT_ANIMATION_OPTIONS}

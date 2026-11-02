@@ -29,7 +29,7 @@ function tokens(selector) {
 test('차가운 회색 무광 다크 토큰을 적용하고 라이트 기본 표면은 보존한다', () => {
   const light = tokens(':root');
   assert.deepEqual(['--bg', '--bg-elev', '--bg-elev-2', '--text', '--text-dim', '--text-mute', '--accent']
-    .map((key) => light[key]), ['#f4f5fb', '#ffffff', '#f3f4fa', '#14161f', '#525872', '#666d85', '#4169e1']);
+    .map((key) => light[key]), ['#f4f5fb', '#ffffff', '#f3f4fa', '#14161f', '#525872', '#5d6479', '#4169e1']);
   assert.equal(light['--shadow'], '0 22px 50px -28px rgba(20,24,60,0.20)');
   assert.equal(light['--surface-fill'], undefined);
   assert.equal(light['--surface-pattern-opacity'], undefined);

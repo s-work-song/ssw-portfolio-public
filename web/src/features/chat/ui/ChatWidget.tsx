@@ -1833,8 +1833,8 @@ export function ChatWidget() {
                 ? "빠른 메뉴 닫기"
                 : "빠른 메뉴 열기"
               : isOpen
-                ? "챗봇 닫기"
-                : "챗봇 열기"
+                ? "질문하기, 챗봇 닫기"
+                : "질문하기, 챗봇 열기"
           }
         >
           <span aria-hidden="true">

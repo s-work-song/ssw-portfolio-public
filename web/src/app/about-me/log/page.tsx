@@ -8,13 +8,15 @@ import Link from 'next/link';
 import AboutDecorativeGrid from '@/components/layout/AboutDecorativeGrid';
 import AboutPanel from '@/components/layout/AboutPanel';
 import LogEntries from '../../../features/logs/list/LogEntries';
+import { loadStaticLogList } from '@/features/logs/api/logStatic';
 
 export const metadata = {
-  title: '기록 | Log',
+  title: '기록',
   description: '개인적인 생각과 회고',
 };
 
-export default function LogPage() {
+export default async function LogPage() {
+  const initialList = await loadStaticLogList();
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '48px' }}>
       
@@ -47,7 +49,7 @@ export default function LogPage() {
         </div>
       </AboutPanel>
 
-      <LogEntries />
+      <LogEntries initialList={initialList} />
 
       <section style={{ 
         padding: '40px', 

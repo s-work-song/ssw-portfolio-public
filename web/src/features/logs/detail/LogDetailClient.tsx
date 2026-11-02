@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
 import ReactMarkdown from 'react-markdown';
 import {
   getPortfolioLog,
@@ -14,10 +13,11 @@ import { captureLogDetailReturn, type LogListReturn } from '../navigation/logLis
 import { scheduleLogReadingPosition } from './logReadingPosition';
 import styles from '../../../app/about-me/log/view/page.module.css';
 
-export default function LogDetailClient() {
-  const searchParams = useSearchParams();
-  const slug = searchParams.get('slug')?.trim() ?? '';
-  const [loaded, setLoaded] = useState<{ slug: string; requestKey: string; detail: LogDetailResponse; returnTo: LogListReturn | null } | null>(null);
+/** initialDetail은 빌드 때 받은 본문이다. 있으면 첫 화면을 바로 그리고, 새로고침할 때만 API를 부른다. */
+export default function LogDetailClient({ slug, initialDetail = null }: { slug: string; initialDetail?: LogDetailResponse | null }) {
+  const [loaded, setLoaded] = useState<{ slug: string; requestKey: string; detail: LogDetailResponse; returnTo: LogListReturn | null } | null>(
+    initialDetail && { slug, requestKey: `${slug}\u00000`, detail: initialDetail, returnTo: null },
+  );
   const [failed, setFailed] = useState<{ slug: string; requestKey: string; message: string; returnTo: LogListReturn | null } | null>(null);
   const [retryNonce, setRetryNonce] = useState(0);
   const requestKey = `${slug}\u0000${retryNonce}`;
@@ -30,13 +30,19 @@ export default function LogDetailClient() {
   useEffect(() => {
     if (!slug) return;
     const returnTo = captureLogDetailReturn(window, slug);
+    if (initialDetail && retryNonce === 0) {
+      const frameId = window.requestAnimationFrame(() => {
+        setLoaded((current) => current && { ...current, returnTo });
+      });
+      return () => window.cancelAnimationFrame(frameId);
+    }
     const controller = new AbortController();
     void getPortfolioLog(slug, controller.signal)
       .then((result) => {
         if (controller.signal.aborted) return;
         setLoaded({ slug, requestKey, detail: result, returnTo });
         setFailed(null);
-        document.title = `${result.post.title} | Log`;
+        document.title = `${result.post.title} | SSW 소개페이지`;
       })
       .catch((caught) => {
         if (controller.signal.aborted) return;
@@ -49,7 +55,7 @@ export default function LogDetailClient() {
         });
       });
     return () => controller.abort();
-  }, [requestKey, slug]);
+  }, [initialDetail, requestKey, retryNonce, slug]);
 
   const detail = loaded?.slug === slug ? loaded.detail : null;
   const returnTo = loaded?.slug === slug ? loaded.returnTo : failed?.slug === slug ? failed.returnTo : null;

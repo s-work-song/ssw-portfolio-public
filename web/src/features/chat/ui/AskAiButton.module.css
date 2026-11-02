@@ -10,7 +10,7 @@
   border: 1px solid color-mix(in srgb, var(--accent, #6366f1) 38%, var(--border));
   border-radius: 9px;
   background: color-mix(in srgb, var(--accent, #6366f1) 9%, var(--bg-elev));
-  color: var(--accent, #6366f1);
+  color: var(--accent-text);
   cursor: pointer;
   font: inherit;
   font-size: 12.5px;
