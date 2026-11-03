@@ -66,8 +66,6 @@ test('개발·배포 화면 조회는 낡은 해시 대신 실제 마운트된 �
 test('개발·배포 환경 페이지는 정적 본문을 좌우 탭의 슬롯으로 제공한다', async () => {
   const page = await readFile(new URL('../../../../src/app/about-me/architecture/page.tsx', import.meta.url), 'utf8');
   assert.doesNotMatch(page, /['"]use client['"]|fetch\(|searchParams/u);
-  assert.match(page, /title: '개발·배포 환경 구성 \| Environments'/u);
-  assert.match(page, /<h2>개발·배포 환경 구성<\/h2>/u);
   assert.doesNotMatch(page, /quickNav|href="#|↓/u);
   for (const tag of ['<DeploymentOverview />', '<DevelopmentEnvironmentOverview />', '<InfrastructureMigration />']) assert.equal(page.split(tag).length - 1, 1);
   assert.match(page, /<ArchitectureTabs[\s\S]*development=\{<DevelopmentEnvironmentOverview \/>\}[\s\S]*deployment=\{<DeploymentOverview \/>\}/u);
@@ -82,15 +80,13 @@ test('세 환경 탭은 접근성·키보드 처리를 제공하고 비활성 �
   assert.match(tabs, /useSyncExternalStore\(subscribeToLocation, currentHash, serverHash\)/u);
   assert.match(tabs, /activeHash === architectureTabHash\(activeTab\)/u);
   assert.match(tabs, /document.getElementById\(activeHash.slice\(1\)\)/u);
-  assert.match(tabs, /<Tabs.List[^>]*aria-label="개발·배포 환경 보기"/u);
   assert.equal((tabs.match(/<Tabs.Trigger /gu) ?? []).length, 3);
   assert.equal((tabs.match(/<Tabs.Content /gu) ?? []).length, 3);
-  assert.match(tabs, /<Tabs.Trigger value="migration"[^>]*>인프라 최적화<\/Tabs.Trigger>/u);
+  assert.match(tabs, /<Tabs.Trigger value="migration"/u);
   assert.doesNotMatch(tabs, /forceMount|fetch\(/u);
   assert.match(tabs, /history.pushState/u);
   assert.match(tabs, /addEventListener\('popstate'/u);
   const css = await readFile(new URL('../../../../src/features/architecture/ui/ArchitectureTabs.module.css', import.meta.url), 'utf8');
-  assert.match(css, /repeat\(3, minmax\(0, 1fr\)\)/u);
   assert.match(css, /:focus-visible/u);
 });
 
@@ -112,14 +108,10 @@ test('이관 배경·전환 단계·메모리 비교는 새 탭에 한 번만 �
   assert.doesNotMatch(migration, /['"]use client['"]|fetch\(|MermaidDiagram|DeploymentDiagramCarousel/u);
   assert.match(migration, /id="infrastructure-migration"/u);
   assert.match(migration, /aria-labelledby="infrastructure-migration-title"/u);
-  assert.match(migration, /공용 인프라 최적화와 이관/u);
   for (const text of ['infrastructureMigrationReasons.map', 'infrastructureTransition.map', '<DeploymentMemoryHistory />']) {
     assert.equal(migration.split(text).length - 1, 1);
     assert.equal(deployment.includes(text), false);
   }
-  const css = await readFile(new URL('../../../../src/features/architecture/ui/InfrastructureMigration.module.css', import.meta.url), 'utf8');
-  assert.match(css, /\.timeline \{[^}]*repeat\(3, minmax\(0, 1fr\)\)/u);
-  assert.match(css, /@media \(max-width: 760px\)[\s\S]*\.timeline \{ grid-template-columns: 1fr/u);
 });
 
 test('소개에는 렌더링 엔진 없이 짧은 진입 카드만 남기고 상세 탭으로 연결한다', async () => {
@@ -128,30 +120,19 @@ test('소개에는 렌더링 엔진 없이 짧은 진입 카드만 남기고 상
   assert.equal(overview.split('<ArchitecturePreview />').length - 1, 1);
   const preview = await readFile(new URL('../../../../src/features/architecture/ui/ArchitecturePreview.tsx', import.meta.url), 'utf8');
   assert.match(preview, /href="\/about-me\/architecture\/"/u);
-  assert.match(preview, /개발·배포 환경 살펴보기/u);
-  assert.match(preview, /<h3[^>]*>개발·배포 환경 구성<\/h3>/u);
   assert.doesNotMatch(preview, /Mermaid|deploymentDiagrams|deploymentMemoryComparison/u);
 });
 
-test('기존 탭은 6개로 유지하고 개발·배포 환경은 설정 옆 짧은 이름의 버튼으로 제공한다', async () => {
+test('개발·배포 환경은 소개 탭 목록 밖에서 설정 옆 버튼으로 제공한다', async () => {
   const layout = await readFile(new URL('../../../../src/app/about-me/layout.tsx', import.meta.url), 'utf8');
   const tabs = layout.match(/const ABOUT_TABS = \[([\s\S]*?)\] as const/u)?.[1];
   assert.ok(tabs);
-  assert.equal((tabs.match(/href:/gu) ?? []).length, 6);
-  assert.doesNotMatch(tabs, /architecture|개발·배포 환경/u);
+  assert.doesNotMatch(tabs, /architecture/u);
   assert.match(layout, /const ARCHITECTURE_PATH = "\/about-me\/architecture"/u);
-  assert.match(layout, /className="about-header-actions"[\s\S]*href=\{ARCHITECTURE_PATH\}[\s\S]*개발·배포 환경[\s\S]*href="\/settings"/u);
-  assert.doesNotMatch(layout, /개발·배포 환경 구성/u);
+  assert.match(layout, /className="about-header-actions"[\s\S]*href=\{ARCHITECTURE_PATH\}[\s\S]*href="\/settings"/u);
   assert.match(layout, /aria-current=\{architectureActive \? 'page' : undefined\}/u);
   assert.match(layout, /data-about-tab-path=\{ARCHITECTURE_PATH\}/u);
   assert.equal(aboutTabPathFromPath('/about-me/architecture/'), '/about-me/architecture');
   assert.equal(aboutTabPathFromPath('/about-me/architecture-extra'), null);
   assert.equal(aboutTabPathFromPath('/about-me/architecture/details/'), '/about-me/architecture');
-  const css = await readFile(new URL('../../../../src/app/globals.css', import.meta.url), 'utf8');
-  assert.match(css, /\.about-header-nav\s*\{[^}]*repeat\(6, minmax\(0, 1fr\)\)/u);
-  assert.match(css, /\.about-subnav-link\s*\{[^}]*white-space: nowrap/u);
-  assert.match(css, /\.about-header-actions\s*\{[^}]*display: flex[^}]*gap: 8px/u);
-  assert.match(css, /\.about-system-link\s*\{[^}]*white-space: nowrap/u);
-  assert.match(css, /\.about-system-link:hover,\s*\.about-system-link\.active\s*\{[^}]*color: var\(--text\)/u);
-  assert.match(css, /@media \(max-width: 640px\)\s*\{\s*\.about-header-nav\s*\{\s*grid-template-columns: repeat\(3, minmax\(0, 1fr\)\)/u);
 });

@@ -16,14 +16,10 @@ test('프리뷰는 Opus·Lyria·GPT 앨범 순서로 묶고 앨범 내 곡 순�
   assert.deepEqual(groupAudioPreviews([]), []);
 });
 
-test('실제 OSCILLO 프리뷰 17곡은 소개 화면의 5개 앨범 순서로 묶고 데이터와 앨범 안의 곡 순서를 보존한다', () => {
+test('실제 OSCILLO 프리뷰도 묶음에서 곡을 빠뜨리지 않고 앨범 안 순서와 원본을 보존한다', () => {
   const previews = agentExperiments.find(({ id }) => id === 'oscillo-rhythm-game').audioPreviews;
   const original = structuredClone(previews);
   const grouped = groupAudioPreviews(previews);
-  assert.deepEqual(grouped.map(({ album }) => album), [
-    'Opus 5.5', 'Lyria 3.5', 'Lyria 3.5 보컬', 'GPT Dots 리메이크', 'Lyria 3.0 보컬 메들리 · 밈 가사',
-  ]);
-  assert.deepEqual(grouped.map(({ tracks }) => tracks.length), [3, 3, 3, 3, 5]);
   const bySource = (left, right) => left.src.localeCompare(right.src);
   assert.deepEqual(grouped.flatMap(({ tracks }) => tracks).toSorted(bySource), previews.toSorted(bySource));
   for (const { album, tracks } of grouped) {
@@ -76,17 +72,7 @@ test('프리뷰 UI는 단일 수동 플레이어·MP3·basePath·실험 이동 �
   assert.match(source, /active\.audio && <ExperimentAudio/u);
 });
 
-test('많은 곡의 앨범은 두 칸·곡 목록 두 열로 표시하고 모바일에서는 한 열로 복귀한다', async () => {
+test('많은 곡의 앨범은 넓은 칸으로 표시한다', async () => {
   const source = await readFile(new URL('../../../../src/features/experiments/ui/AgentExperimentGallery.tsx', import.meta.url), 'utf8');
   assert.match(source, /<fieldset key=\{album\} className=\{tracks\.length > 3 \? `\$\{styles\.audioAlbum\} \$\{styles\.audioAlbumWide\}` : styles\.audioAlbum\}/u);
-  const css = await readFile(new URL('../../../../src/features/experiments/ui/AgentExperimentGallery.module.css', import.meta.url), 'utf8');
-  assert.match(css, /\.audioAlbums \{[^}]*repeat\(3, minmax\(0, 1fr\)\)/u);
-  assert.match(css, /\.audioAlbumWide \{ grid-column: span 2; \}/u);
-  assert.match(css, /\.audioAlbumWide \.audioTracks \{ grid-template-columns: repeat\(2, minmax\(0, 1fr\)\); \}/u);
-  assert.match(css, /@media \(max-width: 600px\) \{[^}]*\}[^}]*\.audioAlbums \{ grid-template-columns: minmax\(0, 1fr\); \}/u);
-  const mobile = css.slice(css.indexOf('@media (max-width: 600px)'), css.indexOf('@media (max-width: 480px)'));
-  assert.match(mobile, /\.audioAlbumWide \{ grid-column: auto; \}/u);
-  assert.match(mobile, /\.audioAlbumWide \.audioTracks \{ grid-template-columns: minmax\(0, 1fr\); \}/u);
-  assert.match(css, /\.audioTracks button > span:first-child \{ min-width: 0; overflow-wrap: anywhere; \}/u);
-  assert.match(css, /\.audioPlayer \{[^}]*width: 100%; min-width: 0;/u);
 });

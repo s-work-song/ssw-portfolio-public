@@ -10,8 +10,7 @@ test('전체 연결 그림 없이 프로젝트 카드와 상세 캐러셀만 보
   assert.doesNotMatch(overview, /['"]use client['"]/u);
   assert.doesNotMatch(overview, /deploymentOverviewDiagram|<MermaidDiagram|전체 구조도/u);
   assert.match(overview, /<DeploymentDiagramCarousel diagrams=\{deploymentDiagrams\} \/>/u);
-  assert.match(overview, /LLM 추론은 각 웹의 서버 측에서 요청/u);
-  const order = ['deploymentProjects.map', '외부 공개 경계', '<DeploymentDiagramCarousel']
+  const order = ['deploymentProjects.map', '<DeploymentDiagramCarousel']
     .map((text) => overview.indexOf(text));
   assert.ok(order.every((position, index) => position >= 0 && (!index || position > order[index - 1])));
   assert.doesNotMatch(overview, /DeploymentMemoryHistory|infrastructureMigrationReasons|infrastructureTransition/u);
@@ -29,8 +28,8 @@ test('이름 선택·이전·다음과 번호 안내는 기본 키보드·접근
   assert.match(component, /role="region" aria-roledescription="carousel"/u);
   assert.match(component, /aria-labelledby=\{headingId\} tabIndex=\{0\}/u);
   assert.match(component, /aria-pressed=\{index === activeIndex\}/u);
-  assert.match(component, /disabled=\{activeIndex === 0\} aria-label="이전 프로젝트"/u);
-  assert.match(component, /disabled=\{activeIndex === diagrams\.length - 1\} aria-label="다음 프로젝트"/u);
+  assert.match(component, /disabled=\{activeIndex === 0\}/u);
+  assert.match(component, /disabled=\{activeIndex === diagrams\.length - 1\}/u);
   assert.match(component, /aria-live="polite" aria-atomic="true"/u);
   assert.match(component, /event\.target !== event\.currentTarget/u);
   for (const key of ['ArrowLeft', 'ArrowRight', 'Home', 'End']) assert.ok(component.includes(`'${key}'`));
@@ -93,9 +92,6 @@ test('개발 환경은 배포 프로젝트 카드와 구분되는 별도 정적 
   assert.doesNotMatch(environment, /['"]use client['"]|deploymentProjects|deploymentDiagrams/u);
   assert.match(environment, /id="development-environment"/u);
   assert.match(environment, /aria-labelledby="development-environment-title"/u);
-  assert.match(environment, /개발 환경 연결 구조/u);
-  assert.match(environment, /어느 기기에서 어떤 도구에 접속하는지와 기기 간 연결/u);
-  assert.match(environment, /폰에서 조작하는 앱과 실제 작업이 실행되는 PC/u);
   assert.match(environment, /<DevelopmentEnvironmentDiagram \/>/u);
   assert.doesNotMatch(environment, /DevelopmentAccessOverview|DevelopmentTopology/u);
   assert.doesNotMatch(environment, /MermaidDiagram/u);

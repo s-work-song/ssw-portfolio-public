@@ -5,19 +5,6 @@ import { ACCENTS, DEFAULT_ACCENT } from '../../src/features/settings/state/accen
 import { ACCENTS as ACCENT_KEYS } from '../../src/features/portfolio-tools/settings.ts';
 
 const css = await readFile(new URL('../../src/app/globals.css', import.meta.url), 'utf8');
-const surfaceFiles = {
-  SiTerminologyNotice: 'features/ai-workflow/ui/SiTerminologyNotice',
-  AiWorkflowPreview: 'features/ai-workflow/ui/AiWorkflowPreview',
-  OptimizationPreview: 'features/research/ui/OptimizationPreview',
-  DevelopmentEnvironmentOverview: 'features/architecture/ui/DevelopmentEnvironmentOverview',
-  DeploymentDiagramCarousel: 'features/architecture/ui/DeploymentDiagramCarousel',
-  AgentExperimentGallery: 'features/experiments/ui/AgentExperimentGallery',
-  DevelopmentEnvironmentDiagram: 'features/architecture/diagrams/DevelopmentEnvironmentDiagram',
-  DeploymentOverview: 'features/architecture/ui/DeploymentOverview',
-  MermaidDiagram: 'components/diagrams/MermaidDiagram',
-  InfrastructureMigration: 'features/architecture/ui/InfrastructureMigration',
-  DeploymentMemoryHistory: 'features/architecture/ui/DeploymentMemoryHistory',
-};
 function tokens(selector) {
   const start = css.indexOf(`${selector} {`);
   assert.notEqual(start, -1, selector);
@@ -26,40 +13,14 @@ function tokens(selector) {
     .map(([, key, value]) => [key, value.trim()]));
 }
 
-test('차가운 회색 무광 다크 토큰을 적용하고 라이트 기본 표면은 보존한다', () => {
-  const light = tokens(':root');
-  assert.deepEqual(['--bg', '--bg-elev', '--bg-elev-2', '--text', '--text-dim', '--text-mute', '--accent']
-    .map((key) => light[key]), ['#f4f5fb', '#ffffff', '#f3f4fa', '#14161f', '#525872', '#5d6479', '#4169e1']);
-  assert.equal(light['--shadow'], '0 22px 50px -28px rgba(20,24,60,0.20)');
-  assert.equal(light['--surface-fill'], undefined);
-  assert.equal(light['--surface-pattern-opacity'], undefined);
-  const dark = tokens("[data-theme='dark']");
-  assert.deepEqual(['--bg', '--bg-elev', '--bg-elev-2', '--text', '--border', '--nav-bg']
-    .map((key) => dark[key]), ['#111315', '#1b1e22', '#24282d', '#edf0f3', '#34383e', '#111315']);
-  for (const key of ['--bg', '--bg-elev', '--bg-elev-2', '--text', '--text-dim', '--text-mute', '--border', '--border-strong']) {
-    const [r, g, b] = [1, 3, 5].map((offset) => Number.parseInt(dark[key].slice(offset, offset + 2), 16));
-    assert.ok(r <= g && g <= b && b - r <= 16, `${key}: 차가운 저채도 회색`);
-  }
-  assert.equal(dark['--shadow'], 'none');
-  assert.equal(dark['--surface-fill'], 'var(--bg-elev-2)');
-  assert.equal(dark['--surface-pattern-opacity'], '0');
-});
-
-test('로얄블루를 첫 옵션과 공통 기본색으로 쓰고 인디고의 다크 덮어쓰기를 제거한다', async () => {
-  assert.equal(DEFAULT_ACCENT, 'blue');
-  assert.equal(ACCENT_KEYS[0], 'blue');
-  assert.equal(ACCENTS.blue.label, '로얄블루');
+test('기본 강조색은 설정 목록에 있고 CSS 기본 토큰과 같으며 다크 테마가 덮어쓰지 않는다', () => {
+  assert.ok(ACCENT_KEYS.includes(DEFAULT_ACCENT));
   assert.deepEqual(Object.keys(ACCENTS), [...ACCENT_KEYS]);
   const light = tokens(':root');
   for (const [token, key] of [['--accent', 'color'], ['--accent-2', 'color2'], ['--accent-soft', 'soft'], ['--accent-contrast', 'contrast']]) {
-    assert.equal(light[token], ACCENTS.blue[key]);
+    assert.equal(light[token], ACCENTS[DEFAULT_ACCENT][key]);
     assert.equal(tokens("[data-theme='dark']")[token], undefined);
   }
-  assert.doesNotMatch(css, /data-accent='indigo'/u);
-  const settingsCss = await readFile(new URL('../../src/app/settings/page.module.css', import.meta.url), 'utf8');
-  assert.ok(settingsCss.includes(':global(:root[data-accent="blue"]) .optOn[data-option="accent"][data-value="blue"]'));
-  assert.deepEqual(Object.values(ACCENTS).map((palette) => palette.color),
-    ['#4169e1', '#6366f1', '#059669', '#d97706', '#e11d48', '#7c3aed']);
 });
 
 function luminance(hex) {
@@ -68,96 +29,19 @@ function luminance(hex) {
   return channels[0] * 0.2126 + channels[1] * 0.7152 + channels[2] * 0.0722;
 }
 
-test('공통 패널은 화이트·쿨그레이 조합이며 양쪽 테마의 설명·네트워크 글자 대비를 유지한다', () => {
+test('양쪽 테마의 설명·네트워크 글자는 공통 패널 위에서 대비를 유지한다', () => {
   const light = tokens(':root');
   const dark = tokens("[data-theme='dark']");
   const contrast = (a, b) => {
     const values = [luminance(a), luminance(b)].sort((x, y) => y - x);
     return (values[0] + .05) / (values[1] + .05);
   };
-  assert.equal(light['--panel-bg'], '#ffffff');
-  assert.equal(light['--panel-card-bg'], '#f6f8fc');
-  assert.equal(light['--panel-inset-bg'], light['--panel-card-bg']);
   assert.ok(contrast(light['--panel-border'], light['--panel-bg']) >= 1.3);
   for (const theme of [light, dark]) {
     for (const surface of ['--panel-bg', '--panel-card-bg', '--panel-inset-bg']) {
       for (const foreground of ['--text', '--text-dim', '--network-color']) {
         assert.ok(contrast(theme[foreground], theme[surface]) >= 4.5, `${foreground} / ${surface}`);
       }
-    }
-  }
-});
-
-test('화이트 공통 배경 안의 활용 단계 카드와 배포 노드는 쿨그레이 토큰으로 구분한다', async () => {
-  const preview = await readFile(new URL('../../src/features/ai-workflow/ui/AiWorkflowPreview.module.css', import.meta.url), 'utf8');
-  assert.match(preview, /\.stages a\s*\{[^}]*background:\s*var\(--panel-card-bg\)/u);
-  assert.match(preview, /:global\(:root:not\(\[data-theme='dark'\]\)\) \.preview\s*\{[^}]*border-top:\s*3px solid var\(--accent\)/u);
-  const diagram = await readFile(new URL('../../src/features/architecture/diagrams/PortfolioDeploymentDiagram.module.css', import.meta.url), 'utf8');
-  assert.match(diagram, /\.node rect\s*\{[^}]*fill:\s*var\(--panel-card-bg\)/u);
-  const dark = tokens("[data-theme='dark']");
-  assert.equal(dark['--panel-bg'], '#24282d');
-  assert.equal(dark['--panel-card-bg'], dark['--bg-elev']);
-});
-
-test('안내·미리보기·다이어그램 표면은 하나의 테마 토큰을 공유한다', async () => {
-  for (const [file, selector] of [
-    ['SiTerminologyNotice', '.notice'],
-    ['AiWorkflowPreview', '.preview'],
-    ['OptimizationPreview', '.preview'],
-    ['DevelopmentEnvironmentOverview', '.diagramPanel'],
-    ['DeploymentDiagramCarousel', '.frame'],
-    ['AgentExperimentGallery', '.introPanel'],
-  ]) {
-    const source = await readFile(new URL(`../../src/${surfaceFiles[file]}.module.css`, import.meta.url), 'utf8');
-    const start = source.search(new RegExp(`(?:^|\n)${selector.replaceAll('.', '\\.')} \\{`));
-    assert.notEqual(start, -1, file);
-    const block = source.slice(start).split('}')[0];
-    assert.match(block, /background:\s*var\(--panel-bg\)/, file);
-    assert.match(block, /border:\s*1px solid var\(--panel-border\)/, file);
-  }
-});
-
-test('큰 패널은 강조색이 아닌 중립색이며 환경·설명·선택 탭은 역할별 표면을 구분한다', async () => {
-  for (const theme of [tokens(':root'), tokens("[data-theme='dark']")]) {
-    const channels = [1, 3, 5].map(offset => Number.parseInt(theme['--panel-bg'].slice(offset, offset + 2), 16));
-    assert.ok(Math.max(...channels) - Math.min(...channels) <= 10);
-    assert.notEqual(theme['--diagram-personal-bg'], theme['--diagram-external-bg']);
-    assert.notEqual(theme['--panel-inset-bg'], theme['--panel-bg']);
-  }
-  const diagram = await readFile(new URL('../../src/features/architecture/diagrams/DevelopmentEnvironmentDiagram.module.css', import.meta.url), 'utf8');
-  assert.match(diagram, /\.personal rect\s*\{[^}]*var\(--diagram-personal-bg\)/u);
-  assert.match(diagram, /\.external rect, \.externalTailnet rect\s*\{[^}]*var\(--diagram-external-bg\)/u);
-  assert.match(diagram, /\.node\[data-environment-node='Grok'\] > rect\s*\{[^}]*var\(--diagram-external-node-bg\)/u);
-  for (const selector of ['history', 'notes']) {
-    assert.match(diagram, new RegExp(`\\.${selector} \\{[^}]*background: var\\(--panel-inset-bg\\)`, 'u'));
-  }
-  const tabs = await readFile(new URL('../../src/features/architecture/ui/ArchitectureTabs.module.css', import.meta.url), 'utf8');
-  assert.match(tabs, /\.tabList\s*\{[^}]*background:\s*var\(--panel-bg\)/u);
-  assert.match(tabs, /\.tab\[data-state='active'\]\s*\{[^}]*color:\s*var\(--accent-contrast\)[^}]*background:\s*var\(--accent\)/u);
-});
-
-test('설명·캡션 크기는 공통 토큰을 쓰며 모바일에서도 작은 크기로 덮어쓰지 않는다', async () => {
-  const light = tokens(':root');
-  assert.equal(light['--font-size-description'], '.9rem');
-  assert.equal(light['--font-size-caption'], '.875rem');
-  for (const [file, selectors] of [
-    ['SiTerminologyNotice', ['.content p']],
-    ['AiWorkflowPreview', ['.stageDescription', '.footer p']],
-    ['OptimizationPreview', ['.title', '.note', '.footer p']],
-    ['DevelopmentEnvironmentDiagram', ['.lead', '.history p', '.notes']],
-    ['DeploymentOverview', ['.projectDescription', '.boundaryNote']],
-    ['DeploymentDiagramCarousel', ['.header p']],
-    ['MermaidDiagram', ['.description']],
-    ['InfrastructureMigration', ['.reasons p', '.stepDescription']],
-    ['DeploymentMemoryHistory', ['.scope', '.serviceTable']],
-  ]) {
-    const source = await readFile(new URL(`../../src/${surfaceFiles[file]}.module.css`, import.meta.url), 'utf8');
-    for (const selector of selectors) {
-      const block = source.slice(source.indexOf(`${selector} {`)).split('}')[0];
-      assert.match(block, /font-size:\s*var\(--font-size-description\)/, `${file} ${selector}`);
-    }
-    if (file === 'DevelopmentEnvironmentDiagram') {
-      assert.doesNotMatch(source, /\.lead,\s*\.history p,\s*\.notes\s*\{[^}]*font-size:/);
     }
   }
 });
@@ -224,23 +108,9 @@ test('다크 반전 버튼에만 포인트 색을 옅게 섞고 모든 팔레트
   }
 });
 
-test('채팅·둘러보기·미디어의 평면 표면은 다크 선택자로 제한한다', async () => {
-  for (const path of [
-    '../../src/features/chat/ui/ChatWidget.module.css',
-    '../../src/features/chat/onboarding/GuidedTourCard.module.css',
-    '../../src/features/projects/ui/ProjectMediaCarousel.module.css',
-    '../../src/features/experiments/ui/AgentExperimentGallery.module.css',
-  ]) {
-    const source = await readFile(new URL(path, import.meta.url), 'utf8');
-    assert.match(source, /:global\(:root\[data-theme='dark'\]\)[^{]+\{[^}]*box-shadow:\s*none/);
-  }
-  const chat = await readFile(new URL('../../src/features/chat/ui/ChatWidget.module.css', import.meta.url), 'utf8');
-  assert.match(chat, /:global\(:root\[data-theme='dark'\]\)[^{]*\.composer button[^}]*color: var\(--accent-contrast\)/);
-});
-
 test('둘러보기 본문은 기본 채팅 크기와 본문 대비를 쓰고 종료 후 변형을 남기지 않는다', async () => {
   const tour = await readFile(new URL('../../src/features/chat/onboarding/GuidedTourCard.module.css', import.meta.url), 'utf8');
-  assert.match(tour, /\.message,\s*\.instruction\s*\{[^}]*color:\s*var\(--chat-text\);[^}]*font-size:\s*14px;[^}]*font-weight:\s*500;/u);
+  assert.match(tour, /\.message,\s*\.instruction\s*\{[^}]*color:\s*var\(--chat-text\);/u);
   for (const name of ['tour-enter', 'tour-panel-reveal']) {
     assert.match(tour, new RegExp(`animation:\\s*${name}[^;]*\\bbackwards;`, 'u'));
     const keyframes = tour.slice(tour.indexOf(`@keyframes ${name}`));

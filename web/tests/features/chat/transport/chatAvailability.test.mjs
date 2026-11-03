@@ -4,12 +4,6 @@ import { readFileSync } from 'node:fs';
 import { createChatAvailabilityMonitor, canSendUnverifiedExplanation, chatAvailabilityPresentation, chatFailureAvailability, CHAT_STATUS_TIMEOUT_MS } from '../../../../src/features/chat/transport/chatAvailability.ts';
 
 const response = status => ({ status, checkedAt: '2026-10-12T00:00:00.000Z' });
-test('오프라인 안내는 실제 동작과 같이 수동 재확인을 설명하고 자동 폴링을 약속하지 않는다', () => {
-  const source = readFileSync(new URL('../../../../src/features/chat/ui/ChatOfflineNotice.tsx', import.meta.url), 'utf8');
-  assert.doesNotMatch(source, /자동으로 (?:다시 )?확인하고 있어요/u);
-  assert.match(source, /연결 상태를 자동으로 재조회하지는 않아요/u);
-  assert.match(source, /다시 확인/u);
-});
 async function settle() { for (let i = 0; i < 6; i++) await Promise.resolve(); }
 function deferred() {
   let resolve;

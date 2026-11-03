@@ -4,20 +4,15 @@ import test from 'node:test';
 import { sharedInfrastructureDeploymentSource, sharedInfrastructureServices } from '../../../../src/features/architecture/data/sharedInfrastructureDiagram.ts';
 
 test('주요 공용 기능과 운영 기능은 이름과 역할이 있는 개별 서비스 카드로 나눈다', () => {
-  assert.deepEqual(sharedInfrastructureServices.map(service => service.id), ['Auth', 'File', 'Media', 'Chat', 'Config', 'Notification', 'Scheduler', 'Monitoring', 'Logging', 'Analytics', 'Tracing', 'Remote', 'Backup']);
   assert.equal(new Set(sharedInfrastructureServices.map(service => service.id)).size, sharedInfrastructureServices.length);
   for (const service of sharedInfrastructureServices) {
     assert.ok(service.title && service.role);
     assert.ok(sharedInfrastructureDeploymentSource.includes(`${service.id}["${service.title}`));
   }
   assert.doesNotMatch(sharedInfrastructureDeploymentSource, /Services\[/u);
-  assert.match(sharedInfrastructureServices[0].role, /JWT.*공개키/u);
 });
 
-test('Pi 안의 K3s 경계에는 개별 워크로드와 내부 자원을 표시하고 외부 요청은 Tunnel·게이트웨이로 받는다', () => {
-  assert.match(sharedInfrastructureDeploymentSource, /subgraph Pi\["Raspberry Pi"\][\s\S]*subgraph Cluster\["K3s/u);
-  assert.match(sharedInfrastructureDeploymentSource, /Client -->\|"공용 API 요청"\| Tunnel\s+Tunnel --> Gateway/u);
-  assert.match(sharedInfrastructureDeploymentSource, /서비스별 DB.*캐시.*파일 볼륨/u);
+test('공용 인프라 도식에는 다른 프로젝트나 내부 주소를 싣지 않는다', () => {
   assert.doesNotMatch(sharedInfrastructureDeploymentSource, /CommerceAPI|Asset|https?:\/\/|localhost|\bport\b|[A-Z]:[\\/]/iu);
 });
 

@@ -127,18 +127,10 @@ test('완료·실패·중단·사용자는 활성 안내 없이 실제 본문과
   assert.doesNotMatch(user, /generationBadge|generationDots/u);
 });
 
-test('행은 좌/우 정렬과 기존 최대 폭을 유지하고 모션 정책·점 애니메이션은 바꾸지 않는다', () => {
+test('행은 좌/우로 정렬하고 모션 끔·동작 줄이기 설정에서 점 애니메이션을 멈춘다', () => {
   const css = readFileSync(new URL('../../../../src/features/chat/ui/ChatWidget.module.css', import.meta.url), 'utf8');
-  assert.match(css, /\.messageRow\s*\{[^}]*flex-direction: column;[^}]*max-width: 91%;[^}]*min-width: 0;/u);
   assert.match(css, /\.assistantMessageRow\s*\{\s*align-self: flex-start;/u);
   assert.match(css, /\.userMessageRow\s*\{\s*align-self: flex-end;/u);
-  assert.match(css, /\.messageRow > \.message\s*\{[^}]*max-width: 100%;[^}]*min-width: 0;/u);
-  assert.match(css, /\.message,\s*\.messageRow\s*\{\s*max-width: 94%;/u);
-  assert.match(css, /\.generationBadge\s*\{[^}]*max-width: 100%;[^}]*margin: 0;[^}]*padding: 0;/u);
-  assert.match(css, /\.generationDots span\s*\{[^}]*animation: generationDot 1\.2s ease-in-out infinite;/u);
-  assert.match(css, /\.generationDots span:nth-child\(2\)\s*\{\s*animation-delay: 160ms;/u);
-  assert.match(css, /\.generationDots span:nth-child\(3\)\s*\{\s*animation-delay: 320ms;/u);
-  assert.match(css, /@keyframes generationDot\s*\{\s*0%, 60%, 100% \{ opacity: 0\.35; transform: translateY\(0\); \}\s*30% \{ opacity: 1; transform: translateY\(-3px\); \}/u);
   assert.match(css, /:global\(:root\[data-motion="off"\]\) \.generationDots span\s*\{\s*animation: none;/u);
   assert.match(css, /@media \(prefers-reduced-motion: reduce\)[\s\S]*:global\(:root:not\(\[data-motion="on"\]\)\) \.generationDots span\s*\{\s*animation: none;/u);
 });

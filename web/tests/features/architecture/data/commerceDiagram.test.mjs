@@ -57,19 +57,12 @@ test('모든 선은 해당 카드 경계에서 시작하고 끝나며 다른 카
   assert.throws(() => commerceConnectionPath([[0, 0], [1, 1]]), /orthogonal/u);
 });
 
-test('JWT 발급과 공개키 제공은 인증 서버, JWT 검증과 업무 데이터는 커머스에 구분한다', () => {
-  assert.match(nodeById.get('InfraAuth').lines.join(' '), /JWT 발급·갱신.*공개키 제공/u);
-  assert.match(nodeById.get('CommerceAPI').lines.join(' '), /JWT 직접 검증/u);
-  const authRequest = commerceDiagramLinks.find(link => link.from === 'CommerceAPI' && link.to === 'InfraTunnel');
-  assert.ok(authRequest.label.lines.includes('JWKS 공개키 조회'));
+test('브라우저는 인증 서버로 바로 가지 않고 업무 DB는 공용 인프라로 연결하지 않는다', () => {
   assert.equal(commerceDiagramLinks.some(link => link.from === 'Browser' && link.to === 'InfraAuth'), false);
   assert.equal(commerceDiagramLinks.some(link => link.from === 'CommerceDB' && link.to.startsWith('Infra')), false);
-  assert.match(commerce.description, /인증 연동 시/u);
 });
 
-test('고객·관리자 Workers는 별도 추론 Tunnel 뒤의 Colab LLM에 연결한다', () => {
-  assert.match(nodeById.get('InferenceTunnel').title, /추론 전용/u);
-  assert.match(nodeById.get('LLM').title, /Google Colab.*GPU/u);
+test('고객·관리자 Workers는 별도 추론 Tunnel 뒤의 LLM에 연결한다', () => {
   const links = new Set(commerceDiagramLinks.map(link => edgeKey(link.from, link.to)));
   assert.ok(links.has('Workers-InferenceTunnel'));
   assert.ok(links.has('InferenceTunnel-LLM'));

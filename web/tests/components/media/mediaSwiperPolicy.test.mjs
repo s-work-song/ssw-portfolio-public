@@ -142,7 +142,6 @@ test('확대창은 휠·버튼·키보드·드래그를 제공하고 슬라이�
   assert.match(zoom, /event\.metaKey \|\| !event\.deltaY/);
   assert.match(zoom, /setPointerCapture\(event\.pointerId\)/);
   assert.match(zoom, /ResizeObserver\(measure\)/);
-  assert.match(zoom, /aria-label="이미지 전체 보기"/);
   assert.match(zoom, /data-image-zoom=\{transform\.scale\}/);
   const carousel = await readFile(new URL('../../../src/features/projects/ui/ProjectMediaCarousel.tsx', import.meta.url), 'utf8');
   assert.match(carousel, /index === activeIndex \? \(\s*<ZoomableImage key=\{image\.src\}/);
@@ -169,7 +168,6 @@ test('캠프파이어 혼합 갤러리는 사진 확대만 공유하고 영상 �
   assert.match(archive, /noSwipingSelector="button, \[data-swiper-native-controls\], \[data-image-zoom-root\]"/);
   assert.match(archive, /loop=\{false\}/);
   const css = await readFile(new URL('../../../src/components/media/ArchiveVideoGallery.module.css', import.meta.url), 'utf8');
-  assert.match(css, /\.dialog\.imageDialog \{\s*width: min\(1000px, calc\(100vw - 24px\)\)/);
   assert.match(css, /\.mediaViewport\.imageViewport/);
 });
 

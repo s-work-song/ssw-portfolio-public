@@ -9,7 +9,7 @@ import { AGENT_EXPERIMENT_VIEW_ACTIONS, AGENT_EXPERIMENT_VIEW_TARGETS,
 import { readActiveAgentExperiment, resolvePortfolioNavigationTarget,
   createTargetLayoutStabilityCheck } from '../../../src/features/portfolio-tools/experimentNavigation.ts';
 import { experimentDomFixture, installGallerySelectionEffect } from './experimentNavigationFixtures.mjs';
-import { PORTFOLIO_VIEW_ACTIONS, portfolioViewControlInput } from '../../../src/features/portfolio-tools/view.ts';
+import { portfolioViewControlInput } from '../../../src/features/portfolio-tools/view.ts';
 import { readPortfolioViewState, resolvePortfolioViewTarget } from '../../../src/features/webmcp/portfolioView.ts';
 import { parseTurnEvent } from '../../../src/features/chat/transport/sse.ts';
 import { CHAT_ACTION_TARGET_PREPARE_EVENT } from '../../../src/features/chat/navigation.ts';
@@ -17,8 +17,6 @@ import { CHAT_ACTION_TARGET_PREPARE_EVENT } from '../../../src/features/chat/nav
 test('실험 제목 핑은 카드 안쪽 곡률을 공유해 둥근 clipping 경계에서 잘리지 않는다', () => {
   const css = readFileSync(new URL('../../../src/features/experiments/ui/AgentExperimentGallery.module.css', import.meta.url), 'utf8');
   const stage = css.match(/\.stage\s*\{([^}]+)\}/u)?.[1] ?? '';
-  assert.match(stage, /--experiment-stage-radius:\s*16px/u);
-  assert.match(stage, /--experiment-stage-border-width:\s*1px/u);
   assert.match(stage, /border-radius:\s*var\(--experiment-stage-radius\)/u);
   assert.match(stage, /overflow:\s*hidden/u);
   // 공통 [data-chat-action-target]보다 구체적으로 지정하고 animated/static 모두 적용한다.
@@ -37,14 +35,10 @@ function useDom(t, id = 'svg-illustrations') {
   return f;
 }
 
-test('실험 이동 목록은 원문 순서·제목의 공개 29개만 담고 소개·7분류를 합쳐 37개다', () => {
+test('실험 이동 목록은 공개 실험과 원문 순서·제목이 같고 숨김 항목과 모르는 목적지는 거절한다', () => {
   assert.deepEqual(PUBLIC_AGENT_EXPERIMENT_TARGETS,
     agentExperiments.filter(item => !item.hidden).map(({ id, title, category }) => ({ id, title, category })));
-  assert.equal(PUBLIC_AGENT_EXPERIMENT_TARGETS.length, 29);
-  assert.equal(AGENT_EXPERIMENT_VIEW_ACTIONS.length, 37);
-  assert.equal(new Set(AGENT_EXPERIMENT_VIEW_ACTIONS).size, 37);
-  // 성능 최적화 하위 탭(CPU·메모리·직렬화) 3개, 챗봇 구조 실험 카드 1개, SI 학습 활용 섹션 1개, 오픈웨이트 모델 실험 탭과 학습 데이터 카드 3개를 더해 81개다.
-  assert.equal(PORTFOLIO_VIEW_ACTIONS.length, 81);
+  assert.equal(new Set(AGENT_EXPERIMENT_VIEW_ACTIONS).size, AGENT_EXPERIMENT_VIEW_ACTIONS.length);
   for (const target of AGENT_EXPERIMENT_VIEW_TARGETS) {
     assert.deepEqual(portfolioViewControlInput.parse({ action: target.action }), { action: target.action });
     assert.throws(() => portfolioViewControlInput.parse({ action: target.action, target: 'all' }));

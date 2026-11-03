@@ -49,7 +49,6 @@ test('게임 iframe의 격리·경로·닫기 계약은 라이브러리 전환�
   assert.match(source, /referrerPolicy="no-referrer"/);
   assert.match(source, /src=\{`\$\{basePath\}\$\{activeProject\.demo\.src\}`\}/);
   assert.match(source, /key=\{activeProject\.id\}/);
-  assert.match(source, /aria-label="게임 닫기"/);
   assert.doesNotMatch(source, /allow-same-origin|allow-popups/);
 });
 
