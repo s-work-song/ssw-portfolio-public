@@ -258,12 +258,18 @@
     transform 180ms ease;
 }
 
-.filter:hover,
 .filterActive {
   transform: translateY(-1px);
   border-color: color-mix(in srgb, var(--accent, #6366f1) 60%, var(--border));
   background: color-mix(in srgb, var(--accent, #6366f1) 10%, var(--bg-elev));
   color: var(--accent-text);
+}
+
+/* 선택을 끈 직후에도 켜진 것처럼 보이지 않게 호버는 테두리만 바꾸고, 터치 기기에서는 쓰지 않는다. */
+@media (hover: hover) {
+  .filter:hover {
+    border-color: color-mix(in srgb, var(--accent, #6366f1) 60%, var(--border));
+  }
 }
 
 .filter:disabled,
