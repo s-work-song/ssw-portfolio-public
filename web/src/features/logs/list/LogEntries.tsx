@@ -45,7 +45,7 @@ export default function LogEntries({ initialList = null }: { initialList?: LogLi
   const [viewMode, setViewMode] = useState<LogViewMode>("all");
   const [displayMode, setDisplayMode] = useState<LogDisplayMode>("list");
   const [mapFilterRevision, setMapFilterRevision] = useState(0);
-  const [selectedTag, setSelectedTag] = useState<string | null>(null);
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [query, setQuery] = useState("");
   const [appliedQuery, setAppliedQuery] = useState("");
   const [isComposing, setIsComposing] = useState(false);
@@ -53,7 +53,7 @@ export default function LogEntries({ initialList = null }: { initialList?: LogLi
   const [isViewModeFading, setIsViewModeFading] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [retryNonce, setRetryNonce] = useState(0);
-  const requestKey = `${viewMode}\u0000${selectedTag ?? ""}\u0000${appliedQuery.trim()}\u0000${retryNonce}`;
+  const requestKey = `${viewMode}\u0000${appliedQuery.trim()}\u0000${retryNonce}`;
   const [loadedRequestKey, setLoadedRequestKey] = useState<string | null>(null);
   const isLoading = !isLocationStateReady || loadedRequestKey !== requestKey;
   const refreshLogs = () => {
@@ -65,9 +65,11 @@ export default function LogEntries({ initialList = null }: { initialList?: LogLi
     source: PortfolioLogSearchViewDetail["source"];
   } | null>(null);
   const visiblePosts = useMemo(() => {
-    const filteredPosts = externalSearch
-      ? posts.filter((post) => externalSearch.slugs.has(post.slug))
-      : posts;
+    // 태그를 여러 개 고르면 그중 하나라도 붙은 기록을 보여 준다.
+    const filteredPosts = posts.filter((post) => (
+      (!externalSearch || externalSearch.slugs.has(post.slug))
+      && (selectedTags.length === 0 || selectedTags.some((tag) => post.tags?.includes(tag)))
+    ));
 
     if (viewMode === "recommended") {
       return [...filteredPosts].sort(
@@ -76,7 +78,7 @@ export default function LogEntries({ initialList = null }: { initialList?: LogLi
       );
     }
     return filteredPosts;
-  }, [externalSearch, posts, viewMode]);
+  }, [externalSearch, posts, selectedTags, viewMode]);
   const [renderedPosts, setRenderedPosts] = useState(visiblePosts);
   const renderedPostsRef = useRef(visiblePosts);
   const [animatingSlugs, setAnimatingSlugs] = useState<Set<string>>(() => new Set());
@@ -103,7 +105,7 @@ export default function LogEntries({ initialList = null }: { initialList?: LogLi
     return () => observer.disconnect();
   }, [displayMode, isLoading]);
 
-  const selectView = (nextViewMode: LogViewMode, nextTag: string | null) => {
+  const selectView = (nextViewMode: LogViewMode, nextTags: string[]) => {
     const applySelection = () => {
       // 필터 전환 시점에 정리해야 이전 태그가 페이드 중에 다시 저장되지 않는다.
       const url = new URL(window.location.href);
@@ -113,7 +115,7 @@ export default function LogEntries({ initialList = null }: { initialList?: LogLi
       setMapFilterRevision((value) => value + 1);
       setExternalSearch(null);
       setViewMode(nextViewMode);
-      setSelectedTag(nextTag);
+      setSelectedTags(nextTags);
     };
     if (displayMode === "map" || nextViewMode === viewMode) {
       if (viewModeFadeTimeoutRef.current !== undefined) {
@@ -153,11 +155,10 @@ export default function LogEntries({ initialList = null }: { initialList?: LogLi
   useEffect(() => {
     const applySearchView = (detail: PortfolioLogSearchViewDetail) => {
       const matchedSlugs = new Set(detail.matchedSlugs);
-      const tag = detail.tag || null;
       setDisplayMode("list");
       setViewMode("all");
       setExternalSearch({ slugs: matchedSlugs, source: detail.source });
-      setSelectedTag(tag);
+      setSelectedTags(detail.tag ? [detail.tag] : []);
       setQuery(detail.query);
       setAppliedQuery(detail.query);
       setIsComposing(false);
@@ -185,14 +186,13 @@ export default function LogEntries({ initialList = null }: { initialList?: LogLi
         const searchParams = new URLSearchParams(window.location.search);
         setDisplayMode(searchParams.get("layout") === "map" ? "map" : "list");
         const restoredQuery = searchParams.get(SEARCH_QUERY_PARAM) ?? "";
-        const requestedTag = searchParams.get(SEARCH_TAG_PARAM);
         const restoredViewMode: LogViewMode = searchParams.get(SEARCH_VIEW_PARAM)
           === RECOMMENDED_VIEW_VALUE
           ? "recommended"
           : "all";
-        const restoredTag = requestedTag || null;
+        const restoredTags = [...new Set(searchParams.getAll(SEARCH_TAG_PARAM).filter(Boolean))];
         setViewMode(restoredViewMode);
-        setSelectedTag(restoredTag);
+        setSelectedTags(restoredTags);
         setExternalSearch(null);
         setQuery(restoredQuery);
         setAppliedQuery(restoredQuery);
@@ -212,7 +212,6 @@ export default function LogEntries({ initialList = null }: { initialList?: LogLi
     const controller = new AbortController();
     void listPortfolioLogs({
       query: appliedQuery.trim(),
-      tag: selectedTag,
       view: viewMode,
     }, controller.signal)
       .then((result) => {
@@ -232,7 +231,7 @@ export default function LogEntries({ initialList = null }: { initialList?: LogLi
         setLoadedRequestKey(requestKey);
       });
     return () => controller.abort();
-  }, [appliedQuery, isLocationStateReady, requestKey, selectedTag, viewMode]);
+  }, [appliedQuery, isLocationStateReady, requestKey, viewMode]);
 
   useEffect(() => {
     if (!isLocationStateReady) return;
@@ -245,11 +244,8 @@ export default function LogEntries({ initialList = null }: { initialList?: LogLi
     } else {
       url.searchParams.delete(SEARCH_QUERY_PARAM);
     }
-    if (selectedTag) {
-      url.searchParams.set(SEARCH_TAG_PARAM, selectedTag);
-    } else {
-      url.searchParams.delete(SEARCH_TAG_PARAM);
-    }
+    url.searchParams.delete(SEARCH_TAG_PARAM);
+    selectedTags.forEach((tag) => url.searchParams.append(SEARCH_TAG_PARAM, tag));
     if (viewMode === "recommended") {
       url.searchParams.set(SEARCH_VIEW_PARAM, RECOMMENDED_VIEW_VALUE);
     } else {
@@ -266,7 +262,7 @@ export default function LogEntries({ initialList = null }: { initialList?: LogLi
     if (nextUrl !== currentUrl) {
       window.history.replaceState(window.history.state, "", nextUrl);
     }
-  }, [displayMode, isLocationStateReady, query, selectedTag, viewMode, loadedRequestKey, requestKey, loadError, visiblePosts.length]);
+  }, [displayMode, isLocationStateReady, query, selectedTags, viewMode, loadedRequestKey, requestKey, loadError, visiblePosts.length]);
 
   useEffect(() => {
     if (isComposing || query === appliedQuery) return;
@@ -303,7 +299,7 @@ export default function LogEntries({ initialList = null }: { initialList?: LogLi
         || (motionSetting !== "on" && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
       const shouldSkipForActionTarget = window.location.hash.startsWith("#log-card-")
         && viewMode === "all"
-        && selectedTag === null
+        && selectedTags.length === 0
         && appliedQuery.length === 0;
 
       const updateRenderedPosts = (nextPosts: LogSummary[]) => {
@@ -396,7 +392,7 @@ export default function LogEntries({ initialList = null }: { initialList?: LogLi
       if (layoutFrameId !== undefined) window.cancelAnimationFrame(layoutFrameId);
       timeoutIds.forEach((timeoutId) => window.clearTimeout(timeoutId));
     };
-  }, [appliedQuery, posts, selectedTag, viewMode, visiblePosts]);
+  }, [appliedQuery, posts, selectedTags, viewMode, visiblePosts]);
 
   useEffect(() => {
     const revealActionTarget = () => {
@@ -407,7 +403,7 @@ export default function LogEntries({ initialList = null }: { initialList?: LogLi
       if (!targetSlug) return;
       setDisplayMode("list");
       setViewMode("all");
-      setSelectedTag(null);
+      setSelectedTags([]);
       setExternalSearch(null);
       setQuery("");
       setAppliedQuery("");
@@ -535,18 +531,18 @@ export default function LogEntries({ initialList = null }: { initialList?: LogLi
           </div>
 
           {tags.length > 0 && (
-            <div className={styles.filters} aria-label="기록 보기 방식 및 태그 필터">
+            <div className={styles.filters} aria-label="기록 보기 방식 및 태그 필터, 태그는 여러 개 고를 수 있음">
               <button
                 type="button"
                 className={
-                  viewMode === "all" && selectedTag === null
+                  viewMode === "all" && selectedTags.length === 0
                     ? styles.filterActive
                     : styles.filter
                 }
-                aria-pressed={viewMode === "all" && selectedTag === null}
+                aria-pressed={viewMode === "all" && selectedTags.length === 0}
                 disabled={isViewModeFading}
                 onClick={() => {
-                  selectView("all", null);
+                  selectView("all", []);
                 }}
               >
                 전체
@@ -557,7 +553,7 @@ export default function LogEntries({ initialList = null }: { initialList?: LogLi
                 aria-pressed={viewMode === "recommended"}
                 disabled={isViewModeFading}
                 onClick={() => {
-                  selectView("recommended", null);
+                  selectView("recommended", []);
                 }}
               >
                 추천 순서
@@ -566,11 +562,13 @@ export default function LogEntries({ initialList = null }: { initialList?: LogLi
                 <button
                   key={tag}
                   type="button"
-                  className={selectedTag === tag ? styles.filterActive : styles.filter}
-                  aria-pressed={selectedTag === tag}
+                  className={selectedTags.includes(tag) ? styles.filterActive : styles.filter}
+                  aria-pressed={selectedTags.includes(tag)}
                   disabled={isViewModeFading}
                   onClick={() => {
-                    selectView("all", tag);
+                    selectView("all", selectedTags.includes(tag)
+                      ? selectedTags.filter((current) => current !== tag)
+                      : [...selectedTags, tag]);
                   }}
                 >
                   #{tag}
@@ -626,7 +624,7 @@ export default function LogEntries({ initialList = null }: { initialList?: LogLi
                 setAppliedQuery("");
                 setIsComposing(false);
                 setViewMode("all");
-                setSelectedTag(null);
+                setSelectedTags([]);
                 setExternalSearch(null);
               }}
             >
@@ -635,10 +633,10 @@ export default function LogEntries({ initialList = null }: { initialList?: LogLi
           </div>
         ) : displayMode === "map" ? (
           <LogRelationshipMap
-            key={JSON.stringify([mapFilterRevision, selectedTag, viewMode, visiblePosts.map((post) => post.slug).sort()])}
+            key={JSON.stringify([mapFilterRevision, selectedTags, viewMode, visiblePosts.map((post) => post.slug).sort()])}
             posts={visiblePosts}
-            filterTag={selectedTag}
-            selectFilterTag={(tag) => selectView("all", tag)}
+            filterTag={selectedTags.length === 1 ? selectedTags[0] : null}
+            selectFilterTag={(tag) => selectView("all", tag ? [tag] : [])}
           />
         ) : (
           <div className={styles.list}>
