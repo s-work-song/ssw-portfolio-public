@@ -12,6 +12,8 @@ import type { LogDetailResponse, LogListResponse } from "./logResponseSchemas.ts
 
 const ATTEMPTS = 3;
 const RETRY_DELAY_MS = 500;
+// 개발 서버는 글을 고치면 바로 보이도록 캐시와 메모를 쓰지 않는다.
+const IS_DEV = process.env.NODE_ENV === "development";
 
 async function fetchLog<T>(path: string, schema: ZodMiniType<T>): Promise<T | null> {
   const baseUrl = process.env.NEXT_PUBLIC_RAG_API_BASE_URL?.trim();
@@ -19,7 +21,7 @@ async function fetchLog<T>(path: string, schema: ZodMiniType<T>): Promise<T | nu
   let failure: unknown;
   for (let attempt = 1; attempt <= ATTEMPTS; attempt++) {
     try {
-      const response = await fetch(`${baseUrl.replace(/\/+$/u, "")}${path}`, { cache: "force-cache" });
+      const response = await fetch(`${baseUrl.replace(/\/+$/u, "")}${path}`, { cache: IS_DEV ? "no-store" : "force-cache" });
       if (response.status === 404) return null;
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       return schema.parse(await response.json());
@@ -36,11 +38,13 @@ let listRequest: Promise<LogListResponse | null> | undefined;
 const detailRequests = new Map<string, Promise<LogDetailResponse | null>>();
 
 export function loadStaticLogList(): Promise<LogListResponse | null> {
+  if (IS_DEV) return fetchLog("/api/logs", logListResponseSchema);
   listRequest ??= fetchLog("/api/logs", logListResponseSchema);
   return listRequest;
 }
 
 export function loadStaticLogDetail(slug: string): Promise<LogDetailResponse | null> {
+  if (IS_DEV) return fetchLog(`/api/logs/${encodeURIComponent(slug)}`, logDetailResponseSchema);
   let request = detailRequests.get(slug);
   if (!request) {
     request = fetchLog(`/api/logs/${encodeURIComponent(slug)}`, logDetailResponseSchema);

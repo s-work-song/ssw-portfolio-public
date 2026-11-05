@@ -15,6 +15,25 @@ import styles from '../../../app/about-me/log/view/page.module.css';
 
 const FIRST_SCREEN_PARAGRAPH = 3;
 
+type HastNode = { type: string; tagName?: string; properties?: Record<string, unknown>; children?: HastNode[] };
+
+/** 앵커를 렌더링 전에 문서 순서대로 붙인다. 렌더링 함수에서 세면 개발 모드의 이중 렌더링에서 번호가 어긋난다. */
+function addLogAnchors() {
+  return (tree: HastNode) => {
+    let headingIndex = 0;
+    let paragraphIndex = 0;
+    const visit = (node: HastNode) => {
+      if (node.tagName === 'h1' || node.tagName === 'h2') {
+        node.properties = { ...node.properties, id: `log-section-${++headingIndex}`, tabIndex: -1 };
+      } else if (node.tagName === 'p' && ++paragraphIndex === FIRST_SCREEN_PARAGRAPH) {
+        node.properties = { ...node.properties, id: LOG_FIRST_SCREEN_ANCHOR };
+      }
+      node.children?.forEach(visit);
+    };
+    visit(tree);
+  };
+}
+
 /** initialDetail은 빌드 때 받은 본문이다. 있으면 첫 화면을 바로 그리고, 새로고침할 때만 API를 부른다. */
 export default function LogDetailClient({ slug, initialDetail = null }: { slug: string; initialDetail?: LogDetailResponse | null }) {
   const [loaded, setLoaded] = useState<{ slug: string; requestKey: string; detail: LogDetailResponse; returnTo: LogListReturn | null } | null>(
@@ -22,6 +41,7 @@ export default function LogDetailClient({ slug, initialDetail = null }: { slug: 
   );
   const [failed, setFailed] = useState<{ slug: string; requestKey: string; message: string; returnTo: LogListReturn | null } | null>(null);
   const [retryNonce, setRetryNonce] = useState(0);
+  const [selectedVariantId, setSelectedVariantId] = useState<string | null>(null);
   const requestKey = `${slug}\u0000${retryNonce}`;
   const refreshLog = () => {
     clearPortfolioLogCache();
@@ -98,10 +118,8 @@ export default function LogDetailClient({ slug, initialDetail = null }: { slug: 
   }
 
   const { post, relatedPosts } = detail;
-  let headingIndex = 0;
-  let paragraphIndex = 0;
-  const sectionAnchor = () => ({ id: `log-section-${++headingIndex}`, tabIndex: -1 });
-  const paragraphAnchor = () => (++paragraphIndex === FIRST_SCREEN_PARAGRAPH ? { id: LOG_FIRST_SCREEN_ANCHOR } : {});
+  const variants = post.variants ?? [];
+  const activeVariant = variants.find((variant) => variant.id === selectedVariantId) ?? variants[0];
 
   return (
     <article className={styles.article}>
@@ -132,16 +150,40 @@ export default function LogDetailClient({ slug, initialDetail = null }: { slug: 
           )}
         </header>
 
+        {variants.length > 1 && activeVariant && (
+          <div className={styles.variantBar}>
+            {post.variantIntro && (
+              <section className={styles.variantIntro} aria-label={post.variantIntro.title}>
+                <h2>{post.variantIntro.title}</h2>
+                {post.variantIntro.paragraphs.map((paragraph) => <p key={paragraph}>{paragraph}</p>)}
+              </section>
+            )}
+            <div className={styles.variantSwitcher} role="group" aria-label="글 버전 선택">
+              {variants.map((variant) => (
+                <button
+                  key={variant.id}
+                  type="button"
+                  aria-pressed={variant.id === activeVariant.id}
+                  onClick={() => setSelectedVariantId(variant.id)}
+                >
+                  {variant.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
         <div className={`${styles.markdownBody} markdown-content`}>
           <ReactMarkdown
+            rehypePlugins={[addLogAnchors]}
             components={{
               h1: ({ node, ...props }) => {
                 void node;
-                return <h2 className={styles.bodyH1} {...sectionAnchor()} {...props} />;
+                return <h2 className={styles.bodyH1} {...props} />;
               },
               h2: ({ node, ...props }) => {
                 void node;
-                return <h2 className={styles.bodyH2} {...sectionAnchor()} {...props} />;
+                return <h2 className={styles.bodyH2} {...props} />;
               },
               h3: ({ node, ...props }) => {
                 void node;
@@ -149,7 +191,7 @@ export default function LogDetailClient({ slug, initialDetail = null }: { slug: 
               },
               p: ({ node, ...props }) => {
                 void node;
-                return <p className={styles.bodyParagraph} {...paragraphAnchor()} {...props} />;
+                return <p className={styles.bodyParagraph} {...props} />;
               },
               a: ({ node, href, children, ...props }) => {
                 void node;
@@ -180,7 +222,7 @@ export default function LogDetailClient({ slug, initialDetail = null }: { slug: 
               },
             }}
           >
-            {post.content}
+            {activeVariant?.content ?? post.content}
           </ReactMarkdown>
         </div>
       </div>

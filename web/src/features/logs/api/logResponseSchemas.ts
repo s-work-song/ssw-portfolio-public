@@ -21,6 +21,8 @@ export const logSummarySchema = object(logSummaryShape);
 export const logPostSchema = object({
   ...logSummaryShape,
   content: string(),
+  variants: optional(array(object({ id: string(), label: string(), content: string() }))),
+  variantIntro: optional(object({ title: string(), paragraphs: array(string()) })),
 });
 
 export const logListResponseSchema = object({

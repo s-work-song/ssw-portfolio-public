@@ -117,6 +117,79 @@ button.listButton:disabled { opacity: 0.55; cursor: wait; transform: none; }
   color: var(--accent-text);
 }
 
+.variantBar {
+  width: min(100%, 780px);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 16px;
+  margin: 28px auto 0;
+}
+
+.variantIntro {
+  width: 100%;
+  box-sizing: border-box;
+  padding: clamp(14px, 2.5vw, 20px);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--bg-elev-2);
+}
+
+.variantIntro h2 {
+  margin: 0 0 8px;
+  color: var(--text);
+  font-size: 0.95rem;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.variantIntro p {
+  margin: 0;
+  color: var(--text-dim);
+  font-size: 0.875rem;
+  line-height: 1.75;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
+.variantIntro p + p {
+  margin-top: 8px;
+}
+
+.variantSwitcher {
+  display: inline-flex;
+  flex: none;
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--bg-elev-2);
+}
+
+.variantSwitcher button {
+  min-width: 76px;
+  min-height: 40px;
+  padding: 7px 14px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-dim);
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.variantSwitcher button[aria-pressed='true'] {
+  background: var(--accent, #6366f1);
+  color: var(--accent-contrast, #fff);
+}
+
+.variantSwitcher button:focus-visible {
+  outline: 2px solid var(--accent, #6366f1);
+  outline-offset: 2px;
+}
+
 .markdownBody {
   width: min(100%, 780px);
   margin: 0 auto;
