@@ -19,6 +19,10 @@
 .introPanel { margin-top: 20px; padding: clamp(16px, 2.5vw, 24px); border: 1px solid var(--panel-border); border-left: 3px solid color-mix(in srgb, var(--accent, #6366f1) 55%, var(--border)); border-radius: 4px 14px 14px 4px; background: var(--panel-bg); }
 .intro { margin: 0; color: var(--text-dim); line-height: 1.8; word-break: keep-all; overflow-wrap: break-word; }
 .intro + .intro { margin-top: 16px; }
+.introNote { display: flex; align-items: center; justify-content: space-between; gap: 24px; margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border-strong); }
+.introNote p { min-width: 0; margin: 0; color: var(--text-dim); font-size: .875rem; line-height: 1.7; word-break: keep-all; overflow-wrap: break-word; }
+.introNoteLink { box-sizing: border-box; display: inline-flex; flex: none; align-items: center; gap: 8px; min-height: 44px; padding: 9px 12px; border: 1px solid var(--border-strong); border-radius: 9px; background: var(--bg-elev-2); color: var(--text); font-size: .875rem; font-weight: 600; line-height: 1.5; text-decoration: none; }
+.introNoteLink:focus-visible { outline: 2px solid var(--accent, #6366f1); outline-offset: 3px; }
 .toolbar { padding-top: 20px; margin-bottom: 16px; border-top: 1px solid var(--border-strong); }
 .filters, .controls, .modelSwitcher { display: flex; gap: 6px; align-items: center; }
 .filters { position: relative; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); align-items: stretch; min-width: 0; max-width: 100%; padding: 5px; border: 1px solid var(--border); border-radius: 12px; background: var(--bg-elev-2); }
@@ -173,6 +177,7 @@
   .modelColumn .capture { aspect-ratio: 16 / 9; }
 }
 @media (max-width: 600px) {
+  .introNote { flex-direction: column; align-items: flex-start; gap: 12px; }
   .filters { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .audioAlbums { grid-template-columns: minmax(0, 1fr); }
   .audioAlbumWide { grid-column: auto; }
