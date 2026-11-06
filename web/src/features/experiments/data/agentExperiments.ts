@@ -899,30 +899,6 @@ export const agentExperiments: AgentExperiment[] = [
     },
   },
   {
-    id: 'fps-model-comparison',
-    hidden: true,
-    category: '3D 게임 실험',
-    title: 'FPS 제작 테스트',
-    description: '같은 제작 과제를 모델별로 진행하고, 결과 화면과 구현 내용을 비교할 예정입니다.',
-    focus: ['공통 과제', '모델별 결과', '개입 과정'],
-    models: ['Opus 5', 'Fable 5.1', 'Astra'],
-  },
-  {
-    id: 'blender-3d-assets',
-    hidden: true,
-    category: 'Blender 3D 에셋 제작',
-    title: 'Blender 3D 에셋 제작',
-    description: 'Blender로 제작한 3D 모델과 리깅·애니메이션 결과를 정리하고 비교할 자리입니다.',
-    focus: ['3D 모델링', '리깅·애니메이션', '게임 리소스'],
-  },
-];
-
-/**
- * 로컬 개발 서버에서만 갤러리에 섞어 보여 주는 초안. 운영 빌드·이동 계약·챗봇 지식에는 넣지 않는다.
- * 실제 작품이 생기면 agentExperiments로 옮기고 이 목록에서는 지운다.
- */
-export const agentExperimentDrafts: AgentExperiment[] = [
-  {
     id: 'potemkin-bitcoin-trading',
     category: '포템킨 빌리지',
     title: 'ZZZ-BOT 자동 매매 에이전트',
@@ -985,4 +961,27 @@ export const agentExperimentDrafts: AgentExperiment[] = [
       reality: 'AI 호출은 없습니다. 커서의 움직임과 칠하는 순서는 미리 짜 둔 연출을 재생하고, 완성 그림은 처음부터 준비된 SVG입니다.',
     },
   },
+  {
+    id: 'fps-model-comparison',
+    hidden: true,
+    category: '3D 게임 실험',
+    title: 'FPS 제작 테스트',
+    description: '같은 제작 과제를 모델별로 진행하고, 결과 화면과 구현 내용을 비교할 예정입니다.',
+    focus: ['공통 과제', '모델별 결과', '개입 과정'],
+    models: ['Opus 5', 'Fable 5.1', 'Astra'],
+  },
+  {
+    id: 'blender-3d-assets',
+    hidden: true,
+    category: 'Blender 3D 에셋 제작',
+    title: 'Blender 3D 에셋 제작',
+    description: 'Blender로 제작한 3D 모델과 리깅·애니메이션 결과를 정리하고 비교할 자리입니다.',
+    focus: ['3D 모델링', '리깅·애니메이션', '게임 리소스'],
+  },
 ];
+
+/**
+ * 로컬 개발 서버에서만 갤러리에 섞어 보여 주는 초안. 운영 빌드·이동 계약·챗봇 지식에는 넣지 않는다.
+ * 실제 작품이 생기면 agentExperiments로 옮기고 이 목록에서는 지운다.
+ */
+export const agentExperimentDrafts: AgentExperiment[] = [];

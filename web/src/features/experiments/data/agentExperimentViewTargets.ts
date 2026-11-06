@@ -35,6 +35,8 @@ export const PUBLIC_AGENT_EXPERIMENT_TARGETS = [
   { id: 'project-code-archive', title: '코드 아카이브', category: '앱·도구 실험' },
   { id: 'project-receipt-ocr', title: '영수증 OCR', category: '앱·도구 실험' },
   { id: 'potemkin-automation', title: '업무 완전 자동화 플랫폼', category: '포템킨 빌리지' },
+  { id: 'potemkin-bitcoin-trading', title: 'ZZZ-BOT 자동 매매 에이전트', category: '포템킨 빌리지' },
+  { id: 'potemkin-multi-cursor-agents', title: '다중 에이전트 동시 작업', category: '포템킨 빌리지' },
 ] as const;
 
 const ITEM_ACTIONS = PUBLIC_AGENT_EXPERIMENT_TARGETS.map(({ id }) => `agent-experiment-${id}` as const);
