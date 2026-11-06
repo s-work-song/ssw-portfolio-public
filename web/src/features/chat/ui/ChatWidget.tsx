@@ -486,15 +486,18 @@ export function ChatWidget() {
   }, [availability, close, runTourTransition, startGuidedTour]);
 
   /**
-   * 둘러보기를 마치고 설정·WebMCP 안내를 보여 준다.
-   * 안내를 읽는 것이 목적이라 입력창에 포커스를 주지 않고 연다.
+   * 둘러보기를 마치고 설정 페이지로 옮긴 뒤 설정·WebMCP 안내를 보여 준다.
+   * 설정은 둘러보기 단계가 아니라 원하는 사람만 들어가는 마무리 선택지다.
+   * 안내를 읽는 것이 목적이라 입력창에 포커스를 주지 않고 연다. 오프라인이면 패널이
+   * 안내 대신 연결 상태만 보여 주므로 패널은 열지 않고 설정 페이지로만 옮긴다.
    */
   const showSettingsGuideAfterTour = useCallback(() => {
     setActiveQuickDestination(null);
     stopGuidedTour();
+    navigateAction("settings_overview");
     showSettingsWebMcpGuide();
-    open({ focusInput: false });
-  }, [open, showSettingsWebMcpGuide, stopGuidedTour]);
+    if (availability === "online") open({ focusInput: false });
+  }, [availability, navigateAction, open, showSettingsWebMcpGuide, stopGuidedTour]);
 
   /** 온보딩에서 설정·WebMCP 안내를 바로 보여 준다. */
   const showSettingsGuideFromOnboarding = useCallback(() => {

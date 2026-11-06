@@ -223,11 +223,23 @@ export function useGuidedTour({
   /**
    * 이전 단계로 되돌아가 그 위치로 다시 이동한다.
    *
-   * 첫 단계이거나 진행 중이 아니면 아무것도 하지 않는다. 되돌아간 단계의
-   * interaction은 새로 계산하므로, 이미 답변까지 마친 단계로 돌아가면 질문
-   * 체험을 처음부터 다시 하게 된다.
+   * 완료 카드에서 누르면 마지막 단계로 돌아간다. 완료 상태도 마지막 stepIndex를
+   * 그대로 들고 있어 그 단계로 다시 이동하면 된다. 첫 단계이거나 진행 중·완료가
+   * 아니면 아무것도 하지 않는다. 되돌아간 단계의 interaction은 새로 계산하므로,
+   * 이미 답변까지 마친 단계로 돌아가면 질문 체험을 처음부터 다시 하게 된다.
    */
   const previous = useCallback(() => {
+    if (state.status === "completed") {
+      const lastIndex = state.stepIndex;
+      navigationRef.current?.run(GUIDED_TOUR_STEPS[lastIndex].actionId, () => {
+        setState({
+          status: "active",
+          stepIndex: lastIndex,
+          interaction: guidedTourInteractionForStep(GUIDED_TOUR_STEPS[lastIndex]),
+        });
+      });
+      return;
+    }
     if (state.status !== "active" || state.stepIndex <= 0) return;
     const previousIndex = state.stepIndex - 1;
     navigationRef.current?.run(GUIDED_TOUR_STEPS[previousIndex].actionId, () => {

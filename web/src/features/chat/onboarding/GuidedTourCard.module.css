@@ -214,6 +214,16 @@
   gap: 8px;
 }
 
+/* 완료 카드는 다시 둘러보기·설정 둘러보기를 왼쪽에 두고 닫기만 종료 자리에 남긴다.
+   "둘러보기 마치기"를 연달아 누르던 자리에 다른 버튼이 들어와 실수로 눌리지 않게 비워 둔다. */
+.completedActions {
+  justify-content: flex-start;
+}
+
+.completedActions > :last-child {
+  margin-left: auto;
+}
+
 .actions button,
 .inviteActions button {
   min-height: 36px;

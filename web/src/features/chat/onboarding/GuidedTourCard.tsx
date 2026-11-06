@@ -12,6 +12,9 @@ import type { GuidedTourState, GuidedTourStep } from "./guidedTour";
 import { useEffect, useRef, type Ref } from "react";
 import styles from "./GuidedTourCard.module.css";
 
+/** 완료 카드가 나타난 직후 버튼 입력을 무시하는 시간이다. 마치기 연타가 이어지지 않을 만큼만 둔다. */
+const COMPLETION_CLICK_GUARD_MS = 600;
+
 /** 배너의 두 버튼이 각각 투어 시작과 배너 닫기를 상위로 올린다. */
 interface GuidedTourInviteProps {
   onStart: () => void;
@@ -103,7 +106,7 @@ interface GuidedTourCardProps {
 /**
  * 진행 중인 투어의 현재 단계와 다음 행동 버튼을 보여 주는 안내 카드다.
  *
- * 완료 상태에서는 단계 안내 대신 마무리 문구와 다시 둘러보기·설정 안내 버튼을
+ * 완료 상태에서는 단계 안내 대신 마무리 문구와 이전·다시 둘러보기·설정 둘러보기 버튼을
  * 내놓는다. 질문 체험을 기다리는 동안에는 "다음 장소" 버튼을 감춰 방문자가
  * 체험을 지나치지 않게 하고, 대신 건너뛰기 버튼만 남긴다. 답변을 받는
  * 중(answering)에는 이전·현재 장소·종료를 모두 잠가 진행 중인 요청과 화면
@@ -131,6 +134,16 @@ export function GuidedTourCard({
   onToggleExternalChat,
 }: GuidedTourCardProps) {
   const completed = state.status === "completed";
+  // "둘러보기 마치기"를 연달아 누른 입력이 막 나타난 완료 버튼에 닿지 않도록 잠시 무시한다.
+  // 좁은 화면에서는 배치만으로 마치기 자리를 완전히 비울 수 없다.
+  const completedAtRef = useRef(0);
+  useEffect(() => {
+    if (completed) completedAtRef.current = window.performance.now();
+  }, [completed]);
+  const afterCompletionSettles = (action: () => void) => () => {
+    if (window.performance.now() - completedAtRef.current < COMPLETION_CLICK_GUARD_MS) return;
+    action();
+  };
   // 완료 상태는 마지막 stepIndex를 그대로 들고 있으므로 진행도만 전체 값으로 채운다.
   // 진행 중에는 인덱스가 범위를 벗어나도 표시가 깨지지 않도록 전체 개수로 잘라 낸다.
   const progress = completed
@@ -185,8 +198,8 @@ export function GuidedTourCard({
       <p className={styles.message}>
         {completed
           ? aiAvailable
-            ? "이제 관심 있는 카드의 챗봇 버튼을 누르거나 챗봇에 자유롭게 질문해 보세요."
-            : "관심 있는 페이지와 기록을 자유롭게 더 살펴보세요. 챗봇 질문은 연결이 가능할 때 이용할 수 있어요."
+            ? "이제 관심 있는 카드의 챗봇 버튼을 누르거나 챗봇에 자유롭게 질문해 보세요. 테마·글꼴 같은 화면 설정도 ‘다크 모드로 바꿔줘’처럼 말하면 챗봇이 바로 바꿔 줍니다."
+            : "관심 있는 페이지와 기록을 자유롭게 더 살펴보세요. 챗봇 질문은 연결이 가능할 때 이용할 수 있어요. 테마·글꼴 같은 화면 설정은 설정 둘러보기에서 바꿀 수 있어요."
           : step?.message}
       </p>
 
@@ -217,18 +230,21 @@ export function GuidedTourCard({
         />
       </div>
 
-      <div className={styles.actions}>
+      <div className={completed ? `${styles.actions} ${styles.completedActions}` : styles.actions}>
         {completed ? (
           <>
-            <button type="button" className={styles.secondary} onClick={onRestart}>
+            <button type="button" className={styles.secondary} onClick={afterCompletionSettles(onPrevious)}>
+              이전
+            </button>
+            <button type="button" className={styles.secondary} onClick={afterCompletionSettles(onRestart)}>
               다시 둘러보기
             </button>
             <button
               type="button"
               className={styles.primary}
-              onClick={onShowSettingsGuide}
+              onClick={afterCompletionSettles(onShowSettingsGuide)}
             >
-              설정·WebMCP 안내
+              설정 둘러보기
             </button>
             <button type="button" className={styles.ghost} onClick={onStop}>
               닫기

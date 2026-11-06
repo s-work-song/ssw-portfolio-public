@@ -14,7 +14,7 @@ import { aiWorkflowStages } from "../../ai-workflow/data/aiWorkflow.ts";
  * 단계 구성을 바꿀 때 이 숫자를 올린다. 아래 두 저장 키에 그대로 섞여 들어가므로,
  * 예전 판에서 저장한 진행 상태가 새 단계 목록에 잘못 적용되는 일 없이 버려진다.
  */
-export const GUIDED_TOUR_VERSION = 10;
+export const GUIDED_TOUR_VERSION = 13;
 /** 투어를 안내한 적이 있는지 기억하는 localStorage 키다. 값은 started·completed·dismissed 중 하나다. */
 export const GUIDED_TOUR_VISIT_KEY = `portfolio-guided-tour:v${GUIDED_TOUR_VERSION}:visit`;
 /** 진행 중인 투어 상태를 탭 단위로 이어 붙이는 sessionStorage 키다. 페이지 이동으로 훅이 다시 마운트돼도 단계가 유지된다. */
@@ -71,6 +71,8 @@ export interface GuidedTourStep {
     | "experiments-videos"
     | "experiments-comfyui"
     | "experiments-apps"
+    | "experiments-rigging"
+    | "experiments-potemkin"
     | "resume"
     | "cover-letter"
     | "cover-letter-story"
@@ -136,7 +138,8 @@ const SI_STAGE_ACTIONS = {
 /**
  * 방문자를 데려갈 단계 목록이다. 배열 순서가 곧 진행 순서다.
  *
- * 소개에서 시작해 이력서·자기소개서·연구 경험·개발·배포 환경·SI 활용 단계·기록을 거쳐 설정으로 끝나는 흐름이며,
+ * 소개에서 시작해 이력서·자기소개서·연구 경험·SI 활용 단계·개발·배포 환경을 거쳐 기록에서 끝나는 흐름이며,
+ * 설정은 단계에 넣지 않고 완료 카드의 설정 둘러보기 버튼으로 원하는 사람만 들어간다.
  * 질문 체험은 자기소개서 단계 하나에만 걸어 투어가 중간에 막히는 지점을 최소화했다.
  * 단계를 더하거나 순서를 바꾸면 GUIDED_TOUR_VERSION도 함께 올려야 저장된
  * stepIndex가 엉뚱한 단계를 가리키지 않는다.
@@ -146,7 +149,7 @@ export const GUIDED_TOUR_STEPS: readonly GuidedTourStep[] = [
     id: "overview",
     title: "소개 페이지",
     message:
-      "포트폴리오의 전체 구성을 먼저 살펴볼게요. 소개, 이력서, 자기소개서, 연구 경험, 개발·배포 환경, SI 활용 단계, 기록과 설정을 순서대로 둘러봅니다.",
+      "포트폴리오의 전체 구성을 먼저 살펴볼게요. 소개, 이력서, 자기소개서, 연구 경험, SI 활용 단계, 개발·배포 환경, 기록을 순서대로 둘러봅니다.",
     actionId: "overview",
   },
   {
@@ -199,7 +202,7 @@ export const GUIDED_TOUR_STEPS: readonly GuidedTourStep[] = [
     id: "agent-experiments",
     title: "SI 에이전트 성능·활용 실험",
     message:
-      "SI 활용과 모델 성능을 취미로 실험하며 얻은 결과를 모은 공간입니다. 먼저 실험의 목적과 작업 방식을 읽고, 다음 단계부터 2D 실험, 3D 실험, 영상물, 앱·도구 실험을 차례로 살펴볼게요.",
+      "SI 활용과 모델 성능을 취미로 실험하며 얻은 결과를 모은 공간입니다. 먼저 실험의 목적과 작업 방식을 읽고, 다음 단계부터 2D 실험, 3D 실험, 게임, 영상물, 앱·도구 실험, 포템킨 빌리지를 차례로 살펴볼게요.",
     actionId: "agent_experiments",
   },
   {
@@ -207,12 +210,6 @@ export const GUIDED_TOUR_STEPS: readonly GuidedTourStep[] = [
     title: "2D 실험 · SVG 제작",
     message: "SVG 일러스트와 자전거 타는 펠리컨 애니메이션을 살펴보세요. 같은 프롬프트로 얻은 모델별 결과도 비교할 수 있어요.",
     actionId: "agent_experiments_svg",
-  },
-  {
-    id: "experiments-2d-games",
-    title: "2D 실험 · 2D 게임",
-    message: "Planet Defense와 물고기 키우기 등 2D 게임 작업물입니다. 코드·이미지·음악에 활용한 모델과 결과를 확인해 보세요.",
-    actionId: "agent_experiments_2d_games",
   },
   {
     id: "experiments-comfyui",
@@ -227,16 +224,28 @@ export const GUIDED_TOUR_STEPS: readonly GuidedTourStep[] = [
     actionId: "agent_experiments_webgl",
   },
   {
-    id: "experiments-3d-games",
-    title: "3D 실험 · 3D 게임",
-    message: "비행 시뮬레이터와 공성전처럼 공간과 물리 동작을 다룬 3D 게임 작업물입니다. 캡처를 보거나 연결된 게임을 직접 실행해 볼 수 있어요.",
-    actionId: "agent_experiments_3d_games",
-  },
-  {
     id: "experiments-blender",
     title: "3D 실험 · Blender",
     message: "무기·음식과 가전·지하철·도시·사무실 모델링을 모았습니다. 제작 모델과 렌더 이미지를 확인하고, 사무실의 참고 이미지와 구현 결과도 비교해 보세요.",
     actionId: "agent_experiments_blender",
+  },
+  {
+    id: "experiments-rigging",
+    title: "3D 실험 · 리깅",
+    message: "외부 모델 없이 코드로 만든 손·팔 리그로 관절과 스키닝, 손끝 IK, 손·검 잡기를 실험한 작업입니다. 연결된 실행 화면에서 직접 조작해 볼 수 있어요.",
+    actionId: "agent_experiments_rigging",
+  },
+  {
+    id: "experiments-2d-games",
+    title: "게임 · 2D 게임",
+    message: "Planet Defense와 물고기 키우기 등 2D 게임 작업물입니다. 코드·이미지·음악에 활용한 모델과 결과를 확인해 보세요.",
+    actionId: "agent_experiments_2d_games",
+  },
+  {
+    id: "experiments-3d-games",
+    title: "게임 · 3D 게임",
+    message: "비행 시뮬레이터와 공성전처럼 공간과 물리 동작을 다룬 3D 게임 작업물입니다. 캡처를 보거나 연결된 게임을 직접 실행해 볼 수 있어요.",
+    actionId: "agent_experiments_3d_games",
   },
   {
     id: "experiments-videos",
@@ -247,8 +256,14 @@ export const GUIDED_TOUR_STEPS: readonly GuidedTourStep[] = [
   {
     id: "experiments-apps",
     title: "SI 실험 · 앱·도구 실험",
-    message: "검증한 코드를 보관하는 코드 아카이브, 영수증 OCR 앱, 스프라이트 보정 도구처럼 SI 에이전트와 만든 앱과 도구입니다. 실행 화면을 살펴보세요.",
+    message: "스프라이트 보정 도구, 검증한 코드를 보관하는 코드 아카이브, 영수증 OCR 앱처럼 SI 에이전트와 만든 앱과 도구입니다. 실행 화면을 살펴보세요.",
     actionId: "agent_experiments_apps",
+  },
+  {
+    id: "experiments-potemkin",
+    title: "SI 실험 · 포템킨 빌리지",
+    message: "겉만 번듯하고 실체는 없는 데모를 직접 만들어 본 공간입니다. 페이지의 ‘실제 내용’ 스위치를 켜면 화면 뒤에서 실제로 무엇이 돌아가는지 확인할 수 있어요.",
+    actionId: "agent_experiments_potemkin",
   },
   {
     id: "resume",
@@ -400,24 +415,6 @@ export const GUIDED_TOUR_STEPS: readonly GuidedTourStep[] = [
     actionId: "research_chatbot_architecture",
   },
   {
-    id: "development-environment",
-    title: "개발·배포 환경 · 개발 환경",
-    message: "어느 기기에서 어떤 도구에 접속하는지와 기기 간 연결을 한 그림에 정리했습니다. 폰에서 조작하는 앱과 실제 작업이 실행되는 PC를 구분해 보세요.",
-    actionId: "development_environment",
-  },
-  {
-    id: "deployment-overview",
-    title: "개발·배포 환경 · 배포 구성",
-    message: "포트폴리오·공용 인프라·이커머스·에셋 라이브러리를 정적 웹 화면, API, LLM 추론 역할로 나눠 배포한 구성입니다.",
-    actionId: "deployment_overview",
-  },
-  {
-    id: "infrastructure-optimization",
-    title: "개발·배포 환경 · 인프라 최적화",
-    message: "클라우드 비용 절감에서 시작해 백엔드를 Rust로 다시 만들고 라즈베리파이로 옮긴 과정입니다. 메모리 최적화와 이관 과정을 살펴보세요.",
-    actionId: "infrastructure_optimization",
-  },
-  {
     id: "si-levels",
     title: "SI 활용 단계 소개",
     message: "채팅부터 여러 에이전트의 협업까지, SI를 활용하는 다섯 단계를 살펴봅니다. 나와 우리 팀·조직은 어느 단계로 작업하는지 생각해 보세요.",
@@ -436,6 +433,24 @@ export const GUIDED_TOUR_STEPS: readonly GuidedTourStep[] = [
     actionId: "si_learning",
   },
   {
+    id: "development-environment",
+    title: "개발·배포 환경 · 개발 환경",
+    message: "어느 기기에서 어떤 도구에 접속하는지와 기기 간 연결을 한 그림에 정리했습니다. 폰에서 조작하는 앱과 실제 작업이 실행되는 PC를 구분해 보세요.",
+    actionId: "development_environment",
+  },
+  {
+    id: "deployment-overview",
+    title: "개발·배포 환경 · 배포 구성",
+    message: "포트폴리오·공용 인프라·이커머스·에셋 라이브러리를 정적 웹 화면, API, LLM 추론 역할로 나눠 배포한 구성입니다.",
+    actionId: "deployment_overview",
+  },
+  {
+    id: "infrastructure-optimization",
+    title: "개발·배포 환경 · 인프라 최적화",
+    message: "클라우드 비용 절감에서 시작해 백엔드를 Rust로 다시 만들고 라즈베리파이로 옮긴 과정입니다. 메모리 최적화와 이관 과정을 살펴보세요.",
+    actionId: "infrastructure_optimization",
+  },
+  {
     id: "log",
     title: "기록",
     message:
@@ -443,12 +458,6 @@ export const GUIDED_TOUR_STEPS: readonly GuidedTourStep[] = [
     actionId: "log",
     targetId: "log-overview",
     highlightDurationMs: 1_800,
-  },
-  {
-    id: "settings",
-    title: "사이트 설정",
-    message: "테마, 포인트 색상, 채팅 글꼴·글자 크기, 패널 배치와 답변 연출을 바꿀 수 있어요. 채팅에 ‘다크 모드로 바꿔줘’처럼 말해도 챗봇이 바로 바꿔 줍니다.",
-    actionId: "settings_overview",
   },
 ] as const;
 
