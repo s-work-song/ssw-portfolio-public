@@ -106,6 +106,7 @@ export type ActionId =
   | "agent_experiments_blender"
   | "agent_experiments_videos"
   | "agent_experiments_comfyui"
+  | "agent_experiments_apps"
   | "past_work_archive"
   | "open_weight_experiments"
   | "optimization_preview"

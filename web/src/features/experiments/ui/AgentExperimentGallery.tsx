@@ -2,7 +2,10 @@
 
 import { useEffect, useLayoutEffect, useRef, useState, type KeyboardEvent, type ReactNode } from 'react';
 import { agentExperiments, type AgentExperiment } from '@/features/experiments/data/agentExperiments';
-import { AGENT_EXPERIMENT_CATEGORY_ANCHORS, AGENT_EXPERIMENT_INTRO_ANCHOR, agentExperimentForAnchor } from '@/features/experiments/data/agentExperimentNavigation';
+import {
+  AGENT_EXPERIMENT_CATEGORY_ANCHORS, AGENT_EXPERIMENT_CATEGORY_TAB_LABELS, AGENT_EXPERIMENT_GROUPS, AGENT_EXPERIMENT_INTRO_ANCHOR,
+  agentExperimentForAnchor,
+} from '@/features/experiments/data/agentExperimentNavigation';
 import { CHAT_ACTION_TARGET_PREPARE_EVENT, type ChatActionTargetPrepareDetail } from '@/features/chat/navigation';
 import LogReadingLink from '@/features/logs/navigation/LogReadingLink';
 import ProjectMediaCarousel from '../../projects/ui/ProjectMediaCarousel';
@@ -12,7 +15,12 @@ import styles from './AgentExperimentGallery.module.css';
 
 // 탭, 슬라이드, 직접 링크 모두 동일한 노출 목록을 사용한다.
 const visibleExperiments = agentExperiments.filter((item) => !item.hidden);
-const categories = [...new Set(visibleExperiments.map((item) => item.category))];
+const visibleCategories = new Set(visibleExperiments.map((item) => item.category));
+// 공개 작품이 없는 분류·대분류는 탭을 만들지 않는다.
+const groups = AGENT_EXPERIMENT_GROUPS
+  .map((group) => ({ ...group, categories: group.categories.filter((value) => visibleCategories.has(value)) }))
+  .filter((group) => group.categories.length > 0);
+type Category = AgentExperiment['category'];
 const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? '';
 
 function CapturePlaceholder({ label, kind = 'capture' }: { label: string; kind?: 'capture' | 'image' | 'video' | 'svg-animation' }) {
@@ -273,7 +281,7 @@ function ExperimentImageBlock({ title, mediaTitle, images, credits }: {
 
 /** 자동 재생 없이 실험을 탐색하고, 모델 비교는 같은 화면에서 확인하는 갤러리다. */
 export default function AgentExperimentGallery() {
-  const [category, setCategory] = useState<(typeof categories)[number]>(visibleExperiments[0]?.category ?? 'SVG 제작');
+  const [category, setCategory] = useState<Category>(visibleExperiments[0]?.category ?? 'SVG 제작');
   const [selectedId, setSelectedId] = useState(visibleExperiments[0]?.id ?? '');
   const [selectedModel, setSelectedModel] = useState(0);
   const [filterIndicator, setFilterIndicator] = useState<{ x: number; y: number; width: number; height: number } | null>(null);
@@ -283,10 +291,11 @@ export default function AgentExperimentGallery() {
   const experiments = visibleExperiments.filter((item) => item.category === category);
   const index = Math.max(0, experiments.findIndex((item) => item.id === selectedId));
   const active = experiments[index];
+  const activeGroup = groups.find((group) => group.categories.includes(category)) ?? groups[0];
 
   useLayoutEffect(() => {
     const list = filterListRef.current;
-    const button = filterButtonRefs.current.get(category);
+    const button = filterButtonRefs.current.get(activeGroup.label);
     if (!list || !button) return;
     const measure = () => {
       const next = { x: button.offsetLeft, y: button.offsetTop, width: button.offsetWidth, height: button.offsetHeight };
@@ -299,7 +308,7 @@ export default function AgentExperimentGallery() {
     observer.observe(list);
     observer.observe(button);
     return () => observer.disconnect();
-  }, [category]);
+  }, [activeGroup.label]);
 
   useEffect(() => {
     const selectAnchor = (anchor: string) => {
@@ -336,6 +345,12 @@ export default function AgentExperimentGallery() {
   }, []);
 
   if (!active) return null;
+
+  function chooseCategory(value: Category) {
+    setCategory(value);
+    setSelectedId(visibleExperiments.find((item) => item.category === value)!.id);
+    setSelectedModel(0);
+  }
 
   function select(nextIndex: number, focus = false) {
     const next = (nextIndex + experiments.length) % experiments.length;
@@ -384,17 +399,24 @@ export default function AgentExperimentGallery() {
             height: filterIndicator.height,
             transform: `translate3d(${filterIndicator.x}px, ${filterIndicator.y}px, 0)`,
           }} />}
-          {categories.map((value) => (
-            <button key={value} id={AGENT_EXPERIMENT_CATEGORY_ANCHORS[value]} ref={(button) => {
-              if (button) filterButtonRefs.current.set(value, button);
-              else filterButtonRefs.current.delete(value);
-            }} type="button" aria-pressed={category === value} onClick={() => {
-              setCategory(value);
-              setSelectedId(visibleExperiments.find((item) => item.category === value)!.id);
-              setSelectedModel(0);
-            }}>{value === 'Blender 3D 에셋 제작' ? 'Blender' : value}</button>
+          {groups.map((group) => (
+            // 분류가 하나뿐인 대분류는 그 분류 앵커를 그대로 써서 기존 링크·이동 계약을 유지한다.
+            <button key={group.label} id={group.categories.length === 1 ? AGENT_EXPERIMENT_CATEGORY_ANCHORS[group.categories[0]] : group.anchor} ref={(button) => {
+              if (button) filterButtonRefs.current.set(group.label, button);
+              else filterButtonRefs.current.delete(group.label);
+            }} type="button" aria-pressed={activeGroup.label === group.label} onClick={() => {
+              if (activeGroup.label !== group.label) chooseCategory(group.categories[0]);
+            }}>{group.label}</button>
           ))}
         </div>
+        {activeGroup.categories.length > 1 && (
+          <div className={styles.subFilters} role="group" aria-label={`${activeGroup.label} 하위 분류`}>
+            {activeGroup.categories.map((value) => (
+              <button key={value} id={AGENT_EXPERIMENT_CATEGORY_ANCHORS[value]} type="button" aria-pressed={category === value}
+                onClick={() => chooseCategory(value)}>{AGENT_EXPERIMENT_CATEGORY_TAB_LABELS[value]}</button>
+            ))}
+          </div>
+        )}
       </div>
 
       <div className={styles.experimentNavigation}>
@@ -531,7 +553,7 @@ export default function AgentExperimentGallery() {
               ) : active.images?.length ? (
                 <ExperimentImageBlock
                   title={active.title}
-                  mediaTitle={active.category === 'Blender 3D 에셋 제작' ? '3D 모델링 결과' : active.category === 'SVG 제작' ? 'SVG 제작 결과' : active.category === 'WebGL' ? 'WebGL 실행 화면' : '게임 플레이 캡처'}
+                  mediaTitle={active.category === 'Blender 3D 에셋 제작' ? '3D 모델링 결과' : active.category === 'SVG 제작' ? 'SVG 제작 결과' : active.category === 'WebGL' ? 'WebGL 실행 화면' : active.category === '앱·도구 실험' ? '실행 화면' : '게임 플레이 캡처'}
                   images={active.images}
                   credits={active.modelCredits?.filter((credit) => !active.audio || credit.purpose !== '배경음악')}
                 />

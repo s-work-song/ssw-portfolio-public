@@ -31,6 +31,9 @@ export const PUBLIC_AGENT_EXPERIMENT_TARGETS = [
   { id: 'motion-atlas', title: '모션 도감', category: '영상물' },
   { id: 'comfyui-qwen-wan', title: 'ComfyUI 이미지 → 5초 영상', category: 'ComfyUI 활용' },
   { id: 'comfyui-gpt-image2-wan', title: '행성 탐사 이미지 → 5초 영상', category: 'ComfyUI 활용' },
+  { id: 'project-code-archive', title: '코드 아카이브', category: '앱·도구 실험' },
+  { id: 'project-receipt-ocr', title: 'SSW 영수증 OCR', category: '앱·도구 실험' },
+  { id: 'project-sprite-toolkit', title: 'SSW Sprite Toolkit', category: '앱·도구 실험' },
 ] as const;
 
 const ITEM_ACTIONS = PUBLIC_AGENT_EXPERIMENT_TARGETS.map(({ id }) => `agent-experiment-${id}` as const);

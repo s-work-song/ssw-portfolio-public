@@ -14,7 +14,7 @@ import { aiWorkflowStages } from "../../ai-workflow/data/aiWorkflow.ts";
  * 단계 구성을 바꿀 때 이 숫자를 올린다. 아래 두 저장 키에 그대로 섞여 들어가므로,
  * 예전 판에서 저장한 진행 상태가 새 단계 목록에 잘못 적용되는 일 없이 버려진다.
  */
-export const GUIDED_TOUR_VERSION = 9;
+export const GUIDED_TOUR_VERSION = 10;
 /** 투어를 안내한 적이 있는지 기억하는 localStorage 키다. 값은 started·completed·dismissed 중 하나다. */
 export const GUIDED_TOUR_VISIT_KEY = `portfolio-guided-tour:v${GUIDED_TOUR_VERSION}:visit`;
 /** 진행 중인 투어 상태를 탭 단위로 이어 붙이는 sessionStorage 키다. 페이지 이동으로 훅이 다시 마운트돼도 단계가 유지된다. */
@@ -70,6 +70,7 @@ export interface GuidedTourStep {
     | "experiments-blender"
     | "experiments-videos"
     | "experiments-comfyui"
+    | "experiments-apps"
     | "resume"
     | "cover-letter"
     | "cover-letter-story"
@@ -198,36 +199,42 @@ export const GUIDED_TOUR_STEPS: readonly GuidedTourStep[] = [
     id: "agent-experiments",
     title: "SI 에이전트 성능·활용 실험",
     message:
-      "SI 활용과 모델 성능을 취미로 실험하며 얻은 결과를 모은 공간입니다. 먼저 실험의 목적과 작업 방식을 읽고, 다음 단계부터 일곱 대분류를 차례로 살펴볼게요.",
+      "SI 활용과 모델 성능을 취미로 실험하며 얻은 결과를 모은 공간입니다. 먼저 실험의 목적과 작업 방식을 읽고, 다음 단계부터 2D 실험, 3D 실험, 영상물, 앱·도구 실험을 차례로 살펴볼게요.",
     actionId: "agent_experiments",
   },
   {
     id: "experiments-svg",
-    title: "SI 실험 · SVG 제작",
+    title: "2D 실험 · SVG 제작",
     message: "SVG 일러스트와 자전거 타는 펠리컨 애니메이션을 살펴보세요. 같은 프롬프트로 얻은 모델별 결과도 비교할 수 있어요.",
     actionId: "agent_experiments_svg",
   },
   {
-    id: "experiments-webgl",
-    title: "SI 실험 · WebGL",
-    message: "기계 장치를 살펴보는 분해도 도감과 얼음 동동 라떼의 시각효과 실험입니다. 실행 화면을 보거나 연결된 샘플을 직접 열어 보세요.",
-    actionId: "agent_experiments_webgl",
-  },
-  {
     id: "experiments-2d-games",
-    title: "SI 활용 · 2D 게임 실험",
+    title: "2D 실험 · 2D 게임",
     message: "Planet Defense와 물고기 키우기 등 2D 게임 작업물입니다. 코드·이미지·음악에 활용한 모델과 결과를 확인해 보세요.",
     actionId: "agent_experiments_2d_games",
   },
   {
+    id: "experiments-comfyui",
+    title: "2D 실험 · ComfyUI 활용",
+    message: "Qwen Image와 GPT Image로 만든 이미지를 Wan I2V 모델로 5초 영상으로 확장한 사례입니다. 원본 이미지와 생성 영상을 함께 살펴보세요.",
+    actionId: "agent_experiments_comfyui",
+  },
+  {
+    id: "experiments-webgl",
+    title: "3D 실험 · WebGL",
+    message: "기계 장치를 살펴보는 분해도 도감과 얼음 동동 라떼의 시각효과 실험입니다. 실행 화면을 보거나 연결된 샘플을 직접 열어 보세요.",
+    actionId: "agent_experiments_webgl",
+  },
+  {
     id: "experiments-3d-games",
-    title: "SI 활용 · 3D 게임 실험",
+    title: "3D 실험 · 3D 게임",
     message: "비행 시뮬레이터와 공성전처럼 공간과 물리 동작을 다룬 3D 게임 작업물입니다. 캡처를 보거나 연결된 게임을 직접 실행해 볼 수 있어요.",
     actionId: "agent_experiments_3d_games",
   },
   {
     id: "experiments-blender",
-    title: "SI 실험 · Blender",
+    title: "3D 실험 · Blender",
     message: "무기·음식과 가전·지하철·도시·사무실 모델링을 모았습니다. 제작 모델과 렌더 이미지를 확인하고, 사무실의 참고 이미지와 구현 결과도 비교해 보세요.",
     actionId: "agent_experiments_blender",
   },
@@ -238,10 +245,10 @@ export const GUIDED_TOUR_STEPS: readonly GuidedTourStep[] = [
     actionId: "agent_experiments_videos",
   },
   {
-    id: "experiments-comfyui",
-    title: "SI 실험 · ComfyUI 활용",
-    message: "Qwen Image와 GPT Image로 만든 이미지를 Wan I2V 모델로 5초 영상으로 확장한 사례입니다. 원본 이미지와 생성 영상을 함께 살펴보세요.",
-    actionId: "agent_experiments_comfyui",
+    id: "experiments-apps",
+    title: "SI 실험 · 앱·도구 실험",
+    message: "검증한 코드를 보관하는 코드 아카이브, 영수증 OCR 앱, 스프라이트 보정 도구처럼 SI 에이전트와 만든 앱과 도구입니다. 실행 화면을 살펴보세요.",
+    actionId: "agent_experiments_apps",
   },
   {
     id: "resume",

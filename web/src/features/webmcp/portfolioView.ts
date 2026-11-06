@@ -387,8 +387,8 @@ const VIEW_TARGETS: Readonly<Record<PortfolioViewAction, PortfolioViewTarget>> =
   'project-code-archive': {
     action: 'project-code-archive',
     route: ACTION_ROUTES.project_code_archive,
-    message: 'SI 협업 프로젝트 · 코드 아카이브로 이동을 시작했습니다.',
-    label: 'SI 협업 프로젝트 · 코드 아카이브',
+    message: 'SI 활용 실험 · 앱·도구 실험 · 코드 아카이브로 이동을 시작했습니다.',
+    label: 'SI 활용 실험 · 앱·도구 실험 · 코드 아카이브',
   },
 };
 

@@ -29,7 +29,7 @@ export type AgentExperimentAudioPreview = {
 /** 실험 갤러리의 공개 메타데이터. 미확인 제작 정보와 결과는 채우지 않는다. */
 export type AgentExperiment = {
   id: string;
-  category: '2D 게임 실험' | '3D 게임 실험' | 'Blender 3D 에셋 제작' | 'SVG 제작' | 'WebGL' | '영상물' | 'ComfyUI 활용';
+  category: '2D 게임 실험' | '3D 게임 실험' | 'Blender 3D 에셋 제작' | 'SVG 제작' | 'WebGL' | '영상물' | 'ComfyUI 활용' | '앱·도구 실험';
   title: string;
   description: string;
   /** 비교에 사용한 입력 원문. 설명과 분리해 인용 박스로 표시한다. */
@@ -776,6 +776,86 @@ export const agentExperiments: AgentExperiment[] = [
       poster: '/images/agent-experiments/comfyui/astronaut-gpt-image-2.webp',
       caption: '이미지에서 생성한 5초 영상',
     },
+  },
+  {
+    // 예전 SI 협업 프로젝트 앵커(#project-*)로 들어온 링크가 그대로 이 항목을 고르도록 ID를 유지한다.
+    id: 'project-code-archive',
+    category: '앱·도구 실험',
+    title: '코드 아카이브',
+    description: 'SI 에이전트로 구현한 코드를 테스트·검증한 뒤, 검증한 버전을 항목별로 보관하는 프로젝트입니다. 주제·언어·식별 정보를 기준으로 원하는 코드를 찾아 재사용할 수 있습니다.',
+    focus: ['검증한 코드 보관', '주제·언어별 탐색', '재사용'],
+    demoUrl: 'https://s-work-agency.github.io/ssw-algorithm-archive-public/',
+    demoLabel: '코드 아카이브 보기',
+    images: [
+      {
+        src: '/images/projects/code-archive/ssw-algorithm-archive-thoughts.webp',
+        alt: '알고리즘 활용 관점과 자원 효율에 대한 생각을 정리한 SSW Algorithm Archive 문서',
+        caption: '구현보다 활용 조건과 자원을 먼저 보는 알고리즘 관점',
+      },
+      {
+        src: '/images/projects/code-archive/ssw-algorithm-archive-detail.webp',
+        alt: '버블 정렬의 설명·계약·테스트와 사용 시나리오를 보여주는 알고리즘 상세 화면',
+        caption: '설명·스펙·구현·테스트를 함께 조회하는 알고리즘 상세',
+      },
+      {
+        src: '/images/projects/code-archive/ssw-algorithm-archive-list.webp',
+        alt: '검색과 분류 필터 및 알고리즘 카드 목록을 보여주는 SSW Algorithm Archive 화면',
+        caption: '주제·언어·분류 기준으로 탐색하는 알고리즘 카탈로그',
+      },
+    ],
+  },
+  {
+    id: 'project-receipt-ocr',
+    category: '앱·도구 실험',
+    title: 'SSW 영수증 OCR',
+    description: '영수증 사진에서 거래 정보와 상품·할인 정보를 추출하고, 원본과 비교해 검수·보관·내보내는 Windows·Android 앱입니다. 전체 사진과 확대 사진의 판독 결과를 비교하고 원판독과 사용자가 수정한 값을 구분해 보존합니다. 비용 분류와 월별 집계, JSON·CSV 내보내기, 사진을 포함한 ZIP 백업·복원을 지원합니다.',
+    focus: ['영수증 추출·검수', 'Windows·Android', '내보내기·백업'],
+    images: [
+      {
+        src: '/images/projects/receipt-ocr/01-receipt-review-trimmed.webp',
+        alt: '일부 정보를 가린 영수증 사진과 추출 원문·수정 값·항목별 확인 상태를 나란히 보여 주는 데스크톱 검수 화면',
+        caption: '영수증 원본과 추출 값을 비교·수정하는 검수 화면 · 일부 정보 가림',
+      },
+      {
+        src: '/images/projects/receipt-ocr/02-ai-settings-trimmed.png',
+        alt: 'ChatGPT와 OpenAI 호환 API 제공자 선택 메뉴, 계정 연결과 사용 모델 선택 항목이 표시된 AI 설정 화면',
+        caption: 'AI 설정 화면 · ChatGPT·OpenAI 호환 API와 모델 선택',
+      },
+    ],
+  },
+  {
+    id: 'project-sprite-toolkit',
+    category: '앱·도구 실험',
+    title: 'SSW Sprite Toolkit',
+    description: 'SI 에이전트로 생성한 스프라이트 시트를 게임용 이미지와 애니메이션으로 다듬는 브라우저 도구입니다. 격자와 재생 순서를 확인하고 배경·색상·프레임 위치를 보정한 뒤 PNG·GIF·APNG로 내보낼 수 있습니다. WebMCP로 SI 에이전트의 편집 작업을 연결하고, 변경 전후 미리보기와 실제 출력 파일 검사로 결과를 확인합니다.',
+    focus: ['스프라이트 보정', 'PNG·GIF·APNG 내보내기', 'WebMCP 연결'],
+    images: [
+      {
+        src: '/images/projects/sprite-toolkit/01-home.webp',
+        alt: '파일 열기와 작업 단계 안내를 제공하는 스프라이트 툴킷 홈 화면',
+        caption: '스프라이트 파일 열기와 작업 흐름을 안내하는 홈 화면',
+      },
+      {
+        src: '/images/projects/sprite-toolkit/02-castle-workspace.webp',
+        alt: '파란 지붕·깃발·배너의 성 이미지를 불러와 프레임과 격자를 확인하는 스프라이트 툴킷 작업 공간',
+        caption: '파란 성 원본을 확인하는 프레임·격자 작업 공간',
+      },
+      {
+        src: '/images/projects/sprite-toolkit/03-color-change-preview.webp',
+        alt: '성 이미지의 파란 지붕·깃발·배너를 빨간색으로 바꾼 적용 전 미리보기와 색상 변경 도구',
+        caption: '색상 변경 · 파랑→빨강 적용 전 미리보기',
+      },
+      {
+        src: '/images/projects/sprite-toolkit/01-grid-workspace.jpg',
+        alt: '3열 2행 격자에 배치된 여섯 슬라임 프레임과 격자 편집 패널',
+        caption: '테스트용 생성 스프라이트를 격자와 프레임 단위로 확인하는 작업 공간',
+      },
+      {
+        src: '/images/projects/sprite-toolkit/02-quality-check.jpg',
+        alt: '보정된 초록 슬라임 미리보기와 마무리 검사 통과 결과가 표시된 내보내기 화면',
+        caption: '잔여 배경색과 바닥선을 보정한 뒤 실제 GIF 출력까지 검사한 로컬 화면',
+      },
+    ],
   },
   {
     id: 'fps-model-comparison',
