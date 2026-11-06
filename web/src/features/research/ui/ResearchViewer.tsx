@@ -15,6 +15,10 @@ import {
   researchTabs,
   type ResearchTabId,
 } from '@/features/research/data/research';
+import {
+  CHAT_ACTION_IN_PAGE_TAB_EVENT,
+  type ChatActionInPageTabDetail,
+} from '@/features/chat/navigation';
 import ResearchPanels from '@/features/research/ui/ResearchPanels';
 import ResearchTabs from '@/features/research/ui/ResearchTabs';
 import { useResearchTabs } from '@/features/research/hooks/useResearchTabs';
@@ -77,6 +81,11 @@ export default function ResearchViewer() {
   );
   const [actionTargetTab, setActionTargetTab] =
     React.useState<ResearchTabId | null>(null);
+  // 대분류 강조는 대분류가 실제로 바뀔 때만 켠다. 같은 대분류 안 소분류 이동에서 다시 켜지면 강조가 겹쳐 보인다.
+  const [actionTargetPrimaryTab, setActionTargetPrimaryTab] = React.useState<
+    ReturnType<typeof researchPrimaryTabFromTab> | null
+  >(null);
+  const activeTabRef = React.useRef(activeTab);
   const transitionTimerRef = React.useRef(0);
   const entryTimerRef = React.useRef(0);
   const attractionTimerRef = React.useRef(0);
@@ -151,30 +160,46 @@ export default function ResearchViewer() {
 
   React.useEffect(() => {
     selectResearchTabRef.current = selectResearchTab;
-  }, [selectResearchTab]);
+    activeTabRef.current = activeTab;
+  }, [activeTab, selectResearchTab]);
 
   React.useEffect(() => {
-    const selectHashTarget = () => {
+    const selectHashTarget = (event?: Event) => {
       const requestedTab = researchTabFromHash(window.location.hash);
       if (!requestedTab) return;
+      const requestedPrimaryTab = researchPrimaryTabFromTab(requestedTab);
+      // 처음 들어올 때는 다른 페이지에서 넘어온 것이라 대분류도 강조한다.
+      const primaryChanged =
+        !event ||
+        requestedPrimaryTab !== researchPrimaryTabFromTab(activeTabRef.current);
       window.clearTimeout(attractionTimerRef.current);
       setActionTargetTab(requestedTab);
+      setActionTargetPrimaryTab(primaryChanged ? requestedPrimaryTab : null);
       attractionTimerRef.current = window.setTimeout(() => {
         attractionTimerRef.current = 0;
         setActionTargetTab(null);
+        setActionTargetPrimaryTab(null);
       }, RESEARCH_TAB_ATTRACTION_MS);
       selectResearchTabRef.current(requestedTab);
+    };
+    // 채팅·둘러보기 이동이 이 화면의 탭을 바꾸면 탭 막대를 알려, 막대까지 올라간 뒤 탭을 바꾸게 한다.
+    const answerInPageTabQuery = (event: Event) => {
+      const { detail } = event as CustomEvent<ChatActionInPageTabDetail>;
+      const requestedTab = researchTabFromHash(`#${detail.anchor}`);
+      if (!requestedTab || requestedTab === activeTabRef.current) return;
+      detail.tabBar = document.getElementById('research-experiments');
     };
 
     selectHashTarget();
     window.addEventListener('hashchange', selectHashTarget);
-    return () => window.removeEventListener('hashchange', selectHashTarget);
+    window.addEventListener(CHAT_ACTION_IN_PAGE_TAB_EVENT, answerInPageTabQuery);
+    return () => {
+      window.removeEventListener('hashchange', selectHashTarget);
+      window.removeEventListener(CHAT_ACTION_IN_PAGE_TAB_EVENT, answerInPageTabQuery);
+    };
   }, []);
 
   const activePrimaryTab = researchPrimaryTabFromTab(activeTab);
-  const actionTargetPrimaryTab = actionTargetTab
-    ? researchPrimaryTabFromTab(actionTargetTab)
-    : null;
   const isOptimizationSection = activePrimaryTab === 'optimization';
 
   const selectPrimaryResearchTab = React.useCallback(

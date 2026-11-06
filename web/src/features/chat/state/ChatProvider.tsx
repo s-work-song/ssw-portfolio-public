@@ -69,6 +69,7 @@ import {
 } from "../../portfolio-tools/portfolioUiToolExecutor";
 import { CHOICE_SETTING_TARGETS, chatDockFitsViewport, type PortfolioChoiceSetting } from "../../portfolio-tools/schema";
 import {
+  CHAT_ACTION_IN_PAGE_TAB_EVENT,
   CHAT_ACTION_NAVIGATE_EVENT,
   CHAT_ACTION_PAGE_ENTERED_EVENT,
   CHAT_ACTION_RESTORE_CHAT_INPUT_EVENT,
@@ -78,6 +79,7 @@ import {
   aboutTabPathFromPath,
   normalizeNavigationPath,
   pathWithoutHash,
+  type ChatActionInPageTabDetail,
   type ChatActionNavigationOptions,
   type ChatActionNavigateDetail,
   type ChatActionPageEnteredDetail,
@@ -1037,7 +1039,38 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
         routePath === normalizeNavigationPath(pathname)
       ) {
         pendingActionAwaitingPageEntryRef.current = false;
-        scrollToPendingActionAnchor();
+        // 화면 안 탭이 바뀌는 이동은 페이지 간 이동처럼 탭 막대까지 먼저 올라간 뒤
+        // 탭을 바꾼다. 스크롤과 탭 전환이 겹치면 무엇이 바뀌었는지 보이지 않는다.
+        const tabQuery = new CustomEvent<ChatActionInPageTabDetail>(
+          CHAT_ACTION_IN_PAGE_TAB_EVENT,
+          { detail: { anchor: actionAnchor, tabBar: null } },
+        );
+        window.dispatchEvent(tabQuery);
+        const tabBar = tabQuery.detail.tabBar;
+        if (!tabBar || motionSuppressed || pageTransition === "none") {
+          scrollToPendingActionAnchor();
+          return;
+        }
+        const tabBarTop = tabBar.getBoundingClientRect().top;
+        const tabBarMargin =
+          Number.parseFloat(window.getComputedStyle(tabBar).scrollMarginTop) || 0;
+        // 탭 막대가 이미 화면 위쪽 절반에 보이면 올라갈 필요가 없다.
+        if (tabBarTop >= tabBarMargin - 1 && tabBarTop <= window.innerHeight / 2) {
+          scrollToPendingActionAnchor();
+          return;
+        }
+        const currentTop = document.scrollingElement?.scrollTop ?? window.scrollY;
+        animateDocumentScroll(
+          currentTop + tabBarTop - tabBarMargin,
+          (frame) => {
+            if (isCurrent()) actionTopScrollFrameRef.current = frame;
+          },
+          () => {
+            if (isCurrent()) scrollToPendingActionAnchor();
+          },
+          "ease-out",
+          isCurrent,
+        );
         return;
       }
 

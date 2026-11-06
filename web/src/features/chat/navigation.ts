@@ -21,6 +21,12 @@ export const CHAT_ACTION_TARGET_ABANDONED_EVENT =
 /** 같은 해시로 다시 이동할 때도 선택·렌더를 도착 전에 준비한다. */
 export const CHAT_ACTION_TARGET_PREPARE_EVENT =
   "portfolio:chat-action-target-prepare";
+/**
+ * 같은 페이지 안 이동에서 앵커가 화면 안 탭을 바꾸는지 묻는다. 바꾼다면 화면이
+ * tabBar에 탭 막대 요소를 채워 답하고, ChatProvider는 그 막대까지 먼저 올라간 뒤 탭을 바꾼다.
+ */
+export const CHAT_ACTION_IN_PAGE_TAB_EVENT =
+  "portfolio:chat-action-in-page-tab";
 /** 이동 연출이 끝난 뒤 채팅 입력창에 다시 초점을 돌려 달라는 신호다. 전달할 값이 없어 일반 Event로 보낸다. */
 export const CHAT_ACTION_RESTORE_CHAT_INPUT_EVENT =
   "portfolio:chat-action-restore-input";
@@ -49,6 +55,12 @@ export interface ChatActionTargetArrivedDetail {
 export interface ChatActionTargetPrepareDetail {
   anchor: string;
   signal?: AbortSignal;
+}
+
+/** 화면이 tabBar를 채우면 그 앵커는 화면 안 탭을 바꾸는 이동이다. */
+export interface ChatActionInPageTabDetail {
+  anchor: string;
+  tabBar: HTMLElement | null;
 }
 
 /** 상세 변경처럼 DOM 커밋을 기다려야 하는 이동만 추가 준비 조건·취소를 전달한다. */
