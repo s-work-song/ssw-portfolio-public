@@ -16,9 +16,10 @@ const PRETENDARD_CSS =
   "https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css";
 /**
  * 글꼴 조각을 기다리느라 본문이 늦게 그려지거나 조각마다 레이아웃을 다시 계산하지 않도록,
- * load 뒤에 필요한 조각을 모두 받아 한 번에 바꾼다. 같은 탭에서는 캐시가 있으니 바로 쓴다.
+ * load 뒤에 필요한 조각을 모두 받아 한 번에 바꾼다. 한 번 받은 브라우저는 캐시가 있으니 새 탭에서도 바로 쓴다.
+ * 기록을 탭 단위로 두면 캐시가 있어도 새 탭마다 대체 글꼴에서 다시 바뀌어 깜빡인다.
  */
-const PRETENDARD_LOADER = `(function(){var r=document.documentElement,k="pretendard-ready";function g(){var l=document.createElement("link");l.rel="stylesheet";l.href=${JSON.stringify(PRETENDARD_CSS)};return l}function s(){try{return sessionStorage.getItem(k)}catch(e){}}function d(){r.dataset.fonts="ready";try{sessionStorage.setItem(k,"1")}catch(e){}}if(s()){r.dataset.fonts="ready";document.head.appendChild(g());return}function a(){var l=g();l.onload=function(){document.fonts.load("400 1em 'Pretendard Variable'",document.body.innerText).then(d,d)};document.head.appendChild(l)}document.readyState==="complete"?a():window.addEventListener("load",a,{once:true})})()`;
+const PRETENDARD_LOADER = `(function(){var r=document.documentElement,k="pretendard-ready";function g(){var l=document.createElement("link");l.rel="stylesheet";l.href=${JSON.stringify(PRETENDARD_CSS)};return l}function s(){try{return localStorage.getItem(k)}catch(e){}}function d(){r.dataset.fonts="ready";try{localStorage.setItem(k,"1")}catch(e){}}if(s()){r.dataset.fonts="ready";document.head.appendChild(g());return}function a(){var l=g();l.onload=function(){document.fonts.load("400 1em 'Pretendard Variable'",document.body.innerText).then(d,d)};document.head.appendChild(l)}document.readyState==="complete"?a():window.addEventListener("load",a,{once:true})})()`;
 
 /**
  * 링크 미리보기 이미지는 같은 폴더의 opengraph-image.png 파일 규칙으로 붙는다.
