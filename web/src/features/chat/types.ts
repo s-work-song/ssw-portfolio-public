@@ -107,6 +107,8 @@ export type ActionId =
   | "agent_experiments_videos"
   | "agent_experiments_comfyui"
   | "agent_experiments_apps"
+  | "agent_experiments_rigging"
+  | "agent_experiments_potemkin"
   | "past_work_archive"
   | "open_weight_experiments"
   | "optimization_preview"

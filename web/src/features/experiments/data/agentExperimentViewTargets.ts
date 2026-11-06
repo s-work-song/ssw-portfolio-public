@@ -14,8 +14,8 @@ export const PUBLIC_AGENT_EXPERIMENT_TARGETS = [
   { id: 'flight-simulator-experiment', title: '비행 시뮬레이터', category: '3D 게임 실험' },
   { id: 'siege-warfare', title: '공성전 (Siege Warfare)', category: '3D 게임 실험' },
   { id: 'noeul-circuit', title: '노을서킷 · 3D 레이싱 게임', category: '3D 게임 실험' },
-  { id: 'hand-joint-rigging', title: '손 관절 리깅 실험', category: '3D 게임 실험' },
-  { id: 'first-person-hand-sword', title: '1인칭 손·검 훈련장', category: '3D 게임 실험' },
+  { id: 'hand-joint-rigging', title: '손 관절 리깅 실험', category: '리깅' },
+  { id: 'first-person-hand-sword', title: '손·검 잡기 실험', category: '리깅' },
   { id: 'frostpass-fantasy-rpg', title: '서리고개 · 1인칭 판타지 RPG', category: '3D 게임 실험' },
   { id: 'modern-warfare-sample', title: '현대전 샘플', category: '3D 게임 실험' },
   { id: 'limen-portal', title: '포탈 실험', category: '3D 게임 실험' },
@@ -31,14 +31,18 @@ export const PUBLIC_AGENT_EXPERIMENT_TARGETS = [
   { id: 'motion-atlas', title: '모션 도감', category: '영상물' },
   { id: 'comfyui-qwen-wan', title: 'ComfyUI 이미지 → 5초 영상', category: 'ComfyUI 활용' },
   { id: 'comfyui-gpt-image2-wan', title: '행성 탐사 이미지 → 5초 영상', category: 'ComfyUI 활용' },
-  { id: 'project-code-archive', title: '코드 아카이브', category: '앱·도구 실험' },
-  { id: 'project-receipt-ocr', title: 'SSW 영수증 OCR', category: '앱·도구 실험' },
   { id: 'project-sprite-toolkit', title: 'SSW Sprite Toolkit', category: '앱·도구 실험' },
+  { id: 'project-code-archive', title: '코드 아카이브', category: '앱·도구 실험' },
+  { id: 'project-receipt-ocr', title: '영수증 OCR', category: '앱·도구 실험' },
+  { id: 'potemkin-automation', title: '업무 완전 자동화 플랫폼', category: '포템킨 빌리지' },
 ] as const;
 
 const ITEM_ACTIONS = PUBLIC_AGENT_EXPERIMENT_TARGETS.map(({ id }) => `agent-experiment-${id}` as const);
+// 공개 작품이 아직 없는 분류는 탭이 없으므로 이동 대상에서도 뺀다.
+const PUBLIC_CATEGORY_ANCHORS = Object.entries(AGENT_EXPERIMENT_CATEGORY_ANCHORS)
+  .filter(([category]) => PUBLIC_AGENT_EXPERIMENT_TARGETS.some((item) => item.category === category));
 export const AGENT_EXPERIMENT_VIEW_ACTIONS = [
-  'agent-experiments', ...Object.values(AGENT_EXPERIMENT_CATEGORY_ANCHORS), ...ITEM_ACTIONS,
+  'agent-experiments', ...PUBLIC_CATEGORY_ANCHORS.map(([, anchor]) => anchor), ...ITEM_ACTIONS,
 ] as const;
 export type AgentExperimentViewAction = (typeof AGENT_EXPERIMENT_VIEW_ACTIONS)[number];
 export type PublicAgentExperimentTarget = (typeof PUBLIC_AGENT_EXPERIMENT_TARGETS)[number];
@@ -57,7 +61,7 @@ export interface AgentExperimentViewTarget {
 export const AGENT_EXPERIMENT_VIEW_TARGETS: readonly AgentExperimentViewTarget[] = [
   { action: 'agent-experiments', anchor: AGENT_EXPERIMENT_INTRO_ANCHOR,
     route: `/about-me#${AGENT_EXPERIMENT_INTRO_ANCHOR}`, label: 'SI 활용 실험 소개', kind: 'intro' },
-  ...Object.entries(AGENT_EXPERIMENT_CATEGORY_ANCHORS).map(([category, anchor]) => ({
+  ...PUBLIC_CATEGORY_ANCHORS.map(([category, anchor]) => ({
     action: anchor, anchor, route: `/about-me#${anchor}`, label: category, kind: 'category' as const,
     category: category as AgentExperimentCategory,
     itemId: PUBLIC_AGENT_EXPERIMENT_TARGETS.find((item) => item.category === category)!.id,

@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useLayoutEffect, useRef, useState, type KeyboardEvent, type ReactNode } from 'react';
-import { agentExperiments, type AgentExperiment } from '@/features/experiments/data/agentExperiments';
+import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type KeyboardEvent, type ReactNode } from 'react';
+import { agentExperimentDrafts, agentExperiments, type AgentExperiment } from '@/features/experiments/data/agentExperiments';
 import {
   AGENT_EXPERIMENT_CATEGORY_ANCHORS, AGENT_EXPERIMENT_CATEGORY_TAB_LABELS, AGENT_EXPERIMENT_GROUPS, AGENT_EXPERIMENT_INTRO_ANCHOR,
   agentExperimentForAnchor,
@@ -13,14 +13,19 @@ import { creditsWithoutTitleRepeat, imageWithoutRepeatedCaption, mergeModelCredi
 import { audioPreviewSource, formatAudioPreviewDuration, groupAudioPreviews, pauseAndResetAudioPreview } from '../audio/experimentAudioPreview';
 import styles from './AgentExperimentGallery.module.css';
 
-// 탭, 슬라이드, 직접 링크 모두 동일한 노출 목록을 사용한다.
-const visibleExperiments = agentExperiments.filter((item) => !item.hidden);
+// 탭, 슬라이드, 직접 링크 모두 동일한 노출 목록을 사용한다. 초안은 로컬 개발 서버에서만 섞는다.
+const visibleExperiments = [
+  ...agentExperiments,
+  ...(process.env.NODE_ENV === 'development' ? agentExperimentDrafts : []),
+].filter((item) => !item.hidden);
 const visibleCategories = new Set(visibleExperiments.map((item) => item.category));
 // 공개 작품이 없는 분류·대분류는 탭을 만들지 않는다.
 const groups = AGENT_EXPERIMENT_GROUPS
   .map((group) => ({ ...group, categories: group.categories.filter((value) => visibleCategories.has(value)) }))
   .filter((group) => group.categories.length > 0);
 type Category = AgentExperiment['category'];
+// 처음 화면은 첫 대분류의 첫 작품을 보여 준다.
+const initialExperiment = visibleExperiments.find((item) => item.category === groups[0]?.categories[0]) ?? visibleExperiments[0];
 const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? '';
 
 function CapturePlaceholder({ label, kind = 'capture' }: { label: string; kind?: 'capture' | 'image' | 'video' | 'svg-animation' }) {
@@ -279,10 +284,15 @@ function ExperimentImageBlock({ title, mediaTitle, images, credits }: {
   );
 }
 
+/** 대분류 설명의 `**구절**`만 굵게 바꾼다. 그 밖의 표기는 글자 그대로 둔다. */
+function withEmphasis(text: string) {
+  return text.split(/\*\*(.+?)\*\*/u).map((part, index) => (index % 2 ? <strong key={index}>{part}</strong> : part));
+}
+
 /** 자동 재생 없이 실험을 탐색하고, 모델 비교는 같은 화면에서 확인하는 갤러리다. */
 export default function AgentExperimentGallery() {
-  const [category, setCategory] = useState<Category>(visibleExperiments[0]?.category ?? 'SVG 제작');
-  const [selectedId, setSelectedId] = useState(visibleExperiments[0]?.id ?? '');
+  const [category, setCategory] = useState<Category>(initialExperiment?.category ?? 'SVG 제작');
+  const [selectedId, setSelectedId] = useState(initialExperiment?.id ?? '');
   const [selectedModel, setSelectedModel] = useState(0);
   const [filterIndicator, setFilterIndicator] = useState<{ x: number; y: number; width: number; height: number } | null>(null);
   const filterListRef = useRef<HTMLDivElement | null>(null);
@@ -393,7 +403,8 @@ export default function AgentExperimentGallery() {
       </header>
 
       <div className={styles.toolbar}>
-        <div ref={filterListRef} className={styles.filters} role="group" aria-label="실험 분류">
+        <div ref={filterListRef} className={styles.filters} role="group" aria-label="실험 분류"
+          style={{ '--filter-count': groups.length } as CSSProperties}>
           {filterIndicator && <span className={styles.filterIndicator} aria-hidden="true" style={{
             width: filterIndicator.width,
             height: filterIndicator.height,
@@ -417,6 +428,26 @@ export default function AgentExperimentGallery() {
             ))}
           </div>
         )}
+        {activeGroup.description?.length ? (
+          <div className={`${styles.groupNote} ${activeGroup.notice ? styles.groupNoteStacked : ''}`}>
+            <div className={styles.groupNoteText}>
+              {activeGroup.description.map((paragraph) => <p key={paragraph}>{withEmphasis(paragraph)}</p>)}
+              {activeGroup.notice && (
+                <aside className={styles.groupNotice} aria-label={activeGroup.notice.title}>
+                  <strong>{activeGroup.notice.title}</strong>
+                  {activeGroup.notice.paragraphs.map((paragraph) => <p key={paragraph}>{paragraph}</p>)}
+                </aside>
+              )}
+              {activeGroup.footnote && <small className={styles.groupNoteFootnote}>{activeGroup.footnote}</small>}
+            </div>
+            {activeGroup.relatedLog && (
+              <LogReadingLink slug={activeGroup.relatedLog.slug} className={`${styles.introNoteLink} hover-btn-secondary`}>
+                <span>{activeGroup.relatedLog.label}</span>
+                <span aria-hidden="true">→</span>
+              </LogReadingLink>
+            )}
+          </div>
+        ) : null}
       </div>
 
       <div className={styles.experimentNavigation}>
@@ -553,7 +584,7 @@ export default function AgentExperimentGallery() {
               ) : active.images?.length ? (
                 <ExperimentImageBlock
                   title={active.title}
-                  mediaTitle={active.category === 'Blender 3D 에셋 제작' ? '3D 모델링 결과' : active.category === 'SVG 제작' ? 'SVG 제작 결과' : active.category === 'WebGL' ? 'WebGL 실행 화면' : active.category === '앱·도구 실험' ? '실행 화면' : '게임 플레이 캡처'}
+                  mediaTitle={active.category === 'Blender 3D 에셋 제작' ? '3D 모델링 결과' : active.category === 'SVG 제작' ? 'SVG 제작 결과' : active.category === 'WebGL' ? 'WebGL 실행 화면' : active.category === '앱·도구 실험' || active.category === '리깅' || active.category === '포템킨 빌리지' ? '실행 화면' : '게임 플레이 캡처'}
                   images={active.images}
                   credits={active.modelCredits?.filter((credit) => !active.audio || credit.purpose !== '배경음악')}
                 />
@@ -575,6 +606,12 @@ export default function AgentExperimentGallery() {
                   <span className={styles.promptLabel}>공통 프롬프트</span>
                   <p>{active.prompt}</p>
                 </blockquote>
+              )}
+              {active.parody && (
+                <dl className={styles.parody} aria-label="겉과 속">
+                  <div><dt>겉으로 보이는 것</dt><dd>{active.parody.surface}</dd></div>
+                  <div><dt>실제로 되는 것</dt><dd>{active.parody.reality}</dd></div>
+                </dl>
               )}
               <ul className={styles.tags}>{active.focus.map((focus) => <li key={focus}>{focus}</li>)}</ul>
             </div>

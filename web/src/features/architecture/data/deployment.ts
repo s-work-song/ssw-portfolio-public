@@ -42,7 +42,7 @@ export const portfolioLinkedExperiments = [
       { id: 'flight-simulator-experiment', label: '비행 시뮬레이터' },
       { id: 'siege-warfare', label: '공성전' },
       { id: 'hand-joint-rigging', label: '손 관절 리깅' },
-      { id: 'first-person-hand-sword', label: '1인칭 손·검 훈련장' },
+      { id: 'first-person-hand-sword', label: '손·검 잡기 실험' },
     ],
   },
   {

@@ -44,7 +44,11 @@ test('2D·3D 게임 분류는 실험으로 표시하고 기존 직접 링크를 
 
 test('설명 박스와 대분류 탭의 앵커를 분리하고 일곱 분류의 첫 공개 작품만 선택한다', async () => {
   assert.equal(AGENT_EXPERIMENT_INTRO_ANCHOR, 'agent-experiments-intro');
-  assert.deepEqual(Object.keys(AGENT_EXPERIMENT_CATEGORY_ANCHORS), [...new Set(visible.map((item) => item.category))]);
+  // 공개 작품이 아직 없는 분류도 앵커는 미리 둘 수 있지만, 공개 분류는 모두 앵커가 있어야 한다.
+  assert.deepEqual(
+    Object.keys(AGENT_EXPERIMENT_CATEGORY_ANCHORS).filter((category) => visible.some((item) => item.category === category)),
+    [...new Set(visible.map((item) => item.category))],
+  );
   for (const [category, anchor] of Object.entries(AGENT_EXPERIMENT_CATEGORY_ANCHORS)) {
     assert.equal(agentExperimentForAnchor(agentExperiments, anchor), visible.find((item) => item.category === category));
     assert.ok(!agentExperiments.some((item) => item.id === anchor));
@@ -73,7 +77,8 @@ test('실험 선택 목록은 가로 스크롤 없이 줄바꿈하고 키보드 
   const css = await readFile(new URL('../../../../src/features/experiments/ui/AgentExperimentGallery.module.css', import.meta.url), 'utf8');
   const filmstrip = css.match(/\.filmstrip\s*\{([^}]+)\}/)?.[1];
   assert.ok(filmstrip);
-  assert.match(filmstrip, /flex-wrap:\s*wrap/);
+  // 같은 폭 칸으로 줄바꿈한다(auto-fill 격자).
+  assert.match(filmstrip, /grid-template-columns:\s*repeat\(auto-fill,/);
   assert.doesNotMatch(filmstrip, /overflow-x:\s*(?:auto|scroll)/);
   const component = await readFile(new URL('../../../../src/features/experiments/ui/AgentExperimentGallery.tsx', import.meta.url), 'utf8');
   assert.doesNotMatch(component, /scrollLeft/);

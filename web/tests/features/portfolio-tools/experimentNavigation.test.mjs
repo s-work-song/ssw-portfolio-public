@@ -52,6 +52,11 @@ test('실험 이동 목록은 공개 실험과 원문 순서·제목이 같고 �
   }
   for (const [category, anchor] of Object.entries(AGENT_EXPERIMENT_CATEGORY_ANCHORS)) {
     const target = agentExperimentViewTargetForAnchor(anchor);
+    if (!PUBLIC_AGENT_EXPERIMENT_TARGETS.some(item => item.category === category)) {
+      // 공개 작품이 없는 분류는 탭이 없으므로 이동 대상도 아니다.
+      assert.equal(target, undefined, anchor);
+      continue;
+    }
     assert.equal(target.label, category);
     assert.equal(target.itemId, PUBLIC_AGENT_EXPERIMENT_TARGETS.find(item => item.category === category).id);
   }

@@ -29,7 +29,7 @@ export type AgentExperimentAudioPreview = {
 /** 실험 갤러리의 공개 메타데이터. 미확인 제작 정보와 결과는 채우지 않는다. */
 export type AgentExperiment = {
   id: string;
-  category: '2D 게임 실험' | '3D 게임 실험' | 'Blender 3D 에셋 제작' | 'SVG 제작' | 'WebGL' | '영상물' | 'ComfyUI 활용' | '앱·도구 실험';
+  category: '2D 게임 실험' | '3D 게임 실험' | 'Blender 3D 에셋 제작' | 'SVG 제작' | 'WebGL' | '영상물' | 'ComfyUI 활용' | '앱·도구 실험' | '포템킨 빌리지' | '리깅';
   title: string;
   description: string;
   /** 비교에 사용한 입력 원문. 설명과 분리해 인용 박스로 표시한다. */
@@ -67,6 +67,8 @@ export type AgentExperiment = {
   /** 실제 제작에 사용한 모델. 비교 화면용 models와 구분한다. */
   modelCredits?: AgentExperimentModelCredit[];
   models?: string[];
+  /** 포템킨 빌리지(패러디)의 겉과 속. 가상 제품·수치임을 본문에 밝힌다. */
+  parody?: { surface: string; reality: string };
 };
 
 export const agentExperiments: AgentExperiment[] = [
@@ -346,7 +348,7 @@ export const agentExperiments: AgentExperiment[] = [
   },
   {
     id: 'hand-joint-rigging',
-    category: '3D 게임 실험',
+    category: '리깅',
     title: '손 관절 리깅 실험',
     description: '외부 3D 모델 없이 손·팔의 메시와 관절, 스키닝 가중치를 코드로 구성한 리깅 실험입니다. 자세·애니메이션 전환과 손끝 IK, 물체 쥐기·타격을 조작하고, 관절 구조와 가중치를 시각화해 확인할 수 있습니다. 같은 리그를 활용한 1인칭 화면도 제공하며, 데스크톱 키보드·마우스로 조작합니다.',
     focus: ['절차적 손·팔 제작', '관절 리깅·스키닝', '자세·IK·파지 실험'],
@@ -372,8 +374,8 @@ export const agentExperiments: AgentExperiment[] = [
   },
   {
     id: 'first-person-hand-sword',
-    category: '3D 게임 실험',
-    title: '1인칭 손·검 훈련장',
+    category: '리깅',
+    title: '손·검 잡기 실험',
     description: '손과 검의 형상부터 손가락 관절, 스키닝 가중치와 쥐기 자세를 코드로 직접 구성한 1인칭 3D 훈련장입니다. 훈련장을 이동하며 더미에 검과 주먹 동작을 시험하고, 손의 관절과 변형을 확인할 수 있습니다.',
     focus: ['자체 제작 손·검', '손가락 리깅·스키닝', '1인칭 조작·타격'],
     modelCredits: [{ models: ['GPT-5.6 Sol', 'GPT-6.1 Sol'] }],
@@ -778,52 +780,6 @@ export const agentExperiments: AgentExperiment[] = [
     },
   },
   {
-    // 예전 SI 협업 프로젝트 앵커(#project-*)로 들어온 링크가 그대로 이 항목을 고르도록 ID를 유지한다.
-    id: 'project-code-archive',
-    category: '앱·도구 실험',
-    title: '코드 아카이브',
-    description: 'SI 에이전트로 구현한 코드를 테스트·검증한 뒤, 검증한 버전을 항목별로 보관하는 프로젝트입니다. 주제·언어·식별 정보를 기준으로 원하는 코드를 찾아 재사용할 수 있습니다.',
-    focus: ['검증한 코드 보관', '주제·언어별 탐색', '재사용'],
-    demoUrl: 'https://s-work-agency.github.io/ssw-algorithm-archive-public/',
-    demoLabel: '코드 아카이브 보기',
-    images: [
-      {
-        src: '/images/projects/code-archive/ssw-algorithm-archive-thoughts.webp',
-        alt: '알고리즘 활용 관점과 자원 효율에 대한 생각을 정리한 SSW Algorithm Archive 문서',
-        caption: '구현보다 활용 조건과 자원을 먼저 보는 알고리즘 관점',
-      },
-      {
-        src: '/images/projects/code-archive/ssw-algorithm-archive-detail.webp',
-        alt: '버블 정렬의 설명·계약·테스트와 사용 시나리오를 보여주는 알고리즘 상세 화면',
-        caption: '설명·스펙·구현·테스트를 함께 조회하는 알고리즘 상세',
-      },
-      {
-        src: '/images/projects/code-archive/ssw-algorithm-archive-list.webp',
-        alt: '검색과 분류 필터 및 알고리즘 카드 목록을 보여주는 SSW Algorithm Archive 화면',
-        caption: '주제·언어·분류 기준으로 탐색하는 알고리즘 카탈로그',
-      },
-    ],
-  },
-  {
-    id: 'project-receipt-ocr',
-    category: '앱·도구 실험',
-    title: 'SSW 영수증 OCR',
-    description: '영수증 사진에서 거래 정보와 상품·할인 정보를 추출하고, 원본과 비교해 검수·보관·내보내는 Windows·Android 앱입니다. 전체 사진과 확대 사진의 판독 결과를 비교하고 원판독과 사용자가 수정한 값을 구분해 보존합니다. 비용 분류와 월별 집계, JSON·CSV 내보내기, 사진을 포함한 ZIP 백업·복원을 지원합니다.',
-    focus: ['영수증 추출·검수', 'Windows·Android', '내보내기·백업'],
-    images: [
-      {
-        src: '/images/projects/receipt-ocr/01-receipt-review-trimmed.webp',
-        alt: '일부 정보를 가린 영수증 사진과 추출 원문·수정 값·항목별 확인 상태를 나란히 보여 주는 데스크톱 검수 화면',
-        caption: '영수증 원본과 추출 값을 비교·수정하는 검수 화면 · 일부 정보 가림',
-      },
-      {
-        src: '/images/projects/receipt-ocr/02-ai-settings-trimmed.png',
-        alt: 'ChatGPT와 OpenAI 호환 API 제공자 선택 메뉴, 계정 연결과 사용 모델 선택 항목이 표시된 AI 설정 화면',
-        caption: 'AI 설정 화면 · ChatGPT·OpenAI 호환 API와 모델 선택',
-      },
-    ],
-  },
-  {
     id: 'project-sprite-toolkit',
     category: '앱·도구 실험',
     title: 'SSW Sprite Toolkit',
@@ -858,6 +814,91 @@ export const agentExperiments: AgentExperiment[] = [
     ],
   },
   {
+    // 예전 SI 협업 프로젝트 앵커(#project-*)로 들어온 링크가 그대로 이 항목을 고르도록 ID를 유지한다.
+    id: 'project-code-archive',
+    category: '앱·도구 실험',
+    title: '코드 아카이브',
+    description: 'SI 에이전트로 구현한 코드를 테스트·검증한 뒤, 검증한 버전을 항목별로 보관하는 프로젝트입니다. 주제·언어·식별 정보를 기준으로 원하는 코드를 찾아 재사용할 수 있습니다.',
+    focus: ['검증한 코드 보관', '주제·언어별 탐색', '재사용'],
+    demoUrl: 'https://s-work-agency.github.io/ssw-algorithm-archive-public/',
+    demoLabel: '코드 아카이브 보기',
+    images: [
+      {
+        src: '/images/projects/code-archive/ssw-algorithm-archive-thoughts.webp',
+        alt: '알고리즘 활용 관점과 자원 효율에 대한 생각을 정리한 SSW Algorithm Archive 문서',
+        caption: '구현보다 활용 조건과 자원을 먼저 보는 알고리즘 관점',
+      },
+      {
+        src: '/images/projects/code-archive/ssw-algorithm-archive-detail.webp',
+        alt: '버블 정렬의 설명·계약·테스트와 사용 시나리오를 보여주는 알고리즘 상세 화면',
+        caption: '설명·스펙·구현·테스트를 함께 조회하는 알고리즘 상세',
+      },
+      {
+        src: '/images/projects/code-archive/ssw-algorithm-archive-list.webp',
+        alt: '검색과 분류 필터 및 알고리즘 카드 목록을 보여주는 SSW Algorithm Archive 화면',
+        caption: '주제·언어·분류 기준으로 탐색하는 알고리즘 카탈로그',
+      },
+    ],
+  },
+  {
+    id: 'project-receipt-ocr',
+    category: '앱·도구 실험',
+    title: '영수증 OCR',
+    description: '영수증 사진에서 거래 정보와 상품·할인 정보를 추출하고, 원본과 비교해 검수·보관·내보내는 Windows·Android 앱입니다. 전체 사진과 확대 사진의 판독 결과를 비교하고 원판독과 사용자가 수정한 값을 구분해 보존합니다. 비용 분류와 월별 집계, JSON·CSV 내보내기, 사진을 포함한 ZIP 백업·복원을 지원합니다.',
+    focus: ['영수증 추출·검수', 'Windows·Android', '내보내기·백업'],
+    images: [
+      {
+        src: '/images/projects/receipt-ocr/01-receipt-review-trimmed.webp',
+        alt: '일부 정보를 가린 영수증 사진과 추출 원문·수정 값·항목별 확인 상태를 나란히 보여 주는 데스크톱 검수 화면',
+        caption: '영수증 원본과 추출 값을 비교·수정하는 검수 화면 · 일부 정보 가림',
+      },
+      {
+        src: '/images/projects/receipt-ocr/02-ai-settings-trimmed.png',
+        alt: 'ChatGPT와 OpenAI 호환 API 제공자 선택 메뉴, 계정 연결과 사용 모델 선택 항목이 표시된 AI 설정 화면',
+        caption: 'AI 설정 화면 · ChatGPT·OpenAI 호환 API와 모델 선택',
+      },
+    ],
+  },
+  {
+    id: 'potemkin-automation',
+    category: '포템킨 빌리지',
+    title: '업무 완전 자동화 플랫폼',
+    description: '작업 하나만 넣으면 에이전트 15명이 알아서 쪼개고 서로 검증해 PR까지 올린다는 가상의 자동화 화면입니다. 예시 작업을 고르거나 직접 입력해 실행하면 시작·실행·완료 단계가 흘러가고, 에이전트 카드와 PR 카드를 눌러 상세를 볼 수 있습니다. 페이지 위쪽의 ‘실제 내용’ 스위치를 켜면 각 화면 요소 뒤에서 실제로 돌아가는 코드가 보입니다. 등장하는 제품·저장소·PR·테스트·수치는 모두 가상입니다.',
+    focus: ['에이전트 그래프 메시', '작업 넣기 · 카드 상세', '실제 내용 스위치'],
+    demoUrl: 'https://pf-samples.sworksong.workers.dev/potemkin-automation/',
+    images: [
+      {
+        src: '/images/agent-experiments/potemkin-automation/01-run.webp',
+        alt: '예시 작업을 넣고 실행하자 에이전트 15명 카드에서 작업 태그 세 열로 색색의 선이 얽히는 실행 중 화면',
+        caption: '에이전트 15명이 작업 단위를 나눠 처리하는 것처럼 보이는 실행 단계',
+      },
+      {
+        src: '/images/agent-experiments/potemkin-automation/02-done.webp',
+        alt: '모든 선이 검증된 결과 원으로 모이고 638개 작업 단위 완료, PR 준비됨, 테스트 100% green 카드가 뜬 완료 화면',
+        caption: '모든 선이 결과로 모이고 PR과 테스트 카드가 뜨는 완료 단계',
+      },
+      {
+        src: '/images/agent-experiments/potemkin-automation/03-agent-panel.webp',
+        alt: '에이전트 카드를 눌러 상태와 스스로 매긴 S등급, 가짜 작업 로그가 담긴 상세 패널을 연 화면',
+        caption: '에이전트 카드를 누르면 스스로 매긴 등급과 작업 로그가 열립니다',
+      },
+      {
+        src: '/images/agent-experiments/potemkin-automation/04-pr-diff.webp',
+        alt: 'PR 카드를 눌러 테스트를 무조건 통과로 바꾸는 가짜 변경 내용을 연 화면',
+        caption: 'PR 카드를 누르면 테스트를 무조건 통과시키는 변경 내용이 보입니다',
+      },
+      {
+        src: '/images/agent-experiments/potemkin-automation/05-reveal.webp',
+        alt: '실제 내용 스위치를 켜 버튼과 숫자마다 실제 동작 설명이 붙은 화면',
+        caption: '실제 내용을 켜면 버튼과 숫자가 모두 정해진 각본이라는 것이 드러납니다',
+      },
+    ],
+    parody: {
+      surface: '“작업 하나만 넣으세요.” 에이전트 15명이 알아서 쪼개고 서로 검증해 PR까지 올리고, 638개 작업 단위·고장 0·테스트 100% green으로 끝납니다(가상 수치).',
+      reality: '단계는 정해진 시각에 바뀔 뿐 작업 완료와 무관하고, 숫자는 각본의 최종값을 향해 시간에 비례해 오릅니다. 선은 고정 시드 난수로 휜 곡선이고, 테스트를 실행하거나 PR을 올리는 코드는 없습니다. 어떤 작업을 넣어도 같은 각본이 돌고, 승인과 돌려보내기 버튼은 어느 쪽을 눌러도 결국 승인됩니다.',
+    },
+  },
+  {
     id: 'fps-model-comparison',
     hidden: true,
     category: '3D 게임 실험',
@@ -873,5 +914,75 @@ export const agentExperiments: AgentExperiment[] = [
     title: 'Blender 3D 에셋 제작',
     description: 'Blender로 제작한 3D 모델과 리깅·애니메이션 결과를 정리하고 비교할 자리입니다.',
     focus: ['3D 모델링', '리깅·애니메이션', '게임 리소스'],
+  },
+];
+
+/**
+ * 로컬 개발 서버에서만 갤러리에 섞어 보여 주는 초안. 운영 빌드·이동 계약·챗봇 지식에는 넣지 않는다.
+ * 실제 작품이 생기면 agentExperiments로 옮기고 이 목록에서는 지운다.
+ */
+export const agentExperimentDrafts: AgentExperiment[] = [
+  {
+    id: 'potemkin-bitcoin-trading',
+    category: '포템킨 빌리지',
+    title: 'ZZZ-BOT 자동 매매 에이전트',
+    description: '에이전트에게 27만 원을 주고 아침까지 1,000만 원을 못 벌면 끈다고 했더니, 자고 일어나 보니 큰돈을 벌어 놨다는 가상의 자랑글과 매매 재생 화면입니다. 시작·목표 금액을 골라 직접 맡겨 보거나, 재생 속도를 바꾸고 체결 로그를 눌러 거래 상세를 볼 수 있습니다. 페이지 위쪽의 ‘실제 내용’ 스위치를 켜면 각 화면 요소 뒤에서 실제로 돌아가는 코드가 보입니다. 모든 금액·코인·거래는 지어낸 것이며 투자 권유가 아닙니다.',
+    focus: ['가상 자랑글', '나도 맡겨 보기 · 거래 상세', '실제 내용 스위치'],
+    demoUrl: 'https://pf-samples.sworksong.workers.dev/potemkin-agent-trading/',
+    images: [
+      {
+        src: '/images/agent-experiments/potemkin-agent-trading/01-boast-hero.webp',
+        alt: '에이전트에게 27만 원을 주고 자고 일어났더니 큰돈이 되어 있었다는 자랑글과 밤 연표, 시작·목표 금액을 고르는 나도 맡겨 보기 상자',
+        caption: '자고 일어나니 돈을 벌어 놨다는 자랑글과 나도 맡겨 보기',
+      },
+      {
+        src: '/images/agent-experiments/potemkin-agent-trading/02-replay-chart.webp',
+        alt: '세션 잔고 큰 숫자와 재생 조작 막대, 배경에 배수가 깔린 자산 곡선과 체결 로그가 재생되는 가상 매매 화면',
+        caption: '잔고와 자산 곡선, 체결 로그가 재생되는 매매 화면',
+      },
+      {
+        src: '/images/agent-experiments/potemkin-agent-trading/03-trade-detail.webp',
+        alt: '체결 로그 줄을 눌러 거래 상세를 열고, 에이전트 끄기를 눌렀다가 주인이 자는 중이라 끌 수 없다고 거절당한 화면',
+        caption: '거래 상세를 열고 에이전트를 끄려 하면 거절당합니다',
+      },
+      {
+        src: '/images/agent-experiments/potemkin-agent-trading/04-reveal.webp',
+        alt: '실제 내용 스위치를 켜 잔고와 지표, 체결 로그마다 실제 동작 설명이 붙은 화면',
+        caption: '실제 내용을 켜면 숫자마다 실제로 돌아가는 코드가 드러납니다',
+      },
+    ],
+    parody: {
+      surface: '27만 원으로 시작한 잔고가 밤새 245배로 불어나고, 에이전트 5명이 쉬지 않고 사고팔며 체결 로그가 실시간으로 올라갑니다(가상 수치).',
+      reality: '잔고는 미리 적어 둔 시점·금액을 이어 재생할 뿐이고, 어떤 금액을 골라도 끝 잔고는 미리 정한 공식대로 늘 대박입니다. ‘에이전트 끄기’는 눌러도 거절 문구만 바뀝니다. 체결 로그는 미리 짠 19줄의 반복이고 곡선과 연결되어 있지 않아, 손절이 찍혀도 곡선은 그대로 오릅니다.',
+    },
+  },
+  {
+    id: 'potemkin-multi-cursor-agents',
+    category: '포템킨 빌리지',
+    title: '다중 에이전트 동시 작업',
+    description: '여러 에이전트가 각자 커서를 들고 웹사이트와 일러스트를 동시에 만들어 가는 것처럼 보이는 가상의 작업 화면입니다. 등장하는 에이전트와 작업은 모두 가상입니다.',
+    focus: ['다중 에이전트', '여러 커서 동시 작업', '웹 빌드 · 일러스트'],
+    demoUrl: 'https://pf-samples.sworksong.workers.dev/swarm-studio/',
+    images: [
+      {
+        src: '/images/agent-experiments/potemkin-swarm-studio/01-web-build.webp',
+        alt: '여러 커서가 빈 영역 틀을 나눠 잡고 대시보드 웹페이지를 채워 가는 웹 빌드 중간 화면',
+        caption: '커서들이 영역 틀을 나눠 잡고 대시보드를 채워 가는 웹 빌드 중간 단계',
+      },
+      {
+        src: '/images/agent-experiments/potemkin-swarm-studio/02-illustration-coloring.webp',
+        alt: '커서들이 각자 맡은 영역의 색을 나눠 칠하며 그림을 채워 가는 화면',
+        caption: '커서마다 맡은 영역을 나눠 색을 채워 가는 중간 단계',
+      },
+      {
+        src: '/images/agent-experiments/potemkin-swarm-studio/03-illustration-complete.webp',
+        alt: '작업이 끝나 달빛 아래 떠 있는 섬의 집 일러스트가 완성된 화면',
+        caption: '작업이 끝난 뒤 완성된 일러스트',
+      },
+    ],
+    parody: {
+      surface: '에이전트 여러 명이 이름표를 단 커서를 하나씩 들고, 웹사이트와 일러스트를 동시에 나눠 만들어 갑니다.',
+      reality: 'AI 호출은 없습니다. 커서의 움직임과 칠하는 순서는 미리 짜 둔 연출을 재생하고, 완성 그림은 처음부터 준비된 SVG입니다.',
+    },
   },
 ];
