@@ -7,9 +7,9 @@ import { aboutTabPathFromPath } from '../../../../src/features/chat/navigation.t
 import { workflowStageFromHash, workflowStageIndexFromHash, workflowStageIndexForKey } from '../../../../src/features/ai-workflow/navigation/workflowStageNavigation.ts';
 import { scrollToWorkflowStageNav } from '../../../../src/features/ai-workflow/navigation/workflowStageScroll.ts';
 
-test('SI 활용 다섯 단계는 고유 앵커와 역할 설명을 갖는다', () => {
-  assert.deepEqual(aiWorkflowStages.map(({ id }) => id), ['chat', 'read-only', 'implementation', 'tools', 'orchestration']);
-  assert.deepEqual(aiWorkflowStages.map(({ number }) => number), ['01', '02', '03', '04', '05']);
+test('SI 활용 여섯 단계는 고유 앵커와 역할 설명을 갖는다', () => {
+  assert.deepEqual(aiWorkflowStages.map(({ id }) => id), ['chat', 'read-only', 'implementation', 'tools', 'orchestration', 'multi-model']);
+  assert.deepEqual(aiWorkflowStages.map(({ number }) => number), ['01', '02', '03', '04', '05', '06']);
   for (const stage of aiWorkflowStages) {
     for (const key of ['shortTitle', 'navDescription', 'title', 'description', 'aiRole', 'humanRole', 'change', 'captureNote']) {
       assert.ok(typeof stage[key] === 'string' && stage[key].trim(), `${stage.id}.${key}`);
@@ -242,10 +242,11 @@ test('단계 탭은 기존 직접 링크·챗봇 헤더·사례 앵커를 올바
   for (const hash of ['', '#ai-workflow-intro', '#workflow-tools-extra', '#workflow-header-unknown', '#%']) {
     assert.equal(workflowStageFromHash(hash), 'chat');
   }
-  assert.equal(workflowStageIndexForKey('ArrowRight', 4), 0);
-  assert.equal(workflowStageIndexForKey('ArrowLeft', 0), 4);
+  const last = aiWorkflowStages.length - 1;
+  assert.equal(workflowStageIndexForKey('ArrowRight', last), 0);
+  assert.equal(workflowStageIndexForKey('ArrowLeft', 0), last);
   assert.equal(workflowStageIndexForKey('Home', 3), 0);
-  assert.equal(workflowStageIndexForKey('End', 1), 4);
+  assert.equal(workflowStageIndexForKey('End', 1), last);
   for (const key of ['Tab', 'Enter', ' ', 'ArrowDown']) assert.equal(workflowStageIndexForKey(key, 1), null);
 });
 
@@ -473,12 +474,12 @@ test('SI 학습 활용 예시의 관련 링크는 채팅 이동 경로에 있는
   }
 });
 
-test('둘러보기는 SI 05단계 다음에 학습 섹션을 들른 뒤 개발·배포 환경을 거쳐 기록으로 넘어간다', async () => {
+test('둘러보기는 SI 마지막 단계 다음에 학습 섹션을 들른 뒤 개발·배포 환경을 거쳐 기록으로 넘어간다', async () => {
   const { GUIDED_TOUR_STEPS } = await import('../../../../src/features/chat/onboarding/guidedTour.ts');
   const { ACTION_ROUTES, ACTION_IDS } = await import('../../../../src/features/chat/constants.ts');
   const ids = GUIDED_TOUR_STEPS.map(({ id }) => id);
   const index = ids.indexOf('si-learning');
-  assert.equal(ids[index - 1], 'si-level-orchestration');
+  assert.equal(ids[index - 1], 'si-level-multi-model');
   assert.equal(ids[index + 1], 'development-environment');
   assert.equal(ids[ids.indexOf('log') - 1], 'infrastructure-optimization');
   const step = GUIDED_TOUR_STEPS[index];

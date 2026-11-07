@@ -9,8 +9,8 @@ export default function AiWorkflowPreview() {
       <p className={styles.eyebrow}>SI ADOPTION LEVELS</p>
       <h3 id="ai-workflow-preview-title">SI 활용 단계</h3>
       <p className={styles.intro}>
-        채팅으로 답을 얻는 단계부터 구현, 도구 연결, 여러 에이전트의 조율까지.
-        SI 활용 수준을 다섯 단계로 나누어, 개인과 팀·조직의 현재 위치를 살펴봅니다.
+        채팅으로 답을 얻는 단계부터 구현, 도구 연결, 여러 에이전트의 조율과 다중 모델 협업까지.
+        SI 활용 수준을 여섯 단계로 나누어, 개인과 팀·조직의 현재 위치를 살펴봅니다.
       </p>
       <ol className={styles.stages} aria-label="SI 활용 단계 바로 보기">
         {aiWorkflowStages.map((stage) => (

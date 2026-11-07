@@ -14,7 +14,7 @@ import { aiWorkflowStages } from "../../ai-workflow/data/aiWorkflow.ts";
  * 단계 구성을 바꿀 때 이 숫자를 올린다. 아래 두 저장 키에 그대로 섞여 들어가므로,
  * 예전 판에서 저장한 진행 상태가 새 단계 목록에 잘못 적용되는 일 없이 버려진다.
  */
-export const GUIDED_TOUR_VERSION = 13;
+export const GUIDED_TOUR_VERSION = 14;
 /** 투어를 안내한 적이 있는지 기억하는 localStorage 키다. 값은 started·completed·dismissed 중 하나다. */
 export const GUIDED_TOUR_VISIT_KEY = `portfolio-guided-tour:v${GUIDED_TOUR_VERSION}:visit`;
 /** 진행 중인 투어 상태를 탭 단위로 이어 붙이는 sessionStorage 키다. 페이지 이동으로 훅이 다시 마운트돼도 단계가 유지된다. */
@@ -133,6 +133,7 @@ const SI_STAGE_ACTIONS = {
   implementation: "si_level_implementation",
   tools: "si_level_tools",
   orchestration: "si_level_orchestration",
+  "multi-model": "si_level_multi_model",
 } as const satisfies Record<(typeof aiWorkflowStages)[number]["id"], ActionId>;
 
 /**
@@ -195,7 +196,7 @@ export const GUIDED_TOUR_STEPS: readonly GuidedTourStep[] = [
   {
     id: "si-levels-preview",
     title: "SI 활용 단계 미리보기",
-    message: "SI 활용 수준을 다섯 단계로 나눈 페이지의 입구입니다. 단계별 내용은 둘러보기 끝부분에서 차례로 살펴봅니다.",
+    message: "SI 활용 수준을 여섯 단계로 나눈 페이지의 입구입니다. 단계별 내용은 둘러보기 끝부분에서 차례로 살펴봅니다.",
     actionId: "si_levels_preview",
   },
   {
@@ -417,7 +418,7 @@ export const GUIDED_TOUR_STEPS: readonly GuidedTourStep[] = [
   {
     id: "si-levels",
     title: "SI 활용 단계 소개",
-    message: "채팅부터 여러 에이전트의 협업까지, SI를 활용하는 다섯 단계를 살펴봅니다. 나와 우리 팀·조직은 어느 단계로 작업하는지 생각해 보세요.",
+    message: "채팅부터 여러 모델의 협업까지, SI를 활용하는 여섯 단계를 살펴봅니다. 나와 우리 팀·조직은 어느 단계로 작업하는지 생각해 보세요.",
     actionId: "si_levels",
   },
   ...aiWorkflowStages.map((stage) => ({

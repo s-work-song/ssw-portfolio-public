@@ -146,6 +146,7 @@ export type ActionId =
   | "si_level_implementation"
   | "si_level_tools"
   | "si_level_orchestration"
+  | "si_level_multi_model"
   | "si_learning"
   | "si_tools_ffmpeg"
   | "si_session_messaging"

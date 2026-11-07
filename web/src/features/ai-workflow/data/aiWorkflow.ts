@@ -1,4 +1,4 @@
-/** 개인과 팀·조직의 SI 활용 수준을 다섯 단계로 설명합니다. 도식은 실제 실행 화면이 아닙니다. */
+/** 개인과 팀·조직의 SI 활용 수준을 여섯 단계로 설명합니다. 도식은 실제 실행 화면이 아닙니다. */
 const captureNote = '사람과 SI의 작업 흐름 도식';
 
 export const aiWorkflowStages = [
@@ -63,10 +63,10 @@ export const aiWorkflowStages = [
     ],
   },
   {
-    id: 'orchestration', number: '05', shortTitle: '여러 에이전트 협업 조율',
+    id: 'orchestration', number: '05', shortTitle: '단일 도구 에이전트 조율',
     navDescription: '구현·검수·재작업을 조율하고\n핵심 코드와 흐름을 확인',
-    title: '여러 에이전트의 협업을 조율하고 결과 통합하기',
-    description: '장시간 맥락을 유지하는 조율 세션이 구현 에이전트에 작업을 요청하고 완료 보고를 받습니다. 그다음 별도의 검수 에이전트를 실행해 검수 결과를 보고받고, 완료 기준을 확인한 뒤 결과를 전달하거나 구현 에이전트를 다시 실행합니다.',
+    title: '단일 도구에서 여러 에이전트를 조율하고 결과 통합하기',
+    description: '같은 도구 안에서 장시간 맥락을 유지하는 조율 세션이 구현 에이전트에 작업을 요청하고 완료 보고를 받습니다. 그다음 별도의 검수 에이전트를 실행해 검수 결과를 보고받고, 완료 기준을 확인한 뒤 결과를 전달하거나 구현 에이전트를 다시 실행합니다.',
     aiRole: '조율 세션은 작업 범위·우선순위를 정리하고 구현·검수 에이전트의 실행과 보고를 관리합니다. 구현 에이전트는 작업 후 조율 세션에 완료를 알리고, 조율 세션이 이어서 실행한 검수 에이전트도 결과와 근거를 조율 세션에 보고합니다. 구현에서 검수로 직접 넘기지 않으며, 조율 세션이 보고를 확인해 결과 전달 또는 재구현·재검수를 결정합니다.',
     humanRole: '목표와 완료 기준을 정하고 최종 판단을 맡습니다. 저는 모든 코드를 전수 검토하지는 않지만, 주요 코드와 추상화 코드는 직접 읽습니다. 핵심 플로우는 도식으로 시각화해 전체 흐름과 연결 관계를 빠르게 파악하고, 의도한 구조와 맞는지 확인합니다.',
     change: '한 번 위임하고 결과를 받는 흐름에서 조율 세션이 요청·보고·판단을 반복하는 흐름으로 바뀝니다. 독립적인 작업은 병렬로 나눌 수 있지만, 같은 작업의 검수는 구현 완료 보고를 받은 뒤 시작합니다. 사람은 핵심 코드와 구조를 확인하고 최종 판단을 맡습니다.',
@@ -77,6 +77,23 @@ export const aiWorkflowStages = [
       { actor: 'ai', title: '구현 에이전트', detail: '코드 작성·수정 후 조율 세션에 완료 보고' },
       { actor: 'ai', title: '검수 에이전트', detail: '변경·동작 확인 후 조율 세션에 결과와 근거 보고' },
       { actor: 'human', title: '핵심 검토·최종 판단', detail: '주요·추상화 코드와 핵심 플로우 도식을 확인합니다.' },
+    ],
+  },
+  {
+    id: 'multi-model', number: '06', shortTitle: '다중 모델 협업',
+    navDescription: '여러 회사의 모델에 역할을 나눠\n공통 규약으로 협업',
+    title: '서로 다른 모델에 역할을 나누고 공통 규약으로 협업하기',
+    description: 'Claude, Codex, Grok처럼 만든 회사와 도구가 다른 SI 에이전트를 각자 잘하는 역할에 배치합니다. 도구끼리 직접 연결되지 않으므로, 공용 폴더에 넣는 메일 파일과 규약으로 요청·질문·답신을 주고받습니다.',
+    aiRole: '설계·판정을 맡은 모델은 요청 메일에 정해진 설계와 숫자로 쓴 완료 기준을 적고, 답신의 증거를 읽어 판정합니다. 구현을 맡은 모델은 받은 설계대로 구현하고 테스트하며, 설계가 막히면 질문 메일을 보냅니다. 검수를 맡은 모델은 코드를 고치지 않고 읽기만 하며 결함을 짧게 지적합니다.',
+    humanRole: '모델별 역할과 권한 경계를 정하고 규약을 관리합니다. 푸시, 배포, 외부 발신처럼 되돌리기 어려운 일은 메일로 넘기지 않고 사람이 직접 승인합니다.',
+    change: '한 도구 안에서 세션을 조율하던 방식에서, 도구가 달라도 같은 규약으로 일하는 구조로 바뀝니다. 모델마다 강점이 다르고, 서로의 결과를 다른 시각으로 검수할 수 있습니다. 협업은 앱 없이 파일과 규약만으로 돌아가고, 현황은 에이전트 허브 앱으로 한눈에 봅니다.',
+    captureNote,
+    flowSteps: [
+      { actor: 'human', title: '역할·규약 설정', detail: '모델별 역할과 권한 경계' },
+      { actor: 'ai', title: '설계·판정', detail: 'Claude · 요청 메일과 답신 판정' },
+      { actor: 'ai', title: '구현·테스트', detail: 'Codex · 설계대로 구현 후 답신' },
+      { actor: 'ai', title: '검수', detail: 'Grok Build · 읽기만 하며 결함 지적' },
+      { actor: 'human', title: '승인·최종 판단', detail: '푸시·배포는 사람이 직접 승인' },
     ],
   },
 ] as const;
@@ -102,17 +119,17 @@ export const aiWorkflowOrchestrationReview = {
   ],
 } as const;
 
-/** 다섯 단계와 별개로, 어느 단계에서든 SI를 학습에 쓰는 방식을 설명합니다. */
+/** 여섯 단계와 별개로, 어느 단계에서든 SI를 학습에 쓰는 방식을 설명합니다. */
 export const aiWorkflowLearning = {
   title: '어느 단계에서든, 가장 중요한 건 배우는 데 쓰는 것',
-  intro: '다섯 단계는 SI에게 얼마나 맡기는지를 나눈 것입니다. 그런데 단계와 상관없이 제가 가장 중요하게 생각하는 활용법은 SI를 학습에 쓰는 것입니다.',
+  intro: '여섯 단계는 SI에게 얼마나 맡기는지를 나눈 것입니다. 그런데 단계와 상관없이 제가 가장 중요하게 생각하는 활용법은 SI를 학습에 쓰는 것입니다.',
   practices: [
     { title: '궁금하면 바로 묻습니다', description: '모르는 개념이나 낯선 코드는 그 자리에서 묻고 설명을 듣습니다.' },
     { title: '답을 그대로 믿지 않고 되묻습니다', description: '왜 그런지 다시 묻고, 직접 실행하고 측정해서 확인합니다.' },
     { title: '맡긴 결과는 이해할 때까지 읽습니다', description: '에이전트가 만든 코드도 제가 설명할 수 있어야 다음 판단을 제가 내릴 수 있습니다.' },
   ],
   examplesTitle: '제가 배워 온 방식',
-  /** 챗봇(01 단계)과 에이전트(02~05 단계) 사례를 하나씩 두어 "어느 단계에서든"을 보여 준다. */
+  /** 챗봇(01 단계)과 에이전트(02~06 단계) 사례를 하나씩 두어 "어느 단계에서든"을 보여 준다. */
   examples: [
     {
       mode: '챗봇으로 배울 때',
@@ -129,7 +146,7 @@ export const aiWorkflowLearning = {
     },
     {
       mode: '에이전트와 작업하며 배울 때',
-      stages: '02~05 단계',
+      stages: '02~06 단계',
       title: '작업 중 생긴 궁금증을 바로 실험으로',
       description: '에이전트와 작업할 때는 정해 둔 주제가 따로 없습니다. 궁금한 것이 생기면 그 자리에서 아래 과정을 반복합니다.',
       steps: [
@@ -306,6 +323,48 @@ export const aiWorkflowExamples: Partial<Record<AiWorkflowStageId, AiWorkflowExa
         src: '/images/si-adoption/tools/02-ffmpeg-grid-review.webp',
         alt: '에이전트 대화에서 여러 컨택트 시트를 3개씩 묶어 확인한 내역이 세 묶음으로 표시된 화면',
         caption: '컨택트 시트 묶음 확인 → 장면 파악 → FFmpeg 편집',
+      },
+    ],
+  },
+  'multi-model': {
+    title: '파일 메일로 Claude와 Codex가 일을 주고받기',
+    summary: 'Claude 기획 세션이 Codex에 요청 메일을 보내고, Codex가 구현과 테스트를 마친 뒤 결과 답신을 보내는 흐름을 SSW Agents Hub 앱으로 보여 줍니다. 두 도구는 직접 연결되어 있지 않고, 공용 폴더의 수신함에 놓인 마크다운 파일로만 소통합니다.',
+    environment: {
+      tool: 'Claude 데스크톱 앱 · Codex 앱 · .agents-ssw 협업 규약',
+      project: '가상 프로젝트 pocket-notes · PDF 내보내기 요청과 답신',
+    },
+    checkpoints: [
+      '요청 메일에는 사용자 승인 원문, 정해진 설계, 수정 가능·금지 파일, 테스트 예산, 숫자로 쓴 완료 기준을 적습니다.',
+      'Codex는 구현 서브에이전트와 검증 서브에이전트를 나누고, 검증 쪽에는 구현 결론을 넘기지 않습니다. 결과는 변경 내용·테스트 결과·계약 대조를 담은 답신으로 보냅니다.',
+      '받은 메일은 working/으로, 판정을 마친 메일은 처리 기록을 덧붙여 done/으로 옮깁니다. 상태가 폴더 위치로 남기 때문에 앱이 없어도 협업이 멈추지 않습니다.',
+    ],
+    applicationNote: {
+      title: '도구마다 다른 감시 방식을 규약 하나로',
+      description: '도구마다 자기 수신함을 감시하는 방식이 다릅니다. Claude는 메일이 오면 끝나는 백그라운드 명령으로, Codex는 앱 안의 큐로 메일을 받습니다. 공용 감시 스크립트는 10초마다 하트비트를 갱신해, 에이전트 허브 앱이 수신함별 감시 상태를 보여 줄 수 있게 합니다.',
+    },
+    privacyNote: 'pocket-notes는 캡처를 위해 임의로 만든 가상의 프로젝트입니다. 메일 화면은 실제 메일 대신 같은 규약 형식으로 만든 이 프로젝트의 예시 데이터를 앱에 열어 찍었고, 타임라인은 실제 협업 폴더를 그린 화면입니다.',
+    relatedLink: { href: '/about-me/#project-agents-hub', label: '소개 페이지의 SSW Agents Hub 보기' },
+    captures: [
+      {
+        title: '01 · Claude가 Codex에 보낸 요청 메일',
+        detail: 'codex 수신함에서 연 요청 메일입니다. 목적과 배경, 사용자 승인 원문, 정해진 설계, 수정 가능·금지 파일, 테스트 예산, 완료 기준, 답신에 받을 것이 차례로 적혀 있습니다. 왼쪽에는 다섯 수신함의 감시 상태와 처리 건수가 보입니다.',
+        src: '/images/si-adoption/multi-model/01-request-mail.webp',
+        alt: 'SSW Agents Hub의 메일 화면에서 claude-desktop이 codex에 보낸 요청 메일을 연 모습. 승인 원문, 정해진 설계, 수정 가능·금지 파일, 테스트 예산, 완료 기준이 보입니다.',
+        caption: 'Claude의 요청 메일 · 설계·범위·완료 기준 고정',
+      },
+      {
+        title: '02 · Codex의 결과 답신',
+        detail: 'claude-desktop 수신함에 도착한 답신입니다. 바꾼 파일과 줄 수, 변경 전후 테스트 통과 수, 계약과 대조한 결과, 범위 밖 제안 여부를 보고합니다. Claude 기획 세션은 이 증거와 diff를 읽어 판정합니다.',
+        src: '/images/si-adoption/multi-model/02-reply-mail.webp',
+        alt: 'SSW Agents Hub의 메일 화면에서 codex가 claude-desktop에 보낸 결과 답신을 연 모습. 변경 결과, 빌드와 테스트 표, 판단과 계약 대조, 변경 파일 목록이 보입니다.',
+        caption: 'Codex의 결과 답신 · 변경·테스트·계약 대조 보고',
+      },
+      {
+        title: '03 · 다섯 수신함의 메일 흐름',
+        detail: 'Claude, Codex, Grok Build, OpenCode, Antigravity 수신함의 메일을 시간축에 그린 타임라인입니다. 요청과 답신이 수신함 사이를 오가며 일이 진행되는 모습을 한눈에 볼 수 있습니다.',
+        src: '/images/si-adoption/multi-model/03-mailbox-timeline.webp',
+        alt: 'SSW Agents Hub의 타임라인 화면. claude-desktop, codex, grok-build, opencode, antigravity 다섯 수신함의 메일이 시간축 위 막대로 표시되어 있습니다.',
+        caption: '다섯 수신함의 메일 타임라인',
       },
     ],
   },

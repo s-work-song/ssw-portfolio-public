@@ -7,7 +7,7 @@ import styles from './AiWorkflow.module.css';
 
 export const metadata: Metadata = {
   title: 'SI 활용 단계 | SI Adoption Levels',
-  description: '채팅부터 구현, 도구 연결, 여러 에이전트 조율까지 SI 활용 수준을 다섯 단계로 정리합니다. 여러분 또는 여러분의 팀·조직은 지금 어느 단계로 일하고 있나요?',
+  description: '채팅부터 구현, 도구 연결, 여러 에이전트 조율과 다중 모델 협업까지 SI 활용 수준을 여섯 단계로 정리합니다. 여러분 또는 여러분의 팀·조직은 지금 어느 단계로 일하고 있나요?',
 };
 
 export default function AiWorkflowPage() {
@@ -17,8 +17,8 @@ export default function AiWorkflowPage() {
         <p className={styles.eyebrow}>SI ADOPTION LEVELS</p>
         <h2 id="workflow-title" className={styles.pageTitle}>SI(Super Intelligence, 초지능) 활용 단계</h2>
         <p className={styles.lead}>
-          채팅으로 답을 얻는 단계부터 여러 에이전트를 조율하는 단계까지.<br />
-          SI 활용 수준을 다섯 단계로 나누어 살펴봅니다.
+          채팅으로 답을 얻는 단계부터 여러 모델이 함께 일하는 단계까지.<br />
+          SI 활용 수준을 여섯 단계로 나누어 살펴봅니다.
         </p>
         <div className={styles.principle}>
           <span className={styles.principleMark} aria-hidden="true">?</span>

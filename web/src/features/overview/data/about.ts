@@ -312,6 +312,48 @@ export const aboutProjects: AboutProject[] = [
     ],
   },
   {
+    id: 'project-agents-hub',
+    title: 'SSW Agents Hub',
+    category: 'Multi-agent Collaboration Hub',
+    desc: '여러 SI 에이전트가 파일 메일로 일을 나누는 .agents-ssw 협업 폴더의 현황을 한 화면에 보여 주는 Windows 데스크톱 앱입니다. 에이전트는 앱 없이 규약과 메일 파일만으로 협업하고, 앱은 그 현황을 읽어서 보여 줍니다.\n\n수신함별 메일과 감시 상태, 백로그 칸반, 메일 타임라인과 활동 달력, 에셋 미리보기를 제공하고, 프로젝트 코드의 테스트와 타입 구조를 다이어그램으로 보여 줍니다.\n\n메일·백로그·에셋·기록 화면은 캡처를 위해 임의로 만든 가상 프로젝트 pocket-notes의 예시 데이터입니다.',
+    status: '실행 화면 공개',
+    gallery: {
+      images: [
+        {
+          src: '/images/projects/agents-hub/01-mail.webp',
+          alt: '다섯 수신함의 감시 상태와 처리 건수, 상태별 메일 목록, Codex 답신 본문이 함께 보이는 SSW Agents Hub 메일 화면',
+          caption: '수신함별 감시 상태와 Codex 답신 본문 · 예시 데이터',
+        },
+        {
+          src: '/images/projects/agents-hub/02-backlog-kanban.webp',
+          alt: '시작 전·진행 중·끝남 세 열의 백로그 카드와 선택한 항목의 배경·후보·완료 기준이 보이는 칸반 화면',
+          caption: '시작 전·진행 중·끝남으로 나눈 백로그 칸반 · 예시 데이터',
+        },
+        {
+          src: '/images/projects/agents-hub/03-timeline.webp',
+          alt: 'claude-desktop, codex, grok-build, opencode, antigravity 다섯 수신함의 메일을 시간축 막대로 그린 타임라인 화면',
+          caption: '다섯 수신함의 메일 흐름 타임라인',
+        },
+        {
+          src: '/images/projects/agents-hub/04-type-diagram.webp',
+          alt: '인터페이스 하나와 이를 구현한 클래스 9개의 상속 다이어그램, 아래에 해당 소스가 보이는 코드 타입 화면',
+          caption: '인터페이스와 구현 9개의 상속 다이어그램',
+        },
+        {
+          src: '/images/projects/agents-hub/05-asset-versions.webp',
+          alt: '등대 그림 에셋의 버전 1·2·3을 나란히 비교하고 이 에셋을 언급한 메일 목록이 아래에 보이는 에셋 화면',
+          caption: '에셋 버전 비교와 언급한 메일 · 예시 데이터',
+        },
+        {
+          src: '/images/projects/agents-hub/06-troubleshooting.webp',
+          alt: '증상·재현 방법·원인·해결·기록 순서로 정리된 트러블슈팅 문서와 해결된 항목 목록이 보이는 기록 화면',
+          caption: '증상·원인·해결을 남긴 트러블슈팅 기록 · 예시 데이터',
+        },
+      ],
+      placeholder: '메일, 백로그, 타임라인, 코드, 에셋, 기록 화면입니다.',
+    },
+  },
+  {
     id: 'project-asset-library',
     title: 'SSW Asset Library',
     category: 'Agent-connected Asset Library',

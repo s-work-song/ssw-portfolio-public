@@ -24,7 +24,7 @@
 .principleMark { color: var(--accent); font-size: 1.6rem; line-height: 1.3; }
 .principle p { margin: 0; color: var(--text-dim); font-size: .93rem; line-height: 1.75; word-break: keep-all; }
 .principle strong { display: block; color: var(--text); margin-bottom: 4px; }
-.jumpNav ol { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; list-style: none; margin: 0; padding: 0; }
+.jumpNav ol { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px; list-style: none; margin: 0; padding: 0; }
 .jumpNav button {
   position: relative;
   width: 100%;
@@ -204,7 +204,6 @@
   .page { gap: 22px; }
   .jumpNav ol { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .jumpNav button { gap: 8px; padding: 14px; }
-  .jumpNav li:last-child { grid-column: 1 / -1; }
   .jumpArrow { right: 14px; top: 12px; }
   .jumpCurrent { right: 14px; top: 18px; }
   .stageTabs { gap: 22px; }
