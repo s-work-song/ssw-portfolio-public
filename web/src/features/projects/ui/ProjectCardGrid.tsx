@@ -90,7 +90,7 @@ export default function ProjectCardGrid({ projects }: { projects: AboutProject[]
             {project.status}
           </span>
           {project.links && project.links.length > 0 && (
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '2px' }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'flex-end', gap: '8px', marginTop: '2px' }}>
               {project.links.map((link) => {
                 const isDemo = link.kind === 'demo';
                 const linkStyle = {

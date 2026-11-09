@@ -57,6 +57,28 @@ export const AGENT_EXPERIMENT_GROUPS: readonly AgentExperimentGroup[] = [
   },
 ];
 
+/** 분류 탭 위에 따로 두는 대표 실험. 갤러리 분류에 넣지 않고 소개 아래 한 장의 카드로 보인다. */
+export const AGENT_EXPERIMENT_SHOWCASE = {
+  id: 'portfolio-plaza',
+  anchor: 'agent-experiments-plaza',
+  eyebrow: '대표 실험',
+  title: '3D 포트폴리오 광장',
+  description: [
+    '이 사이트의 내용을 걸어 다니며 둘러보는 3D 공간입니다. 전시관에는 작품과 소개가 걸려 있고, 상영관에서는 실험 영상을, 카페 주크박스에서는 직접 만든 음악을 들을 수 있습니다.',
+    '날씨와 계절, 하루의 시간이 바뀝니다. three.js로 SI 에이전트와 함께 만들었습니다.',
+  ],
+  url: 'https://pf-samples.sworksong.workers.dev/plaza/',
+  linkLabel: '광장 둘러보기',
+  note: '받는 양이 많은 편이라 와이파이에서 여는 것을 권합니다.',
+  images: [
+    { src: '/images/agent-experiments/portfolio-plaza/plaza-fountain.webp', alt: '분수 광장 너머로 상영관과 전시관이 보이는 3D 포트폴리오 광장', caption: '분수 광장' },
+    { src: '/images/agent-experiments/portfolio-plaza/plaza-yard-path.webp', alt: '길 양옆 울타리 안에 다연장로켓·전차·헬기 모델과 설명판이 늘어선 야외 전시장', caption: '야외 전시장' },
+    { src: '/images/agent-experiments/portfolio-plaza/plaza-yard-tank.webp', alt: '울타리 안 받침 위에 놓인 주력전차 모델과 설명판', caption: '야외 전시장 · 주력전차' },
+    { src: '/images/agent-experiments/portfolio-plaza/plaza-cafe-window.webp', alt: '통창 너머로 광장이 보이는 카페 안의 긴 의자와 탁자', caption: '주크박스 카페' },
+    { src: '/images/agent-experiments/portfolio-plaza/plaza-cafe-counter.webp', alt: '카페 출입문과 커피 머신이 놓인 카운터', caption: '주크박스 카페 · 카운터' },
+  ],
+};
+
 /** 하위 탭에 보이는 짧은 이름. */
 export const AGENT_EXPERIMENT_CATEGORY_TAB_LABELS: Record<AgentExperiment['category'], string> = {
   'SVG 제작': 'SVG',

@@ -27,5 +27,6 @@
 @media (max-width: 700px) {
   .cards { grid-template-columns: 1fr; }
   .footer { align-items: flex-start; flex-direction: column; }
+  .more { align-self: flex-end; }
 }
 @media (prefers-reduced-motion: reduce) { .card { transition: none; } .card:hover { transform: none; } }

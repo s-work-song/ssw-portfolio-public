@@ -4,7 +4,7 @@ import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type 
 import { agentExperimentDrafts, agentExperiments, type AgentExperiment } from '@/features/experiments/data/agentExperiments';
 import {
   AGENT_EXPERIMENT_CATEGORY_ANCHORS, AGENT_EXPERIMENT_CATEGORY_TAB_LABELS, AGENT_EXPERIMENT_GROUPS, AGENT_EXPERIMENT_INTRO_ANCHOR,
-  agentExperimentForAnchor,
+  AGENT_EXPERIMENT_SHOWCASE, agentExperimentForAnchor,
 } from '@/features/experiments/data/agentExperimentNavigation';
 import { CHAT_ACTION_TARGET_PREPARE_EVENT, type ChatActionTargetPrepareDetail } from '@/features/chat/navigation';
 import LogReadingLink from '@/features/logs/navigation/LogReadingLink';
@@ -401,6 +401,28 @@ export default function AgentExperimentGallery() {
           </div>
         </div>
       </header>
+
+      <article id={AGENT_EXPERIMENT_SHOWCASE.anchor} tabIndex={-1} className={styles.showcase} aria-labelledby="agent-experiments-showcase-title">
+        {/* 제목 줄은 카드 전체 폭으로 둔다(사진만 위를 꽉 채워 한쪽으로 쏠려 보이지 않게). */}
+        <div className={styles.showcaseHeader}>
+          <p className={styles.showcaseEyebrow}>{AGENT_EXPERIMENT_SHOWCASE.eyebrow}</p>
+          <h4 id="agent-experiments-showcase-title">{AGENT_EXPERIMENT_SHOWCASE.title}</h4>
+        </div>
+        <ProjectMediaCarousel
+          className={styles.showcaseMedia}
+          gallery={{ images: [...AGENT_EXPERIMENT_SHOWCASE.images], placeholder: `${AGENT_EXPERIMENT_SHOWCASE.title} 화면을 추가할 자리입니다.` }}
+          projectTitle={AGENT_EXPERIMENT_SHOWCASE.title}
+          imageSizes="(max-width: 900px) calc(100vw - 72px), 560px"
+        />
+        <div className={styles.showcaseBody}>
+          {AGENT_EXPERIMENT_SHOWCASE.description.map((paragraph) => <p key={paragraph}>{paragraph}</p>)}
+          <a className={styles.showcaseLink} href={AGENT_EXPERIMENT_SHOWCASE.url} target="_blank" rel="noopener noreferrer"
+            aria-label={`${AGENT_EXPERIMENT_SHOWCASE.title} ${AGENT_EXPERIMENT_SHOWCASE.linkLabel}, 새 탭`}>
+            {AGENT_EXPERIMENT_SHOWCASE.linkLabel} <span aria-hidden="true">↗</span>
+          </a>
+          <small>{AGENT_EXPERIMENT_SHOWCASE.note}</small>
+        </div>
+      </article>
 
       <div className={styles.toolbar}>
         <div ref={filterListRef} className={styles.filters} role="group" aria-label="실험 분류"

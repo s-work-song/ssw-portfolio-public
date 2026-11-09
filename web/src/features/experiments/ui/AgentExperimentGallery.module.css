@@ -23,6 +23,19 @@
 .introNote p { min-width: 0; margin: 0; color: var(--text-dim); font-size: .875rem; line-height: 1.7; word-break: keep-all; overflow-wrap: break-word; }
 .introNoteLink { box-sizing: border-box; display: inline-flex; flex: none; align-items: center; gap: 8px; min-height: 44px; padding: 9px 12px; border: 1px solid var(--border-strong); border-radius: 9px; background: var(--bg-elev-2); color: var(--text); font-size: .875rem; font-weight: 600; line-height: 1.5; text-decoration: none; }
 .introNoteLink:focus-visible { outline: 2px solid var(--accent, #6366f1); outline-offset: 3px; }
+/* 대표 실험: 소개와 분류 탭 사이에 한 장으로 둔다. 넓은 화면은 그림 왼쪽·글 오른쪽, 좁으면 위아래. */
+.showcase { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: clamp(18px, 3vw, 28px); align-items: start; margin-bottom: 28px; padding: clamp(14px, 2vw, 18px); border: 1px solid var(--panel-border); border-radius: 16px; background: var(--panel-bg); scroll-margin-top: 108px; }
+.showcase:focus-visible { outline: 2px solid var(--accent, #6366f1); outline-offset: 3px; }
+.showcaseHeader { grid-column: 1 / -1; min-width: 0; padding: 2px 2px 14px; border-bottom: 1px solid var(--border); }
+.showcaseEyebrow { margin: 0 0 4px; color: var(--accent-text); font-size: .75rem; font-weight: 700; letter-spacing: .12em; }
+.showcaseHeader h4 { margin: 0; color: var(--text); font-size: clamp(1.15rem, 2.4vw, 1.4rem); line-height: 1.4; word-break: keep-all; }
+.showcaseLink { display: inline-flex; align-self: flex-end; margin-top: auto; gap: 10px; align-items: center; min-height: 44px; padding: 9px 16px; border-radius: 9px; background: var(--accent, #6366f1); color: var(--accent-contrast, #fff); font-size: .9rem; font-weight: 700; text-decoration: none; }
+.showcaseLink:focus-visible { outline: 2px solid var(--accent, #6366f1); outline-offset: 3px; }
+.showcaseMedia { min-width: 0; }
+/* 설명은 사진과 위를 맞추고, 들어가기 버튼과 안내는 오른쪽 아래(안내가 사진 캡션 줄)에 붙인다. */
+.showcaseBody { min-width: 0; align-self: stretch; display: flex; flex-direction: column; }
+.showcaseBody p { margin: 0 0 10px; color: var(--text-dim); font-size: .92rem; line-height: 1.75; word-break: keep-all; overflow-wrap: break-word; }
+.showcaseBody small { display: block; margin-top: 10px; text-align: right; color: var(--text-mute); font-size: .78rem; line-height: 1.5; word-break: keep-all; }
 .toolbar { padding-top: 20px; margin-bottom: 16px; border-top: 1px solid var(--border-strong); }
 .filters, .controls, .modelSwitcher { display: flex; gap: 6px; align-items: center; }
 .filters { position: relative; display: grid; grid-template-columns: repeat(var(--filter-count, 4), minmax(0, 1fr)); align-items: stretch; min-width: 0; max-width: 100%; padding: 5px; border: 1px solid var(--border); border-radius: 12px; background: var(--bg-elev-2); }
@@ -158,6 +171,8 @@
 .details dd { margin: 3px 0 0; color: var(--text-dim); overflow-wrap: anywhere; }
 .modelVia { display: block; margin-top: 3px; color: var(--text-mute); font-size: .75rem; }
 .details a { display: inline-flex; gap: 24px; align-items: center; min-height: 42px; padding: 8px 14px; border-radius: 8px; background: var(--accent, #6366f1); color: white; font-size: .875rem; font-weight: 600; text-decoration: none; }
+/* 직접 실행 버튼은 대표 실험 카드처럼 오른쪽에 붙인다. */
+.details > a { align-self: flex-end; }
 .downloads { width: 100%; }
 .downloads > p { margin: 0 0 8px; color: var(--text-mute); font-size: .75rem; }
 .downloadLinks { display: flex; flex-wrap: wrap; gap: 8px; }
@@ -187,6 +202,7 @@
 .srOnly { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 @keyframes reveal { from { opacity: 0; transform: translateX(8px); } to { opacity: 1; transform: translateX(0); } }
 @media (max-width: 900px) {
+  .showcase { grid-template-columns: minmax(0, 1fr); }
   .filters { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .audioPanel { grid-template-columns: minmax(0, 1fr); gap: 14px; padding: 18px 20px; }
   .audioPreviews { padding: 18px 20px; }
@@ -204,6 +220,7 @@
 }
 @media (max-width: 600px) {
   .introNote, .groupNote { flex-direction: column; align-items: flex-start; gap: 12px; }
+  .introNote .introNoteLink, .groupNote .introNoteLink { align-self: flex-end; }
   .filters { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .audioAlbums { grid-template-columns: minmax(0, 1fr); }
   .audioAlbumWide { grid-column: auto; }

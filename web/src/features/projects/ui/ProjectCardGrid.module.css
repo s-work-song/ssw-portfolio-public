@@ -46,7 +46,7 @@
 }
 
 .learningContextLink {
-  align-self: flex-start;
+  align-self: flex-end;
   box-sizing: border-box;
   display: inline-flex;
   align-items: center;

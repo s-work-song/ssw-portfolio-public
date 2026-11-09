@@ -27,5 +27,6 @@
   .stages { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .stages a { min-height: 105px; gap: 12px; }
   .footer { align-items: flex-start; flex-direction: column; }
+  .more { align-self: flex-end; }
 }
 @media (prefers-reduced-motion: reduce) { .stages a { transition: none; } .stages a:hover { transform: none; } }
