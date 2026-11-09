@@ -88,12 +88,6 @@
   font-variant-numeric: tabular-nums;
 }
 
-.limitation {
-  padding-top: 12px;
-  border-top: 1px solid var(--border);
-  font-size: 0.875rem;
-}
-
 @media (max-width: 640px) {
   .comparison {
     grid-template-columns: 1fr;

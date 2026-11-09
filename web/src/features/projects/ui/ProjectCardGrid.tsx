@@ -70,7 +70,6 @@ export default function ProjectCardGrid({ projects }: { projects: AboutProject[]
               <p>{project.experiment.scope}</p>
               <p>{project.experiment.retained}</p>
               <p>{project.experiment.observation}</p>
-              <p className={styles.limitation}>{project.experiment.limitation}</p>
             </section>
           )}
           <span style={{

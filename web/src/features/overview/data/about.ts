@@ -39,7 +39,6 @@ export interface AboutProjectExperiment {
   scope: string;
   retained: string;
   observation: string;
-  limitation: string;
 }
 
 export interface AboutProjectGallery {
