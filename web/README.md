@@ -309,16 +309,16 @@ WebMCP 도구가 노출되지 않았지만, localhost 정적 화면에서는 등
 실험 분류는 `SVG 제작` 바로 다음에 `WebGL`을 배치하고, 이후 기존 2D·3D 게임·Blender·영상물·ComfyUI 순서를 유지합니다.
 WebGL에는 `분해도 도감`, `얼음 동동 라떼`, `전광판 시뮬레이터`, `연기 이동 실험` 네 샘플을 순서대로 둡니다. 기계 장치의 회전·분해·작동과
 얼음·커피·우유의 혼합 및 유리잔 반사 시각효과를 다루며, 확인되지 않은 제작 모델이나 CFD 검증을 주장하지 않습니다.
-실행 링크는 `https://pf-samples.sworksong.workers.dev/exploded-atlas/`와
-`https://pf-samples.sworksong.workers.dev/iced-latte/`입니다. 실제 실행 JPEG만 소개에 사용하며 원본 HTML·JS·ZIP은 공개 프런트엔드에 복사하지 않습니다.
+실행 링크는 `https://pf-samples.sworksong.workers.dev/3d/webgl/exploded-atlas/`와
+`https://pf-samples.sworksong.workers.dev/3d/webgl/iced-latte/`입니다. 실제 실행 JPEG만 소개에 사용하며 원본 HTML·JS·ZIP은 공개 프런트엔드에 복사하지 않습니다.
 전광판 시뮬레이터는 문구·연출, 2D·3D 렌더링과 도트 패널·구동·전력 옵션을 조절하는 로컬 브라우저 실험입니다.
-실행 링크는 `https://pf-samples.sworksong.workers.dev/dot-board/`이며, 설정은 브라우저 localStorage에 저장합니다.
+실행 링크는 `https://pf-samples.sworksong.workers.dev/3d/webgl/dot-board/`이며, 설정은 브라우저 localStorage에 저장합니다.
 공유 게시판 기능을 비활성화한 정적 버전을 사용하며 클라우드 공유 게시판이나 실제 회로의 정확성을 검증한 시뮬레이션으로 설명하지 않습니다.
 `images/agent-experiments/dot-board/`의 실제 JPEG 두 장만 소개에 사용합니다.
 연기 이동 실험은 캐릭터가 연기로 흩어졌다가 목적지에서 재구성되는 WebGL2 시각효과 실험입니다.
 바닥 클릭·터치나 좌표 입력으로 순간이동하고 연기·바람 흩날림·디졸브와 흐름·밀도·색·속도를 비교합니다.
 입자 기반 유체 근사이며 완전한 유체 압력해석이나 물리적 정확성을 검증한 것으로 설명하지 않습니다.
-WebGL2 지원 브라우저가 필요하고 PC WASD·모바일 스틱 조작을 제공하며, 실행 링크는 `https://pf-samples.sworksong.workers.dev/phase-smoke/`입니다.
+WebGL2 지원 브라우저가 필요하고 PC WASD·모바일 스틱 조작을 제공하며, 실행 링크는 `https://pf-samples.sworksong.workers.dev/3d/webgl/phase-smoke/`입니다.
 제작 모델은 확인되지 않아 표시하지 않고, 실제 브라우저 캡처가 등록되기 전까지 기존 `사진 준비 중` 표시를 사용합니다.
 분류 앵커는 `#agent-experiments-webgl`, 작품별 직접 링크는 `#exploded-atlas`, `#iced-latte`, `#dot-board`, `#phase-smoke`입니다.
 새 분류도 기존 프런트 이동 액션·둘러보기와 앵커를 공유하며, 원격 WebMCP 제어 enum이나 모델 도구는 추가하지 않습니다.
@@ -327,7 +327,7 @@ WebGL2 지원 브라우저가 필요하고 PC WASD·모바일 스틱 조작을 �
 OSCILLO는 앨범·곡·난이도를 선택하고 4개 레인으로 내려오는 노트를 입력하는 브라우저 리듬게임입니다.
 사용자가 확인한 제작 정보는 코드 `Opus 5.5`, 음원 `다양한 모델 혼합`이며 별도 역할로 표시합니다.
 `images/agent-experiments/oscillo/`의 실제 곡 선택·플레이 캡처 두 장을 사용하고,
-`https://pf-samples.sworksong.workers.dev/rhythm-game-oscillo/`를 직접 실행 링크로 연결합니다.
+`https://pf-samples.sworksong.workers.dev/games/2d/oscillo/`를 직접 실행 링크로 연결합니다.
 MP3 프리뷰 17곡은 같은 호스트의 `/rhythm-game-oscillo/previews/`에 있는 콘텐츠 해시 포함 URL로 연결합니다.
 공개 프런트엔드의 런타임·테스트는 별도 샘플 저장소나 원본 ZIP에 의존하지 않습니다.
 원본 데이터는 `Opus 5.5`(3곡), `Lyria 3.5`(3곡), `Lyria 3.5 보컬`(3곡),
@@ -369,18 +369,18 @@ Gemini를 통해 Lyria 3로 제작한 게임 배경음악입니다. 원본 MP3�
 `현대전 샘플`은 지상·항공 장비의 주행·조준·발포와 아케이드 비행을 확인하는 브라우저 샘플입니다.
 제작 모델은 Opus 5.5이며, 모델링 도구 Blender를 보조적으로 활용했습니다.
 `images/agent-experiments/modern-warfare-sample/`의 전차 사격장·전투기 활주로
-실제 실행 캡처 두 장을 표시합니다. 사용자 지정 주소 `https://modern-warfare-sample.sworksong.workers.dev/`를
-직접 실행 링크로 유지합니다. 정밀 군사 시뮬레이션이나 실제 전투 재현으로 서술하지 않습니다.
+실제 실행 캡처 두 장을 표시합니다. 샘플 모음 주소 `https://pf-samples.sworksong.workers.dev/games/3d/modern-warfare/`를
+직접 실행 링크로 둡니다(예전 전용 Worker는 정리함). 정밀 군사 시뮬레이션이나 실제 전투 재현으로 서술하지 않습니다.
 
 `노을서킷 · 3D 레이싱 게임`은 트랙·차량을 선택하고 스피드전·아이템전으로 달리는 브라우저 게임입니다.
-`https://pf-samples.sworksong.workers.dev/racing-game-noeul-circuit/`로 연결하며,
+`https://pf-samples.sworksong.workers.dev/games/3d/noeul-circuit/`로 연결하며,
 `images/agent-experiments/noeul-circuit/`의 실제 레이스 준비·주행 JPEG 두 장을 사용합니다.
 제작 모델과 트랙·차량의 수량은 미확인 정보를 채우지 않고, 원본 HTML·JS·ZIP은 공개 프런트엔드에 복사하지 않습니다.
 기존 3D 게임 분류와 `#noeul-circuit` 작품 앵커를 사용하며 새 분류·원격 도구·둘러보기 단계를 추가하지 않습니다.
 
 `포탈 실험`은 두 포탈로 공간을 연결하는 Three.js 기반 1인칭 실험입니다.
 벽·바닥·천장 사이의 이동과 시선·속도 보존, 중첩 포탈 뷰를 다루며 PC WASD·마우스와 터치 조작을 제공합니다.
-실행 링크는 `https://pf-samples.sworksong.workers.dev/limen-portal/`, 작품 앵커는 `#limen-portal`입니다.
+실행 링크는 `https://pf-samples.sworksong.workers.dev/games/3d/limen-portal/`, 작품 앵커는 `#limen-portal`입니다.
 제작 모델은 확인되지 않아 표시하지 않고, 실제 브라우저 캡처가 등록되기 전까지 기존 `사진 준비 중` 표시를 사용합니다.
 두 새 작품의 소스·ZIP은 별도 샘플 저장소에서 관리하며 포트폴리오에서는 외부 직접 실행 링크만 제공합니다.
 

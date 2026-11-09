@@ -34,7 +34,7 @@ test('음원 경로는 로컬에만 basePath를 붙이고 외부 HTTPS URL은 �
   assert.equal(audioPreviewSource(local, '/ssw-portfolio-public'), `/ssw-portfolio-public${local}`);
   assert.equal(audioPreviewSource(local, '/ssw-portfolio-public/'), `/ssw-portfolio-public${local}`);
   assert.equal(audioPreviewSource(local, '/'), local);
-  const remote = 'https://pf-samples.sworksong.workers.dev/rhythm-game-oscillo/previews/low-b-gravity.b25c0c7934ec.mp3?version=2#preview';
+  const remote = 'https://pf-samples.sworksong.workers.dev/games/2d/oscillo/previews/low-b-gravity.b25c0c7934ec.mp3?version=2#preview';
   for (const prefix of ['', '/ssw-portfolio-public', '/ssw-portfolio-public/']) {
     assert.equal(audioPreviewSource(remote, prefix), remote);
   }

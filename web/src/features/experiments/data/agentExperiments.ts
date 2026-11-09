@@ -138,7 +138,7 @@ export const agentExperiments: AgentExperiment[] = [
     title: '분해도 도감',
     description: '기계 장치를 3D로 돌려 보고, 부품을 분해하거나 작동시켜 구조와 움직임을 살펴보는 WebGL 도감입니다.',
     focus: ['3D 분해도', '회전·분해·작동', 'WebGL'],
-    demoUrl: 'https://pf-samples.sworksong.workers.dev/exploded-atlas/',
+    demoUrl: 'https://pf-samples.sworksong.workers.dev/3d/webgl/exploded-atlas/',
     images: [
       {
         src: '/images/agent-experiments/exploded-atlas/01-exploded-overview.jpg',
@@ -153,7 +153,7 @@ export const agentExperiments: AgentExperiment[] = [
     title: '얼음 동동 라떼',
     description: '얼음·커피·우유를 섞으며 유리잔의 반사와 유체가 섞이는 시각효과를 살펴보는 카페라떼 시뮬레이션입니다.',
     focus: ['카페라떼 시뮬레이션', '유리잔 반사', '혼합 시각효과'],
-    demoUrl: 'https://pf-samples.sworksong.workers.dev/iced-latte/',
+    demoUrl: 'https://pf-samples.sworksong.workers.dev/3d/webgl/iced-latte/',
     images: [
       {
         src: '/images/agent-experiments/iced-latte/01-latte-overview.jpg',
@@ -168,7 +168,7 @@ export const agentExperiments: AgentExperiment[] = [
     title: '전광판 시뮬레이터',
     description: '문구와 연출을 바꾸고 2D·3D 렌더링, 도트 패널과 구동·전력 옵션을 조절해 보는 브라우저 전광판 시뮬레이터입니다.',
     focus: ['문구·연출', '2D·3D 렌더링', '도트 패널·구동 옵션'],
-    demoUrl: 'https://pf-samples.sworksong.workers.dev/dot-board/',
+    demoUrl: 'https://pf-samples.sworksong.workers.dev/3d/webgl/dot-board/',
     images: [
       {
         src: '/images/agent-experiments/dot-board/01-dot-board.jpg',
@@ -188,7 +188,7 @@ export const agentExperiments: AgentExperiment[] = [
     title: '연기 이동 실험',
     description: '사람 캐릭터가 연기로 흩어졌다가 목적지에서 재구성되는 WebGL2 시각효과 실험입니다. 바닥 클릭·터치나 좌표 입력으로 순간이동하고, 연기·바람 흩날림·디졸브 효과와 흐름·밀도·색·속도를 비교할 수 있습니다. 입자 기반 유체 근사를 사용하며, WebGL2 지원 브라우저에서 PC WASD와 모바일 스틱 조작을 제공합니다.',
     focus: ['연기 순간이동', '입자 기반 유체 근사', '효과·흐름 조절', 'WebGL2'],
-    demoUrl: 'https://pf-samples.sworksong.workers.dev/phase-smoke/',
+    demoUrl: 'https://pf-samples.sworksong.workers.dev/3d/webgl/phase-smoke/',
   },
   {
     id: 'planet-defense',
@@ -256,25 +256,25 @@ export const agentExperiments: AgentExperiment[] = [
       { purpose: '코드', models: ['Opus 5.5'] },
       { purpose: '음원', models: ['다양한 모델 혼합'] },
     ],
-    demoUrl: 'https://pf-samples.sworksong.workers.dev/rhythm-game-oscillo/',
+    demoUrl: 'https://pf-samples.sworksong.workers.dev/games/2d/oscillo/',
     audioPreviews: [
-      { title: 'Neon Highway', album: 'Opus 5.5', src: 'https://pf-samples.sworksong.workers.dev/rhythm-game-oscillo/previews/neon-highway.30bff6f87e82.mp3', durationSeconds: 13 },
-      { title: 'Pixel Picnic', album: 'Opus 5.5', src: 'https://pf-samples.sworksong.workers.dev/rhythm-game-oscillo/previews/pixel-picnic.b942f6527a59.mp3', durationSeconds: 13 },
-      { title: 'Overclock', album: 'Opus 5.5', src: 'https://pf-samples.sworksong.workers.dev/rhythm-game-oscillo/previews/overclock.e7b29385bb2a.mp3', durationSeconds: 13 },
-      { title: 'Midnight Weight', album: 'Lyria 3.5', src: 'https://pf-samples.sworksong.workers.dev/rhythm-game-oscillo/previews/midnight-weight.20f79edd89da.mp3', durationSeconds: 13 },
-      { title: 'After the Great Ascent', album: 'Lyria 3.5', src: 'https://pf-samples.sworksong.workers.dev/rhythm-game-oscillo/previews/after-the-great-ascent.9e51d493779b.mp3', durationSeconds: 13 },
-      { title: 'The High Noon Hustle', album: 'Lyria 3.5', src: 'https://pf-samples.sworksong.workers.dev/rhythm-game-oscillo/previews/the-high-noon-hustle.416ff5c5bb1f.mp3', durationSeconds: 13 },
-      { title: '내 눈물 속에 갇힌 너', album: 'Lyria 3.5 보컬', src: 'https://pf-samples.sworksong.workers.dev/rhythm-game-oscillo/previews/trapped-in-my-tears.b2689a0bcb46.mp3', durationSeconds: 13 },
-      { title: '하얀 입김', album: 'Lyria 3.5 보컬', src: 'https://pf-samples.sworksong.workers.dev/rhythm-game-oscillo/previews/white-breath.6032598e16c4.mp3', durationSeconds: 13 },
-      { title: '새벽의 끝에서', album: 'Lyria 3.5 보컬', src: 'https://pf-samples.sworksong.workers.dev/rhythm-game-oscillo/previews/at-the-end-of-dawn.3ca8ab97a927.mp3', durationSeconds: 13 },
-      { title: 'Medley 01', album: 'Lyria 3.0 보컬 메들리 · 밈 가사', src: 'https://pf-samples.sworksong.workers.dev/rhythm-game-oscillo/previews/medley-01.c5d210be3559.mp3', durationSeconds: 13 },
-      { title: '웹 퍼블리셔 메들리', album: 'Lyria 3.0 보컬 메들리 · 밈 가사', src: 'https://pf-samples.sworksong.workers.dev/rhythm-game-oscillo/previews/web-publisher-medley.82d183de34da.mp3', durationSeconds: 13 },
-      { title: '개발밈 메들리', album: 'Lyria 3.0 보컬 메들리 · 밈 가사', src: 'https://pf-samples.sworksong.workers.dev/rhythm-game-oscillo/previews/dev-meme-medley.52895475ab7d.mp3', durationSeconds: 13 },
-      { title: '보안 메들리', album: 'Lyria 3.0 보컬 메들리 · 밈 가사', src: 'https://pf-samples.sworksong.workers.dev/rhythm-game-oscillo/previews/security-medley.4364a987c109.mp3', durationSeconds: 13 },
-      { title: '흐르는 빛의 항해', album: 'Lyria 3.0 보컬 메들리 · 밈 가사', src: 'https://pf-samples.sworksong.workers.dev/rhythm-game-oscillo/previews/flowing-light-voyage.86d8cbd67b6c.mp3', durationSeconds: 13 },
-      { title: 'IRON OVERHAUL', album: 'GPT Dots 리메이크', src: 'https://pf-samples.sworksong.workers.dev/rhythm-game-oscillo/previews/iron-overhaul.36a988772853.mp3', durationSeconds: 13 },
-      { title: 'LOW B GRAVITY', album: 'GPT Dots 리메이크', src: 'https://pf-samples.sworksong.workers.dev/rhythm-game-oscillo/previews/low-b-gravity.98117d5d2864.mp3', durationSeconds: 13 },
-      { title: 'Iron Wall March', album: 'GPT Dots 리메이크', src: 'https://pf-samples.sworksong.workers.dev/rhythm-game-oscillo/previews/iron-wall-march.c723ea54155f.mp3', durationSeconds: 13 },
+      { title: 'Neon Highway', album: 'Opus 5.5', src: 'https://pf-samples.sworksong.workers.dev/games/2d/oscillo/previews/neon-highway.30bff6f87e82.mp3', durationSeconds: 13 },
+      { title: 'Pixel Picnic', album: 'Opus 5.5', src: 'https://pf-samples.sworksong.workers.dev/games/2d/oscillo/previews/pixel-picnic.b942f6527a59.mp3', durationSeconds: 13 },
+      { title: 'Overclock', album: 'Opus 5.5', src: 'https://pf-samples.sworksong.workers.dev/games/2d/oscillo/previews/overclock.e7b29385bb2a.mp3', durationSeconds: 13 },
+      { title: 'Midnight Weight', album: 'Lyria 3.5', src: 'https://pf-samples.sworksong.workers.dev/games/2d/oscillo/previews/midnight-weight.20f79edd89da.mp3', durationSeconds: 13 },
+      { title: 'After the Great Ascent', album: 'Lyria 3.5', src: 'https://pf-samples.sworksong.workers.dev/games/2d/oscillo/previews/after-the-great-ascent.9e51d493779b.mp3', durationSeconds: 13 },
+      { title: 'The High Noon Hustle', album: 'Lyria 3.5', src: 'https://pf-samples.sworksong.workers.dev/games/2d/oscillo/previews/the-high-noon-hustle.416ff5c5bb1f.mp3', durationSeconds: 13 },
+      { title: '내 눈물 속에 갇힌 너', album: 'Lyria 3.5 보컬', src: 'https://pf-samples.sworksong.workers.dev/games/2d/oscillo/previews/trapped-in-my-tears.b2689a0bcb46.mp3', durationSeconds: 13 },
+      { title: '하얀 입김', album: 'Lyria 3.5 보컬', src: 'https://pf-samples.sworksong.workers.dev/games/2d/oscillo/previews/white-breath.6032598e16c4.mp3', durationSeconds: 13 },
+      { title: '새벽의 끝에서', album: 'Lyria 3.5 보컬', src: 'https://pf-samples.sworksong.workers.dev/games/2d/oscillo/previews/at-the-end-of-dawn.3ca8ab97a927.mp3', durationSeconds: 13 },
+      { title: 'Medley 01', album: 'Lyria 3.0 보컬 메들리 · 밈 가사', src: 'https://pf-samples.sworksong.workers.dev/games/2d/oscillo/previews/medley-01.c5d210be3559.mp3', durationSeconds: 13 },
+      { title: '웹 퍼블리셔 메들리', album: 'Lyria 3.0 보컬 메들리 · 밈 가사', src: 'https://pf-samples.sworksong.workers.dev/games/2d/oscillo/previews/web-publisher-medley.82d183de34da.mp3', durationSeconds: 13 },
+      { title: '개발밈 메들리', album: 'Lyria 3.0 보컬 메들리 · 밈 가사', src: 'https://pf-samples.sworksong.workers.dev/games/2d/oscillo/previews/dev-meme-medley.52895475ab7d.mp3', durationSeconds: 13 },
+      { title: '보안 메들리', album: 'Lyria 3.0 보컬 메들리 · 밈 가사', src: 'https://pf-samples.sworksong.workers.dev/games/2d/oscillo/previews/security-medley.4364a987c109.mp3', durationSeconds: 13 },
+      { title: '흐르는 빛의 항해', album: 'Lyria 3.0 보컬 메들리 · 밈 가사', src: 'https://pf-samples.sworksong.workers.dev/games/2d/oscillo/previews/flowing-light-voyage.86d8cbd67b6c.mp3', durationSeconds: 13 },
+      { title: 'IRON OVERHAUL', album: 'GPT Dots 리메이크', src: 'https://pf-samples.sworksong.workers.dev/games/2d/oscillo/previews/iron-overhaul.36a988772853.mp3', durationSeconds: 13 },
+      { title: 'LOW B GRAVITY', album: 'GPT Dots 리메이크', src: 'https://pf-samples.sworksong.workers.dev/games/2d/oscillo/previews/low-b-gravity.98117d5d2864.mp3', durationSeconds: 13 },
+      { title: 'Iron Wall March', album: 'GPT Dots 리메이크', src: 'https://pf-samples.sworksong.workers.dev/games/2d/oscillo/previews/iron-wall-march.c723ea54155f.mp3', durationSeconds: 13 },
     ],
     images: [
       {
@@ -332,7 +332,7 @@ export const agentExperiments: AgentExperiment[] = [
     title: '노을서킷 · 3D 레이싱 게임',
     description: '트랙과 차량을 선택해 달리는 브라우저 3D 레이싱 게임입니다. 스피드전과 아이템전을 선택해 레이스를 즐길 수 있습니다.',
     focus: ['3D 레이싱', '트랙·차량 선택', '스피드전·아이템전'],
-    demoUrl: 'https://pf-samples.sworksong.workers.dev/racing-game-noeul-circuit/',
+    demoUrl: 'https://pf-samples.sworksong.workers.dev/games/3d/noeul-circuit/',
     images: [
       {
         src: '/images/agent-experiments/noeul-circuit/01-race-setup.jpg',
@@ -400,7 +400,7 @@ export const agentExperiments: AgentExperiment[] = [
     description: 'Three.js와 WebGL로 구현한 브라우저 1인칭 판타지 RPG입니다. 마을을 탐험하고 검과 마법으로 전투하며, 캐릭터 능력치·장비와 퀘스트를 확인할 수 있습니다.',
     focus: ['1인칭 탐험·전투', '캐릭터 능력치·장비', '퀘스트'],
     modelCredits: [{ models: ['Opus 5.5'] }],
-    demoUrl: 'https://pf-samples.sworksong.workers.dev/fantasy-rpg-frostpass/',
+    demoUrl: 'https://pf-samples.sworksong.workers.dev/games/3d/frostpass/',
     images: [
       {
         src: '/images/agent-experiments/frostpass-fantasy-rpg/01-gameplay.jpg',
@@ -421,7 +421,7 @@ export const agentExperiments: AgentExperiment[] = [
     description: '현대전 장비의 모델과 조작을 확인하는 브라우저 3D 샘플입니다. 전차·자주포·다연장로켓과 전투기·공격 헬기·폭격기를 선택하고, 지상 장비의 주행·조준·발포와 항공기의 아케이드 비행을 시험할 수 있습니다. 스킨과 애니메이션 클립, 속도·방위·장전 등의 상태를 함께 확인합니다. 제작 과정에서는 모델링 도구인 Blender를 보조적으로 활용했습니다.',
     focus: ['지상·항공 장비', '주행·조준·발포', '아케이드 비행', '모델링 도구 · Blender'],
     modelCredits: [{ models: ['Opus 5.5'] }],
-    demoUrl: 'https://modern-warfare-sample.sworksong.workers.dev/',
+    demoUrl: 'https://pf-samples.sworksong.workers.dev/games/3d/modern-warfare/',
     images: [
       {
         src: '/images/agent-experiments/modern-warfare-sample/01-tank-range.jpg',
@@ -441,7 +441,7 @@ export const agentExperiments: AgentExperiment[] = [
     title: '포탈 실험',
     description: '두 포탈로 공간을 연결하는 Three.js 기반 1인칭 실험입니다. 벽·바닥·천장 사이를 이동하며 시선과 속도의 보존, 포탈 안에 다른 포탈이 보이는 중첩 뷰를 살펴볼 수 있습니다. PC WASD·마우스와 터치 조작을 제공합니다.',
     focus: ['1인칭 포탈 이동', '시선·속도 보존', '중첩 포탈 뷰'],
-    demoUrl: 'https://pf-samples.sworksong.workers.dev/limen-portal/',
+    demoUrl: 'https://pf-samples.sworksong.workers.dev/games/3d/limen-portal/',
   },
   {
     id: 'blender-medieval-weapons',
@@ -865,7 +865,7 @@ export const agentExperiments: AgentExperiment[] = [
     title: '업무 완전 자동화 플랫폼',
     description: '작업 하나만 넣으면 에이전트 15명이 알아서 쪼개고 서로 검증해 PR까지 올린다는 가상의 자동화 화면입니다. 예시 작업을 고르거나 직접 입력해 실행하면 시작·실행·완료 단계가 흘러가고, 에이전트 카드와 PR 카드를 눌러 상세를 볼 수 있습니다. 페이지 위쪽의 ‘실제 내용’ 스위치를 켜면 각 화면 요소 뒤에서 실제로 돌아가는 코드가 보입니다. 등장하는 제품·저장소·PR·테스트·수치는 모두 가상입니다.',
     focus: ['에이전트 그래프 메시', '작업 넣기 · 카드 상세', '실제 내용 스위치'],
-    demoUrl: 'https://pf-samples.sworksong.workers.dev/potemkin-automation/',
+    demoUrl: 'https://pf-samples.sworksong.workers.dev/potemkin/automation/',
     images: [
       {
         src: '/images/agent-experiments/potemkin-automation/01-run.webp',
@@ -904,7 +904,7 @@ export const agentExperiments: AgentExperiment[] = [
     title: 'ZZZ-BOT 자동 매매 에이전트',
     description: '에이전트에게 27만 원을 주고 아침까지 1,000만 원을 못 벌면 끈다고 했더니, 자고 일어나 보니 큰돈을 벌어 놨다는 가상의 자랑글과 매매 재생 화면입니다. 시작·목표 금액을 골라 직접 맡겨 보거나, 재생 속도를 바꾸고 체결 로그를 눌러 거래 상세를 볼 수 있습니다. 페이지 위쪽의 ‘실제 내용’ 스위치를 켜면 각 화면 요소 뒤에서 실제로 돌아가는 코드가 보입니다. 모든 금액·코인·거래는 지어낸 것이며 투자 권유가 아닙니다.',
     focus: ['가상 자랑글', '나도 맡겨 보기 · 거래 상세', '실제 내용 스위치'],
-    demoUrl: 'https://pf-samples.sworksong.workers.dev/potemkin-agent-trading/',
+    demoUrl: 'https://pf-samples.sworksong.workers.dev/potemkin/agent-trading/',
     images: [
       {
         src: '/images/agent-experiments/potemkin-agent-trading/01-boast-hero.webp',
@@ -938,7 +938,7 @@ export const agentExperiments: AgentExperiment[] = [
     title: '다중 에이전트 동시 작업',
     description: '여러 에이전트가 각자 커서를 들고 웹사이트와 일러스트를 동시에 만들어 가는 것처럼 보이는 가상의 작업 화면입니다. 등장하는 에이전트와 작업은 모두 가상입니다.',
     focus: ['다중 에이전트', '여러 커서 동시 작업', '웹 빌드 · 일러스트'],
-    demoUrl: 'https://pf-samples.sworksong.workers.dev/swarm-studio/',
+    demoUrl: 'https://pf-samples.sworksong.workers.dev/potemkin/swarm-studio/',
     images: [
       {
         src: '/images/agent-experiments/potemkin-swarm-studio/01-web-build.webp',
