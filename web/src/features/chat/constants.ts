@@ -10,7 +10,7 @@
  * 확장자 없는 상대 경로를 찾지 못한다.
  */
 import { ACCENTS as ACCENT_PALETTE } from "../settings/state/accentPalette.ts";
-import { AGENT_EXPERIMENT_CATEGORY_ANCHORS, AGENT_EXPERIMENT_INTRO_ANCHOR } from "../experiments/data/agentExperimentNavigation.ts";
+import { AGENT_EXPERIMENT_CATEGORY_ANCHORS, AGENT_EXPERIMENT_INTRO_ANCHOR, AGENT_EXPERIMENT_SHOWCASE } from "../experiments/data/agentExperimentNavigation.ts";
 import type {
   ActionId,
   ApiAudience,
@@ -380,6 +380,7 @@ export const ACTION_ROUTES: Readonly<Record<ActionId, string>> = {
   log: "/about-me/log#log-overview",
   project_overview: "/about-me#featured-projects",
   agent_experiments: `/about-me#${AGENT_EXPERIMENT_INTRO_ANCHOR}`,
+  agent_experiments_plaza: `/about-me#${AGENT_EXPERIMENT_SHOWCASE.anchor}`,
   agent_experiments_svg: `/about-me#${AGENT_EXPERIMENT_CATEGORY_ANCHORS['SVG 제작']}`,
   agent_experiments_webgl: `/about-me#${AGENT_EXPERIMENT_CATEGORY_ANCHORS['WebGL']}`,
   agent_experiments_2d_games: `/about-me#${AGENT_EXPERIMENT_CATEGORY_ANCHORS['2D 게임 실험']}`,
@@ -499,6 +500,7 @@ export const ACTION_LABELS: Readonly<Record<ActionId, string>> = {
   log: "작업 기록 보기",
   project_overview: "공개용 프로젝트 보기",
   agent_experiments: "SI 에이전트 성능·활용 실험 보기",
+  agent_experiments_plaza: "3D 포트폴리오 광장 보기",
   agent_experiments_svg: "SVG 제작 실험 보기",
   agent_experiments_webgl: "WebGL 실험 보기",
   agent_experiments_2d_games: "2D 게임 실험 보기",
@@ -592,6 +594,7 @@ export const ACTION_IDS: readonly ActionId[] = [
   "log",
   "project_overview",
   "agent_experiments",
+  "agent_experiments_plaza",
   "agent_experiments_svg",
   "agent_experiments_webgl",
   "agent_experiments_2d_games",

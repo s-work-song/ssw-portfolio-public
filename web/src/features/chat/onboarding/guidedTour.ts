@@ -14,7 +14,7 @@ import { aiWorkflowStages } from "../../ai-workflow/data/aiWorkflow.ts";
  * 단계 구성을 바꿀 때 이 숫자를 올린다. 아래 두 저장 키에 그대로 섞여 들어가므로,
  * 예전 판에서 저장한 진행 상태가 새 단계 목록에 잘못 적용되는 일 없이 버려진다.
  */
-export const GUIDED_TOUR_VERSION = 14;
+export const GUIDED_TOUR_VERSION = 15;
 /** 투어를 안내한 적이 있는지 기억하는 localStorage 키다. 값은 started·completed·dismissed 중 하나다. */
 export const GUIDED_TOUR_VISIT_KEY = `portfolio-guided-tour:v${GUIDED_TOUR_VERSION}:visit`;
 /** 진행 중인 투어 상태를 탭 단위로 이어 붙이는 sessionStorage 키다. 페이지 이동으로 훅이 다시 마운트돼도 단계가 유지된다. */
@@ -63,6 +63,7 @@ export interface GuidedTourStep {
     | "architecture-preview"
     | "si-levels-preview"
     | "agent-experiments"
+    | "experiments-plaza"
     | "experiments-svg"
     | "experiments-webgl"
     | "experiments-2d-games"
@@ -203,8 +204,14 @@ export const GUIDED_TOUR_STEPS: readonly GuidedTourStep[] = [
     id: "agent-experiments",
     title: "SI 에이전트 성능·활용 실험",
     message:
-      "SI 활용과 모델 성능을 취미로 실험하며 얻은 결과를 모은 공간입니다. 먼저 실험의 목적과 작업 방식을 읽고, 다음 단계부터 2D 실험, 3D 실험, 게임, 영상물, 앱·도구 실험, 포템킨 빌리지를 차례로 살펴볼게요.",
+      "SI 활용과 모델 성능을 취미로 실험하며 얻은 결과를 모은 공간입니다. 먼저 실험의 목적과 작업 방식을 읽고, 다음 단계부터 대표 실험인 3D 포트폴리오 광장과 2D 실험, 3D 실험, 게임, 영상물, 앱·도구 실험, 포템킨 빌리지를 차례로 살펴볼게요.",
     actionId: "agent_experiments",
+  },
+  {
+    id: "experiments-plaza",
+    title: "대표 실험 · 3D 포트폴리오 광장",
+    message: "이 사이트를 걸어 다니며 둘러보는 3D 공간입니다. 사진을 넘겨 분수 광장, 야외 전시장, 주크박스 카페를 살펴보고, 광장 둘러보기 버튼으로 직접 들어가 볼 수 있어요.",
+    actionId: "agent_experiments_plaza",
   },
   {
     id: "experiments-svg",

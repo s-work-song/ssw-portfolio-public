@@ -99,6 +99,7 @@ export type ActionId =
   | "log"
   | "project_overview"
   | "agent_experiments"
+  | "agent_experiments_plaza"
   | "agent_experiments_svg"
   | "agent_experiments_webgl"
   | "agent_experiments_2d_games"

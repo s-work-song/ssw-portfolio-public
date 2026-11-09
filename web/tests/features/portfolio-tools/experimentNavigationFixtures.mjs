@@ -21,6 +21,8 @@ export function experimentDomFixture(scroller = { scrollTop: 0 }, initialId = 's
     removeAttribute(name) { delete this.attributes[name]; },
   });
   const intro = element('agent-experiments-intro', () => 500);
+  // 소개와 분류 탭 사이의 대표 실험 카드(광장).
+  const showcase = element('agent-experiments-plaza', () => 900);
   const gallery = element('agent-experiments');
   const stage = element('agent-experiment-stage');
   let article;
@@ -56,11 +58,12 @@ export function experimentDomFixture(scroller = { scrollTop: 0 }, initialId = 's
     if (id === gallery.id) return gallery;
     if (id === stage.id) return stage;
     if (id === intro.id) return intro;
+    if (id === showcase.id) return showcase;
     if (categoryButtons[id]) return categoryButtons[id];
     const activeCategory = visible.find(item => item.id === state.selectedId)?.category;
     return visible.some(item => item.id === id && item.category === activeCategory) ? itemButtons[id] : null;
   } };
-  return { state, document, commit, intro, gallery, categoryButtons, itemButtons,
+  return { state, document, commit, intro, showcase, gallery, categoryButtons, itemButtons,
     get article() { return article; }, get heading() { return heading; } };
 }
 

@@ -1,4 +1,4 @@
-import { AGENT_EXPERIMENT_CATEGORY_ANCHORS, AGENT_EXPERIMENT_INTRO_ANCHOR } from './agentExperimentNavigation.ts';
+import { AGENT_EXPERIMENT_CATEGORY_ANCHORS, AGENT_EXPERIMENT_INTRO_ANCHOR, AGENT_EXPERIMENT_SHOWCASE } from './agentExperimentNavigation.ts';
 
 /** 공개 이동 계약만 담는 경량 목록이다. 원문/미디어 목록과의 일치는 테스트가 확인한다. */
 export const PUBLIC_AGENT_EXPERIMENT_TARGETS = [
@@ -44,7 +44,7 @@ const ITEM_ACTIONS = PUBLIC_AGENT_EXPERIMENT_TARGETS.map(({ id }) => `agent-expe
 const PUBLIC_CATEGORY_ANCHORS = Object.entries(AGENT_EXPERIMENT_CATEGORY_ANCHORS)
   .filter(([category]) => PUBLIC_AGENT_EXPERIMENT_TARGETS.some((item) => item.category === category));
 export const AGENT_EXPERIMENT_VIEW_ACTIONS = [
-  'agent-experiments', ...PUBLIC_CATEGORY_ANCHORS.map(([, anchor]) => anchor), ...ITEM_ACTIONS,
+  'agent-experiments', 'agent-experiments-plaza', ...PUBLIC_CATEGORY_ANCHORS.map(([, anchor]) => anchor), ...ITEM_ACTIONS,
 ] as const;
 export type AgentExperimentViewAction = (typeof AGENT_EXPERIMENT_VIEW_ACTIONS)[number];
 export type PublicAgentExperimentTarget = (typeof PUBLIC_AGENT_EXPERIMENT_TARGETS)[number];
@@ -63,6 +63,9 @@ export interface AgentExperimentViewTarget {
 export const AGENT_EXPERIMENT_VIEW_TARGETS: readonly AgentExperimentViewTarget[] = [
   { action: 'agent-experiments', anchor: AGENT_EXPERIMENT_INTRO_ANCHOR,
     route: `/about-me#${AGENT_EXPERIMENT_INTRO_ANCHOR}`, label: 'SI 활용 실험 소개', kind: 'intro' },
+  // 분류 탭 위의 대표 실험 카드. 탭을 고르지 않으므로 소개처럼 앵커로 바로 간다.
+  { action: 'agent-experiments-plaza', anchor: AGENT_EXPERIMENT_SHOWCASE.anchor,
+    route: `/about-me#${AGENT_EXPERIMENT_SHOWCASE.anchor}`, label: AGENT_EXPERIMENT_SHOWCASE.title, kind: 'intro' },
   ...PUBLIC_CATEGORY_ANCHORS.map(([category, anchor]) => ({
     action: anchor, anchor, route: `/about-me#${anchor}`, label: category, kind: 'category' as const,
     category: category as AgentExperimentCategory,
