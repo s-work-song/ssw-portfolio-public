@@ -11,8 +11,24 @@ export type BenchmarkProjectId =
   | 'duck-typing'
   | 'strongly-typed-values';
 
+/**
+ * 공개 벤치마크를 연구 화면의 어느 패널에 묶을지 나타낸다.
+ * performance는 연구 탭 카드와 이어지는 성능 실험, csharp는 C# 언어 기능과 타입 표현 비교다.
+ */
+export type BenchmarkCatalogId = 'performance' | 'csharp';
+
+export interface BenchmarkCatalog {
+  id: BenchmarkCatalogId;
+  /** 챗봇 화면 이동과 둘러보기가 가리키는 DOM id다. 바꾸면 이동 표도 함께 바꾼다. */
+  anchorId: string;
+  eyebrow: string;
+  title: string;
+  intro: string;
+}
+
 export interface BenchmarkProject {
   id: BenchmarkProjectId;
+  catalog: BenchmarkCatalogId;
   title: string;
   summary: string;
   tags: readonly string[];
@@ -42,9 +58,29 @@ export const SIMD_RECORD_BASELINE_ROOT_URL =
 export const SIMD_RECORD_BASELINE_SOURCE_URL =
   `${GITHUB_REPOSITORY}/blob/${SIMD_RECORD_BASELINE_COMMIT}/benchmarks/simd-avx2/src/SSW.Benchmarks.SimdAvx2/Implementations/Simd`;
 
+export const BENCHMARK_CATALOGS: readonly BenchmarkCatalog[] = [
+  {
+    id: 'performance',
+    anchorId: 'research-benchmark-code',
+    eyebrow: 'PUBLIC BENCHMARKS',
+    title: '공개 벤치마크 코드',
+    intro:
+      '연구 탭에서 설명하는 구현 일부를 독립 실행 가능한 .NET 8 솔루션으로 재구성했습니다. 각 프로젝트에는 구현, 테스트와 BenchmarkDotNet 러너가 분리되어 있습니다.',
+  },
+  {
+    id: 'csharp',
+    anchorId: 'research-csharp-optimization',
+    eyebrow: 'C# OPTIMIZATION',
+    title: 'C# 최적화',
+    intro:
+      'foreach 패턴과 값 형식처럼 C# 언어 기능과 타입 표현만 바꿔 같은 결과를 내는 구현을 비교했습니다. 각 프로젝트에는 구현, 테스트와 BenchmarkDotNet 러너가 분리되어 있습니다.',
+  },
+] as const;
+
 export const BENCHMARK_PROJECTS: readonly BenchmarkProject[] = [
   {
     id: 'simd-avx2',
+    catalog: 'performance',
     title: 'SIMD AVX2 범위 합산',
     summary:
       '동일한 범위 합산 계약을 분기, 브랜치리스, AVX2, 언롤링, 곱셈-덧셈·프리페치와 병렬 처리로 구현해 비교합니다.',
@@ -61,6 +97,7 @@ export const BENCHMARK_PROJECTS: readonly BenchmarkProject[] = [
   },
   {
     id: 'counting-sort',
+    catalog: 'performance',
     title: '계수 정렬 재구성',
     summary:
       '바이트 정렬을 표준 라이브러리와 단일·2/4/8/16-way·병렬 계수 정렬로 구성하고 결과 동등성과 레지스터 스필 영향을 확인합니다.',
@@ -77,6 +114,7 @@ export const BENCHMARK_PROJECTS: readonly BenchmarkProject[] = [
   },
   {
     id: 'serialization-protobuf',
+    catalog: 'performance',
     title: 'Protobuf 직렬화와 Nibble Packing',
     summary:
       'JSON과 Protobuf 직렬화, 정수 인코딩, 4비트 값 패킹을 같은 데이터의 왕복 계약으로 비교합니다.',
@@ -93,6 +131,7 @@ export const BENCHMARK_PROJECTS: readonly BenchmarkProject[] = [
   },
   {
     id: 'duck-typing',
+    catalog: 'csharp',
     title: 'Duck Typing 열거 방식 비교',
     summary:
       '인터페이스, boxing, 패턴 기반 struct 열거와 ref struct 열거를 같은 토큰화 결과 아래에서 비교합니다.',
@@ -106,6 +145,7 @@ export const BENCHMARK_PROJECTS: readonly BenchmarkProject[] = [
   },
   {
     id: 'strongly-typed-values',
+    catalog: 'csharp',
     title: '강타입 값 객체 표현 비교',
     summary:
       '원시 정수, readonly record struct 값 객체와 class wrapper의 타입 경계와 표현 비용을 비교합니다.',

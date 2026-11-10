@@ -2,11 +2,13 @@
 
 import type { ReactNode } from 'react';
 import {
+  BENCHMARK_CATALOGS,
   BENCHMARK_PROJECTS,
   BENCHMARK_PROJECT_BY_ID,
   BENCHMARK_ROOT_URL,
   benchmarkReadmeUrl,
   benchmarkTreeUrl,
+  type BenchmarkCatalogId,
   type BenchmarkProject,
   type BenchmarkProjectId,
 } from '@/features/research/data/benchmarks';
@@ -86,32 +88,37 @@ export function BenchmarkEvidence({
   );
 }
 
-export function BenchmarkCatalog() {
+export function BenchmarkCatalog({
+  catalogId,
+}: Readonly<{ catalogId: BenchmarkCatalogId }>) {
+  const catalog = BENCHMARK_CATALOGS.find((item) => item.id === catalogId);
+  if (!catalog) return null;
+  const projects = BENCHMARK_PROJECTS.filter(
+    (project) => project.catalog === catalogId,
+  );
+  const titleId = `${catalog.anchorId}-title`;
+
   return (
     <section
-      id="research-benchmark-code"
+      id={catalog.anchorId}
       tabIndex={-1}
       className={styles.catalog}
-      aria-labelledby="research-benchmark-code-title"
+      aria-labelledby={titleId}
     >
       <div className={styles.catalogHeader}>
         <div>
-          <span className={styles.eyebrow}>PUBLIC BENCHMARKS</span>
-          <h3 id="research-benchmark-code-title" className={styles.catalogTitle}>
-            공개 벤치마크 코드
+          <span className={styles.eyebrow}>{catalog.eyebrow}</span>
+          <h3 id={titleId} className={styles.catalogTitle}>
+            {catalog.title}
           </h3>
         </div>
         <ExternalLink href={BENCHMARK_ROOT_URL}>전체 폴더 보기</ExternalLink>
       </div>
 
-      <p className={styles.catalogIntro}>
-        연구 탭에서 설명하는 구현 일부를 독립 실행 가능한 .NET 8 솔루션으로
-        재구성했습니다. 각 프로젝트에는 구현, 테스트와 BenchmarkDotNet 러너가
-        분리되어 있습니다.
-      </p>
+      <p className={styles.catalogIntro}>{catalog.intro}</p>
 
       <div className={styles.catalogGrid}>
-        {BENCHMARK_PROJECTS.map((project) => (
+        {projects.map((project) => (
           <article key={project.id} className={styles.catalogCard}>
             <div className={styles.catalogCardHeader}>
               <h4>{project.title}</h4>

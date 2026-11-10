@@ -196,9 +196,13 @@ test('최적화 탭의 주의점 카드는 벤치마크 목록 뒤에 놓이고 
   const tab = panels.slice(panels.indexOf("activeTab === 'optimization'"), panels.indexOf("activeTab === 'cpu'"));
   const overview = tab.indexOf('id="research-optimization-overview"');
   const caution = tab.indexOf('id="research-optimization-caution"');
-  const catalog = tab.indexOf('<BenchmarkCatalog />');
-  // 개요가 "아래에 연결했다"고 한 벤치마크 목록을 바로 다음에 두고, 주의점은 그 뒤에 둔다.
-  assert.ok(overview >= 0 && catalog > overview && caution > catalog, '개요, 벤치마크 목록, 주의점 순서');
+  const catalog = tab.indexOf('<BenchmarkCatalog catalogId="performance"');
+  const csharpCatalog = tab.indexOf('<BenchmarkCatalog catalogId="csharp"');
+  // 개요가 "아래에 연결했다"고 한 벤치마크 목록들을 바로 다음에 두고, 주의점은 그 뒤에 둔다.
+  assert.ok(
+    overview >= 0 && catalog > overview && csharpCatalog > catalog && caution > csharpCatalog,
+    '개요, 벤치마크 목록, C# 최적화 목록, 주의점 순서',
+  );
   const card = tab.slice(caution);
   // 기록 깨기는 숨긴 이스터에그라 개요 카드에 드러내지 않는다.
   assert.doesNotMatch(card, /토발즈|Torvalds|painful|악랄|🥚|기록 깨기/u);

@@ -46,6 +46,7 @@ const RESEARCH_TAB_BY_ANCHOR: Readonly<Record<string, ChatPortfolioResearchTab>>
   'research-optimization-overview': 'optimization',
   'research-optimization-caution': 'optimization',
   'research-benchmark-code': 'optimization',
+  'research-csharp-optimization': 'optimization',
   'research-panel-optimization': 'optimization',
   'research-cpu-simd': 'cpu',
   'research-counting-sort': 'cpu',

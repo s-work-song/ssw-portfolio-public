@@ -42,6 +42,7 @@ const RESEARCH_ACTION_TARGET_TABS: Readonly<
   'research-optimization-overview': 'optimization',
   'research-optimization-caution': 'optimization',
   'research-benchmark-code': 'optimization',
+  'research-csharp-optimization': 'optimization',
   'research-cpu-simd': 'cpu',
   'research-counting-sort': 'cpu',
   'research-memory-layout': 'memory',

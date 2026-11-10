@@ -93,7 +93,9 @@ export default function ResearchPanels({ activeTab }: { activeTab: ResearchTabId
               </div>
             </section>
 
-            <BenchmarkCatalog />
+            {/* 개요가 "아래에 연결했다"고 한 공개 코드 목록이다. 성능 실험과 C# 언어 기능 비교를 나눠 보인다. */}
+            <BenchmarkCatalog catalogId="performance" />
+            <BenchmarkCatalog catalogId="csharp" />
 
             {/* 에이전트로 극한 최적화를 할 때의 주의점. 차분한 안내만 두고 강한 표현·인용은 넣지 않는다.
                 개요가 "아래에 연결했다"고 한 벤치마크 목록을 먼저 보이고, 이 참고는 그 뒤에 둔다. */}
