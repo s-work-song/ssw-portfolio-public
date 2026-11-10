@@ -126,7 +126,7 @@ export const aboutArchiveProjects: AboutArchiveProject[] = [
     id: 'archive-canvas-dodge-game',
     title: 'Canvas 피하기 게임',
     category: 'Canvas Game',
-    desc: 'HTML Canvas와 JavaScript로 만든 브라우저 게임입니다. 방향키로 캐릭터를 움직여 장애물을 피하며 생존 시간을 기록합니다. 당시 작성한 단일 HTML 파일을 그대로 실행할 수 있습니다.',
+    desc: 'HTML Canvas와 JavaScript로 만든 브라우저 게임입니다.\n\n방향키로 캐릭터를 움직여 장애물을 피하며 생존 시간을 기록합니다. 당시 작성한 단일 HTML 파일을 그대로 실행할 수 있습니다.',
     status: '단일 HTML 원본 실행',
     tags: ['HTML', 'Canvas', 'JavaScript'],
     preview: {
@@ -155,7 +155,7 @@ export const aboutArchiveProjects: AboutArchiveProject[] = [
     id: 'archive-wpf-excel-row-mapper',
     title: '엑셀 행 매핑 WPF 앱',
     category: 'WPF Desktop App',
-    desc: '반복적인 엑셀 작업의 생산성을 높이기 위해 만든 데스크톱 앱입니다. 정부24에서 조회한 토지대장 정보를 주소·지번 기준으로 원본 엑셀 행에 매핑해 누락 정보를 채우는 WinForms 프로토타입을 만든 뒤, WPF 기반의 MVVM 구조로 전환해 실제 작업에 사용했습니다.',
+    desc: '반복적인 엑셀 작업의 생산성을 높이기 위해 만든 데스크톱 앱입니다.\n\n정부24에서 조회한 토지대장 정보를 주소·지번 기준으로 원본 엑셀 행에 매핑해 누락 정보를 채우는 WinForms 프로토타입을 만든 뒤, WPF 기반의 MVVM 구조로 전환해 실제 작업에 사용했습니다.',
     status: '실사용 화면 보관',
     tags: ['C#', 'WPF', 'MVVM', 'Excel'],
     preview: {
@@ -179,7 +179,7 @@ export const aboutArchiveProjects: AboutArchiveProject[] = [
     id: 'archive-android-ar-campfire',
     title: 'Android AR 캠프파이어 앱',
     category: 'Android AR',
-    desc: 'VR/AR 콘텐츠 개발 과정(메디치이앤에스) 수강 중 제작한 Android AR 앱입니다. 현실 공간에 가상의 캠프파이어를 배치하고 점화하는 과정을 시연 영상과 이미지로 담았습니다.',
+    desc: 'VR/AR 콘텐츠 개발 과정(메디치이앤에스) 수강 중 제작한 Android AR 앱입니다.\n\n현실 공간에 가상의 캠프파이어를 배치하고 점화하는 과정을 시연 영상과 이미지로 담았습니다.',
     status: 'VR/AR 콘텐츠 개발 과정 제작 · 시연 영상·화면 보관',
     tags: ['Android', 'AR', 'Mobile'],
     wide: true,
@@ -226,7 +226,7 @@ export const aboutProjects: AboutProject[] = [
     id: 'project-common-infrastructure',
     title: '공용 인프라 프로젝트군',
     category: 'Shared Infrastructure',
-    desc: '여러 프로젝트에서 반복해서 필요한 인증·채팅·파일·미디어·알림·분석 기능을 공용 구성 요소로 분리했습니다. 게이트웨이·설정·스케줄링·관측 기능도 함께 구성했습니다.',
+    desc: '여러 프로젝트에서 반복해서 필요한 인증·채팅·파일·미디어·알림·분석 기능을 공용 구성 요소로 분리했습니다.\n\n게이트웨이·설정·스케줄링·관측 기능도 함께 구성했습니다.',
     status: '설계 문서 공개',
     gallery: {
       images: [
@@ -260,7 +260,7 @@ export const aboutProjects: AboutProject[] = [
     id: 'project-ecommerce-demo',
     title: '이커머스 데모',
     category: 'Commerce Demo',
-    desc: '상품 조회, 장바구니, 주문, 관리자 기능을 구현한 이커머스 데모입니다. 실제 결제 기능은 포함하지 않았으며, 배너와 상품 이미지는 SI 도구로 제작했습니다.',
+    desc: '상품 조회, 장바구니, 주문, 관리자 기능을 구현한 이커머스 데모입니다.\n\n실제 결제 기능은 포함하지 않았으며, 배너와 상품 이미지는 SI 도구로 제작했습니다.',
     status: '데모·설계 문서 공개',
     gallery: {
       images: [
@@ -356,7 +356,7 @@ export const aboutProjects: AboutProject[] = [
     id: 'project-asset-library',
     title: 'SSW Asset Library',
     category: 'Agent-connected Asset Library',
-    desc: '이미지·3D 모델·음원·문서를 에셋 단위로 묶고 버전과 제작 기록을 함께 관리하는 개인용 웹 라이브러리입니다. 자료 검색과 파일 미리보기, 그룹·참조 맵, 버전 백업과 복원을 제공합니다. MCP를 통해 SI 에이전트의 에셋 검색·등록·다운로드와 제작 기록 관리 작업을 연결했습니다.',
+    desc: '이미지·3D 모델·음원·문서를 에셋 단위로 묶고 버전과 제작 기록을 함께 관리하는 개인용 웹 라이브러리입니다.\n\n자료 검색과 파일 미리보기, 그룹·참조 맵, 버전 백업과 복원을 제공합니다. MCP를 통해 SI 에이전트의 에셋 검색·등록·다운로드와 제작 기록 관리 작업을 연결했습니다.',
     status: '실행 화면 공개',
     gallery: {
       images: [
