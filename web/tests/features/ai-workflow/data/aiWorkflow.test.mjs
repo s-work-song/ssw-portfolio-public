@@ -61,7 +61,13 @@ test('실제 사례는 있는 단계에 연결하고 사용 환경만 남기며 
   for (const example of Object.values(aiWorkflowExamples)) {
     assert.deepEqual(Object.keys(example.environment).sort(), ['project', 'tool']);
     assert.ok(example.summary && example.privacyNote);
-    assert.doesNotMatch(JSON.stringify(example), /[A-Z]:[\\/]|https?:\/\/|_si-adoption-levels-imgs/u);
+    // 사이트 밖 주소는 externalLink(공개 페이지, https, sworkagency.com 아래)에만 둔다. 본문·캡처에는 주소를 넣지 않는다.
+    const { externalLink, ...rest } = example;
+    if (externalLink) {
+      assert.ok(externalLink.label);
+      assert.match(externalLink.href, /^https:\/\/([a-z0-9-]+\.)*sworkagency\.com\//u);
+    }
+    assert.doesNotMatch(JSON.stringify(rest), /[A-Z]:[\\/]|https?:\/\/|_si-adoption-levels-imgs/u);
     assert.doesNotMatch(JSON.stringify(example), /Gemini|GPT-\d|Extra High|사용 모델/u);
   }
   for (const id of ['chat', 'read-only', 'implementation']) assert.ok(aiWorkflowExamples[id].request);

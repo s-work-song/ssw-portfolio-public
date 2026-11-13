@@ -41,6 +41,13 @@ export default function WorkflowExample({ stageId, example }: WorkflowExamplePro
           </Link>
         </p>
       )}
+      {example.externalLink && (
+        <p className={styles.privacyNote}>
+          <a className={styles.captureLink} href={example.externalLink.href} target="_blank" rel="noopener noreferrer">
+            {example.externalLink.label} <span aria-hidden="true">↗</span>
+          </a>
+        </p>
+      )}
     </section>
   );
 }

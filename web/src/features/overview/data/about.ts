@@ -351,6 +351,13 @@ export const aboutProjects: AboutProject[] = [
       ],
       placeholder: '메일, 백로그, 타임라인, 코드, 에셋, 기록 화면입니다.',
     },
+    links: [
+      {
+        label: '공개 소개 페이지',
+        href: 'https://about.agents-hub.sworkagency.com/',
+        kind: 'demo',
+      },
+    ],
   },
   {
     id: 'project-asset-library',

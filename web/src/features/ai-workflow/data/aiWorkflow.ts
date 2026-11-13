@@ -180,6 +180,8 @@ export interface AiWorkflowExample {
   portrait?: boolean;
   frameAspectRatio?: string;
   relatedLink?: { href: string; label: string };
+  /** 사이트 밖 공개 페이지 링크(새 탭으로 연다). */
+  externalLink?: { href: string; label: string };
   captures: AiWorkflowCapture[];
 }
 
@@ -344,6 +346,7 @@ export const aiWorkflowExamples: Partial<Record<AiWorkflowStageId, AiWorkflowExa
     },
     privacyNote: 'pocket-notes는 캡처를 위해 임의로 만든 가상의 프로젝트입니다. 메일 화면은 실제 메일 대신 같은 규약 형식으로 만든 이 프로젝트의 예시 데이터를 앱에 열어 찍었고, 타임라인은 실제 협업 폴더를 그린 화면입니다.',
     relatedLink: { href: '/about-me/#project-agents-hub', label: '소개 페이지의 SSW Agents Hub 보기' },
+    externalLink: { href: 'https://about.agents-hub.sworkagency.com/how-it-works/', label: 'SSW Agents Hub 공개 소개 페이지에서 작동 방식·규약 보기' },
     captures: [
       {
         title: '01 · Claude가 Codex에 보낸 요청 메일',
