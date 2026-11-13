@@ -228,6 +228,7 @@ export const aboutProjects: AboutProject[] = [
     title: '공용 인프라 프로젝트군',
     category: 'Shared Infrastructure',
     desc: '여러 프로젝트에서 반복해서 필요한 인증·채팅·파일·미디어·알림·분석 기능을 공용 구성 요소로 분리했습니다.\n\n게이트웨이·설정·스케줄링·관측 기능도 함께 구성했습니다.',
+    status: '설계 문서 공개',
     gallery: {
       images: [
         {
@@ -261,6 +262,7 @@ export const aboutProjects: AboutProject[] = [
     title: '이커머스 데모',
     category: 'Commerce Demo',
     desc: '상품 조회, 장바구니, 주문, 관리자 기능을 구현한 이커머스 데모입니다.\n\n실제 결제 기능은 포함하지 않았으며, 배너와 상품 이미지는 SI 도구로 제작했습니다.',
+    status: '데모·설계 문서 공개',
     gallery: {
       images: [
         {
@@ -314,6 +316,7 @@ export const aboutProjects: AboutProject[] = [
     title: 'SSW Agents Hub',
     category: 'Multi-agent Collaboration Hub',
     desc: '여러 SI 에이전트가 파일 메일로 일을 나누는 .agents-ssw 협업 폴더의 현황을 한 화면에 보여 주는 Windows 데스크톱 앱입니다. 에이전트는 앱 없이 규약과 메일 파일만으로 협업하고, 앱은 그 현황을 읽어서 보여 줍니다.\n\n수신함별 메일과 감시 상태, 백로그 칸반, 메일 타임라인과 활동 달력, 에셋 미리보기를 제공하고, 프로젝트 코드의 테스트와 타입 구조를 다이어그램으로 보여 줍니다.\n\n메일·백로그·에셋·기록 화면은 캡처를 위해 임의로 만든 가상 프로젝트 pocket-notes의 예시 데이터입니다.',
+    status: '실행 화면 공개',
     gallery: {
       images: [
         {

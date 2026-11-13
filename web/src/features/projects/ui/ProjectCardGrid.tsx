@@ -84,6 +84,7 @@ export default function ProjectCardGrid({ projects }: { projects: AboutProject[]
               : 'transparent',
             color: project.statusTone === 'warning' ? '#f97316' : 'var(--text-mute)',
             fontSize: '0.82rem',
+            whiteSpace: 'nowrap',
             fontWeight: project.statusTone === 'warning' ? 700 : 400,
           }}>
             {project.status}
