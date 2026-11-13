@@ -72,7 +72,7 @@ export default function ProjectCardGrid({ projects }: { projects: AboutProject[]
               <p>{project.experiment.observation}</p>
             </section>
           )}
-          <span style={{
+          {project.status && <span style={{
             alignSelf: 'flex-start',
             padding: project.statusTone === 'warning' ? '5px 9px' : 0,
             border: project.statusTone === 'warning'
@@ -87,7 +87,7 @@ export default function ProjectCardGrid({ projects }: { projects: AboutProject[]
             fontWeight: project.statusTone === 'warning' ? 700 : 400,
           }}>
             {project.status}
-          </span>
+          </span>}
           {project.links && project.links.length > 0 && (
             <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'flex-end', gap: '8px', marginTop: '2px' }}>
               {project.links.map((link) => {
