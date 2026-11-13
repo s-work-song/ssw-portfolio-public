@@ -72,8 +72,9 @@ export default function ProjectCardGrid({ projects }: { projects: AboutProject[]
               <p>{project.experiment.observation}</p>
             </section>
           )}
+          {(project.status || (project.links && project.links.length > 0)) && (
+          <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '8px 12px', marginTop: '2px' }}>
           {project.status && <span style={{
-            alignSelf: 'flex-start',
             padding: project.statusTone === 'warning' ? '5px 9px' : 0,
             border: project.statusTone === 'warning'
               ? '1px solid color-mix(in srgb, #f97316 42%, transparent)'
@@ -90,7 +91,7 @@ export default function ProjectCardGrid({ projects }: { projects: AboutProject[]
             {project.status}
           </span>}
           {project.links && project.links.length > 0 && (
-            <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'flex-end', gap: '8px', marginTop: '2px' }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'flex-end', gap: '8px', marginLeft: 'auto' }}>
               {project.links.map((link) => {
                 const isDemo = link.kind === 'demo';
                 const linkStyle = {
@@ -141,6 +142,8 @@ export default function ProjectCardGrid({ projects }: { projects: AboutProject[]
                 );
               })}
             </div>
+          )}
+          </div>
           )}
         </article>
       ))}
