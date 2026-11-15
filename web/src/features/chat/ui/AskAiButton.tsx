@@ -27,8 +27,9 @@ interface AskAiButtonProps {
 /**
  * 정해진 질문 하나를 챗봇에 던지는 버튼이다.
  *
- * 아직 상태를 확인하지 않았어도 진입점을 보여 주고 클릭한 실제 질문으로 확인한다.
- * 확인된 오프라인이면 숨기고, 확인·답변을 기다리는 동안 같은 질문을 중복하지 않는다.
+ * 챗봇이 온라인으로 확인된 뒤에만 보인다. 확인 전·확인 중에는 자리만 차지한 채 보이지 않게 두어
+ * 확인이 끝나 버튼이 나타날 때 아래 내용이 밀리지 않게 하고, 확인된 오프라인이면 아예 그리지 않는다.
+ * 답변을 기다리는 동안에는 같은 질문을 중복하지 않는다.
  *
  * 클릭 처리는 순서가 중요하다. 투어에 먼저 알려야 그 시점의 `waiting-for-ai`
  * 상태를 보고 체험을 받아들일 수 있고, 그 반환값이 true일 때만 답변 뒤에 완료를
@@ -52,6 +53,7 @@ export function AskAiButton({
   } = useChat();
 
   if (availability === "offline") return null;
+  const ready = availability === "online";
 
   return (
     <button
@@ -59,7 +61,10 @@ export function AskAiButton({
       className={`${styles.button} ${
         align === "end" ? styles.alignEnd : ""
       } ${className}`.trim()}
-      disabled={isLoading || availability === "checking" || retryWaitSeconds > 0}
+      disabled={!ready || isLoading || retryWaitSeconds > 0}
+      aria-hidden={ready ? undefined : true}
+      tabIndex={ready ? undefined : -1}
+      style={ready ? undefined : { visibility: "hidden" }}
       title={retryWaitSeconds > 0 ? `${retryWaitSeconds}초 후 질문할 수 있어요.` : undefined}
       data-guided-tour-target={guidedTourTarget}
       onClick={async () => {
