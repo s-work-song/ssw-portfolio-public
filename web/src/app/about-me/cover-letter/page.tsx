@@ -145,6 +145,77 @@ const TRAITS = [
   },
 ];
 
+/**
+ * 채용 과제와 코딩 테스트(지식 문서 employment-preferences.md 채용 과제와 코딩 테스트와 같은 내용).
+ * 참여하는 것부터 하지 않는 것 순서로 둔다. tone은 꼬리표 색(join: 강조, 나머지: 중립).
+ */
+const HIRING_TESTS = [
+  {
+    tag: '참여',
+    tone: 'join',
+    title: '서로 맞는지 확인할 수 있는 과제',
+    body: '실제 입사 후 해결할 문제와 연결되거나, 새로운 기술적 도전으로서 서로 맞는지 확인할 수 있는 과제는 범위를 검토한 뒤 무상으로 참여합니다.',
+  },
+  {
+    tag: '협의',
+    tone: 'neutral',
+    title: '기계적·반복적인 과제',
+    body: '역량과 적합성을 실질적으로 확인하기 어려운 기계적·반복적 과제는 원칙적으로 진행하지 않습니다. 꼭 필요한 절차라면 소요 시간에 대한 비용을 협의합니다.',
+  },
+  {
+    tag: '별도 계약',
+    tone: 'neutral',
+    title: '실제 업무에 쓸 결과물을 요구하는 과제',
+    body: '회사가 실제 업무에 활용할 수 있는 구현 결과를 요구하는 과제는 채용 평가가 아니라 외주 업무로 보고, 별도 계약과 비용을 협의합니다.',
+  },
+  {
+    tag: '응시 안 함',
+    tone: 'neutral',
+    title: '알고리즘형 코딩 테스트·라이브 코딩',
+    body: '알고리즘형 코딩 테스트와 라이브 코딩은 현재 응시하지 않습니다. 채용 절차로서는 존중하지만, 제가 찾는 포지션이나 조직 문화와는 맞지 않는다고 생각합니다.',
+  },
+] as const;
+
+/**
+ * 술과 담배(지식 문서 employment-preferences.md 음주 중심의 회식 문화·실내 흡연과 같은 내용).
+ * 술·담배 공통의 생각은 섹션 첫 문단에 두고, 카드는 가능한 선 → 지양하는 선 순서.
+ */
+const DRINKING = [
+  {
+    tag: '가능',
+    tone: 'join',
+    title: '연례행사로 열리는 회식',
+    body: '연례행사로 열리는 회식에는 적당히 참여할 수 있습니다.',
+  },
+  {
+    tag: '지양',
+    tone: 'warn',
+    title: '잦은 회식과 갑작스러운 번개',
+    body: '일상적이고 잦은 회식, 갑작스러운 번개 모임에는 참여하기 어렵습니다.',
+  },
+] as const;
+
+const SMOKING = [
+  {
+    tag: '가능',
+    tone: 'join',
+    title: '흡연 시간의 대화',
+    body: '비흡연자이지만, 친한 사이라면 흡연 시간에 함께 나가 대화하는 정도는 괜찮습니다.',
+  },
+  {
+    tag: '지양',
+    tone: 'warn',
+    title: '실내 흡연',
+    body: '사무실은 물론이고 베란다·화장실 같은 실내 공간에서의 흡연은 곤란합니다. 실제로 겪어 본 일이라 미리 적어 둡니다.',
+  },
+] as const;
+
+/** 음주에 대한 생각을 자세히 쓴 공개 기록. */
+const DRINKING_LOGS = [
+  { slug: 'when-drinking-becomes-a-workplace-problem', title: '음주가 개인의 선택을 넘어 문제가 되는 순간' },
+  { slug: 'health-as-the-most-important-long-term-asset', title: '건강을 가장 중요한 장기 자산으로 보는 이유' },
+] as const;
+
 /** 앞으로 탐구하고 싶은 분야. */
 const NEXT_INTERESTS = ['XR', '게임 제작', '임베디드', '실제 제품 만들기'];
 
@@ -200,7 +271,40 @@ function CoverPanel({ id, children }: { id: string; children: React.ReactNode })
   );
 }
 
-const sectionTitleStyle: React.CSSProperties = { fontSize: '1.5rem', fontWeight: 700, margin: 0, color: 'var(--text)', lineHeight: 1.2 };
+/**
+ * 꼬리표 색: join은 강조 색, warn은 옅은 주황 경고색(프로젝트 카드의 경고 상태 꼬리표와 같은 #f97316 계열), neutral은 중립 색.
+ */
+const TAG_TONES = {
+  join: { border: '1px solid var(--border)', background: 'var(--accent-soft)', color: 'var(--accent-text)' },
+  // 글자는 본문 색과 섞어 밝은 테마에선 진한 주황, 어두운 테마에선 밝은 주황이 되게 한다(밝은 테마에서 #f97316 그대로는 대비가 모자람).
+  warn: { border: '1px solid color-mix(in srgb, #f97316 42%, transparent)', background: 'color-mix(in srgb, #f97316 13%, transparent)', color: 'color-mix(in srgb, #f97316 68%, var(--text))' },
+  neutral: { border: '1px solid var(--border)', background: 'var(--bg-elev-2)', color: 'var(--text-dim)' },
+} as const satisfies Record<string, React.CSSProperties>;
+
+interface TagCardItem {
+  tag: string;
+  tone: keyof typeof TAG_TONES;
+  title: string;
+  body: string;
+  /** 본문 아래 따로 두는 문단들. */
+  detail?: readonly string[];
+}
+
+/** 꼬리표(참여·가능·지양 등)가 붙은 카드 목록. 테스트 전형 안내와 술과 담배 섹션이 함께 쓴다. */
+function TagCards({ items }: { items: readonly TagCardItem[] }) {
+  return items.map((item) => (
+    <li key={item.title} style={cardStyle}>
+      <h5 style={cardTitleStyle}>
+        <span style={{ ...tagStyle, ...TAG_TONES[item.tone] }}>{item.tag}</span>
+        {item.title}
+      </h5>
+      <p style={cardTextStyle}>{item.body}</p>
+      {item.detail?.map((text) => <p key={text} style={cardTextStyle}>{text}</p>)}
+    </li>
+  ));
+}
+
+const sectionTitleStyle: React.CSSProperties ={ fontSize: '1.5rem', fontWeight: 700, margin: 0, color: 'var(--text)', lineHeight: 1.2 };
 const leadStyle: React.CSSProperties = { margin: 0, fontSize: '1.03125rem', color: 'var(--text-dim)', lineHeight: 1.7, wordBreak: 'keep-all' };
 const cardGridStyle: React.CSSProperties = { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 340px), 1fr))', gap: '16px' };
 
@@ -404,6 +508,71 @@ export default function CoverLetterPage() {
         <AskAiButton align="end" question="자기소개서의 「강점과 약점」에 적힌 강점과 약점, 약점을 보완하는 방식을 실제 사례와 함께 설명해 주세요." />
       </CoverPanel>
 
+      {/* Hobbies */}
+      <CoverPanel id="cover-letter-hobbies">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          <h3 style={sectionTitleStyle}>취미와 관심사</h3>
+          <p style={leadStyle}>
+            관심의 중심은 코딩 자체보다 컴퓨터와 계산 자원을 어떻게 구성하고 활용해 원하는 결과를 만드느냐에 있습니다. 그래서 컴퓨터를 다루는 취미가 곧 일상이기도 합니다.
+          </p>
+        </div>
+        <div style={cardGridStyle}>
+          {HOBBIES.map((item) => (
+            <div key={item.title} style={cardStyle}>
+              <h5 style={cardTitleStyle}>{item.title}</h5>
+              <p style={cardTextStyle}>{item.body}</p>
+            </div>
+          ))}
+        </div>
+        <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '8px' }}>
+          <span style={{ ...cardTextStyle, fontWeight: 600, color: 'var(--text)', marginRight: '4px' }}>앞으로 탐구하고 싶은 분야</span>
+          {NEXT_INTERESTS.map((name) => (
+            <span key={name} style={{ padding: '4px 12px', borderRadius: '999px', border: '1px solid var(--border)', background: 'var(--bg)', color: 'var(--text-dim)', fontSize: '0.875rem', fontWeight: 600 }}>{name}</span>
+          ))}
+        </div>
+        <AskAiButton align="end" question="자기소개서의 「취미와 관심사」가 개발 방식이나 지금의 작업과 어떻게 이어지는지 설명해 주세요." />
+      </CoverPanel>
+
+      {/* Drinking and smoking */}
+      <CoverPanel id="cover-letter-drinking-smoking">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          <h3 style={sectionTitleStyle}>술과 담배</h3>
+          <p style={leadStyle}>
+            술과 담배는 즐기지 않습니다. 시간과 건강, 돈을 모두 소모한다고 생각하기 때문입니다.
+          </p>
+          <p style={leadStyle}>
+            특히 술은 마신 다음 날 컨디션이 떨어진 채로 일하게 되는데, 그런 상태로 작업하는 것은 되도록 피하고 싶습니다.
+          </p>
+          <p style={leadStyle}>
+            이 내용을 따로 적는 이유는, 공백기 이전 현업에 있을 때 음주 문화가 업무 스트레스의 큰 부분을 차지했기 때문입니다. 코로나19 시기를 거쳐 회식 문화가 많이 바뀌었다고는 하지만, 현업을 꾸준히 지키고 있는 지인들에게 들어 보면 여전히 크게 달라지지는 않은 것 같습니다. 그래서 함께 일할 때 미리 맞춰 두면 좋을 내용을 아래에 정리했습니다.
+          </p>
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+          <h4 style={subheadStyle}>술</h4>
+          <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <TagCards items={DRINKING} />
+          </ul>
+          <p style={{ ...cardTextStyle, fontSize: '0.875rem' }}>
+            음주에 대한 생각을 자세히 쓴 글:{' '}
+            {DRINKING_LOGS.map((log, index) => (
+              <React.Fragment key={log.slug}>
+                {index > 0 ? ' · ' : null}
+                <LogReadingLink slug={log.slug} style={{ color: 'var(--accent-text)', fontWeight: 600 }}>「{log.title}」</LogReadingLink>
+              </React.Fragment>
+            ))}
+          </p>
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+          <h4 style={subheadStyle}>담배</h4>
+          <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <TagCards items={SMOKING} />
+          </ul>
+        </div>
+        <AskAiButton align="end" question="자기소개서의 「술과 담배」에서 회식과 흡연에 대해 어디까지 괜찮고 어디부터 지양하는지 설명해 주세요." />
+      </CoverPanel>
+
+      <CareerTurningPointPreview />
+
       {/* Work priorities and conditions */}
       <CoverPanel id="cover-letter-values">
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -443,32 +612,20 @@ export default function CoverLetterPage() {
         <AskAiButton align="end" question="자기소개서의 「함께 일할 때 중요하게 보는 것」에서 합법성과 윤리를 가장 먼저 보는 이유와 나머지 기준을 설명해 주세요." />
       </CoverPanel>
 
-      {/* Hobbies */}
-      <CoverPanel id="cover-letter-hobbies">
+      {/* Hiring tests: 구직용 안내 */}
+      <CoverPanel id="cover-letter-hiring-tests">
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          <h3 style={sectionTitleStyle}>취미와 관심사</h3>
+          <p style={{ margin: 0, fontSize: '0.8125rem', fontWeight: 700, letterSpacing: '0.04em', color: 'var(--accent-text)' }}>구직 안내</p>
+          <h3 style={sectionTitleStyle}>테스트 전형 안내</h3>
           <p style={leadStyle}>
-            관심의 중심은 코딩 자체보다 컴퓨터와 계산 자원을 어떻게 구성하고 활용해 원하는 결과를 만드느냐에 있습니다. 그래서 컴퓨터를 다루는 취미가 곧 일상이기도 합니다.
+            상대를 평가하는 기준이 아니라, 서로 맞는지 미리 확인할 수 있도록 먼저 밝혀 두는 안내입니다. 참여하는 과제부터 순서대로 적었습니다.
           </p>
         </div>
-        <div style={cardGridStyle}>
-          {HOBBIES.map((item) => (
-            <div key={item.title} style={cardStyle}>
-              <h5 style={cardTitleStyle}>{item.title}</h5>
-              <p style={cardTextStyle}>{item.body}</p>
-            </div>
-          ))}
-        </div>
-        <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '8px' }}>
-          <span style={{ ...cardTextStyle, fontWeight: 600, color: 'var(--text)', marginRight: '4px' }}>앞으로 탐구하고 싶은 분야</span>
-          {NEXT_INTERESTS.map((name) => (
-            <span key={name} style={{ padding: '4px 12px', borderRadius: '999px', border: '1px solid var(--border)', background: 'var(--bg)', color: 'var(--text-dim)', fontSize: '0.875rem', fontWeight: 600 }}>{name}</span>
-          ))}
-        </div>
-        <AskAiButton align="end" question="자기소개서의 「취미와 관심사」가 개발 방식이나 지금의 작업과 어떻게 이어지는지 설명해 주세요." />
+        <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          <TagCards items={HIRING_TESTS} />
+        </ul>
+        <AskAiButton align="end" question="자기소개서의 「테스트 전형 안내」에서 과제 종류마다 어떻게 참여하는지 설명해 주세요." />
       </CoverPanel>
-
-      <CareerTurningPointPreview />
 
 
       <section style={{ 
