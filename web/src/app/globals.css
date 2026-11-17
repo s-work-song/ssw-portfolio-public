@@ -99,6 +99,9 @@
 html {
   scroll-behavior: smooth;
   scroll-padding-top: 84px;
+  /* 휴대폰 브라우저가 링크·버튼을 누를 때 덮는 파란 강조를 끈다(상속되므로 사이트 전체).
+     누른 느낌은 각 버튼의 :active 모양이 맡는다. */
+  -webkit-tap-highlight-color: transparent;
 }
 
 body {
@@ -572,6 +575,15 @@ input, select, textarea, button {
   background-color: var(--bg-elev);
   font-weight: 600;
   border-color: var(--border-strong);
+}
+
+/* 누를 때: 탭 모양 그대로 살짝 눌리는 느낌만 준다(파란 강조는 html에서 끈다). */
+.about-subnav-link:active {
+  color: var(--text);
+  background-color: var(--bg-elev);
+  border-color: var(--border);
+  transform: translateY(0) scale(0.98);
+  box-shadow: none;
 }
 
 .about-subnav-link[data-chat-action-tab-target="true"] {
@@ -1328,6 +1340,10 @@ code {
   background: color-mix(in srgb, var(--accent) 8%, var(--bg-elev));
 }
 
+.about-system-link:active {
+  transform: scale(0.97);
+}
+
 .about-system-link:focus-visible {
   outline: 3px solid var(--accent);
   outline-offset: 3px;
@@ -1350,11 +1366,18 @@ code {
   color: var(--accent-text) !important;
 }
 
-/* 탭은 제목·설정 아래에서 전체 너비를 같은 크기로 나눕니다. */
+.about-title-link:active .about-title {
+  color: var(--accent-text) !important;
+  opacity: 0.8;
+}
+
+/* 탭은 제목·설정 아래에서 전체 너비를 같은 크기로 나눕니다.
+   이름이 긴 탭(자기소개서 (Cover Letter))은 글자와 좌우 여백이 다 들어가도록
+   그 칸만 글자 폭만큼 넓히고, 나머지 칸이 남은 너비를 같은 크기로 나눕니다. */
 .about-header-nav {
   grid-column: 1 / -1;
   display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
+  grid-template-columns: repeat(6, minmax(max-content, 1fr));
   gap: 6px;
   width: 100%;
   min-width: 0;
@@ -1369,7 +1392,7 @@ code {
   justify-content: center;
   min-width: 0;
   min-height: 44px;
-  padding-inline: 6px;
+  padding-inline: 14px;
   text-align: center;
   white-space: nowrap;
   line-height: 1.4;
@@ -1400,6 +1423,11 @@ code {
   border-color: var(--border);
   transform: translateY(-1.5px);
   box-shadow: 0 4px 14px -3px rgba(0, 0, 0, 0.12);
+}
+
+.about-settings-link:active {
+  transform: scale(0.94);
+  box-shadow: none;
 }
 
 .about-settings-link-top {
