@@ -33,7 +33,7 @@ const STRENGTHS = [
 const WEAKNESSES = [
   {
     title: '즉석 구두 설명',
-    weakness: '정리된 글과 문서로는 잘 설명하지만, 회의에서 즉석으로 구두 설명을 풀어내는 것은 상대적으로 약한 편입니다.',
+    weakness: '정리된 글과 문서로는 잘 설명하지만, 즉석으로 구두 설명을 풀어내는 것은 상대적으로 약한 편입니다.',
     remedy: '중요한 논의는 자료를 먼저 정리해 공유하고, 구두로 논의한 뒤에는 결정 사항을 문서로 남깁니다.',
   },
   {
@@ -200,7 +200,7 @@ const SMOKING = [
     tag: '가능',
     tone: 'join',
     title: '흡연 시간의 대화',
-    body: '비흡연자이지만, 친한 사이라면 흡연 시간에 함께 나가 대화하는 정도는 괜찮습니다.',
+    body: '비흡연자이지만, 친한 사이라면 흡연 시간에 밖으로 함께 나가 지정된 장소에서 대화하는 정도는 괜찮습니다.',
   },
   {
     tag: '지양',
@@ -210,7 +210,7 @@ const SMOKING = [
   },
 ] as const;
 
-/** 음주에 대한 생각을 자세히 쓴 공개 기록. */
+/** 음주와 관련된 공개 기록. */
 const DRINKING_LOGS = [
   { slug: 'when-drinking-becomes-a-workplace-problem', title: '음주가 개인의 선택을 넘어 문제가 되는 순간' },
   { slug: 'health-as-the-most-important-long-term-asset', title: '건강을 가장 중요한 장기 자산으로 보는 이유' },
@@ -604,7 +604,7 @@ export default function CoverLetterPage() {
             <TagCards items={DRINKING} />
           </ul>
           <p style={{ ...cardTextStyle, fontSize: '0.875rem' }}>
-            음주에 대한 생각을 자세히 쓴 글:{' '}
+            음주와 관련된 기록:{' '}
             {DRINKING_LOGS.map((log, index) => (
               <React.Fragment key={log.slug}>
                 {index > 0 ? ' · ' : null}
@@ -629,7 +629,7 @@ export default function CoverLetterPage() {
           <p style={{ margin: 0, fontSize: '0.8125rem', fontWeight: 700, letterSpacing: '0.04em', color: 'var(--accent-text)' }}>구직 안내</p>
           <h3 style={sectionTitleStyle}>테스트 전형 안내</h3>
           <p style={leadStyle}>
-            채용 과정의 과제와 테스트에 어떻게 참여하는지, 참여하는 것부터 순서대로 적었습니다.
+            채용 과정 중에 있을 수 있는 테스트 전형에 대한 기준을, 참여 가능한 내용부터 순서대로 적었습니다.
           </p>
         </div>
         <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: '12px' }}>
