@@ -37,19 +37,19 @@ const WEAKNESSES = [
     remedy: '중요한 논의는 자료를 먼저 정리해 공유하고, 구두로 논의한 뒤에는 결정 사항을 문서로 남깁니다.',
   },
   {
-    title: '몰입이 끊길 때',
+    title: '몰입이 끊기는 것에 대한 예민함',
     weakness: '깊이 몰입한 상태가 예고 없이 끊기면 스트레스를 크게 받는 편입니다. 작업 전환 자체는 받아들이지만, 몰입이 반복해서 끊기면 결과 품질이 떨어진다고 봅니다.',
     remedy: '급하지 않은 요청은 정리해서 받고, 급한 사안은 구두로 알려 주시면 우선순위를 바로 조정합니다.',
   },
   {
-    title: '마감과 품질',
-    weakness: '품질을 먼저 챙기고 싶은 성향이 있습니다.',
-    remedy: '현실에서는 마감을 먼저 지키는 것을 기본값으로 삼고 있고, 이 방식으로 문제가 된 적은 없습니다.',
+    title: '완성도에 대한 집착',
+    weakness: '품질을 먼저 챙기고 싶은 성향이 있어, 마감에 맞추느라 아쉬운 부분을 남긴 채 결과를 넘겨야 할 때 스트레스를 받는 편입니다.',
+    remedy: '현실에서는 마감을 먼저 지키는 것을 기본값으로 삼고 있고, 이 방식으로 문제가 된 적은 없습니다. 완성도에 대한 욕심도 많이 내려놓아서, 지금은 예전보다 스트레스를 덜 받습니다.',
   },
   {
-    title: '코드 스타일에 대한 고집',
-    weakness: '예전에는 코드 스타일을 사용 언어와 기술적 문맥을 고려한 정석으로 바로잡으려는 고집이 있었습니다.',
-    remedy: '지금은 팀이 합의한 스타일을 우선 기준으로 정하고 그대로 따르며, 정석적인 방식은 제안만 합니다.',
+    title: '정석을 따르려는 성향',
+    weakness: '코드 스타일을 사용 언어와 기술적 문맥을 고려한 정석에 맞추고 싶은 성향이 있어, 정석과 크게 다른 코드를 보면 스트레스를 받는 편입니다. 예전에는 이것이 바로잡으려는 고집으로 이어지기도 했습니다.',
+    remedy: '지금은 많이 내려놓아, 팀이 합의한 스타일을 우선 기준으로 정하고 그대로 따릅니다. 여건이 될 때는 관심 있는 동료들과 스터디를 열어 함께 학습하고, 현행 코드에 어떻게 적용할지 고민하는 방식으로 개선을 유도하기도 합니다.',
   },
 ];
 
@@ -533,45 +533,17 @@ export default function CoverLetterPage() {
         <AskAiButton align="end" question="자기소개서의 「취미와 관심사」가 개발 방식이나 지금의 작업과 어떻게 이어지는지 설명해 주세요." />
       </CoverPanel>
 
-      {/* Drinking and smoking */}
-      <CoverPanel id="cover-letter-drinking-smoking">
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          <h3 style={sectionTitleStyle}>술과 담배</h3>
-          <p style={leadStyle}>
-            술과 담배는 즐기지 않습니다. 시간과 건강, 돈을 모두 소모한다고 생각하기 때문입니다.
-          </p>
-          <p style={leadStyle}>
-            특히 술은 마신 다음 날 컨디션이 떨어진 채로 일하게 되는데, 그런 상태로 작업하는 것은 되도록 피하고 싶습니다.
-          </p>
-          <p style={leadStyle}>
-            이 내용을 따로 적는 이유는, 공백기 이전 현업에 있을 때 음주 문화가 업무 스트레스의 큰 부분을 차지했기 때문입니다. 코로나19 시기를 거쳐 회식 문화가 많이 바뀌었다고는 하지만, 현업을 꾸준히 지키고 있는 지인들에게 들어 보면 여전히 크게 달라지지는 않은 것 같습니다. 그래서 함께 일할 때 미리 맞춰 두면 좋을 내용을 아래에 정리했습니다.
-          </p>
-        </div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-          <h4 style={subheadStyle}>술</h4>
-          <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            <TagCards items={DRINKING} />
-          </ul>
-          <p style={{ ...cardTextStyle, fontSize: '0.875rem' }}>
-            음주에 대한 생각을 자세히 쓴 글:{' '}
-            {DRINKING_LOGS.map((log, index) => (
-              <React.Fragment key={log.slug}>
-                {index > 0 ? ' · ' : null}
-                <LogReadingLink slug={log.slug} style={{ color: 'var(--accent-text)', fontWeight: 600 }}>「{log.title}」</LogReadingLink>
-              </React.Fragment>
-            ))}
-          </p>
-        </div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-          <h4 style={subheadStyle}>담배</h4>
-          <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            <TagCards items={SMOKING} />
-          </ul>
-        </div>
-        <AskAiButton align="end" question="자기소개서의 「술과 담배」에서 회식과 흡연에 대해 어디까지 괜찮고 어디부터 지양하는지 설명해 주세요." />
-      </CoverPanel>
-
       <CareerTurningPointPreview />
+
+      {/* Culture fit: 구직 안내 묶음(함께 일할 때 중요하게 보는 것·술과 담배) */}
+      <section id="cover-letter-culture-fit" tabIndex={-1} aria-labelledby="cover-letter-culture-fit-title" style={{ display: 'flex', flexDirection: 'column', gap: '24px', scrollMarginTop: '96px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', padding: '0 4px' }}>
+          <p style={{ margin: 0, fontSize: '0.8125rem', fontWeight: 700, letterSpacing: '0.04em', color: 'var(--accent-text)' }}>구직 안내</p>
+          <h2 id="cover-letter-culture-fit-title" style={{ fontSize: 'clamp(1.6rem, 4vw, 2rem)', fontWeight: 800, margin: 0, color: 'var(--text)', lineHeight: 1.2 }}>컬처 핏 (Culture Fit)</h2>
+          <p style={leadStyle}>
+            상대를 평가하는 기준이 아니라, 서로 잘 맞는지 미리 확인할 수 있도록 먼저 밝혀 두는 내용입니다.
+          </p>
+        </div>
 
       {/* Work priorities and conditions */}
       <CoverPanel id="cover-letter-values">
@@ -612,13 +584,52 @@ export default function CoverLetterPage() {
         <AskAiButton align="end" question="자기소개서의 「함께 일할 때 중요하게 보는 것」에서 합법성과 윤리를 가장 먼저 보는 이유와 나머지 기준을 설명해 주세요." />
       </CoverPanel>
 
-      {/* Hiring tests: 구직용 안내 */}
+      {/* Drinking and smoking */}
+      <CoverPanel id="cover-letter-drinking-smoking">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          <h3 style={sectionTitleStyle}>술과 담배</h3>
+          <p style={leadStyle}>
+            술과 담배는 즐기지 않습니다. 시간과 건강, 돈을 모두 소모한다고 생각하기 때문입니다.
+          </p>
+          <p style={leadStyle}>
+            특히 술은 마신 다음 날 컨디션이 떨어진 채로 일하게 되는데, 그런 상태로 작업하는 것은 되도록 피하고 싶습니다.
+          </p>
+          <p style={leadStyle}>
+            이 내용을 따로 적는 이유는, 공백기 이전 현업에 있을 때 음주 문화가 업무 스트레스의 큰 부분을 차지했기 때문입니다. 코로나19 시기를 거쳐 회식 문화가 많이 바뀌었다고는 하지만, 현업을 꾸준히 지키고 있는 지인들에게 들어 보면 여전히 크게 달라지지는 않은 것 같습니다. 그래서 함께 일할 때 미리 맞춰 두면 좋을 내용을 아래에 정리했습니다.
+          </p>
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+          <h4 style={subheadStyle}>술</h4>
+          <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <TagCards items={DRINKING} />
+          </ul>
+          <p style={{ ...cardTextStyle, fontSize: '0.875rem' }}>
+            음주에 대한 생각을 자세히 쓴 글:{' '}
+            {DRINKING_LOGS.map((log, index) => (
+              <React.Fragment key={log.slug}>
+                {index > 0 ? ' · ' : null}
+                <LogReadingLink slug={log.slug} style={{ color: 'var(--accent-text)', fontWeight: 600 }}>「{log.title}」</LogReadingLink>
+              </React.Fragment>
+            ))}
+          </p>
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+          <h4 style={subheadStyle}>담배</h4>
+          <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <TagCards items={SMOKING} />
+          </ul>
+        </div>
+        <AskAiButton align="end" question="자기소개서의 「술과 담배」에서 회식과 흡연에 대해 어디까지 괜찮고 어디부터 지양하는지 설명해 주세요." />
+      </CoverPanel>
+      </section>
+
+      {/* Hiring tests: 컬처 핏 밖의 구직 안내 */}
       <CoverPanel id="cover-letter-hiring-tests">
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
           <p style={{ margin: 0, fontSize: '0.8125rem', fontWeight: 700, letterSpacing: '0.04em', color: 'var(--accent-text)' }}>구직 안내</p>
           <h3 style={sectionTitleStyle}>테스트 전형 안내</h3>
           <p style={leadStyle}>
-            상대를 평가하는 기준이 아니라, 서로 맞는지 미리 확인할 수 있도록 먼저 밝혀 두는 안내입니다. 참여하는 과제부터 순서대로 적었습니다.
+            채용 과정의 과제와 테스트에 어떻게 참여하는지, 참여하는 것부터 순서대로 적었습니다.
           </p>
         </div>
         <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -626,7 +637,6 @@ export default function CoverLetterPage() {
         </ul>
         <AskAiButton align="end" question="자기소개서의 「테스트 전형 안내」에서 과제 종류마다 어떻게 참여하는지 설명해 주세요." />
       </CoverPanel>
-
 
       <section style={{ 
         padding: '40px', 
