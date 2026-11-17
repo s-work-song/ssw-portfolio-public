@@ -32,8 +32,8 @@ const STRENGTHS = [
 /** 본인이 밝힌 약점과 보완 방식(지식 문서 profile.md 약점과 보완 방식과 같은 내용). */
 const WEAKNESSES = [
   {
-    title: '즉석 구두 설명',
-    weakness: '정리된 글과 문서로는 잘 설명하지만, 즉석으로 구두 설명을 풀어내는 것은 상대적으로 약한 편입니다.',
+    title: '즉흥적인 구두 설명에 약함',
+    weakness: '생각이 많은 편이라 글 작성은 신중하게 하지만, 그 자리에서 풀어내야 하는 즉흥적인 설명에는 상대적으로 약한 편입니다.',
     remedy: '중요한 논의는 자료를 먼저 정리해 공유하고, 구두로 논의한 뒤에는 결정 사항을 문서로 남깁니다.',
   },
   {
@@ -104,12 +104,12 @@ const HOBBIES = [
     body: '하드웨어 구성과 벤치마킹, 홈서버와 자동화, 새로 나온 SI 도구 써 보기가 서로 이어진 컴퓨터 취미입니다.',
   },
   {
-    title: '운동',
-    body: '일주일에 서너 번 가벼운 스트레칭과 웨이트 트레이닝을 합니다.',
+    title: '가벼운 운동',
+    body: '일주일에 서너 번 가벼운 스트레칭과 웨이트 트레이닝을 합니다. 격일 밤샘 이후 회복에 오랜 시간이 걸린 경험이 있어, 지금은 기록을 늘리기보다 건강과 일상의 컨디션을 유지하기 위한 적당한 노력으로 운동을 대하고 있습니다.',
   },
   {
-    title: '게임',
-    body: '요즘 직접 플레이하는 시간은 많지 않지만, 게임 영상을 보며 장르와 구성 요소를 살펴봅니다.',
+    title: '게임 플레이·분석·제작',
+    body: '최근 직접 플레이하는 시간은 많지 않지만, 게임 영상을 보며 장르와 구성 요소를 분석하고, 취미로 직접 제작하면서 다양한 실험을 하고 있습니다.',
   },
 ];
 /** 핵심 가치(지식 문서 profile.md 핵심 가치와 같은 내용). */
@@ -155,18 +155,30 @@ const HIRING_TESTS = [
     tone: 'join',
     title: '서로 맞는지 확인할 수 있는 과제',
     body: '실제 입사 후 해결할 문제와 연결되거나, 새로운 기술적 도전으로서 서로 맞는지 확인할 수 있는 과제는 범위를 검토한 뒤 무상으로 참여합니다.',
+    detail: ['이런 과제라면 진행 방식도 원하시는 방식에 맞출 수 있습니다. 예를 들면 다음과 같습니다.'],
+    points: [
+      'Git 저장소에 올려 코드를 함께 보기',
+      'Tailscale의 테일넷 VPN으로 묶어, 스테이징 서버로 가정하고 공유하여 확인하기',
+      'Cloudflare Workers로 띄운 개발 페이지에서 확인하기',
+      'Slack으로 소통하거나 Notion으로 문서화하면서 공유하기',
+    ],
+    afterPoints: ['위와 같이 실제 업무처럼 중간 피드백을 서로 주고받으며 진행할 수 있습니다.'],
   },
   {
     tag: '협의',
     tone: 'neutral',
     title: '기계적·반복적인 과제',
-    body: '역량과 적합성을 실질적으로 확인하기 어려운 기계적·반복적 과제는 원칙적으로 진행하지 않습니다. 꼭 필요한 절차라면 소요 시간에 대한 비용을 협의합니다.',
+    body: '역량과 적합성을 실질적으로 확인하기 어려운 기계적·반복적 과제는 선호하지 않지만, 꼭 필요한 절차라면 소요 시간에 대한 비용을 협의합니다.',
+    detail: ['예를 들면 다음과 같습니다.'],
+    points: ['전형적인 CRUD 게시판', '로그인·회원가입·관리자 페이지처럼 틀이 정해진 기능 구현'],
   },
   {
     tag: '별도 계약',
     tone: 'neutral',
     title: '실제 업무에 쓸 결과물을 요구하는 과제',
-    body: '회사가 실제 업무에 활용할 수 있는 구현 결과를 요구하는 과제는 채용 평가가 아니라 외주 업무로 보고, 별도 계약과 비용을 협의합니다.',
+    body: '회사가 실제 업무에 활용할 만한 구현 결과를 요구하는 과제는 채용 평가가 아니라 외주 업무로 간주될 수 있습니다. 채용 과제라는 이름으로 실제 업무가 오가는 일이 생기지 않도록, 이런 과제는 별도 계약과 비용을 협의합니다.',
+    detail: ['예를 들면 다음과 같습니다.'],
+    points: ['운영 중인 실제 서비스나 공공 사이트의 화면·기능 작업', '회사 내부 코드나 실제 데이터를 넘겨받아 기능을 추가하거나 버그를 고치는 과제'],
   },
   {
     tag: '응시 안 함',
@@ -288,6 +300,10 @@ interface TagCardItem {
   body: string;
   /** 본문 아래 따로 두는 문단들. */
   detail?: readonly string[];
+  /** 문단 뒤에 붙는 - 항목 목록. */
+  points?: readonly string[];
+  /** 목록 뒤에 붙는 문단들. */
+  afterPoints?: readonly string[];
 }
 
 /** 꼬리표(참여·가능·지양 등)가 붙은 카드 목록. 테스트 전형 안내와 술과 담배 섹션이 함께 쓴다. */
@@ -300,6 +316,12 @@ function TagCards({ items }: { items: readonly TagCardItem[] }) {
       </h5>
       <p style={cardTextStyle}>{item.body}</p>
       {item.detail?.map((text) => <p key={text} style={cardTextStyle}>{text}</p>)}
+      {item.points ? (
+        <ul style={{ ...cardTextStyle, margin: 0, paddingLeft: '1.25em', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          {item.points.map((text) => <li key={text}>{text}</li>)}
+        </ul>
+      ) : null}
+      {item.afterPoints?.map((text) => <p key={text} style={cardTextStyle}>{text}</p>)}
     </li>
   ));
 }
@@ -535,6 +557,20 @@ export default function CoverLetterPage() {
 
       <CareerTurningPointPreview />
 
+      {/* Job scope: 컬처 핏 앞의 구직 안내 */}
+      <CoverPanel id="cover-letter-job-scope">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          <p style={{ margin: 0, fontSize: '0.8125rem', fontWeight: 700, letterSpacing: '0.04em', color: 'var(--accent-text)' }}>구직 안내</p>
+          <h3 style={sectionTitleStyle}>지원 분야</h3>
+          <p style={leadStyle}>
+            SI 에이전트와 협업하며 개발 과정의 생산성을 높이는 에이전트 네이티브 소프트웨어 엔지니어로서 다양한 역할에 열려 있습니다. 그중에서도 신규 아이디어의 POC·R&amp;D, 기존 시스템의 구조·성능 개선, SI 에이전트를 활용한 개발과 작업 체계 설계에 관심을 두고 기회를 찾고 있습니다.
+          </p>
+          <p style={leadStyle}>
+            다만 게임 분야는 취미로만 이어 갈 계획입니다. 현재 구체적인 계획은 없지만 나중에 직접 만든 게임을 사업자를 내고 출시할 수도 있기에, 그때 경업 금지 같은 문제가 생기지 않도록 게임 분야는 지원 분야에서 제외합니다.
+          </p>
+        </div>
+      </CoverPanel>
+
       {/* Culture fit: 구직 안내 묶음(함께 일할 때 중요하게 보는 것·술과 담배) */}
       <section id="cover-letter-culture-fit" tabIndex={-1} aria-labelledby="cover-letter-culture-fit-title" style={{ display: 'flex', flexDirection: 'column', gap: '24px', scrollMarginTop: '96px' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', padding: '0 4px' }}>
@@ -629,7 +665,7 @@ export default function CoverLetterPage() {
           <p style={{ margin: 0, fontSize: '0.8125rem', fontWeight: 700, letterSpacing: '0.04em', color: 'var(--accent-text)' }}>구직 안내</p>
           <h3 style={sectionTitleStyle}>테스트 전형 안내</h3>
           <p style={leadStyle}>
-            채용 과정 중에 있을 수 있는 테스트 전형에 대한 기준을, 참여 가능한 내용부터 순서대로 적었습니다.
+            채용 과정 중에 있을 수 있는 테스트 전형에 대한 기준을, 참여 가능한 내용부터 순서대로 적었습니다. 어떤 전형이든 모든 진행 과정에서 SI 에이전트를 활용할 수 있다는 것을 전제로 합니다.
           </p>
         </div>
         <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: '12px' }}>
