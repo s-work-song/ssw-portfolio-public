@@ -300,11 +300,11 @@ const VIEW_TARGETS: Readonly<Record<PortfolioViewAction, PortfolioViewTarget>> =
   },
   'si-level-orchestration': {
     action: 'si-level-orchestration', route: ACTION_ROUTES.si_level_orchestration,
-    label: 'SI 활용 05단계 · 단일 도구 에이전트 조율', message: 'SI 활용 05단계 · 단일 도구 에이전트 조율로 이동을 시작했습니다.',
+    label: 'SI 활용 05단계 · 단일 하네스 에이전트 조율', message: 'SI 활용 05단계 · 단일 하네스 에이전트 조율로 이동을 시작했습니다.',
   },
   'si-level-multi-model': {
     action: 'si-level-multi-model', route: ACTION_ROUTES.si_level_multi_model,
-    label: 'SI 활용 06단계 · 다중 모델 협업', message: 'SI 활용 06단계 · 다중 모델 협업으로 이동을 시작했습니다.',
+    label: 'SI 활용 06단계 · 다중 하네스 에이전트 협업', message: 'SI 활용 06단계 · 다중 하네스 에이전트 협업으로 이동을 시작했습니다.',
   },
   'si-learning': {
     action: 'si-learning', route: ACTION_ROUTES.si_learning,

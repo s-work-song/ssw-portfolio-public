@@ -425,7 +425,7 @@ export const GUIDED_TOUR_STEPS: readonly GuidedTourStep[] = [
   {
     id: "si-levels",
     title: "SI 활용 단계 소개",
-    message: "채팅부터 여러 모델의 협업까지, SI를 활용하는 여섯 단계를 살펴봅니다. 나와 우리 팀·조직은 어느 단계로 작업하는지 생각해 보세요.",
+    message: "채팅부터 여러 하네스 에이전트의 협업까지, SI를 활용하는 여섯 단계를 살펴봅니다. 나와 우리 팀·조직은 어느 단계로 작업하는지 생각해 보세요.",
     actionId: "si_levels",
   },
   ...aiWorkflowStages.map((stage) => ({

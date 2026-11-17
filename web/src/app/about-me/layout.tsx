@@ -253,7 +253,7 @@ export default function AboutMeLayout({
               lineHeight: 1.1,
               letterSpacing: '-0.02em'
             }}>
-              소개 페이지
+              소개 페이지<span className="about-title-suffix"><span className="about-title-suffix-sep"> · </span>구직용</span>
             </h1>
           </Link>
         </div>

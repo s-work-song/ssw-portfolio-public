@@ -1301,6 +1301,27 @@ code {
   font-size: clamp(2rem, calc(1.25rem + 1.25vw), 2.375rem);
 }
 
+/* 제목 뒤에 붙는 용도 표시(· 구직용): 제목보다 작고 옅게 둬 "소개 페이지"가 먼저 읽히게 한다. */
+.about-title-suffix {
+  font-size: 0.6em;
+  font-weight: 600;
+  letter-spacing: 0;
+  color: var(--text-dim);
+}
+
+/* 아주 좁은 휴대폰(360px 미만)에서는 오른쪽 버튼과 겹치지 않게 제목 아래 줄로 내린다. */
+@media (max-width: 359px) {
+  .about-title-suffix {
+    display: block;
+    margin-top: 2px;
+  }
+
+  /* 아래 줄로 내려가면 줄 맨 앞의 가운뎃점은 빼고 "구직용"만 둔다. */
+  .about-title-suffix-sep {
+    display: none;
+  }
+}
+
 .about-header-title {
   display: flex;
   min-width: 0;

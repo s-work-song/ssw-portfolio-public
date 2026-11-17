@@ -55,6 +55,9 @@
 .jumpNav button[aria-current='step'] .jumpNumber { color: var(--accent-contrast); background: var(--accent); }
 .jumpCurrent { position: absolute; right: 16px; top: 20px; color: var(--accent); font-size: .65rem; font-weight: 750; }
 .jumpArrow { position: absolute; right: 16px; top: 16px; color: var(--text-mute); }
+/* 단계 선택 카드 바로 아래 한 줄 뜻풀이(하네스). 카드 버튼과 떨어진 정적 글이라 눌리지 않는다. */
+.harnessNote { margin: 10px 0 0; padding: 12px 16px; border: 1px dashed var(--border); border-radius: 14px; background: var(--bg-elev); color: var(--text-dim); font-size: .78rem; line-height: 1.65; word-break: keep-all; }
+.harnessNote strong { margin-right: 4px; color: var(--text); font-weight: 700; }
 .stageTabs { display: grid; grid-template-columns: minmax(0, 1fr); min-width: 0; gap: 28px; }
 .stageNavAnchor { min-width: 0; scroll-margin-top: 24px; }
 .stageViewport { min-width: 0; max-width: 100%; overflow: hidden; padding: 4px; margin: -4px; border-radius: 24px; }

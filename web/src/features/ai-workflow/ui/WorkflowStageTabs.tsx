@@ -3,7 +3,7 @@
 import { useEffect, useRef, useSyncExternalStore, type ReactNode } from 'react';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import type { Swiper as SwiperInstance } from 'swiper';
-import { aiWorkflowStages, type AiWorkflowStageId } from '@/features/ai-workflow/data/aiWorkflow';
+import { aiWorkflowHarnessNote, aiWorkflowStages, type AiWorkflowStageId } from '@/features/ai-workflow/data/aiWorkflow';
 import { useMediaSwiperSpeed } from '@/components/media/useMediaSwiperMotion';
 import WorkflowStageNav from './WorkflowStageNav';
 import { workflowStageFromHash, workflowStageIndexFromHash } from '../navigation/workflowStageNavigation';
@@ -99,6 +99,9 @@ export default function WorkflowStageTabs({ panels }: { panels: readonly ReactNo
     <div className={styles.stageTabs}>
       <div ref={navRef} className={styles.stageNavAnchor}>
         <WorkflowStageNav currentStageId={activeId} onSelect={selectStage} />
+        <p className={styles.harnessNote}>
+          <strong>{aiWorkflowHarnessNote.term}</strong> {aiWorkflowHarnessNote.description}
+        </p>
       </div>
       <div ref={frameRef} className={styles.stageViewport}>
         <Swiper className={styles.stageSwiper} slidesPerView={1} loop={false} autoHeight speed={speed}
