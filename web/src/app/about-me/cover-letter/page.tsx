@@ -8,6 +8,7 @@ import Link from 'next/link';
 import { AskAiButton } from '@/features/chat';
 import CareerTurningPointPreview from '@/features/profile/ui/CareerTurningPointPreview';
 import LogReadingLink from '@/features/logs/navigation/LogReadingLink';
+import SimdRecordChallenge from '@/features/research/ui/SimdRecordChallenge';
 
 /** 강점과 약점: 본인이 확인한 강점(지식 문서 profile.md 핵심 강점과 같은 내용). */
 const STRENGTHS = [
@@ -149,20 +150,44 @@ const TRAITS = [
  * 채용 과제와 코딩 테스트(지식 문서 employment-preferences.md 채용 과제와 코딩 테스트와 같은 내용).
  * 참여하는 것부터 하지 않는 것 순서로 둔다. tone은 꼬리표 색(join: 강조, 나머지: 중립).
  */
+/** 함께 일하게 된다면(입사 후 포부). 자기소개서를 조건이 아닌 함께 일할 그림으로 닫는다. */
+const AMBITIONS = [
+  {
+    title: '검증한 아이디어를 기능으로',
+    body: '새로운 아이디어는 빠르게 POC로 시험해 보고, 효과가 확인되면 실제 기능에 반영해 개선합니다.',
+  },
+  {
+    title: '기존 시스템을 더 나은 구조로',
+    body: '운영 중인 시스템의 구조와 성능을 살펴보고, 측정을 바탕으로 개선할 부분을 찾아 단계적으로 다듬습니다.',
+  },
+  {
+    title: '경험을 나누며 함께 성장하는 동료로',
+    body: 'SI 에이전트로 실험하며 알게 된 것들과 앞으로 알게 될 것들을 꾸준히 팀과 공유하고, 동료의 경험에서 배우며 함께 성장합니다.',
+  },
+] as const;
+
 const HIRING_TESTS = [
   {
     tag: '참여',
     tone: 'join',
     title: '서로 맞는지 확인할 수 있는 과제',
     body: '실제 입사 후 해결할 문제와 연결되거나, 새로운 기술적 도전으로서 서로 맞는지 확인할 수 있는 과제는 범위를 검토한 뒤 무상으로 참여합니다.',
-    detail: ['이런 과제라면 진행 방식도 원하시는 방식에 맞출 수 있습니다. 예를 들면 다음과 같습니다.'],
+    detail: ['예를 들면 다음과 같습니다.'],
     points: [
-      'Git 저장소에 올려 코드를 함께 보기',
-      'Tailscale의 테일넷 VPN으로 묶어, 스테이징 서버로 가정하고 공유하여 확인하기',
-      'Cloudflare Workers로 띄운 개발 페이지에서 확인하기',
-      'Slack으로 소통하거나 Notion으로 문서화하면서 공유하기',
+      '사내에서 쓰는 기술 스택으로, 실제 서비스와 분리된 과하지 않은 기능 하나 구현하기',
+      '실제로 겪고 있는 문제를 단순화한 과제로 원인을 찾고 개선 방향 제안하기',
     ],
-    afterPoints: ['위와 같이 실제 업무처럼 중간 피드백을 서로 주고받으며 진행할 수 있습니다.'],
+    subCard: {
+      title: '진행 방식',
+      lead: '이런 과제라면 진행 방식도 원하시는 방식에 맞출 수 있습니다.',
+      points: [
+        'Git 저장소에 올려 코드를 함께 보기',
+        'Tailscale의 테일넷 VPN으로 묶어, 스테이징 서버로 가정하고 공유하여 확인하기',
+        'Cloudflare Workers로 띄운 개발 페이지에서 확인하기',
+        'Slack으로 소통하거나 Notion으로 문서화하면서 공유하기',
+      ],
+      after: '위와 같이 실제 업무처럼 중간 피드백을 서로 주고받으며 진행하는 방식도 가능합니다.',
+    },
   },
   {
     tag: '협의',
@@ -184,7 +209,12 @@ const HIRING_TESTS = [
     tag: '응시 안 함',
     tone: 'neutral',
     title: '알고리즘형 코딩 테스트·라이브 코딩',
-    body: '알고리즘형 코딩 테스트와 라이브 코딩은 현재 응시하지 않습니다. 채용 절차로서는 존중하지만, 제가 찾는 포지션이나 조직 문화와는 맞지 않는다고 생각합니다.',
+    body: '알고리즘형 코딩 테스트와 라이브 코딩은 채용 절차로서 존중하지만, 크게 두 가지 이유로 현재 응시하지 않습니다.',
+    points: [
+      '반년 넘게 타이핑과 세부 구현은 SI 에이전트에 맡기고 코드 리뷰에 집중해 왔기 때문에, 에이전트 없이 직접 손으로 짜는 방식에는 다시 적응할 시간이 필요합니다.',
+      '찾고 있는 포지션이 SI 에이전트를 활용하는 엔지니어이기 때문에, 에이전트 없이 보는 테스트는 그 포지션에서 실제로 하는 일과 거리가 있어 보입니다.',
+    ],
+    closing: '그래서 이러한 테스트 전형은 제가 찾는 포지션과는 맞지 않는다고 생각합니다.',
   },
 ] as const;
 
@@ -302,8 +332,18 @@ interface TagCardItem {
   detail?: readonly string[];
   /** 문단 뒤에 붙는 - 항목 목록. */
   points?: readonly string[];
-  /** 목록 뒤에 붙는 문단들. */
-  afterPoints?: readonly string[];
+  /** 카드 안에 한 단계 들여 두는 작은 카드(참여 과제의 진행 방식 등). */
+  subCard?: { title: string; lead: string; points: readonly string[]; after?: string };
+  /** 카드 맨 끝에 붙는 마무리 문단. */
+  closing?: string;
+}
+
+function CardPoints({ points }: { points: readonly string[] }) {
+  return (
+    <ul style={{ ...cardTextStyle, margin: 0, paddingLeft: '1.25em', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+      {points.map((text) => <li key={text}>{text}</li>)}
+    </ul>
+  );
 }
 
 /** 꼬리표(참여·가능·지양 등)가 붙은 카드 목록. 테스트 전형 안내와 술과 담배 섹션이 함께 쓴다. */
@@ -316,12 +356,17 @@ function TagCards({ items }: { items: readonly TagCardItem[] }) {
       </h5>
       <p style={cardTextStyle}>{item.body}</p>
       {item.detail?.map((text) => <p key={text} style={cardTextStyle}>{text}</p>)}
-      {item.points ? (
-        <ul style={{ ...cardTextStyle, margin: 0, paddingLeft: '1.25em', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-          {item.points.map((text) => <li key={text}>{text}</li>)}
-        </ul>
+      {item.points ? <CardPoints points={item.points} /> : null}
+      {item.subCard ? (
+        // 참여 꼬리표와 같은 강조색의 왼쪽 선으로, 바깥 카드와 다른 '딸린 설명'임을 드러낸다.
+        <div style={{ marginTop: '4px', padding: '14px 18px', borderRadius: '0 12px 12px 0', borderLeft: '3px solid var(--accent-text)', background: 'var(--accent-soft)', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <h6 style={{ ...cardTitleStyle, fontSize: '0.875rem', color: 'var(--accent-text)', letterSpacing: '0.02em' }}>{item.subCard.title}</h6>
+          <p style={cardTextStyle}>{item.subCard.lead}</p>
+          <CardPoints points={item.subCard.points} />
+          {item.subCard.after ? <p style={cardTextStyle}>{item.subCard.after}</p> : null}
+        </div>
       ) : null}
-      {item.afterPoints?.map((text) => <p key={text} style={cardTextStyle}>{text}</p>)}
+      {item.closing ? <p style={cardTextStyle}>{item.closing}</p> : null}
     </li>
   ));
 }
@@ -672,6 +717,42 @@ export default function CoverLetterPage() {
           <TagCards items={HIRING_TESTS} />
         </ul>
         <AskAiButton align="end" question="자기소개서의 「테스트 전형 안내」에서 과제 종류마다 어떻게 참여하는지 설명해 주세요." />
+      </CoverPanel>
+
+      {/* Ambitions: 자기소개서 마무리 */}
+      <CoverPanel id="cover-letter-ambitions">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          <h3 style={sectionTitleStyle}>함께 일하게 된다면</h3>
+          <p style={leadStyle}>합류 후에는 아래 세 가지로 팀에 기여하려고 합니다.</p>
+        </div>
+        <div style={{ ...cardGridStyle, gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 240px), 1fr))' }}>
+          {AMBITIONS.map((item, index) => (
+            <div key={item.title} style={cardStyle}>
+              <span aria-hidden="true" style={{ fontSize: '0.8125rem', fontWeight: 800, letterSpacing: '0.06em', color: 'var(--accent-text)' }}>{String(index + 1).padStart(2, '0')}</span>
+              <h5 style={cardTitleStyle}>{item.title}</h5>
+              <p style={cardTextStyle}>{item.body}</p>
+            </div>
+          ))}
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          <p style={leadStyle}>
+            합류 자체가 목표는 아니고, 오래 함께할 곳을 찾고 있습니다. 함께하는 동안에는 기간이 한 달이든 몇 년이든, 급여와 세금 등 부대비용을 포함한 고용 비용 이상의 가치를 만드는 것을 기준으로 삼습니다.
+          </p>
+          <p style={leadStyle}>
+            존중과 신뢰를 바탕으로 협업할 수 있다면 계약 형태는 크게 중요하지 않다고 생각합니다. 여건상 정규직이 어렵다면 단기 계약직이나 프리랜서 도급 계약으로 관계를 이어 가는 것에도 열려 있습니다.
+          </p>
+        </div>
+      </CoverPanel>
+
+      {/* 숨겨 둔 기록 깨기를 구직용 자기소개서에서만 알린다. 포부 패널과 나눈 따로 된 패널로 두고, 챗봇 지식에는 계속 넣지 않는다. */}
+      <CoverPanel id="cover-letter-easter-egg">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          <p style={cardTextStyle}>
+            마지막으로, 이 페이지에서만 알려 드리는 것이 하나 있습니다. 연구 페이지에 숨겨 둔 이스터에그를 아래에 접어 두었습니다. 기록의 바탕이 된 실험은{' '}
+            <Link href="/about-me/research#research-cpu-simd" style={{ color: 'var(--accent-text)' }}>연구 페이지의 연산 성능 최적화 실험</Link>에서 자세히 볼 수 있습니다.
+          </p>
+          <SimdRecordChallenge context="cover-letter" />
+        </div>
       </CoverPanel>
 
       <section style={{ 
