@@ -25,7 +25,7 @@ export interface ResearchTab {
 export const researchPrimaryTabs: readonly ResearchTab[] = [
   { id: 'overview', label: '연구·실험 이력 (Timeline)', emoji: '⏱️' },
   { id: 'optimization', label: '성능 최적화', emoji: '⚡' },
-  { id: 'meta', label: '개발 도구 및 SI 활용', emoji: '🛠️' },
+  { id: 'meta', label: '개발 도구 및 AI·SI 활용', emoji: '🛠️' },
   { id: 'open-weight', label: '오픈웨이트 모델 실험', emoji: '🤖' },
 ];
 
@@ -184,20 +184,20 @@ export const researchTimelineItems: CareerItem[] = [
   {
     period: '2026–현재',
     color: '#6366f1',
-    role: 'SI 에이전트 오케스트레이션',
+    role: 'AI·SI 에이전트 오케스트레이션',
     org: '',
-    desc: '장기간 유지되는 세션에서 복수의 SI 에이전트와 다양한 일상 업무를 진행하며, 일상생활과 에이전트 작업을 병행하는 방식을 계속 실험하고 있습니다.',
-    tags: ['SI Agent', 'Orchestration']
+    desc: '장기간 유지되는 세션에서 복수의 AI·SI 에이전트와 다양한 일상 업무를 진행하며, 일상생활과 에이전트 작업을 병행하는 방식을 계속 실험하고 있습니다.',
+    tags: ['AI·SI Agent', 'Orchestration']
   },
   {
     period: '2026–현재',
     color: '#6366f1',
-    role: 'SI 활용 실험',
+    role: 'AI·SI 활용 실험',
     org: '',
     desc: [
-      { summary: 'SI 관련 업데이트를 꾸준히 살펴보며, 새로운 프론티어 모델을 포함하여 다양한 기능을 직접 사용하고 여러 MCP와 플러그인을 연결해 활용하는 실험을 진행하고 있습니다.' },
+      { summary: 'AI·SI 관련 업데이트를 꾸준히 살펴보며, 새로운 프론티어 모델을 포함하여 다양한 기능을 직접 사용하고 여러 MCP와 플러그인을 연결해 활용하는 실험을 진행하고 있습니다.' },
       { summary: '이미지·3D 모델 등 리소스 제작과 바이브 코딩을 통한 2D·3D 게임 제작 실험을 진행하며, 활용 범위를 넓혀 가고 있습니다.' },
     ],
-    tags: ['Vibe Coding', '2D / 3D Game', 'SI Resources']
+    tags: ['Vibe Coding', '2D / 3D Game', 'AI·SI Resources']
   }
 ];

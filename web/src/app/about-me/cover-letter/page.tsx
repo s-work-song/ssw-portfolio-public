@@ -14,7 +14,7 @@ import SimdRecordChallenge from '@/features/research/ui/SimdRecordChallenge';
 const STRENGTHS = [
   {
     title: '역할을 나눈 검증 흐름 설계',
-    body: '여러 SI 세션이 작업·관리·검증 역할을 나눠 맡도록 작업 체계와 검증 흐름을 설계합니다.',
+    body: '여러 AI·SI 세션이 작업·관리·검증 역할을 나눠 맡도록 작업 체계와 검증 흐름을 설계합니다.',
   },
   {
     title: '측정으로 찾는 병목',
@@ -67,10 +67,10 @@ const PRIORITIES = [
     log: { lead: '이 기준을 더 분명히 갖게 된 계기', slug: 'scale-and-appearance-do-not-guarantee-business-integrity', title: '규모와 외형이 사업의 건전성을 보장하지는 않습니다' },
   },
   {
-    title: 'SI 에이전트를 실제 업무에 쓸 수 있는 환경',
+    title: 'AI·SI 에이전트를 실제 업무에 쓸 수 있는 환경',
     required: true,
-    body: 'SI 에이전트 사용을 형식적으로 허용하는 데 그치지 않고, 실제 업무에 바로 활용할 수 있는 환경이어야 합니다.',
-    detail: ['SI 에이전트를 쓸 수 없는 폐쇄망 같은 환경에서는 지금의 작업 방식을 이어 가기 어렵습니다.'],
+    body: 'AI·SI 에이전트 사용을 형식적으로 허용하는 데 그치지 않고, 실제 업무에 바로 활용할 수 있는 환경이어야 합니다.',
+    detail: ['AI·SI 에이전트를 쓸 수 없는 폐쇄망 같은 환경에서는 지금의 작업 방식을 이어 가기 어렵습니다.'],
   },
   {
     title: '최고의 복지는 동료',
@@ -97,12 +97,12 @@ const PRIORITIES = [
 /** 취미와 관심사(지식 문서 personality-and-priorities.md 취미와 관심사와 같은 내용). */
 const HOBBIES = [
   {
-    title: 'SI 에이전트 실험',
-    body: '떠오른 생각을 SI 에이전트와 함께 바로 만들어 보고 결과를 확인하는 일이 지금 가장 많은 시간을 쓰는 취미입니다.',
+    title: 'AI·SI 에이전트 실험',
+    body: '떠오른 생각을 AI·SI 에이전트와 함께 바로 만들어 보고 결과를 확인하는 일이 지금 가장 많은 시간을 쓰는 취미입니다.',
   },
   {
     title: '하드웨어·홈서버·자동화',
-    body: '하드웨어 구성과 벤치마킹, 홈서버와 자동화, 새로 나온 SI 도구 써 보기가 서로 이어진 컴퓨터 취미입니다.',
+    body: '하드웨어 구성과 벤치마킹, 홈서버와 자동화, 새로 나온 AI·SI 도구 써 보기가 서로 이어진 컴퓨터 취미입니다.',
   },
   {
     title: '가벼운 운동',
@@ -162,7 +162,7 @@ const AMBITIONS = [
   },
   {
     title: '경험을 나누며 함께 성장하는 동료로',
-    body: 'SI 에이전트로 실험하며 알게 된 것들과 앞으로 알게 될 것들을 꾸준히 팀과 공유하고, 동료의 경험에서 배우며 함께 성장합니다.',
+    body: 'AI·SI 에이전트로 실험하며 알게 된 것들과 앞으로 알게 될 것들을 꾸준히 팀과 공유하고, 동료의 경험에서 배우며 함께 성장합니다.',
   },
 ] as const;
 
@@ -211,8 +211,8 @@ const HIRING_TESTS = [
     title: '알고리즘형 코딩 테스트·라이브 코딩',
     body: '알고리즘형 코딩 테스트와 라이브 코딩은 채용 절차로서 존중하지만, 크게 두 가지 이유로 현재 응시하지 않습니다.',
     points: [
-      '반년 넘게 타이핑과 세부 구현은 SI 에이전트에 맡기고 코드 리뷰에 집중해 왔기 때문에, 에이전트 없이 직접 손으로 짜는 방식에는 다시 적응할 시간이 필요합니다.',
-      '찾고 있는 포지션이 SI 에이전트를 활용하는 엔지니어이기 때문에, 에이전트 없이 보는 테스트는 그 포지션에서 실제로 하는 일과 거리가 있어 보입니다.',
+      '반년 넘게 타이핑과 세부 구현은 AI·SI 에이전트에 맡기고 코드 리뷰에 집중해 왔기 때문에, 에이전트 없이 직접 손으로 짜는 방식에는 다시 적응할 시간이 필요합니다.',
+      '찾고 있는 포지션이 AI·SI 에이전트를 활용하는 엔지니어이기 때문에, 에이전트 없이 보는 테스트는 그 포지션에서 실제로 하는 일과 거리가 있어 보입니다.',
     ],
     closing: '그래서 이러한 테스트 전형은 제가 찾는 포지션과는 맞지 않는다고 생각합니다.',
   },
@@ -608,7 +608,7 @@ export default function CoverLetterPage() {
           <p style={{ margin: 0, fontSize: '0.8125rem', fontWeight: 700, letterSpacing: '0.04em', color: 'var(--accent-text)' }}>구직 안내</p>
           <h3 style={sectionTitleStyle}>지원 분야</h3>
           <p style={leadStyle}>
-            SI 에이전트와 협업하며 개발 과정의 생산성을 높이는 에이전트 네이티브 소프트웨어 엔지니어로서 다양한 역할에 열려 있습니다. 그중에서도 신규 아이디어의 POC·R&amp;D, 기존 시스템의 구조·성능 개선, SI 에이전트를 활용한 개발과 작업 체계 설계에 관심을 두고 기회를 찾고 있습니다.
+            AI·SI 에이전트와 협업하며 개발 과정의 생산성을 높이는 에이전트 네이티브 소프트웨어 엔지니어로서 다양한 역할에 열려 있습니다. 그중에서도 신규 아이디어의 POC·R&amp;D, 기존 시스템의 구조·성능 개선, AI·SI 에이전트를 활용한 개발과 작업 체계 설계에 관심을 두고 기회를 찾고 있습니다.
           </p>
           <p style={leadStyle}>
             다만 게임 분야는 취미로만 이어 갈 계획입니다. 현재 구체적인 계획은 없지만 나중에 직접 만든 게임을 사업자를 내고 출시할 수도 있기에, 그때 경업 금지 같은 문제가 생기지 않도록 게임 분야는 지원 분야에서 제외합니다.
@@ -713,7 +713,7 @@ export default function CoverLetterPage() {
           <p style={{ margin: 0, fontSize: '0.8125rem', fontWeight: 700, letterSpacing: '0.04em', color: 'var(--accent-text)' }}>구직 안내</p>
           <h3 style={sectionTitleStyle}>테스트 전형 안내</h3>
           <p style={leadStyle}>
-            채용 과정 중에 있을 수 있는 테스트 전형에 대한 기준을, 참여 가능한 내용부터 순서대로 적었습니다. 어떤 전형이든 모든 진행 과정에서 SI 에이전트를 활용할 수 있다는 것을 전제로 합니다.
+            채용 과정 중에 있을 수 있는 테스트 전형에 대한 기준을, 참여 가능한 내용부터 순서대로 적었습니다. 어떤 전형이든 모든 진행 과정에서 AI·SI 에이전트를 활용할 수 있다는 것을 전제로 합니다.
           </p>
         </div>
         <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -753,8 +753,8 @@ export default function CoverLetterPage() {
           <p style={cardTextStyle}>
             마지막으로, 이 페이지에서만 알려 드리는 것이 하나 있습니다. 연구 페이지에 숨겨 둔 이스터에그를 아래에 접어 두었습니다. 기록의 바탕이 된 실험은{' '}
             <Link href="/about-me/research#research-cpu-simd" style={{ color: 'var(--accent-text)' }}>연구 페이지의 연산 성능 최적화 실험</Link>에서 자세히 볼 수 있고,
-            기준 코드가 SI 활용 방식에 따라 단계별로 어떻게 다듬어졌는지는{' '}
-            <Link href="/about-me/ai-workflow#ai-workflow-simd-case" style={{ color: 'var(--accent-text)' }}>SI 활용 단계 페이지의 사례</Link>에서 볼 수 있습니다.
+            기준 코드가 AI·SI 활용 방식에 따라 단계별로 어떻게 다듬어졌는지는{' '}
+            <Link href="/about-me/ai-workflow#ai-workflow-simd-case" style={{ color: 'var(--accent-text)' }}>AI·SI 활용 단계 페이지의 사례</Link>에서 볼 수 있습니다.
           </p>
           <SimdRecordChallenge context="cover-letter" />
         </div>
@@ -770,7 +770,7 @@ export default function CoverLetterPage() {
       }}>
         <h3 style={{ fontSize: '1.5rem', fontWeight: 600, marginBottom: '16px', color: 'var(--text)' }}>연구 기간의 최적화 실험이 궁금하신가요?</h3>
         <p style={{ color: 'var(--text-dim)', marginBottom: '24px' }}>
-          CPU 명령 수준 최적화부터 SI 에이전트 코딩 연구에 이르기까지, 다양한 실험과 도전 결과를 정리해 두었습니다.
+          CPU 명령 수준 최적화부터 AI·SI 에이전트 코딩 연구에 이르기까지, 다양한 실험과 도전 결과를 정리해 두었습니다.
         </p>
         <Link href="/about-me/research" className="hover-btn-primary hover-btn-inverse" style={{
           display: 'inline-block',

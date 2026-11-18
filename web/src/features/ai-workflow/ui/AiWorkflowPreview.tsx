@@ -2,17 +2,17 @@ import Link from "next/link";
 import { aiWorkflowStages } from "@/features/ai-workflow/data/aiWorkflow";
 import styles from "./AiWorkflowPreview.module.css";
 
-/** 개인과 팀·조직이 자신의 SI 활용 단계를 살펴보는 페이지의 진입점입니다. */
+/** 개인과 팀·조직이 자신의 AI·SI 활용 단계를 살펴보는 페이지의 진입점입니다. */
 export default function AiWorkflowPreview() {
   return (
     <section id="ai-workflow-preview" tabIndex={-1} className={styles.preview} aria-labelledby="ai-workflow-preview-title">
-      <p className={styles.eyebrow}>SI ADOPTION LEVELS</p>
-      <h3 id="ai-workflow-preview-title">SI 활용 단계</h3>
+      <p className={styles.eyebrow}>AI·SI ADOPTION LEVELS</p>
+      <h3 id="ai-workflow-preview-title">AI·SI 활용 단계</h3>
       <p className={styles.intro}>
         채팅으로 답을 얻는 단계부터 구현, 도구 연결, 여러 에이전트의 조율과 다중 하네스 에이전트 협업까지.
-        SI 활용 수준을 여섯 단계로 나누어, 개인과 팀·조직의 현재 위치를 살펴봅니다.
+        AI·SI 활용 수준을 여섯 단계로 나누어, 개인과 팀·조직의 현재 위치를 살펴봅니다.
       </p>
-      <ol className={styles.stages} aria-label="SI 활용 단계 바로 보기">
+      <ol className={styles.stages} aria-label="AI·SI 활용 단계 바로 보기">
         {aiWorkflowStages.map((stage) => (
           <li key={stage.id}>
             <Link href={`/about-me/ai-workflow/#workflow-${stage.id}`}>

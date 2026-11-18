@@ -40,10 +40,10 @@ export default async function LogPage() {
           <p style={{ fontSize: 'clamp(0.98rem, 2.4vw, 1.0625rem)', color: 'var(--text-dim)', maxWidth: '850px', lineHeight: 1.6, margin: 0, wordBreak: 'keep-all' }}>
             모든 주제는 개인적인 생각, 회고, 그리고 기술적 성찰의 기록들입니다.
             <br />
-            SI 에이전트와의 인터뷰 형식으로 내용을 정리하며, 사실관계와 표현은 직접
+            AI·SI 에이전트와의 인터뷰 형식으로 내용을 정리하며, 사실관계와 표현은 직접
             검수한 뒤 최종 확정합니다.
             <br />
-            RDBMS를 사용하지 않고 SI 에이전트와 협업해 Markdown(MD) 파일로
+            RDBMS를 사용하지 않고 AI·SI 에이전트와 협업해 Markdown(MD) 파일로
             기록을 관리하는 실험도 함께 진행하고 있습니다.
           </p>
         </div>

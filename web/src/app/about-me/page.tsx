@@ -58,7 +58,7 @@ export default function OverviewPage() {
               하드웨어의 성능과 한계를 직접 측정하는 취미에서 출발해, CPU·주기억장치·보조기억장치에서 데이터가 처리되고 저장되는 방식을 살펴왔습니다. 구성 요소 간 데이터 전송과 외부 유무선 통신에서 대역폭이 성능에 미치는 영향까지 함께 고려하며, 컴퓨팅 시스템 전반의 동작 원리를 탐구해 왔습니다.
             </p>
             <p style={{ margin: 0 }}>
-              소프트웨어 개발에서는 객체지향과 설계 원칙, 디자인 패턴을 단순히 암기하는 데 그치지 않고, 실제 문제 해결에 효과적으로 적용하는 방법을 고민해 왔습니다. 이를 바탕으로 SI(Super Intelligence, 초지능) 에이전트와 협업하며 개발 과정의 생산성을 높이는 에이전트 네이티브 소프트웨어 엔지니어를 지향하고 있습니다.
+              소프트웨어 개발에서는 객체지향과 설계 원칙, 디자인 패턴을 단순히 암기하는 데 그치지 않고, 실제 문제 해결에 효과적으로 적용하는 방법을 고민해 왔습니다. 이를 바탕으로 AI·SI(Super Intelligence, 초지능) 에이전트와 협업하며 개발 과정의 생산성을 높이는 에이전트 네이티브 소프트웨어 엔지니어를 지향하고 있습니다.
             </p>
           </div>
         </div>
@@ -141,7 +141,7 @@ export default function OverviewPage() {
             과거 작업 아카이브
           </h3>
           <p style={{ margin: '10px 0 0', color: 'var(--text-dim)', lineHeight: 1.7, wordBreak: 'keep-all' }}>
-            SI 에이전트를 본격적으로 활용하기 전에 직접 구현하고 사용했던 작업과 실험을 실행 화면과 함께 정리했습니다.
+            AI·SI 에이전트를 본격적으로 활용하기 전에 직접 구현하고 사용했던 작업과 실험을 실행 화면과 함께 정리했습니다.
           </p>
         </div>
         <ArchiveProjectShowcase projects={aboutArchiveProjects} />
@@ -169,10 +169,10 @@ export default function OverviewPage() {
             Projects
           </p>
           <h3 style={{ margin: 0, color: 'var(--text)', fontSize: 'clamp(1.35rem, 3vw, 1.75rem)' }}>
-            SI(Super Intelligence, 초지능) 협업 프로젝트
+            AI·SI(Super Intelligence, 초지능) 협업 프로젝트
           </h3>
           <p style={{ margin: '10px 0 0', color: 'var(--text-dim)', lineHeight: 1.7, wordBreak: 'keep-all' }}>
-            요구사항과 운영 환경에 맞춰 구조와 기술을 선택하고, SI 에이전트의 구현 결과를 검토·테스트하며 진행한 프로젝트입니다.
+            요구사항과 운영 환경에 맞춰 구조와 기술을 선택하고, AI·SI 에이전트의 구현 결과를 검토·테스트하며 진행한 프로젝트입니다.
           </p>
         </div>
         <ProjectCardGrid projects={aboutProjects} />

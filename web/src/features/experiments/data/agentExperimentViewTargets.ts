@@ -62,7 +62,7 @@ export interface AgentExperimentViewTarget {
 
 export const AGENT_EXPERIMENT_VIEW_TARGETS: readonly AgentExperimentViewTarget[] = [
   { action: 'agent-experiments', anchor: AGENT_EXPERIMENT_INTRO_ANCHOR,
-    route: `/about-me#${AGENT_EXPERIMENT_INTRO_ANCHOR}`, label: 'SI 활용 실험 소개', kind: 'intro' },
+    route: `/about-me#${AGENT_EXPERIMENT_INTRO_ANCHOR}`, label: 'AI·SI 활용 실험 소개', kind: 'intro' },
   // 분류 탭 위의 대표 실험 카드. 탭을 고르지 않으므로 소개처럼 앵커로 바로 간다.
   { action: 'agent-experiments-plaza', anchor: AGENT_EXPERIMENT_SHOWCASE.anchor,
     route: `/about-me#${AGENT_EXPERIMENT_SHOWCASE.anchor}`, label: AGENT_EXPERIMENT_SHOWCASE.title, kind: 'intro' },

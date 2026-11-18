@@ -298,10 +298,10 @@ export default function ResearchViewer() {
         boxShadow: 'var(--shadow)'
       }}>
         <h3 style={{ fontSize: '1.4rem', fontWeight: 700, marginBottom: '12px', color: 'var(--text)', wordBreak: 'keep-all' }}>
-          SI(Super Intelligence, 초지능) 활용 단계 살펴보기
+          AI·SI(Super Intelligence, 초지능) 활용 단계 살펴보기
         </h3>
         <p style={{ color: 'var(--text-dim)', marginBottom: '24px', fontSize: '0.975rem', lineHeight: 1.6, maxWidth: '650px', margin: '0 auto 24px' }}>
-          채팅부터 여러 에이전트의 협업까지, 나와 우리 팀·조직의 SI 활용 단계를 살펴보세요.
+          채팅부터 여러 에이전트의 협업까지, 나와 우리 팀·조직의 AI·SI 활용 단계를 살펴보세요.
         </p>
         <Link href="/about-me/ai-workflow/" className="hover-btn-primary hover-btn-inverse" style={{
           display: 'inline-block',
@@ -314,7 +314,7 @@ export default function ResearchViewer() {
           boxShadow: 'var(--shadow)',
           transition: 'all 0.15s ease'
         }}>
-          SI 활용 단계 확인하기
+          AI·SI 활용 단계 확인하기
         </Link>
       </section>
     </div>

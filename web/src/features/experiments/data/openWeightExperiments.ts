@@ -79,7 +79,7 @@ export const openWeightExperiments: AboutProject[] = [
       paragraphs: [
         '개인적인 궁금증을 해소하고, 무엇을 바꾸면 어떤 결과가 나오는지 직접 확인하기 위한 탐색적 실험입니다.',
         '정규 교육과정을 거치지 않고 독학으로 실험하고 있으며, 관련 이론과 세부 기법에 대한 전문지식에는 아직 한계가 있습니다.',
-        'SI 에이전트와 함께 방법을 찾아 적용하고, 실제 실행 결과를 관찰·실측하는 경험적 접근(empirical approach)으로 이해를 쌓고 있습니다.',
+        'AI·SI 에이전트와 함께 방법을 찾아 적용하고, 실제 실행 결과를 관찰·실측하는 경험적 접근(empirical approach)으로 이해를 쌓고 있습니다.',
       ],
       relatedLog: {
         slug: 'every-learning-and-research-effort-has-a-cost',

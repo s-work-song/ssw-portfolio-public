@@ -29,7 +29,7 @@ const ABOUT_TABS = [
   { label: "이력서 (Resume)", shortLabel: "이력서", href: "/about-me/resume" },
   { label: "자기소개서 (Cover Letter)", shortLabel: "자기소개서", href: "/about-me/cover-letter" },
   { label: "연구 경험 (Research)", shortLabel: "연구", href: "/about-me/research" },
-  { label: "SI 활용 단계 (Levels)", shortLabel: "SI 활용 단계", href: "/about-me/ai-workflow" },
+  { label: "AI·SI 활용 단계 (Levels)", shortLabel: "AI·SI 활용 단계", href: "/about-me/ai-workflow" },
   { label: "기록 (Log)", shortLabel: "기록", href: "/about-me/log" },
 ] as const;
 

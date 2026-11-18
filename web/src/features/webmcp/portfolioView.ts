@@ -181,8 +181,8 @@ const VIEW_TARGETS: Readonly<Record<PortfolioViewAction, PortfolioViewTarget>> =
   'research-tools': {
     action: 'research-tools',
     route: ACTION_ROUTES.research_tools,
-    message: '연구 경험의 도구 & SI 접목 탭으로 이동을 시작했습니다.',
-    label: '연구 경험의 도구 & SI 접목 탭',
+    message: '연구 경험의 도구 & AI·SI 접목 탭으로 이동을 시작했습니다.',
+    label: '연구 경험의 도구 & AI·SI 접목 탭',
   },
   'research-open-weight': {
     action: 'research-open-weight',
@@ -280,35 +280,35 @@ const VIEW_TARGETS: Readonly<Record<PortfolioViewAction, PortfolioViewTarget>> =
   },
   'si-levels': {
     action: 'si-levels', route: ACTION_ROUTES.si_levels,
-    label: 'SI 활용 단계 소개', message: 'SI 활용 단계 소개로 이동을 시작했습니다.',
+    label: 'AI·SI 활용 단계 소개', message: 'AI·SI 활용 단계 소개로 이동을 시작했습니다.',
   },
   'si-level-chat': {
     action: 'si-level-chat', route: ACTION_ROUTES.si_level_chat,
-    label: 'SI 활용 01단계 · 챗봇과 대화', message: 'SI 활용 01단계 · 챗봇과 대화로 이동을 시작했습니다.',
+    label: 'AI·SI 활용 01단계 · 챗봇과 대화', message: 'AI·SI 활용 01단계 · 챗봇과 대화로 이동을 시작했습니다.',
   },
   'si-level-read-only': {
     action: 'si-level-read-only', route: ACTION_ROUTES.si_level_read_only,
-    label: 'SI 활용 02단계 · 조회·분석 위임', message: 'SI 활용 02단계 · 조회·분석 위임으로 이동을 시작했습니다.',
+    label: 'AI·SI 활용 02단계 · 조회·분석 위임', message: 'AI·SI 활용 02단계 · 조회·분석 위임으로 이동을 시작했습니다.',
   },
   'si-level-implementation': {
     action: 'si-level-implementation', route: ACTION_ROUTES.si_level_implementation,
-    label: 'SI 활용 03단계 · 구현 위임', message: 'SI 활용 03단계 · 구현 위임으로 이동을 시작했습니다.',
+    label: 'AI·SI 활용 03단계 · 구현 위임', message: 'AI·SI 활용 03단계 · 구현 위임으로 이동을 시작했습니다.',
   },
   'si-level-tools': {
     action: 'si-level-tools', route: ACTION_ROUTES.si_level_tools,
-    label: 'SI 활용 04단계 · MCP·CLI 도구 활용', message: 'SI 활용 04단계 · MCP·CLI 도구 활용으로 이동을 시작했습니다.',
+    label: 'AI·SI 활용 04단계 · MCP·CLI 도구 활용', message: 'AI·SI 활용 04단계 · MCP·CLI 도구 활용으로 이동을 시작했습니다.',
   },
   'si-level-orchestration': {
     action: 'si-level-orchestration', route: ACTION_ROUTES.si_level_orchestration,
-    label: 'SI 활용 05단계 · 단일 하네스 에이전트 조율', message: 'SI 활용 05단계 · 단일 하네스 에이전트 조율로 이동을 시작했습니다.',
+    label: 'AI·SI 활용 05단계 · 단일 하네스 에이전트 조율', message: 'AI·SI 활용 05단계 · 단일 하네스 에이전트 조율로 이동을 시작했습니다.',
   },
   'si-level-multi-model': {
     action: 'si-level-multi-model', route: ACTION_ROUTES.si_level_multi_model,
-    label: 'SI 활용 06단계 · 다중 하네스 에이전트 협업', message: 'SI 활용 06단계 · 다중 하네스 에이전트 협업으로 이동을 시작했습니다.',
+    label: 'AI·SI 활용 06단계 · 다중 하네스 에이전트 협업', message: 'AI·SI 활용 06단계 · 다중 하네스 에이전트 협업으로 이동을 시작했습니다.',
   },
   'si-learning': {
     action: 'si-learning', route: ACTION_ROUTES.si_learning,
-    label: 'SI 활용 · 배우는 데 쓰기', message: 'SI 활용 · 배우는 데 쓰기로 이동을 시작했습니다.',
+    label: 'AI·SI 활용 · 배우는 데 쓰기', message: 'AI·SI 활용 · 배우는 데 쓰기로 이동을 시작했습니다.',
   },
   'si-tools-ffmpeg': {
     action: 'si-tools-ffmpeg', route: ACTION_ROUTES.si_tools_ffmpeg,
@@ -356,8 +356,8 @@ const VIEW_TARGETS: Readonly<Record<PortfolioViewAction, PortfolioViewTarget>> =
     action: 'ai-collaboration-projects',
     route: ACTION_ROUTES.project_overview,
     message:
-      '소개 페이지의 SI 에이전트 협업 프로젝트 섹션으로 이동을 시작했습니다.',
-    label: '소개 페이지의 SI 에이전트 협업 프로젝트 섹션',
+      '소개 페이지의 AI·SI 에이전트 협업 프로젝트 섹션으로 이동을 시작했습니다.',
+    label: '소개 페이지의 AI·SI 에이전트 협업 프로젝트 섹션',
   },
   'archive-canvas-dodge-game': {
     action: 'archive-canvas-dodge-game',
@@ -380,20 +380,20 @@ const VIEW_TARGETS: Readonly<Record<PortfolioViewAction, PortfolioViewTarget>> =
   'project-common-infrastructure': {
     action: 'project-common-infrastructure',
     route: ACTION_ROUTES.project_common_infrastructure,
-    message: 'SI 협업 프로젝트 · 공용 인프라 프로젝트군으로 이동을 시작했습니다.',
-    label: 'SI 협업 프로젝트 · 공용 인프라 프로젝트군',
+    message: 'AI·SI 협업 프로젝트 · 공용 인프라 프로젝트군으로 이동을 시작했습니다.',
+    label: 'AI·SI 협업 프로젝트 · 공용 인프라 프로젝트군',
   },
   'project-ecommerce-demo': {
     action: 'project-ecommerce-demo',
     route: ACTION_ROUTES.project_ecommerce_demo,
-    message: 'SI 협업 프로젝트 · 이커머스 데모로 이동을 시작했습니다.',
-    label: 'SI 협업 프로젝트 · 이커머스 데모',
+    message: 'AI·SI 협업 프로젝트 · 이커머스 데모로 이동을 시작했습니다.',
+    label: 'AI·SI 협업 프로젝트 · 이커머스 데모',
   },
   'project-code-archive': {
     action: 'project-code-archive',
     route: ACTION_ROUTES.project_code_archive,
-    message: 'SI 활용 실험 · 앱·도구 실험 · 코드 아카이브로 이동을 시작했습니다.',
-    label: 'SI 활용 실험 · 앱·도구 실험 · 코드 아카이브',
+    message: 'AI·SI 활용 실험 · 앱·도구 실험 · 코드 아카이브로 이동을 시작했습니다.',
+    label: 'AI·SI 활용 실험 · 앱·도구 실험 · 코드 아카이브',
   },
 };
 

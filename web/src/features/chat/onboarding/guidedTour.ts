@@ -151,7 +151,7 @@ export const GUIDED_TOUR_STEPS: readonly GuidedTourStep[] = [
     id: "overview",
     title: "소개 페이지",
     message:
-      "포트폴리오의 전체 구성을 먼저 살펴볼게요. 소개, 이력서, 자기소개서, 연구 경험, SI 활용 단계, 개발·배포 환경, 기록을 순서대로 둘러봅니다.",
+      "포트폴리오의 전체 구성을 먼저 살펴볼게요. 소개, 이력서, 자기소개서, 연구 경험, AI·SI 활용 단계, 개발·배포 환경, 기록을 순서대로 둘러봅니다.",
     actionId: "overview",
   },
   {
@@ -163,17 +163,17 @@ export const GUIDED_TOUR_STEPS: readonly GuidedTourStep[] = [
   },
   {
     id: "si-terminology",
-    title: "SI 표기 안내",
-    message: "이 사이트에서 SI라는 표현을 사용하는 배경입니다. 개인적인 사용 경험과 앞으로의 기대를 담은 안내를 읽어 보세요.",
+    title: "AI·SI 표기 안내",
+    message: "이 사이트에서 AI·SI라는 표현을 사용하는 배경입니다. 개인적인 사용 경험과 앞으로의 기대를 담은 안내를 읽어 보세요.",
     actionId: "si_terminology",
     targetId: "si-terminology-notice",
     highlightDurationMs: 1_800,
   },
   {
     id: "projects",
-    title: "SI 에이전트들과 협업한 프로젝트",
+    title: "AI·SI 에이전트들과 협업한 프로젝트",
     message:
-      "요구사항과 운영 조건에 맞춰 구조를 선택하고, SI 에이전트의 구현 결과를 직접 리뷰하고 검증하며 진행한 공개 프로젝트를 살펴봅니다.",
+      "요구사항과 운영 조건에 맞춰 구조를 선택하고, AI·SI 에이전트의 구현 결과를 직접 리뷰하고 검증하며 진행한 공개 프로젝트를 살펴봅니다.",
     actionId: "project_overview",
   },
   {
@@ -196,15 +196,15 @@ export const GUIDED_TOUR_STEPS: readonly GuidedTourStep[] = [
   },
   {
     id: "si-levels-preview",
-    title: "SI 활용 단계 미리보기",
-    message: "SI 활용 수준을 여섯 단계로 나눈 페이지의 입구입니다. 단계별 내용은 둘러보기 끝부분에서 차례로 살펴봅니다.",
+    title: "AI·SI 활용 단계 미리보기",
+    message: "AI·SI 활용 수준을 여섯 단계로 나눈 페이지의 입구입니다. 단계별 내용은 둘러보기 끝부분에서 차례로 살펴봅니다.",
     actionId: "si_levels_preview",
   },
   {
     id: "agent-experiments",
-    title: "SI 에이전트 성능·활용 실험",
+    title: "AI·SI 에이전트 성능·활용 실험",
     message:
-      "SI 활용과 모델 성능을 취미로 실험하며 얻은 결과를 모은 공간입니다. 먼저 실험의 목적과 작업 방식을 읽고, 다음 단계부터 대표 실험인 3D 포트폴리오 광장과 2D 실험, 3D 실험, 게임, 영상물, 앱·도구 실험, 포템킨 빌리지를 차례로 살펴볼게요.",
+      "AI·SI 활용과 모델 성능을 취미로 실험하며 얻은 결과를 모은 공간입니다. 먼저 실험의 목적과 작업 방식을 읽고, 다음 단계부터 대표 실험인 3D 포트폴리오 광장과 2D 실험, 3D 실험, 게임, 영상물, 앱·도구 실험, 포템킨 빌리지를 차례로 살펴볼게요.",
     actionId: "agent_experiments",
   },
   {
@@ -257,19 +257,19 @@ export const GUIDED_TOUR_STEPS: readonly GuidedTourStep[] = [
   },
   {
     id: "experiments-videos",
-    title: "SI 실험 · 영상물",
+    title: "AI·SI 실험 · 영상물",
     message: "모션그래픽, 우주선 시뮬레이션, 키보드 분해도와 모션 도감입니다. 관심 있는 작업을 선택해 재생하고 제작 모델을 확인해 보세요.",
     actionId: "agent_experiments_videos",
   },
   {
     id: "experiments-apps",
-    title: "SI 실험 · 앱·도구 실험",
-    message: "스프라이트 보정 도구, 검증한 코드를 보관하는 코드 아카이브, 영수증 OCR 앱처럼 SI 에이전트와 만든 앱과 도구입니다. 실행 화면을 살펴보세요.",
+    title: "AI·SI 실험 · 앱·도구 실험",
+    message: "스프라이트 보정 도구, 검증한 코드를 보관하는 코드 아카이브, 영수증 OCR 앱처럼 AI·SI 에이전트와 만든 앱과 도구입니다. 실행 화면을 살펴보세요.",
     actionId: "agent_experiments_apps",
   },
   {
     id: "experiments-potemkin",
-    title: "SI 실험 · 포템킨 빌리지",
+    title: "AI·SI 실험 · 포템킨 빌리지",
     message: "겉만 번듯하고 실체는 없는 데모를 직접 만들어 본 공간입니다. 페이지의 ‘실제 내용’ 스위치를 켜면 화면 뒤에서 실제로 무엇이 돌아가는지 확인할 수 있어요.",
     actionId: "agent_experiments_potemkin",
   },
@@ -305,7 +305,7 @@ export const GUIDED_TOUR_STEPS: readonly GuidedTourStep[] = [
     id: "research-timeline",
     title: "연구 여정",
     message:
-      "하드웨어 탐구에서 소프트웨어 최적화와 SI 에이전트 활용으로 이어진 연구 흐름을 먼저 살펴봅니다.",
+      "하드웨어 탐구에서 소프트웨어 최적화와 AI·SI 에이전트 활용으로 이어진 연구 흐름을 먼저 살펴봅니다.",
     actionId: "research_timeline",
   },
   {
@@ -405,15 +405,15 @@ export const GUIDED_TOUR_STEPS: readonly GuidedTourStep[] = [
   },
   {
     id: "research-tools",
-    title: "도구와 SI 접목 · Roslyn 코드 생성기",
+    title: "도구와 AI·SI 접목 · Roslyn 코드 생성기",
     message:
-      "반복되는 데이터 바인딩 코드의 수작업 오류를 줄이려고 만든 Roslyn 기반 소스 생성기입니다. 이 탭에서 도구 제작과 SI 접목 경험을 차례로 살펴봅니다.",
+      "반복되는 데이터 바인딩 코드의 수작업 오류를 줄이려고 만든 Roslyn 기반 소스 생성기입니다. 이 탭에서 도구 제작과 AI·SI 접목 경험을 차례로 살펴봅니다.",
     actionId: "research_tools",
   },
   {
     id: "research-ai-verification",
-    title: "도구와 SI 접목 · SI 에이전트 개발·검증 실험",
-    message: "SI 에이전트를 개발·검증 과정에 활용한 실험입니다. 에이전트에 맡긴 역할과 직접 검증한 범위를 확인해 보세요.",
+    title: "도구와 AI·SI 접목 · AI·SI 에이전트 개발·검증 실험",
+    message: "AI·SI 에이전트를 개발·검증 과정에 활용한 실험입니다. 에이전트에 맡긴 역할과 직접 검증한 범위를 확인해 보세요.",
     actionId: "research_ai_verification",
   },
   {
@@ -424,19 +424,19 @@ export const GUIDED_TOUR_STEPS: readonly GuidedTourStep[] = [
   },
   {
     id: "si-levels",
-    title: "SI 활용 단계 소개",
-    message: "채팅부터 여러 하네스 에이전트의 협업까지, SI를 활용하는 여섯 단계를 살펴봅니다. 나와 우리 팀·조직은 어느 단계로 작업하는지 생각해 보세요.",
+    title: "AI·SI 활용 단계 소개",
+    message: "채팅부터 여러 하네스 에이전트의 협업까지, AI·SI를 활용하는 여섯 단계를 살펴봅니다. 나와 우리 팀·조직은 어느 단계로 작업하는지 생각해 보세요.",
     actionId: "si_levels",
   },
   ...aiWorkflowStages.map((stage) => ({
     id: `si-level-${stage.id}` as const,
-    title: `SI 활용 ${stage.number} · ${stage.shortTitle}`,
+    title: `AI·SI 활용 ${stage.number} · ${stage.shortTitle}`,
     message: stage.description,
     actionId: SI_STAGE_ACTIONS[stage.id],
   })),
   {
     id: "si-learning",
-    title: "SI 활용 · 배우는 데 쓰기",
+    title: "AI·SI 활용 · 배우는 데 쓰기",
     message: "단계와 별개로 가장 중요하게 생각하는 활용법입니다. 챗봇으로 SIMD를 독학한 방식과, 에이전트와 작업하며 궁금한 것을 바로 실험해 보는 방식을 살펴보세요.",
     actionId: "si_learning",
   },

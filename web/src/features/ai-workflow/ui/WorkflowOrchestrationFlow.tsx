@@ -21,7 +21,7 @@ export function WorkflowOrchestrationFlow({ stage }: { stage: OrchestrationStage
       <div className={styles.desktopFlow}>
       <div className={styles.network}>
         <div className={styles.coordinator}>
-          <span className={styles.actor}>SI 에이전트 · 조율</span>
+          <span className={styles.actor}>AI·SI 에이전트 · 조율</span>
           <strong>{coordinator.title}</strong>
           <p>{coordinator.detail}</p>
           <p className={styles.coordinatorNote}>② 완료 보고를 받은 뒤 ③ 검수를 실행합니다.</p>
@@ -39,7 +39,7 @@ export function WorkflowOrchestrationFlow({ stage }: { stage: OrchestrationStage
                 ))}
               </ol>
               <div className={styles.agentNode}>
-                <span className={styles.actor}>SI 에이전트 · {id === 'implementer' ? '구현' : '검수'}</span>
+                <span className={styles.actor}>AI·SI 에이전트 · {id === 'implementer' ? '구현' : '검수'}</span>
                 <strong>{node.title}</strong>
                 <p>{node.detail}</p>
               </div>

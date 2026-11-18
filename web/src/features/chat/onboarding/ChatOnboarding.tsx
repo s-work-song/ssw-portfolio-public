@@ -74,7 +74,7 @@ export function ChatOnboarding({
         >
           <span>
             <strong>포트폴리오 처음부터 둘러보기</strong>
-            <small>주요 페이지와 SI 활용 단계를 차례로 안내해요.</small>
+            <small>주요 페이지와 AI·SI 활용 단계를 차례로 안내해요.</small>
           </span>
           <span aria-hidden="true">→</span>
         </button>

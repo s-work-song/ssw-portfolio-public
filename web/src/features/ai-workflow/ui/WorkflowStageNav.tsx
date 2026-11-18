@@ -14,7 +14,7 @@ interface WorkflowStageNavProps {
 /** 기존 단계 카드 모양을 유지한 탭 선택 버튼입니다. */
 export default function WorkflowStageNav({ currentStageId, onSelect, position = 'top' }: WorkflowStageNavProps) {
   const tabIdPrefix = position === 'top' ? 'workflow-tab' : 'workflow-bottom-tab';
-  const label = position === 'top' ? 'SI 활용 단계 선택' : '본문 아래 SI 활용 단계 선택';
+  const label = position === 'top' ? 'AI·SI 활용 단계 선택' : '본문 아래 AI·SI 활용 단계 선택';
 
   function navigateByKey(event: KeyboardEvent<HTMLButtonElement>, index: number) {
     if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;

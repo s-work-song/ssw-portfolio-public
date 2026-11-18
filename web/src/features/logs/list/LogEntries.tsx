@@ -589,7 +589,7 @@ export default function LogEntries({ initialList = null }: { initialList?: LogLi
         {viewMode === "recommended" && !(displayMode === "map" && isLoading) && (
           <div className={styles.recommendedIntro} role="note">
             <span>RECOMMENDED READING</span>
-            <p>개발을 시작한 배경과 개발에 대한 관점, 현재 SI 에이전트를 활용하기까지의 과정을 따라가는 추천 순서입니다.</p>
+            <p>개발을 시작한 배경과 개발에 대한 관점, 현재 AI·SI 에이전트를 활용하기까지의 과정을 따라가는 추천 순서입니다.</p>
           </div>
         )}
 

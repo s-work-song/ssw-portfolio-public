@@ -52,7 +52,7 @@ export const SETTINGS_WEBMCP_GUIDE = `### 설정과 챗봇·WebMCP 도구
 - “설정 페이지 열어줘”
 - “지금 내가 어떤 페이지를 보고 있어?”
 - “자기소개서 페이지로 이동해줘”
-- “소개 페이지의 SI 협업 프로젝트로 이동”
+- “소개 페이지의 AI·SI 협업 프로젝트로 이동”
 - “개발 환경 탭 열어줘”
 - “배포 구성 보여줘”
 - “Rust 전환 메모리 비교로 이동해줘”
@@ -499,7 +499,7 @@ export const ACTION_LABELS: Readonly<Record<ActionId, string>> = {
   research: "연구·기술 탐구 보기",
   log: "작업 기록 보기",
   project_overview: "공개용 프로젝트 보기",
-  agent_experiments: "SI 에이전트 성능·활용 실험 보기",
+  agent_experiments: "AI·SI 에이전트 성능·활용 실험 보기",
   agent_experiments_plaza: "3D 포트폴리오 광장 보기",
   agent_experiments_svg: "SVG 제작 실험 보기",
   agent_experiments_webgl: "WebGL 실험 보기",
@@ -515,7 +515,7 @@ export const ACTION_LABELS: Readonly<Record<ActionId, string>> = {
   open_weight_experiments: "오픈웨이트 모델 실험 보기",
   optimization_preview: "성능 최적화 연구 미리보기",
   architecture_preview: "개발·배포 환경 미리보기",
-  si_levels_preview: "SI 활용 단계 미리보기",
+  si_levels_preview: "AI·SI 활용 단계 미리보기",
   project_common_infrastructure: "공용 인프라 보기",
   project_ecommerce_demo: "이커머스 데모 보기",
   project_code_archive: "코드 아카이브 보기",
@@ -536,20 +536,20 @@ export const ACTION_LABELS: Readonly<Record<ActionId, string>> = {
   research_serialization: "직렬화·전송 연구 보기",
   research_serialization_bandwidth: "물리 계층 대역폭 비교 보기",
   research_tools: "도구·SI 연구 보기",
-  research_ai_verification: "SI 에이전트 개발·검증 실험 보기",
+  research_ai_verification: "AI·SI 에이전트 개발·검증 실험 보기",
   research_open_weight: "오픈웨이트 모델 실험 상세 보기",
   research_chatbot_architecture: "챗봇 구조 실험 보기",
   research_training_data: "학습 데이터 형식 보기",
   research_training_examples: "학습 데이터 예시 보기",
-  si_levels: "SI 활용 단계 소개 보기",
-  si_terminology: "SI 표기 안내 보기",
-  si_level_chat: "SI 활용 01단계 보기",
-  si_level_read_only: "SI 활용 02단계 보기",
-  si_level_implementation: "SI 활용 03단계 보기",
-  si_level_tools: "SI 활용 04단계 보기",
-  si_level_orchestration: "SI 활용 05단계 보기",
-  si_level_multi_model: "SI 활용 06단계 보기",
-  si_learning: "SI 학습 활용 보기",
+  si_levels: "AI·SI 활용 단계 소개 보기",
+  si_terminology: "AI·SI 표기 안내 보기",
+  si_level_chat: "AI·SI 활용 01단계 보기",
+  si_level_read_only: "AI·SI 활용 02단계 보기",
+  si_level_implementation: "AI·SI 활용 03단계 보기",
+  si_level_tools: "AI·SI 활용 04단계 보기",
+  si_level_orchestration: "AI·SI 활용 05단계 보기",
+  si_level_multi_model: "AI·SI 활용 06단계 보기",
+  si_learning: "AI·SI 학습 활용 보기",
   si_tools_ffmpeg: "FFmpeg·컨택트 시트 사례 보기",
   si_session_messaging: "대표 세션 메시지 협업 보기",
   log_ambiguous_support: "AI 지원 조건 기록 보기",
