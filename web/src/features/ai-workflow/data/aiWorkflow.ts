@@ -195,7 +195,7 @@ export const aiWorkflowSimdCase = {
       title: '챗봇을 참고해 직접 짠 코드',
       actor: 'ChatGPT 무료 채팅을 참고해 직접 타이핑',
       description: 'SIMD 인트린직과 예제 코드를 채팅으로 묻고, 빈틈이 많은 답변 코드를 고치고 조합해 직접 짰습니다. 값의 범위를 비교 두 번과 AND로 걸러 내고, SAD로 부분합을 모읍니다.',
-      results: [{ label: '언롤링 구현', microseconds: 36.06 }],
+      results: [{ label: '포인터 없이', microseconds: 36.06 }],
       codeUrl: `${SIMD_CASE_CODE_URL}/Stage1Handwritten`,
     },
     {
