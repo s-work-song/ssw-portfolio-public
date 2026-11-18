@@ -24,7 +24,7 @@ export default function SimdRecordChallenge({ context }: Readonly<{ context: 're
           {inResearch ? '위 비교' : '연구 페이지의 비교'}에서도 C++ 구현(34.5 μs)과 C# SIMD 구현(37 μs)의 처리 시간은 비슷했습니다.
         </p>
         <p style={{ margin: '10px 0 0' }}>
-          이 차별점을 유지하면서, 그때 직접 타이핑해 짠 C# 코드(37 μs)를 에이전트와 함께 한계까지 더 최적화했고, 그 결과를 기록으로 걸어 두었습니다(아래 기준 측정 결과).
+          이 차별점을 유지하면서, 그때 직접 타이핑해 짠 C# 코드(37 μs)를 먼저 에이전트 하나와 함께 다듬었고, 이어서 서로 다른 하네스의 두 에이전트가 협업해 한 번 더 최적화했습니다. 그 결과를 기록으로 걸어 두었습니다(아래 기준 측정 결과).
           같은 문제를 이 기록보다 빠르게 푸는 코드를 만들면 기록을 깬 것입니다. 각자의 PC에서 재 보고 결과를 보내 주시면 누구나 참가할 수 있습니다.
         </p>
         <p style={{ margin: '10px 0 0' }}>
@@ -35,21 +35,21 @@ export default function SimdRecordChallenge({ context }: Readonly<{ context: 're
         <ul style={{ margin: '6px 0 0', paddingLeft: '18px' }}>
           <li>
             <strong style={{ color: 'var(--text)' }}>트랙 1 · <code>unsafe</code> 없는 C#</strong>: 기준 코드는{' '}
-            <a href={`${SIMD_RECORD_BASELINE_SOURCE_URL}/MultiplyAddAvx2RangeSumCalculator.cs`} target="_blank" rel="noreferrer" style={{ color: 'var(--accent-text)' }}><code>MultiplyAddAvx2RangeSumCalculator</code></a>입니다.
+            <a href={`${SIMD_RECORD_BASELINE_SOURCE_URL}/Stage3Collaboration/UnrolledPairedLookaheadMultiplyAddAvx2RangeSumCalculator.cs`} target="_blank" rel="noreferrer" style={{ color: 'var(--accent-text)' }}><code>UnrolledPairedLookaheadMultiplyAddAvx2RangeSumCalculator</code></a>입니다.
             <code>unsafe</code> 키워드와 포인터 없이 C#만으로 넘어야 합니다.
           </li>
           <li>
             <strong style={{ color: 'var(--text)' }}>트랙 2 · 제한 없음</strong>: 기준 코드는{' '}
-            <a href={`${SIMD_RECORD_BASELINE_SOURCE_URL}/PrefetchMultiplyAddAvx2RangeSumCalculator.cs`} target="_blank" rel="noreferrer" style={{ color: 'var(--accent-text)' }}><code>PrefetchMultiplyAddAvx2RangeSumCalculator</code></a>입니다.
+            <a href={`${SIMD_RECORD_BASELINE_SOURCE_URL}/Stage3Collaboration/PairedPrefetchMultiplyAddAvx2RangeSumCalculator.cs`} target="_blank" rel="noreferrer" style={{ color: 'var(--accent-text)' }}><code>PairedPrefetchMultiplyAddAvx2RangeSumCalculator</code></a>입니다.
             언어와 <code>unsafe</code> 모두 자유입니다.
           </li>
         </ul>
 
         <div style={{ marginTop: '14px', fontWeight: 700, color: 'var(--text)' }}>기준 측정 결과</div>
         <ul style={{ margin: '6px 0 0', paddingLeft: '18px', fontVariantNumeric: 'tabular-nums' }}>
-          <li>트랙 1 기준(<code>Avx2MultiplyAdd</code>): <strong style={{ color: 'var(--text)' }}>19.92 μs</strong> (표준편차 1.86)</li>
-          <li>트랙 2 기준(<code>Avx2PrefetchMultiplyAdd</code>): <strong style={{ color: 'var(--text)' }}>15.53 μs</strong> (표준편차 0.86)</li>
-          <li>참고 · {inResearch ? '위' : '연구 페이지'} C# SIMD의 공개 재구성(<code>Avx2Unrolled</code>): <strong style={{ color: 'var(--text)' }}>36.94 μs</strong> (표준편차 1.74)</li>
+          <li>트랙 1 기준(<code>Avx2UnrolledPairedLookahead</code>): <strong style={{ color: 'var(--text)' }}>14.56 μs</strong> (표준편차 0.42)</li>
+          <li>트랙 2 기준(<code>Avx2PairedPrefetch</code>): <strong style={{ color: 'var(--text)' }}>12.72 μs</strong> (표준편차 0.21)</li>
+          <li>참고 · {inResearch ? '위' : '연구 페이지'} C# SIMD의 공개 재구성(<code>Avx2Unrolled</code>): <strong style={{ color: 'var(--text)' }}>36.06 μs</strong> (표준편차 0.73)</li>
         </ul>
         <p style={{ margin: '8px 0 0', fontSize: '0.75rem', lineHeight: 1.5, color: 'var(--text-mute)' }}>
           측정 환경: Intel Core i5-9600K(Coffee Lake, 3.7 GHz, 코어당 L2 256 KB), Windows 11, .NET 8.0.23(x64 RyuJIT, x86-64-v3),
@@ -74,7 +74,7 @@ export default function SimdRecordChallenge({ context }: Readonly<{ context: 're
             이 문턱은 절대적인 기준이 아닙니다. 입력이 L2 캐시에 들어가는 경우와 들어가지 않는 경우를 직접 재 보고, 최신 CPU의 캐시 구성을 참고해 정한 값입니다.
           </li>
           <li>
-            <strong style={{ color: 'var(--text)' }}>환경 맞춤 튜닝</strong>: 기준 코드의 프리페치 거리(2048바이트)와 누적 벡터 개수(8개)는 i5-9600K에 맞춘 값입니다.
+            <strong style={{ color: 'var(--text)' }}>환경 맞춤 튜닝</strong>: 기준 코드의 미리 읽기 거리(4,096바이트·1,024바이트)와 누적 벡터 개수(8개)는 i5-9600K에 맞춘 값입니다.
             이런 상수는 각자의 환경에 맞게 조정해도 되지만, 개선 폭은 절대 시간이 아니라 같은 환경에서 잰 기준 코드 대비 비율로 봅니다.
             다만 상수 조정만으로 얻은 향상은 이 기록 깨기가 찾는 개선이 아닙니다. 명령 선택, 데이터 접근 방식, 알고리즘처럼 방법 자체를 바꾼 개선을 찾습니다.
             그래서 제출 코드는 제 PC(i5-9600K)에서도 다시 재서 기준 코드와 비교해 봅니다. 같은 실행에서 5% 이내면 같은 속도로 봅니다.
