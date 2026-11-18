@@ -130,9 +130,9 @@ export const aiWorkflowLearning = {
   title: '어느 단계에서든, 가장 중요한 건 배우는 데 쓰는 것',
   intro: '여섯 단계는 SI에게 얼마나 맡기는지를 나눈 것입니다. 그런데 단계와 상관없이 제가 가장 중요하게 생각하는 활용법은 SI를 학습에 쓰는 것입니다.',
   practices: [
-    { title: '궁금하면 바로 묻습니다', description: '모르는 개념이나 낯선 코드는 그 자리에서 묻고 설명을 듣습니다.' },
-    { title: '답을 그대로 믿지 않고 되묻습니다', description: '왜 그런지 다시 묻고, 직접 실행하고 측정해서 확인합니다.' },
-    { title: '맡긴 결과는 이해할 때까지 읽습니다', description: '에이전트가 만든 코드도 제가 설명할 수 있어야 다음 판단을 제가 내릴 수 있습니다.' },
+    { title: '궁금하면 바로 묻습니다', description: '모르는 개념이나 낯선 코드는 그 자리에서 묻고 설명을 듣습니다. 지금 하는 작업의 맥락 안에서 물으니, 일반적인 설명이 아니라 눈앞의 문제에 맞는 설명을 들을 수 있습니다.' },
+    { title: '답을 그대로 믿지 않고 되묻습니다', description: '왜 그런지 다시 묻고, 직접 실행하고 측정해서 확인합니다. 에이전트의 답도 틀릴 수 있어서, 근거를 확인한 뒤에야 제 판단의 바탕으로 삼습니다.' },
+    { title: '결과는 어느 정도 이해할 때까지 읽습니다', description: '에이전트의 작업물을 전부 완벽하게 이해하려 하면 그 자체가 병목이 됩니다. 판단과 선택에 필요한 주요 내용과 전체 그림을 파악하는 데 집중합니다.' },
   ],
   examplesTitle: '제가 배워 온 방식',
   /** 챗봇(01 단계)과 에이전트(02~06 단계) 사례를 하나씩 두어 "어느 단계에서든"을 보여 준다. */
@@ -165,6 +165,83 @@ export const aiWorkflowLearning = {
     },
   ],
   closing: 'SI를 잘 쓰는 힘은 도구보다 알고자 하는 마음, 스스로 묻고 찾아가는 자기주도 학습에서 나온다고 생각합니다.',
+} as const;
+
+/** 세 단계 사례의 코드 링크를 고정한 커밋이다. 코드가 나중에 옮겨져도 링크가 깨지지 않게 한다. */
+const SIMD_CASE_COMMIT_URL =
+  'https://github.com/s-work-song/ssw-portfolio-public/tree/8c2fd9aca7741583d8562d241b77b74f93dedbf6/benchmarks/simd-avx2';
+const SIMD_CASE_CODE_URL = `${SIMD_CASE_COMMIT_URL}/src/SSW.Benchmarks.SimdAvx2/Implementations/Simd`;
+
+/**
+ * 같은 SIMD 문제를 SI 활용 단계가 바뀔 때마다 다시 푼 사례입니다.
+ * 수치는 세 단계 구현을 같은 PC에서 한 실행으로 잰 평균값입니다(벤치마크 이름은 저장소의 RangeSumBenchmarks).
+ */
+export const aiWorkflowSimdCase = {
+  title: '같은 문제를 세 단계로 다시 풀기',
+  intro: 'SIMD로 바이트 배열에서 범위 안의 값만 골라 더하는 같은 문제를, SI 활용 방식이 바뀔 때마다 다시 풀었습니다. 세 단계의 코드는 모두 공개 저장소에 그대로 남겨 두었고, 같은 PC에서 한 번에 재서 비교했습니다.',
+  /** 연구 페이지의 SIMD 실험에서 이어진 사례임을 링크와 함께 밝힙니다. */
+  origin: {
+    before: '이 사례는 ',
+    link: { href: '/about-me/research#research-cpu-simd', label: '연구 경험의 CPU·SIMD 실험' },
+    after: '에서 이어진 내용입니다. 그 실험에서 직접 짠 C# SIMD 코드를 공개용으로 재구성한 것이 01 단계 코드이고, 이 코드를 출발점으로 03·06 단계 방식으로 다시 다듬었습니다.',
+  },
+  problem: '1 MiB 바이트 배열에서 100 이상 200 이하인 값의 합 · AVX2 · 단일 스레드',
+  /** 막대는 처리 시간이라 짧을수록 빠릅니다. 포인터를 쓰는 판과 쓰지 않는 판을 나눠 보여 줍니다. */
+  chartMaxMicroseconds: 36.06,
+  steps: [
+    {
+      stageId: 'chat',
+      stage: '01 단계',
+      title: '챗봇을 참고해 직접 짠 코드',
+      actor: 'ChatGPT 무료 채팅을 참고해 직접 타이핑',
+      description: 'SIMD 인트린직과 예제 코드를 채팅으로 묻고, 빈틈이 많은 답변 코드를 고치고 조합해 직접 짰습니다. 값의 범위를 비교 두 번과 AND로 걸러 내고, SAD로 부분합을 모읍니다.',
+      results: [{ label: '언롤링 구현', microseconds: 36.06 }],
+      codeUrl: `${SIMD_CASE_CODE_URL}/Stage1Handwritten`,
+    },
+    {
+      stageId: 'implementation',
+      stage: '03 단계',
+      title: '에이전트 하나와 다듬은 코드',
+      actor: '에이전트에 구현을 맡기고 리뷰·검증',
+      description: '범위 검사를 부호 있는 비교 한 번으로 줄이고, AND와 SAD를 vpmaddubsw 하나로 합쳐 벡터당 명령을 여덟 개에서 네 개로 줄였습니다. 누적 벡터를 여덟 개로 늘리고, 포인터를 쓰는 판에는 프리페치를 더했습니다.',
+      results: [
+        { label: '포인터 없이', microseconds: 18.11 },
+        { label: '포인터 프리페치', microseconds: 14.58 },
+      ],
+      codeUrl: `${SIMD_CASE_CODE_URL}/Stage2SingleAgent`,
+    },
+    {
+      stageId: 'multi-model',
+      stage: '06 단계',
+      title: '서로 다른 하네스의 두 에이전트가 협업한 코드',
+      actor: 'Claude Code의 Fable 5.2 · Codex의 GPT 6.2 Astra',
+      description: '계산은 그대로 두고, 메모리에서 데이터를 가져오는 방식을 바꿨습니다. CPU는 데이터를 64바이트 단위인 캐시 라인(cache line)으로 가져오고, 한 라인을 가져오면 옆에 붙은 짝 라인도 함께 가까운 캐시까지 가져옵니다. 이 성질을 이용해 짝의 앞 라인은 멀리서 미리 요청하고, 뒷라인은 이미 가까이 와 있을 때 가져오게 해서 같은 시간에 더 많은 데이터를 옮기게 했습니다. 포인터 없는 판은 Astra가 찾은 선행 읽기 방식에 Fable이 찾은 짝 구조를 합친 것입니다.',
+      /** 짝 구조를 처음 보는 사람을 위한 접기 설명입니다. */
+      explainer: {
+        summary: '짝 구조란?',
+        paragraphs: [
+          'CPU는 메모리를 1바이트씩이 아니라 64바이트 덩어리인 캐시 라인(cache line) 단위로 L3에서 L2를 거쳐 L1까지 가져옵니다. 이 문제는 1 MiB를 한 번씩 훑기만 하므로, 계산보다 캐시 라인 16,384개를 얼마나 빨리 L1까지 가져오느냐가 속도를 정합니다. 미리 읽기 요청은 라인이 L1에 도착할 때까지 채움 버퍼(LFB) 하나를 차지하는데, 이 버퍼가 코어당 10여 개뿐이라 동시에 오갈 수 있는 라인 수가 제한됩니다.',
+          '짝은 128바이트 경계로 맞춘 이웃한 캐시 라인 두 개입니다. L2에는 한 라인을 가져올 때 짝 라인도 함께 가져오는 인접 라인 프리페처(adjacent line prefetcher)가 있습니다. 06 단계 코드는 짝의 앞 라인만 4 KB 앞에서 요청해 뒷라인이 채움 버퍼 없이 L2까지 오게 하고, 뒷라인은 1 KB 앞에서 요청해 L2에서 L1으로 짧게 올립니다. 채움 버퍼가 그만큼 빨리 비어 더 많은 라인이 동시에 오갑니다.',
+          '같은 두 거리를 쓰되 짝을 무시한 대조 실험은 03 단계보다 8% 남짓, 짝을 맞춘 쪽은 14% 빨라졌습니다. 이 설명은 측정 결과에 맞춘 추론이며 하드웨어 카운터로 확인하지는 않았습니다.',
+        ],
+      },
+      results: [
+        { label: '포인터 없이', microseconds: 14.56 },
+        { label: '포인터 프리페치', microseconds: 12.72 },
+      ],
+      codeUrl: `${SIMD_CASE_CODE_URL}/Stage3Collaboration`,
+    },
+  ],
+  collaborationTitle: '06 단계 협업은 이렇게 진행했습니다',
+  collaboration: [
+    { title: '역할과 규칙 정하기', description: 'Claude Code의 대표 세션이 문제·규칙·측정 방법을 정하고, Codex의 대표 세션에 메일로 요청했습니다. Fable과 Astra는 포인터를 쓰는 판과 쓰지 않는 판을 나눠 맡았습니다.' },
+    { title: '게시판으로 아이디어 나누기', description: '공유 폴더의 게시판에 시도한 것과 안 된 이유를 짧은 메모로 남겼습니다. 상대의 메모를 보고 이미 실패한 방향은 건너뛰고, 통한 아이디어는 가져다 합쳤습니다.' },
+    { title: '측정이 겹치지 않게 하기', description: '두 에이전트가 같은 PC에서 동시에 재면 결과가 흔들립니다. PC 전체에 잠금을 거는 측정 스크립트로 한 번에 한 측정만 돌게 했습니다.' },
+    { title: '대표 세션이 다시 재고 판정하기', description: '두 에이전트가 끝나면 대표 세션이 조용한 상태에서 후보를 한 번에 다시 재고, 정답 검사까지 돌려 최종 결과를 정했습니다.' },
+  ],
+  note: '03 단계와 06 단계 사이에는 모델 세대 차이도 있어서, 줄어든 시간을 모두 협업 효과로 볼 수는 없습니다. 다만 포인터 없는 판은 Astra의 아이디어만으로는 약 7% 빨라지는 데 그쳤고, Fable의 짝 구조와 합쳐 다듬었을 때 약 20% 빨라졌습니다.',
+  environment: '측정 환경: Intel Core i5-9600K, Windows 11, .NET 8.0.23, BenchmarkDotNet 0.15.8 기본 설정 · 평균값',
+  repositoryUrl: SIMD_CASE_COMMIT_URL,
 } as const;
 
 export interface AiWorkflowCapture {

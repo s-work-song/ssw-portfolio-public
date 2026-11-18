@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { aiWorkflowLearning, aiWorkflowStages } from '@/features/ai-workflow/data/aiWorkflow';
 import WorkflowStageTabs from '../../../features/ai-workflow/ui/WorkflowStageTabs';
 import WorkflowStageContent from '../../../features/ai-workflow/ui/WorkflowStageContent';
+import WorkflowSimdCase from '../../../features/ai-workflow/ui/WorkflowSimdCase';
 import styles from './AiWorkflow.module.css';
 
 export const metadata: Metadata = {
@@ -35,6 +36,9 @@ export default function AiWorkflowPage() {
       <WorkflowStageTabs panels={aiWorkflowStages.map((stage) => (
         <WorkflowStageContent key={stage.id} stage={stage} />
       ))} />
+
+      {/* 같은 문제를 01·03·06 단계 방식으로 다시 푼 사례. 단계 비교를 실제 수치로 보여 준 뒤 마무리 카드로 넘어간다. */}
+      <WorkflowSimdCase />
 
       <aside className={styles.closing} aria-labelledby="workflow-try-title">
         <p className={styles.eyebrow}>CHOOSE WHAT FITS</p>
