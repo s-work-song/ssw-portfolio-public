@@ -216,7 +216,7 @@ export default function ResumePage() {
           성장 스토리와 가치관이 궁금하신가요?
         </h3>
         <p style={{ color: 'var(--text-dim)', marginBottom: '24px', fontSize: '0.975rem', lineHeight: 1.6, maxWidth: '650px', margin: '0 auto 24px' }}>
-          단순한 기술 스택을 넘어, 어떤 가치관을 갖고 문제를 해결하는 메이커인지 자기소개서에서 확인해 보세요.
+          단순한 기술 스택을 넘어, 어떤 가치관을 갖고 문제를 해결하는 개발자인지 자기소개서에서 확인해 보세요.
         </p>
         <Link href="/about-me/cover-letter" className="hover-btn-primary hover-btn-inverse" style={{
           display: 'inline-block',

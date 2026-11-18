@@ -415,7 +415,7 @@ export default function CoverLetterPage() {
             &quot;단순히 돌아가는 코드가 아닌,<br />그 이면의 원리를 탐구합니다.&quot;
           </h2>
           <p style={{ fontSize: 'clamp(1rem, 2.6vw, 1.125rem)', color: 'var(--text-dim)', maxWidth: '850px', lineHeight: 1.6, margin: 0, wordBreak: 'keep-all' }}>
-            단순히 결과물만 내는 것이 아니라, 프로덕트가 만들어지는 이면에 담긴 고민과 과정을 중요하게 생각합니다. 언제나 본질을 꿰뚫고 새로운 기준을 제시하기 위해 노력하는 메이커입니다.
+            단순히 결과물만 내는 것이 아니라, 프로덕트가 만들어지는 이면에 담긴 고민과 과정을 중요하게 생각합니다. 언제나 본질을 꿰뚫고 새로운 기준을 제시하기 위해 노력하는 개발자입니다.
           </p>
           <AskAiButton
             align="end"
@@ -490,12 +490,12 @@ export default function CoverLetterPage() {
           <div style={{ display: 'grid', gridTemplateColumns: 'minmax(40px, auto) 1fr', gap: '24px', alignItems: 'start' }}>
             <div style={{ fontFamily: 'monospace', fontSize: '1.75rem', fontWeight: 800, color: 'var(--accent-text)', opacity: 0.8, lineHeight: 1 }}>03</div>
             <div>
-              <h3 style={{ fontSize: '1.35rem', fontWeight: 700, margin: '0 0 12px', color: 'var(--text)', lineHeight: 1.2 }}>스스로 문제를 정의하는 메이커</h3>
+              <h3 style={{ fontSize: '1.35rem', fontWeight: 700, margin: '0 0 12px', color: 'var(--text)', lineHeight: 1.2 }}>스스로 문제를 정의하는 개발자</h3>
               <p style={{ margin: 0, fontSize: '1.03125rem', color: 'var(--text-dim)', lineHeight: 1.7, wordBreak: 'keep-all' }}>
                 단순히 구현하는 것을 넘어, 데이터의 직렬화 포맷을 비교 분석하고 자체적인 코드 제너레이터(Scaffold)를 구축하는 등, 생산성과 성능이라는 두 마리 토끼를 잡기 위해 끊임없이 고민하고 있습니다. 저는 주어지는 문제를 수동적으로 푸는 사람이 아니라, 스스로 문제를 정의하고 본질부터 파고듭니다.
               </p>
               <div style={{ marginTop: '14px' }}>
-                <AskAiButton align="end" question="「스스로 문제를 정의하는 메이커」라는 표현을 실제 프로젝트와 실험 사례를 들어 설명해 주세요." />
+                <AskAiButton align="end" question="「스스로 문제를 정의하는 개발자」라는 표현을 실제 프로젝트와 실험 사례를 들어 설명해 주세요." />
               </div>
             </div>
           </div>
