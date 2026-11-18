@@ -41,7 +41,8 @@ export default function SimdRecordChallenge({ context }: Readonly<{ context: 're
           <li>
             <strong style={{ color: 'var(--text)' }}>트랙 2 · 제한 없음</strong>: 기준 코드는{' '}
             <a href={`${SIMD_RECORD_BASELINE_SOURCE_URL}/Stage3Collaboration/PairedPrefetchMultiplyAddAvx2RangeSumCalculator.cs`} target="_blank" rel="noreferrer" style={{ color: 'var(--accent-text)' }}><code>PairedPrefetchMultiplyAddAvx2RangeSumCalculator</code></a>입니다.
-            언어와 <code>unsafe</code> 모두 자유입니다.
+            언어와 <code>unsafe</code> 모두 자유입니다. C# 밖의 언어는 그 언어에서 널리 쓰는 측정 도구(예: C++의 Google Benchmark, Rust의 Criterion)로 재고,
+            같은 PC에서 기준 코드를 바로 이어서 재서 두 결과를 함께 보내 주세요.
           </li>
         </ul>
 
@@ -67,7 +68,7 @@ export default function SimdRecordChallenge({ context }: Readonly<{ context: 're
             <strong style={{ color: 'var(--text)' }}>같은 조건</strong>: AVX2까지(AVX-512 제외), 단일 스레드입니다.
             명령어는 x86-64-v3 수준(AVX2·FMA·BMI1·BMI2 등)까지만 쓰고, AVX-VNNI·AVX-IFMA·AVX10처럼 그 뒤에 나온 확장은 쓰지 않습니다.
             각자의 PC에서{' '}
-            <a href={SIMD_RECORD_BASELINE_ROOT_URL} target="_blank" rel="noreferrer" style={{ color: 'var(--accent-text)' }}>기준 코드의 벤치마크</a>와 같은 BenchmarkDotNet 실행으로 함께 잽니다.
+            <a href={SIMD_RECORD_BASELINE_ROOT_URL} target="_blank" rel="noreferrer" style={{ color: 'var(--accent-text)' }}>기준 코드의 벤치마크</a>와 같은 BenchmarkDotNet 실행으로 함께 잽니다(C# 밖의 언어는 트랙 2 안내를 따릅니다).
           </li>
           <li>
             <strong style={{ color: 'var(--text)' }}>통과 기준</strong>: 기준 코드보다 10% 이상 빠르면 됩니다.
