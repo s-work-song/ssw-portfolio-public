@@ -5,7 +5,7 @@ using System.Runtime.Intrinsics.X86;
 using SSW.Benchmarks.SimdAvx2.Abstractions;
 using SSW.Benchmarks.SimdAvx2.Implementations.Scalar;
 
-namespace SSW.Benchmarks.SimdAvx2.Implementations.Simd;
+namespace SSW.Benchmarks.SimdAvx2.Implementations.Simd.Stage2SingleAgent;
 
 /// <summary>
 /// 범위 검사와 합산을 벡터당 AVX2 명령 네 개로 줄인 구현입니다.

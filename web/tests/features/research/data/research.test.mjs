@@ -215,22 +215,27 @@ test('최적화 탭의 주의점 카드는 벤치마크 목록 뒤에 놓이고 
 test('SIMD 카드의 기록 깨기는 접힌 채 두고 소개 페이지와 최적화 개요에는 나오지 않는다', async () => {
   const panels = await readFile(new URL('../../../../src/features/research/ui/ResearchPanels.tsx', import.meta.url), 'utf8');
   const cpu = panels.slice(panels.indexOf('id="research-cpu-simd"'), panels.indexOf('id="research-counting-sort"'));
-  const egg = cpu.slice(cpu.indexOf('<details'), cpu.indexOf('</details>'));
-  assert.ok(egg.length > 0, 'CPU & SIMD 첫 카드 안에 있다');
+  assert.ok(cpu.includes('<SimdRecordChallenge context="research" />'), 'CPU & SIMD 첫 카드 안에 있다');
+  // 접기 본문은 연구 페이지와 자기소개서가 함께 쓰는 컴포넌트에 있다.
+  const challenge = await readFile(new URL('../../../../src/features/research/ui/SimdRecordChallenge.tsx', import.meta.url), 'utf8');
+  const egg = challenge.slice(challenge.indexOf('<details'), challenge.indexOf('</details>'));
+  assert.ok(egg.length > 0);
   assert.doesNotMatch(egg, /<details[^>]*\bopen\b/u, '처음에는 접혀 있다');
   assert.doesNotMatch(egg, /__TRACK\d__/u, '빈칸이 남지 않는다');
   const runner = await readFile(new URL('../../../../../benchmarks/simd-avx2/bench/SSW.Benchmarks.SimdAvx2.Benchmarks/RangeSumBenchmarks.cs', import.meta.url), 'utf8');
-  assert.ok(runner.includes('new MultiplyAddAvx2RangeSumCalculator()') && runner.includes('new PrefetchMultiplyAddAvx2RangeSumCalculator()'), '두 기준 코드를 러너에서 함께 잰다');
+  assert.ok(runner.includes('new UnrolledPairedLookaheadMultiplyAddAvx2RangeSumCalculator()') && runner.includes('new PairedPrefetchMultiplyAddAvx2RangeSumCalculator()'), '두 기준 코드를 러너에서 함께 잰다');
   // 기준 코드 링크는 main이 아니라 기준 코드를 넣은 커밋 해시에 고정한다.
   const benchmarkData = await readFile(new URL('../../../../src/features/research/data/benchmarks.ts', import.meta.url), 'utf8');
   assert.match(benchmarkData, /SIMD_RECORD_BASELINE_COMMIT = '[0-9a-f]{40}';/u);
   // 다른 탭의 카드라 해시 링크로는 스크롤되지 않으므로, 탭 전환과 스크롤을 맡는 ResearchLink로 잇는다.
   assert.ok(egg.includes('<ResearchLink href="/about-me/research#research-optimization-caution" arrow={false}'));
   assert.doesNotMatch(egg, /<a href="#research-/u);
-  // 트랙 1 기준 코드는 unsafe 키워드와 포인터 없이 작성한다(주석은 빼고 본다).
-  const track1 = await readFile(new URL('../../../../../benchmarks/simd-avx2/src/SSW.Benchmarks.SimdAvx2/Implementations/Simd/MultiplyAddAvx2RangeSumCalculator.cs', import.meta.url), 'utf8');
-  const track1Code = track1.split(/\r?\n/u).filter((line) => !line.trim().startsWith('//')).join('\n');
-  assert.doesNotMatch(track1Code, /\bunsafe\b|\bfixed\s*\(|\b(?:byte|sbyte|short|int|long|void)\*/u);
+  // 트랙 1 기준 코드와 그것이 기대는 구현은 unsafe 키워드와 포인터 없이 작성한다(주석은 빼고 본다).
+  for (const file of ['Stage3Collaboration/UnrolledPairedLookaheadMultiplyAddAvx2RangeSumCalculator.cs', 'Stage3Collaboration/PairedLookaheadMultiplyAddAvx2RangeSumCalculator.cs', 'Stage2SingleAgent/MultiplyAddAvx2RangeSumCalculator.cs']) {
+    const track1 = await readFile(new URL(`../../../../../benchmarks/simd-avx2/src/SSW.Benchmarks.SimdAvx2/Implementations/Simd/${file}`, import.meta.url), 'utf8');
+    const track1Code = track1.split(/\r?\n/u).filter((line) => !line.trim().startsWith('//')).join('\n');
+    assert.doesNotMatch(track1Code, /\bunsafe\b|\bfixed\s*\(|\b(?:byte|sbyte|short|int|long|void)\*/u, file);
+  }
   // 소개 페이지·미리보기·최적화 개요에는 드러내지 않는다.
   const overview = await readFile(new URL('../../../../src/app/about-me/page.tsx', import.meta.url), 'utf8');
   const preview = await readFile(new URL('../../../../src/features/research/ui/OptimizationPreview.tsx', import.meta.url), 'utf8');

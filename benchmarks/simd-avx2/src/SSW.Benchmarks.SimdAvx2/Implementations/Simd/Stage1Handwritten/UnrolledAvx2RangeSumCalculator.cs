@@ -4,7 +4,7 @@ using System.Runtime.Intrinsics.X86;
 using SSW.Benchmarks.SimdAvx2.Abstractions;
 using SSW.Benchmarks.SimdAvx2.Implementations.Scalar;
 
-namespace SSW.Benchmarks.SimdAvx2.Implementations.Simd;
+namespace SSW.Benchmarks.SimdAvx2.Implementations.Simd.Stage1Handwritten;
 
 /// <summary>
 /// 한 반복에서 AVX2 벡터 네 개를 처리하는 언롤링 구현입니다.

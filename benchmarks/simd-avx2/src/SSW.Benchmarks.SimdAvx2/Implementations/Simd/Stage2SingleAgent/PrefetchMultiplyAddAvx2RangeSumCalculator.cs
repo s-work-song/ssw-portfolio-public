@@ -3,7 +3,7 @@ using System.Runtime.Intrinsics.X86;
 using SSW.Benchmarks.SimdAvx2.Abstractions;
 using SSW.Benchmarks.SimdAvx2.Implementations.Scalar;
 
-namespace SSW.Benchmarks.SimdAvx2.Implementations.Simd;
+namespace SSW.Benchmarks.SimdAvx2.Implementations.Simd.Stage2SingleAgent;
 
 /// <summary>
 /// <see cref="MultiplyAddAvx2RangeSumCalculator"/>에 소프트웨어 프리페치(PREFETCHT0)를 더한 구현입니다.

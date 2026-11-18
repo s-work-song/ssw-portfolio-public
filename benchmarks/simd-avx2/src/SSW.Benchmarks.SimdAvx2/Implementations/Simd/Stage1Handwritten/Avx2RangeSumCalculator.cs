@@ -4,7 +4,7 @@ using System.Runtime.Intrinsics.X86;
 using SSW.Benchmarks.SimdAvx2.Abstractions;
 using SSW.Benchmarks.SimdAvx2.Implementations.Scalar;
 
-namespace SSW.Benchmarks.SimdAvx2.Implementations.Simd;
+namespace SSW.Benchmarks.SimdAvx2.Implementations.Simd.Stage1Handwritten;
 
 /// <summary>
 /// AVX2의 256비트 레인으로 바이트 32개를 한 번에 필터링하는 구현입니다.

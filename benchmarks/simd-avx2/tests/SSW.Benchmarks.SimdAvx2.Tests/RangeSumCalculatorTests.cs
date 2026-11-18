@@ -1,7 +1,9 @@
 using SSW.Benchmarks.SimdAvx2.Abstractions;
 using SSW.Benchmarks.SimdAvx2.Decorators;
 using SSW.Benchmarks.SimdAvx2.Implementations.Scalar;
-using SSW.Benchmarks.SimdAvx2.Implementations.Simd;
+using SSW.Benchmarks.SimdAvx2.Implementations.Simd.Stage1Handwritten;
+using SSW.Benchmarks.SimdAvx2.Implementations.Simd.Stage2SingleAgent;
+using SSW.Benchmarks.SimdAvx2.Implementations.Simd.Stage3Collaboration;
 using SSW.Benchmarks.SimdAvx2.TestData;
 
 namespace SSW.Benchmarks.SimdAvx2.Tests;
@@ -20,6 +22,9 @@ public sealed class RangeSumCalculatorTests
         yield return ["avx2-unrolled", new UnrolledAvx2RangeSumCalculator()];
         yield return ["avx2-multiply-add", new MultiplyAddAvx2RangeSumCalculator()];
         yield return ["avx2-multiply-add-prefetch", new PrefetchMultiplyAddAvx2RangeSumCalculator()];
+        yield return ["avx2-paired-prefetch", new PairedPrefetchMultiplyAddAvx2RangeSumCalculator()];
+        yield return ["avx2-paired-lookahead", new PairedLookaheadMultiplyAddAvx2RangeSumCalculator()];
+        yield return ["avx2-unrolled-paired-lookahead", new UnrolledPairedLookaheadMultiplyAddAvx2RangeSumCalculator()];
         yield return ["parallel", new ParallelRangeSumCalculator()];
     }
 

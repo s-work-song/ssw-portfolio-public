@@ -3,7 +3,9 @@ using SSW.Benchmarks.Shared.Benchmarking;
 using SSW.Benchmarks.SimdAvx2.Abstractions;
 using SSW.Benchmarks.SimdAvx2.Decorators;
 using SSW.Benchmarks.SimdAvx2.Implementations.Scalar;
-using SSW.Benchmarks.SimdAvx2.Implementations.Simd;
+using SSW.Benchmarks.SimdAvx2.Implementations.Simd.Stage1Handwritten;
+using SSW.Benchmarks.SimdAvx2.Implementations.Simd.Stage2SingleAgent;
+using SSW.Benchmarks.SimdAvx2.Implementations.Simd.Stage3Collaboration;
 using SSW.Benchmarks.SimdAvx2.TestData;
 
 namespace SSW.Benchmarks.SimdAvx2.Benchmarks;
@@ -24,6 +26,9 @@ public class RangeSumBenchmarks
     private readonly IRangeSumCalculator _unrolled = new UnrolledAvx2RangeSumCalculator();
     private readonly IRangeSumCalculator _multiplyAdd = new MultiplyAddAvx2RangeSumCalculator();
     private readonly IRangeSumCalculator _prefetchMultiplyAdd = new PrefetchMultiplyAddAvx2RangeSumCalculator();
+    private readonly IRangeSumCalculator _pairedPrefetch = new PairedPrefetchMultiplyAddAvx2RangeSumCalculator();
+    private readonly IRangeSumCalculator _pairedLookahead = new PairedLookaheadMultiplyAddAvx2RangeSumCalculator();
+    private readonly IRangeSumCalculator _unrolledPairedLookahead = new UnrolledPairedLookaheadMultiplyAddAvx2RangeSumCalculator();
     private readonly IRangeSumCalculator _parallel = new ParallelRangeSumCalculator();
     private byte[] _data = [];
 
@@ -57,6 +62,15 @@ public class RangeSumBenchmarks
 
     [Benchmark]
     public long Avx2PrefetchMultiplyAdd() => _prefetchMultiplyAdd.Sum(_data, _range);
+
+    [Benchmark]
+    public long Avx2PairedPrefetch() => _pairedPrefetch.Sum(_data, _range);
+
+    [Benchmark]
+    public long Avx2PairedLookahead() => _pairedLookahead.Sum(_data, _range);
+
+    [Benchmark]
+    public long Avx2UnrolledPairedLookahead() => _unrolledPairedLookahead.Sum(_data, _range);
 
     [Benchmark]
     public long ParallelAvx2() => _parallel.Sum(_data, _range);

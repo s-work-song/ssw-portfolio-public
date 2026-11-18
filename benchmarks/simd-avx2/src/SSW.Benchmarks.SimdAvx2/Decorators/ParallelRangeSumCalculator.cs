@@ -1,6 +1,6 @@
 using System.Collections.Concurrent;
 using SSW.Benchmarks.SimdAvx2.Abstractions;
-using SSW.Benchmarks.SimdAvx2.Implementations.Simd;
+using SSW.Benchmarks.SimdAvx2.Implementations.Simd.Stage1Handwritten;
 
 namespace SSW.Benchmarks.SimdAvx2.Decorators;
 
