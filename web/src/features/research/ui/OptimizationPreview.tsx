@@ -12,7 +12,7 @@ const optimizationHighlights = [
     href: ACTION_ROUTES.research_cpu,
     title: '분기 예측과 SIMD 벡터화',
     metric: '5,341 μs → 37 μs',
-    note: '1 MiB 범위 합산 · AVX2 SIMD 단독 약 143배',
+    note: '1 MiB 무작위 범위 합산 · AVX2 SIMD 단독, 표준 분기 대비 약 143배 · 브랜치리스 대비 약 26배',
   },
   {
     tab: 'memory',

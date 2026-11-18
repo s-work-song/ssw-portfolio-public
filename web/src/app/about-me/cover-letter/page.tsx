@@ -415,7 +415,7 @@ export default function CoverLetterPage() {
             &quot;단순히 돌아가는 코드가 아닌,<br />그 이면의 원리를 탐구합니다.&quot;
           </h2>
           <p style={{ fontSize: 'clamp(1rem, 2.6vw, 1.125rem)', color: 'var(--text-dim)', maxWidth: '850px', lineHeight: 1.6, margin: 0, wordBreak: 'keep-all' }}>
-            단순히 결과물만 내는 것이 아니라, 프로덕트가 만들어지는 이면에 담긴 고민과 과정을 중요하게 생각합니다. 언제나 본질을 꿰뚫고 새로운 기준을 제시하기 위해 노력하는 개발자입니다.
+            단순히 결과물만 내는 것이 아니라, 프로덕트가 만들어지는 이면에 담긴 고민과 과정을 중요하게 생각합니다. 추측보다 측정으로 병목의 원인을 찾고, 그 근거를 남겨 다른 사람도 확인할 수 있게 하는 개발자입니다.
           </p>
           <AskAiButton
             align="end"
@@ -477,7 +477,7 @@ export default function CoverLetterPage() {
             <div>
               <h3 style={{ fontSize: '1.35rem', fontWeight: 700, margin: '0 0 12px', color: 'var(--text)', lineHeight: 1.2 }}>로우레벨에서 하이레벨까지</h3>
               <p style={{ margin: 0, fontSize: '1.03125rem', color: 'var(--text-dim)', lineHeight: 1.7, wordBreak: 'keep-all' }}>
-                Java로 프로그래밍에 입문하며 객체지향과 고수준 추상화의 기초를 다졌고, 이후 C#과 Unity를 통해 게임 개발을 시작하면서 프레임워크를 수동적으로 가져다 쓰는 것을 넘어 동작 원리와 저수준 구현까지 파고들었습니다. WinForms에서 WPF로 마이그레이션하며 MVVM 패턴을 체득했고, 더 나아가 CPU의 비순차 실행이나 분기 예측, SIMD(AVX2) 등 하드웨어의 물리적 특성을 고려한 소프트웨어 성능 최적화 실험에 몰두해 왔고, CUDA로 GPU 가속의 기초도 익혔습니다.
+                Java로 프로그래밍에 입문하며 객체지향과 고수준 추상화의 기초를 다졌고, 이후 C#과 Unity를 통해 게임 개발을 시작하면서 프레임워크를 수동적으로 가져다 쓰는 것을 넘어 동작 원리와 저수준 구현까지 파고들었습니다. WinForms에서 WPF로 마이그레이션하며 MVVM 패턴을 체득했고, 더 나아가 CPU의 비순차 실행이나 분기 예측, SIMD(AVX2) 등 하드웨어의 물리적 특성을 고려한 소프트웨어 성능 최적화 실험에 몰두해 왔고, CUDA로 GPU 가속의 기초도 살펴봤습니다.
               </p>
               <div style={{ marginTop: '14px' }}>
                 <AskAiButton align="end" question="자기소개서의 「로우레벨에서 하이레벨까지」 경험을 기술 선택과 성능 최적화 사례 중심으로 자세히 설명해 주세요." />

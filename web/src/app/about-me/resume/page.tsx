@@ -14,6 +14,7 @@ import {
   skillGroups,
   workExperiences,
 } from '@/features/profile/data/resume';
+import { BENCHMARK_ROOT_URL } from '@/features/research/data/benchmarks';
 
 export const metadata = {
   title: '이력서 | Resume',
@@ -64,6 +65,13 @@ export default function ResumePage() {
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <span aria-hidden="true">✉️</span> <a href="mailto:sworksong@gmail.com" style={{ color: 'var(--accent-text)', textDecoration: 'none' }}>sworksong@gmail.com</a>
               </div>
+              {/* 이력서만 훑는 사람도 측정 근거로 바로 갈 수 있게 연구와 공개 코드 링크를 연락처 옆에 둔다. */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span aria-hidden="true">🔬</span> <Link href="/about-me/research" style={{ color: 'var(--accent-text)', textDecoration: 'none' }}>성능 측정 연구</Link>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span aria-hidden="true">💻</span> <a href={BENCHMARK_ROOT_URL} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent-text)', textDecoration: 'none' }}>벤치마크 코드 (GitHub)</a>
+              </div>
             </div>
           </div>
 
@@ -79,8 +87,8 @@ export default function ResumePage() {
           }}>
             Spring 기반 웹 서비스와 Android 앱, 프런트엔드 웹앱 개발 등 Java·JavaScript 환경에서 실무를 경험한 이후,
             Unity와 WPF를 통해 C#을 주력 언어로 사용해 왔습니다.
-            BenchmarkDotNet과 프로파일링을 바탕으로 CPU·메모리·직렬화 병목을 측정하고 개선하며,
-            AI 에이전트를 탐색과 검증을 돕는 개발 파트너로 활용하고 있습니다.
+            BenchmarkDotNet과 프로파일링을 바탕으로 CPU·메모리·직렬화 병목을 측정하고 개선해 왔습니다.
+            지금은 타이핑과 세부 구현을 AI 에이전트에 맡기고, 구조 결정과 코드 리뷰·검증에 집중하는 방식으로 일하고 있습니다.
           </p>
         </div>
       </AboutPanel>

@@ -23,6 +23,17 @@ export interface ResumeFact {
 
 export const workExperiences: WorkExperience[] = [
   {
+    // 직장 경력이 아닌 기간도 비워 두지 않고, 그 기간에 한 일을 공개 근거와 함께 적는다.
+    title: '독립 학습·개인 프로젝트',
+    organization: '개인 (학습·실험 기간)',
+    period: '2022.02 ~ 현재',
+    bullets: [
+      'BenchmarkDotNet으로 SIMD·캐시·직렬화 병목을 측정하고 개선해, 측정 조건과 재현 코드를 연구 페이지와 공개 벤치마크 저장소에 정리',
+      'AI 에이전트를 역할별로 나눠 운용하는 협업 체계를 설계하고, 이를 바탕으로 이커머스 데모·공용 인프라 설계·이 포트폴리오 사이트를 구축',
+      '포트폴리오 안내용 오픈웨이트 모델 챗봇의 구조를 실험하고, LoRA 미세조정으로 만든 어댑터를 운영에 적용',
+    ],
+  },
+  {
     title: '프리랜서 개발자',
     organization: '라이트소프트 (웹 SI(시스템 통합))',
     period: '2021.02 ~ 2022.01',
@@ -68,6 +79,7 @@ export const skillGroups: SkillGroup[] = [
   { title: 'Languages', skills: ['C#', 'Java', 'JavaScript'] },
   { title: 'Frameworks · Platforms', skills: ['.NET / BCL', 'WPF', 'Unity', 'Spring'] },
   { title: 'Optimization · Tools', skills: ['BenchmarkDotNet', 'xUnit', 'SIMD / AVX2', 'Protobuf', 'ZSTD'] },
+  { title: 'AI Agent Tools', skills: ['Claude Code', 'Codex', 'Grok Build', 'Cursor', 'Antigravity'] },
 ];
 
 export const educationItems: ResumeFact[] = [
