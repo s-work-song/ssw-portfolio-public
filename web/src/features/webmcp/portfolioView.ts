@@ -640,7 +640,7 @@ export function readPortfolioViewState(pathname: string): ChatPortfolioViewState
     const panel = document.querySelector<HTMLElement>('[id^="workflow-"][role="tabpanel"][aria-hidden="false"]');
     const target = anchor ? document.getElementById(anchor) : null;
     const insidePanel = panel && target && panel.contains(target);
-    const standalone = target?.id === 'ai-workflow-intro' || target?.id === 'ai-workflow-learning';
+    const standalone = target?.id === 'ai-workflow-intro' || target?.id === 'ai-workflow-simd-case' || target?.id === 'ai-workflow-learning';
     anchor = insidePanel ? anchor : standalone ? target.id : panel?.id ?? null;
   }
 

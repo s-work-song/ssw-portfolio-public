@@ -12,6 +12,7 @@ import {
   researchTabSelectionRequest,
   type ResearchTabSelectionRequest,
 } from '../model/researchTabSelectionPolicy';
+import { useCenterSelectedTab } from './useCenterSelectedTab';
 export default function ResearchTabs({
   tabs,
   activeTab,
@@ -33,10 +34,14 @@ export default function ResearchTabs({
 }) {
   const isSecondary = variant === 'secondary';
   const pendingSelectionRef = useRef<ResearchTabSelectionRequest | null>(null);
+  const navRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
     pendingSelectionRef.current = null;
   }, [activeTab]);
+
+  // 좁은 화면에서 막대가 가로로 넘칠 때 이동 안내 중인 탭(없으면 선택된 탭)이 막대 밖에 숨지 않게 한다.
+  useCenterSelectedTab(navRef, `${tabIdPrefix}-${actionTargetTab ?? activeTab}`);
 
   const requestSelect = (value: string) => {
     const targetTab = tabs.find((tab) => tab.id === value)?.id;
@@ -57,6 +62,7 @@ export default function ResearchTabs({
     <Tabs.Root asChild value={activeTab} onValueChange={requestSelect} activationMode="manual">
       <Tabs.List asChild loop={true}>
         <nav
+          ref={navRef}
           aria-label={ariaLabel}
           role="tablist"
           style={{

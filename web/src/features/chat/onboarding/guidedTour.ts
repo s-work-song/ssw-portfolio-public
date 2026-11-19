@@ -14,7 +14,7 @@ import { aiWorkflowStages } from "../../ai-workflow/data/aiWorkflow.ts";
  * 단계 구성을 바꿀 때 이 숫자를 올린다. 아래 두 저장 키에 그대로 섞여 들어가므로,
  * 예전 판에서 저장한 진행 상태가 새 단계 목록에 잘못 적용되는 일 없이 버려진다.
  */
-export const GUIDED_TOUR_VERSION = 15;
+export const GUIDED_TOUR_VERSION = 16;
 /** 투어를 안내한 적이 있는지 기억하는 localStorage 키다. 값은 started·completed·dismissed 중 하나다. */
 export const GUIDED_TOUR_VISIT_KEY = `portfolio-guided-tour:v${GUIDED_TOUR_VERSION}:visit`;
 /** 진행 중인 투어 상태를 탭 단위로 이어 붙이는 sessionStorage 키다. 페이지 이동으로 훅이 다시 마운트돼도 단계가 유지된다. */
@@ -77,7 +77,14 @@ export interface GuidedTourStep {
     | "resume"
     | "cover-letter"
     | "cover-letter-story"
+    | "cover-letter-core-values"
+    | "cover-letter-personality"
+    | "cover-letter-strengths"
+    | "cover-letter-hobbies"
     | "cover-letter-career-turning-point"
+    | "cover-letter-job-scope"
+    | "cover-letter-culture-fit"
+    | "cover-letter-ambitions"
     | "research-timeline"
     | "research-year-2011"
     | "research-year-2022"
@@ -87,6 +94,7 @@ export interface GuidedTourStep {
     | "research-year-2026"
     | "research-optimization"
     | "research-benchmark-code"
+    | "research-csharp-optimization"
     | "research-optimization-caution"
     | "research-cpu"
     | "research-counting-sort"
@@ -102,6 +110,7 @@ export interface GuidedTourStep {
     | "infrastructure-optimization"
     | "si-levels"
     | `si-level-${(typeof aiWorkflowStages)[number]["id"]}`
+    | "si-simd-case"
     | "si-learning"
     | "log"
     | "settings";
@@ -296,10 +305,52 @@ export const GUIDED_TOUR_STEPS: readonly GuidedTourStep[] = [
     actionId: "cover_letter_story",
   },
   {
+    id: "cover-letter-core-values",
+    title: "자기소개서 · 핵심 가치",
+    message: "본질 추구, 빠른 실행, 투명한 소통처럼 일할 때 지키려는 핵심 가치를 정리했습니다.",
+    actionId: "cover_letter_core_values",
+  },
+  {
+    id: "cover-letter-personality",
+    title: "자기소개서 · 성격",
+    message: "오래 파고들고 직접 확인하는 편, 사업가보다는 기술자에 가까운 성향처럼 일하는 방식에 드러나는 성격을 소개합니다.",
+    actionId: "cover_letter_personality",
+  },
+  {
+    id: "cover-letter-strengths",
+    title: "자기소개서 · 강점과 약점",
+    message: "측정으로 병목을 찾고 역할을 나눠 검증하는 강점과 함께, 약점과 그것을 보완하는 방식도 적어 두었습니다.",
+    actionId: "cover_letter_strengths",
+  },
+  {
+    id: "cover-letter-hobbies",
+    title: "자기소개서 · 취미와 관심사",
+    message: "AI·SI 에이전트 실험과 하드웨어·홈서버, 게임처럼 지금의 작업과 이어지는 취미와 앞으로의 관심사를 살펴봅니다.",
+    actionId: "cover_letter_hobbies",
+  },
+  {
     id: "cover-letter-career-turning-point",
     title: "자기소개서 · 경력의 전환점",
     message: "직장생활을 멈췄던 배경, 학습과 실험을 이어가며 정리한 생각, 다시 시작하려는 이유를 차례로 읽어 보세요.",
     actionId: "cover_letter_career_turning_point",
+  },
+  {
+    id: "cover-letter-job-scope",
+    title: "자기소개서 · 지원 분야",
+    message: "에이전트 네이티브 소프트웨어 엔지니어로서 열려 있는 역할과 특히 관심 있는 지원 분야를 정리했습니다.",
+    actionId: "cover_letter_job_scope",
+  },
+  {
+    id: "cover-letter-culture-fit",
+    title: "자기소개서 · 컬처 핏",
+    message: "서로 잘 맞는지 미리 확인할 수 있도록, 함께 일할 때 중요하게 보는 것과 술과 담배, 테스트 전형에 대한 생각을 먼저 밝혀 두었습니다.",
+    actionId: "cover_letter_culture_fit",
+  },
+  {
+    id: "cover-letter-ambitions",
+    title: "자기소개서 · 함께 일하게 된다면",
+    message: "합류한 뒤 팀에 기여하려는 세 가지와 함께 일하는 방식에 대한 생각으로 자기소개서를 마무리합니다.",
+    actionId: "cover_letter_ambitions",
   },
   {
     id: "research-timeline",
@@ -357,6 +408,12 @@ export const GUIDED_TOUR_STEPS: readonly GuidedTourStep[] = [
     title: "성능 최적화 · 공개 벤치마크 코드",
     message: "공개할 수 있는 실험을 독립 실행 가능한 코드와 테스트, 벤치마크 러너로 다시 구성한 목록입니다. 원하는 실험의 코드를 직접 열어 보세요.",
     actionId: "research_benchmark_code",
+  },
+  {
+    id: "research-csharp-optimization",
+    title: "성능 최적화 · C# 최적화",
+    message: "foreach 패턴과 값 형식처럼 C# 언어 기능과 타입 표현만 바꿔 같은 결과를 내는 구현을 비교한 공개 코드입니다.",
+    actionId: "research_csharp_optimization",
   },
   {
     id: "research-optimization-caution",
@@ -434,6 +491,12 @@ export const GUIDED_TOUR_STEPS: readonly GuidedTourStep[] = [
     message: stage.description,
     actionId: SI_STAGE_ACTIONS[stage.id],
   })),
+  {
+    id: "si-simd-case",
+    title: "AI·SI 활용 · 같은 문제를 세 단계로",
+    message: "같은 SIMD 문제를 01·03·06 단계 방식으로 다시 풀어, 단계마다 처리 시간이 어떻게 달라졌는지 비교한 사례입니다.",
+    actionId: "si_simd_case",
+  },
   {
     id: "si-learning",
     title: "AI·SI 활용 · 배우는 데 쓰기",

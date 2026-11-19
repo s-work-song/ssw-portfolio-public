@@ -480,12 +480,14 @@ test('SI 학습 활용 예시의 관련 링크는 채팅 이동 경로에 있는
   }
 });
 
-test('둘러보기는 SI 마지막 단계 다음에 학습 섹션을 들른 뒤 개발·배포 환경을 거쳐 기록으로 넘어간다', async () => {
+test('둘러보기는 SI 마지막 단계 다음에 세 단계 사례와 학습 섹션을 들른 뒤 개발·배포 환경을 거쳐 기록으로 넘어간다', async () => {
   const { GUIDED_TOUR_STEPS } = await import('../../../../src/features/chat/onboarding/guidedTour.ts');
   const { ACTION_ROUTES, ACTION_IDS } = await import('../../../../src/features/chat/constants.ts');
   const ids = GUIDED_TOUR_STEPS.map(({ id }) => id);
   const index = ids.indexOf('si-learning');
-  assert.equal(ids[index - 1], 'si-level-multi-model');
+  assert.equal(ids[index - 1], 'si-simd-case');
+  assert.equal(ids[index - 2], 'si-level-multi-model');
+  assert.equal(ACTION_ROUTES.si_simd_case, '/about-me/ai-workflow#ai-workflow-simd-case');
   assert.equal(ids[index + 1], 'development-environment');
   assert.equal(ids[ids.indexOf('log') - 1], 'infrastructure-optimization');
   const step = GUIDED_TOUR_STEPS[index];
