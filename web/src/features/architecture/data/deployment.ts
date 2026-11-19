@@ -55,6 +55,7 @@ export const portfolioLinkedExperiments = [
       { id: 'noeul-circuit', label: '노을서킷' },
       { id: 'frostpass-fantasy-rpg', label: '서리고개' },
       { id: 'dot-board', label: '전광판 시뮬레이터' },
+      { id: 'blender-space-elevator', label: '궤도 엘리베이터 비교' },
     ],
   },
 ] as const;

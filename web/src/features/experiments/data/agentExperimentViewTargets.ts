@@ -24,6 +24,7 @@ export const PUBLIC_AGENT_EXPERIMENT_TARGETS = [
   { id: 'blender-subway', title: '지하철', category: 'Blender 3D 에셋 제작' },
   { id: 'blender-city', title: '도시 거리', category: 'Blender 3D 에셋 제작' },
   { id: 'blender-office', title: '사무실', category: 'Blender 3D 에셋 제작' },
+  { id: 'blender-space-elevator', title: '궤도 엘리베이터 · 모델 4종 비교', category: 'Blender 3D 에셋 제작' },
   { id: 'motion-graphics', title: '모션그래픽 · Opus 5.5', category: '영상물' },
   { id: 'motion-graphics-astra', title: '모션그래픽 · GPT-6 Astra', category: '영상물' },
   { id: 'spaceship-simulation', title: '우주선 시뮬레이션', category: '영상물' },

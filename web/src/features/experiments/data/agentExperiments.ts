@@ -660,6 +660,76 @@ export const agentExperiments: AgentExperiment[] = [
     ],
   },
   {
+    id: 'blender-space-elevator',
+    category: 'Blender 3D 에셋 제작',
+    title: '궤도 엘리베이터 · 모델 4종 비교',
+    description: '같은 과제를 AI·SI 모델 네 개에 각각 맡겨, Blender로 궤도 엘리베이터를 모델링하고 three.js에서 1인칭으로 걸어 다니며 탑승하는 장면까지 구현하게 했습니다. 지상 터미널에서 클라이머를 타고 정지궤도 정거장까지 올라가는 흐름은 같지만, 시설 구성과 고도 연출, 모델을 나누는 방식은 모델마다 다릅니다. 샘플 목차에서 네 결과물을 골라 직접 걸어 볼 수 있습니다.',
+    prompt: '블렌더로 궤도 엘리베이터 만들어줘 threejs에서 1인칭으로 돌아다니면서 상호작용하고 탑승할 수 있게 해줘',
+    focus: ['Blender 모델링 → glb', 'three.js 1인칭 탑승', '모델별 비교'],
+    modelCredits: [
+      { purpose: 'Claude', models: ['Opus 5.5', 'Fable 5.2'] },
+      { purpose: 'GPT', models: ['GPT-6.2 Sol', 'GPT-6.2 Astra'] },
+    ],
+    demoUrl: 'https://pf-samples.sworksong.workers.dev/3d/blender/space-elevator/',
+    demoLabel: '네 결과물 비교 목차 열기',
+    imageGroups: [
+      {
+        title: 'Horizon',
+        description: '실내 터미널에서 시작해 6인승 클라이머의 콘솔로 오르내리는 시설형 구성입니다.',
+        modelCredits: [{ models: ['Opus 5.5'] }],
+        images: [
+          {
+            src: '/images/agent-experiments/blender-space-elevator/01-horizon-terminal.webp',
+            alt: '유리벽 너머로 출발 안내판과 게이트, 키오스크가 보이는 HORIZON 지상 터미널 입구의 1인칭 화면',
+            caption: '지상 터미널 입구 · 고도와 겉보기 중력 표시',
+          },
+          {
+            src: '/images/agent-experiments/blender-space-elevator/02-horizon-console.webp',
+            alt: '클라이머 안에서 고도 안내 화면과 UP·DOWN·DOOR·LIGHT·HOLD·FAST 버튼이 놓인 콘솔을 바라본 1인칭 화면',
+            caption: '클라이머 콘솔 · 상승·하강·문·조명 조작',
+          },
+        ],
+      },
+      {
+        title: 'Pacific Anchor',
+        description: '해상 기지의 갠트리에서 테더를 감싼 고리형 객실에 오르고, 하늘과 지구는 셰이더로 그립니다.',
+        modelCredits: [{ models: ['Fable 5.2'] }],
+        images: [
+          {
+            src: '/images/agent-experiments/blender-space-elevator/03-pacific-anchor-gate.webp',
+            alt: '발사 갠트리 아래 원형 승강장에 고리형 객실이 내려와 있고 앞에 안내 단말이 선 Blender 렌더',
+            caption: '갠트리 아래 원형 승강장과 고리형 객실',
+          },
+          {
+            src: '/images/agent-experiments/blender-space-elevator/04-pacific-anchor-cabin.webp',
+            alt: '테더 기둥을 둘러싼 좌석과 조작 단말, 둥근 창이 있는 객실 내부 Blender 렌더',
+            caption: '테더를 둘러싼 객실 내부',
+          },
+        ],
+      },
+      {
+        title: 'Meridian',
+        description: '지상 터미널과 궤도 터미널을 두 모델로 나누고, 휴대폰용 경량판을 따로 둡니다.',
+        modelCredits: [{ models: ['GPT-6.2 Sol'] }],
+        images: [{
+          src: '/images/agent-experiments/blender-space-elevator/05-meridian-terminal.webp',
+          alt: '바다 위 원형 해상 기지 가운데 탑에서 케이블을 따라 클라이머가 올라가는 Meridian 지상 터미널 렌더',
+          caption: '해상 기지 지상 터미널',
+        }],
+      },
+      {
+        title: 'Velora',
+        description: '설산이 둘러싼 해안 승강장과 객실, 궤도 관측소를 한 모델의 한 월드로 잇습니다.',
+        modelCredits: [{ models: ['GPT-6.2 Astra'] }],
+        images: [{
+          src: '/images/agent-experiments/blender-space-elevator/06-velora-terminal.webp',
+          alt: '설산과 바다를 배경으로 해안 승강장 옆 철탑에 객실이 매달린 Velora 해안 터미널 렌더',
+          caption: '설산 해안의 승강장과 객실',
+        }],
+      },
+    ],
+  },
+  {
     id: 'motion-graphics',
     category: '영상물',
     title: '모션그래픽 · Opus 5.5',
