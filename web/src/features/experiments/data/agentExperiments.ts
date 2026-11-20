@@ -730,6 +730,63 @@ export const agentExperiments: AgentExperiment[] = [
     ],
   },
   {
+    id: 'blender-escalator',
+    category: 'Blender 3D 에셋 제작',
+    title: '에스컬레이터 · 사진 한 장으로 탑승까지',
+    description: '에스컬레이터 사진 한 장만 주고, Blender로 상행·하행 에스컬레이터를 모델링한 뒤 three.js에서 1인칭으로 걸어가 직접 타 볼 수 있게 했습니다. 디딤판 위에 서면 초속 0.5 m로 같이 오르내리고, 운행을 멈추면 표시등이 금지로 바뀌며 계단처럼 걸어 오를 수 있습니다. Blender 헤드리스 모델링부터 탑승 구현까지 약 37분이 걸렸습니다.',
+    prompt: '(에스컬레이터 사진 한 장 첨부) 이 에스컬레이터를 구현하고 threejs로 이동 탑승 해볼 수 있게 시켜봐',
+    focus: ['사진 → Blender 모델링', 'three.js 1인칭 탑승', '운행·정지 전환'],
+    modelCredits: [{ purpose: 'Blender 모델링', models: ['Fable 5.2'] }],
+    demoUrl: 'https://pf-samples.sworksong.workers.dev/3d/blender/escalator/',
+    demoLabel: '에스컬레이터 타 보기',
+    imageGroups: [
+      {
+        title: '참고 사진',
+        description: '모델링에 쓴 사진 한 장과, 비슷한 각도에서 본 Blender 결과를 위아래로 놓은 비교입니다.',
+        modelCredits: [{ purpose: 'Blender 모델링', models: ['Fable 5.2'] }],
+        images: [
+          {
+            src: '/images/agent-experiments/blender-escalator/01-photo.webp',
+            alt: '대리석 바닥 옆에 유리 난간과 검은 핸드레일, 안전 스티커가 붙은 에스컬레이터 두 대와 승강구 바닥의 파란 화살표가 보이는 실제 사진',
+            caption: '모델링에 쓴 원본 사진',
+          },
+          {
+            src: '/images/agent-experiments/blender-escalator/02-compare.webp',
+            alt: '위에 원본 사진, 아래에 비슷한 각도의 Blender 모델을 놓아 핸드레일 끝, 바닥 화살표와 금지 표시, 안전 스티커를 비교한 그림',
+            caption: '사진(위)과 Blender 모델(아래) 비교',
+          },
+        ],
+      },
+      {
+        title: 'Blender 구현 결과',
+        description: '3D 공간 안의 1인칭 화면과 세부 근접입니다.',
+        modelCredits: [{ purpose: 'Blender 모델링', models: ['Fable 5.2'] }],
+        images: [
+          {
+            src: '/images/agent-experiments/blender-escalator/03-riding-up.webp',
+            alt: '상행 에스컬레이터 디딤판 위에서 위층 천장 조명 쪽을 올려다본 1인칭 화면',
+            caption: '타고 올라가는 1인칭 화면',
+          },
+          {
+            src: '/images/agent-experiments/blender-escalator/04-overview.webp',
+            alt: '대리석 벽으로 둘러싸인 두 층 높이 공간에 나란히 놓인 에스컬레이터 두 대의 전체 모습',
+            caption: '두 층을 잇는 전체 모습',
+          },
+          {
+            src: '/images/agent-experiments/blender-escalator/05-newel.webp',
+            alt: '아래 승강구에서 핸드레일이 둥글게 감겨 돌아가는 끝부분과 안전 스티커, 비상 정지 단추를 가까이 본 화면',
+            caption: '핸드레일 끝과 비상 정지 단추',
+          },
+          {
+            src: '/images/agent-experiments/blender-escalator/06-comb-steps.webp',
+            alt: '노란 테두리가 있는 디딤판이 승강구 빗살판에서 계단으로 펼쳐지는 모습을 내려다본 화면',
+            caption: '노란 테두리 디딤판과 승강구',
+          },
+        ],
+      },
+    ],
+  },
+  {
     id: 'motion-graphics',
     category: '영상물',
     title: '모션그래픽 · Opus 5.5',
