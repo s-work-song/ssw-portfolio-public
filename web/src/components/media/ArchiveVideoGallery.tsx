@@ -20,6 +20,7 @@ import type {
 } from '@/features/overview/data/about';
 import { useMediaSwiperSpeed } from './useMediaSwiperMotion';
 import ZoomableImage from './ZoomableImage';
+import { FILL_IMAGE_FRAME_STYLE } from './fillImageFrame';
 import styles from './ArchiveVideoGallery.module.css';
 
 const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? '';
@@ -273,6 +274,7 @@ export default function ArchiveVideoGallery({
               <button
                 type="button"
                 className={styles.posterButton}
+                style={FILL_IMAGE_FRAME_STYLE}
                 onClick={(event) => openViewer(index, event)}
                 aria-label={media.kind === 'video'
                   ? `${media.title} 크게 보기 및 재생`
@@ -392,6 +394,7 @@ export default function ArchiveVideoGallery({
                   <SwiperSlide
                     key={`viewer-${media.kind}-${media.src}`}
                     className={`${styles.mediaSlide} ${media.kind === 'video' ? styles.videoSlide : styles.imageSlide}`}
+                    style={FILL_IMAGE_FRAME_STYLE}
                     aria-hidden={index !== activeIndex}
                     inert={index !== activeIndex}
                   >

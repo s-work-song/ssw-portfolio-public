@@ -11,6 +11,7 @@ import { useMediaSwiperSpeed } from '../../../components/media/useMediaSwiperMot
 import MediaDialog from '../../../components/media/MediaDialog';
 import ZoomableImage from '../../../components/media/ZoomableImage';
 import { mediaDialogOutsideCloseAllowed } from '../../../components/media/mediaDialogPolicy';
+import { FILL_IMAGE_FRAME_STYLE } from '../../../components/media/fillImageFrame';
 import styles from './ProjectMediaCarousel.module.css';
 
 const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? '';
@@ -210,7 +211,7 @@ export default function ProjectMediaCarousel({
             onSwiper={(swiper) => { inlineSwiperRef.current = swiper; }}>
             {images.map((image, index) => (
               <SwiperSlide key={image.src} className={styles.swiperSlide} inert={index !== activeIndex}>
-                <button type="button" className={styles.slide} onClick={openExpandedView}
+                <button type="button" className={styles.slide} style={FILL_IMAGE_FRAME_STYLE} onClick={openExpandedView}
                   aria-haspopup="dialog"
                   ref={(node) => {
                     if (node) slideButtonRefs.current.set(index, node);
@@ -269,7 +270,7 @@ export default function ProjectMediaCarousel({
                 noSwipingSelector="[data-image-zoom-root]"
                 onSwiper={(swiper) => { expandedSwiperRef.current = swiper; }}>
                 {images.map((image, index) => (
-                  <SwiperSlide key={`lightbox-${image.src}`} className={styles.lightboxSlide}
+                  <SwiperSlide key={`lightbox-${image.src}`} className={styles.lightboxSlide} style={FILL_IMAGE_FRAME_STYLE}
                     aria-hidden={index !== activeIndex} inert={index !== activeIndex}>
                     {index === activeIndex ? (
                       <ZoomableImage key={image.src} src={`${basePath}${image.src}`} alt={image.alt}
