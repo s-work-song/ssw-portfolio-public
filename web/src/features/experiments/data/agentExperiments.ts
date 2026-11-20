@@ -742,7 +742,7 @@ export const agentExperiments: AgentExperiment[] = [
     imageGroups: [
       {
         title: '참고 사진',
-        description: '모델링에 쓴 사진 한 장과, 비슷한 각도에서 본 Blender 결과를 위아래로 놓은 비교입니다.',
+        description: '모델링에 쓴 사진 한 장과, 같은 시점에서 본 Blender 결과를 위아래로 놓은 비교입니다.',
         modelCredits: [{ purpose: 'Blender 모델링', models: ['Fable 5.2'] }],
         images: [
           {
@@ -752,7 +752,7 @@ export const agentExperiments: AgentExperiment[] = [
           },
           {
             src: '/images/agent-experiments/blender-escalator/02-compare.webp',
-            alt: '위에 원본 사진, 아래에 비슷한 각도의 Blender 모델을 놓아 핸드레일 끝, 바닥 화살표와 금지 표시, 안전 스티커를 비교한 그림',
+            alt: '위에 원본 사진, 아래에 같은 시점의 Blender 모델을 놓아 핸드레일 끝, 바닥 화살표와 금지 표시, 안전 스티커를 비교한 그림',
             caption: '사진(위)과 Blender 모델(아래) 비교',
           },
         ],
@@ -769,7 +769,7 @@ export const agentExperiments: AgentExperiment[] = [
           },
           {
             src: '/images/agent-experiments/blender-escalator/04-overview.webp',
-            alt: '대리석 벽으로 둘러싸인 두 층 높이 공간에 나란히 놓인 에스컬레이터 두 대의 전체 모습',
+            alt: '회색 석재 타일 벽과 크림색 대리석 바닥으로 된 두 층 높이 공간에 나란히 놓인 에스컬레이터 두 대의 전체 모습',
             caption: '두 층을 잇는 전체 모습',
           },
           {
