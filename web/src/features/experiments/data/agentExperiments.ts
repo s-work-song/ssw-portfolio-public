@@ -189,6 +189,18 @@ export const agentExperiments: AgentExperiment[] = [
     description: '사람 캐릭터가 연기로 흩어졌다가 목적지에서 재구성되는 WebGL2 시각효과 실험입니다. 바닥 클릭·터치나 좌표 입력으로 순간이동하고, 연기·바람 흩날림·디졸브 효과와 흐름·밀도·색·속도를 비교할 수 있습니다. 입자 기반 유체 근사를 사용하며, WebGL2 지원 브라우저에서 PC WASD와 모바일 스틱 조작을 제공합니다.',
     focus: ['연기 순간이동', '입자 기반 유체 근사', '효과·흐름 조절', 'WebGL2'],
     demoUrl: 'https://pf-samples.sworksong.workers.dev/3d/webgl/phase-smoke/',
+    images: [
+      {
+        src: '/images/agent-experiments/phase-smoke/01-dissolve-reform.webp',
+        alt: '바람 흩날림 효과로 사람 캐릭터가 한쪽부터 연기로 날려 가고, 연기 덩어리로 이동한 뒤, 목적지에서 도착한 순서대로 다시 몸이 만들어지는 세 장면을 나란히 놓은 그림',
+        caption: '바람 흩날림 · 흩어짐 → 이동 → 재구성',
+      },
+      {
+        src: '/images/agent-experiments/phase-smoke/02-travel.webp',
+        alt: '어두운 실험 레벨 바닥에서 출발 고리를 떠난 연기가 목적지 고리에 서 있는 캐릭터 몸으로 빨려 들어가며 재구성되는 전체 화면',
+        caption: '실험 레벨 · 목적지에서 다시 합쳐지는 순간',
+      },
+    ],
   },
   {
     id: 'planet-defense',
@@ -415,6 +427,26 @@ export const agentExperiments: AgentExperiment[] = [
     ],
   },
   {
+    id: 'limen-portal',
+    category: '3D 게임 실험',
+    title: '포탈 실험',
+    description: '두 포탈로 공간을 연결하는 Three.js 기반 1인칭 실험입니다. 벽·바닥·천장 사이를 이동하며 시선과 속도의 보존, 포탈 안에 다른 포탈이 보이는 중첩 뷰를 살펴볼 수 있습니다. PC WASD·마우스와 터치 조작을 제공합니다.',
+    focus: ['1인칭 포탈 이동', '시선·속도 보존', '중첩 포탈 뷰'],
+    demoUrl: 'https://pf-samples.sworksong.workers.dev/games/3d/limen-portal/',
+    images: [
+      {
+        src: '/images/agent-experiments/limen-portal/01-both-portals.webp',
+        alt: '벽의 주황 포탈 안으로 반대편 방이 보이고, 왼쪽 벽에 파란 포탈이 함께 보이는 1인칭 화면',
+        caption: '두 포탈 · 주황 포탈 너머로 이어진 공간',
+      },
+      {
+        src: '/images/agent-experiments/limen-portal/02-chamber.webp',
+        alt: '실험실 안쪽 벽의 파란 포탈과 오른쪽 벽의 주황 포탈을 포탈 건을 든 채 바라본 1인칭 화면',
+        caption: '실험실 전경 · 파란 포탈과 주황 포탈',
+      },
+    ],
+  },
+  {
     id: 'modern-warfare-sample',
     category: '3D 게임 실험',
     title: '현대전 샘플',
@@ -434,14 +466,6 @@ export const agentExperiments: AgentExperiment[] = [
         caption: '전투기 활주로 · 비행 계기와 무장 상태',
       },
     ],
-  },
-  {
-    id: 'limen-portal',
-    category: '3D 게임 실험',
-    title: '포탈 실험',
-    description: '두 포탈로 공간을 연결하는 Three.js 기반 1인칭 실험입니다. 벽·바닥·천장 사이를 이동하며 시선과 속도의 보존, 포탈 안에 다른 포탈이 보이는 중첩 뷰를 살펴볼 수 있습니다. PC WASD·마우스와 터치 조작을 제공합니다.',
-    focus: ['1인칭 포탈 이동', '시선·속도 보존', '중첩 포탈 뷰'],
-    demoUrl: 'https://pf-samples.sworksong.workers.dev/games/3d/limen-portal/',
   },
   {
     id: 'blender-medieval-weapons',
@@ -734,7 +758,6 @@ export const agentExperiments: AgentExperiment[] = [
     category: 'Blender 3D 에셋 제작',
     title: '에스컬레이터 · 사진 한 장으로 탑승까지',
     description: '에스컬레이터 사진 한 장만 주고, Blender로 상행·하행 에스컬레이터를 모델링한 뒤 three.js에서 1인칭으로 걸어가 직접 타 볼 수 있게 했습니다. 디딤판 위에 서면 초속 0.5 m로 같이 오르내리고, 운행을 멈추면 표시등이 금지로 바뀌며 계단처럼 걸어 오를 수 있습니다. Blender 헤드리스 모델링부터 탑승 구현까지 약 37분이 걸렸습니다.',
-    prompt: '(에스컬레이터 사진 한 장 첨부) 이 에스컬레이터를 구현하고 threejs로 이동 탑승 해볼 수 있게 시켜봐',
     focus: ['사진 → Blender 모델링', 'three.js 1인칭 탑승', '운행·정지 전환'],
     modelCredits: [{ purpose: 'Blender 모델링', models: ['Fable 5.2'] }],
     demoUrl: 'https://pf-samples.sworksong.workers.dev/3d/blender/escalator/',
