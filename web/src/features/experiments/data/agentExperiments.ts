@@ -411,10 +411,9 @@ export const agentExperiments: AgentExperiment[] = [
     id: 'blender-motion-atlas',
     category: '리깅',
     title: '모션 아틀라스 · 애니메이션 도감',
-    description: 'Blender 파이썬 스크립트로 동물·몬스터·휴머노이드 모델을 만들고 뼈대(리그)를 심어 동작까지 만든 RPG 애니메이션 도감입니다. 동물 22종 104개, 몬스터 15종 71개, 휴머노이드 197개(무기·농사·낚시·여가 장비 110개, 일상·탐험 48개, 파티 연출 32개 포함)로 동작은 모두 372개이고, 샘플 페이지에서 동작마다 3D로 돌려 보며 0.25×부터 2×까지 속도를 바꿔 볼 수 있습니다. 말은 27본 리그 하나로 여덟 동작을 함께 쓰고, 드래곤은 날갯짓·활공·브레스를 따로 만들었습니다. 종마다 기본색 외에 대체 색 두 가지를 고를 수 있고, 고른 색은 재생 화면의 모델에 바로 입혀집니다. 야영지·갈대밭·장터의 RPG 장면 3편과 콘셉트아트 37종, 새 체형을 구상한 리그 연구 10종도 함께 있습니다. 휴머노이드는 뼈 이름만 Mixamo 규칙을 따랐고 동작 데이터는 가져오지 않았습니다. 모델·동작·그림 모두 AI·SI 에이전트(GPT·Claude 협업)로 만들었고, 콘셉트아트와 리그 연구 그림은 GPT 이미지로 그렸습니다.',
+    description: 'Blender 파이썬 스크립트로 동물·몬스터·휴머노이드 모델을 만들고 뼈대(리그)를 심어 동작까지 만든 RPG 애니메이션 도감입니다. 동물 22종 104개, 몬스터 15종 71개, 휴머노이드 197개(무기·농사·낚시·여가 장비 110개, 일상·탐험 48개, 파티 연출 32개 포함)로 동작은 모두 372개이고, 샘플 페이지에서 동작마다 3D로 돌려 보며 0.25×부터 2×까지 속도를 바꿔 볼 수 있습니다. 말은 27본 리그 하나로 여덟 동작을 함께 쓰고, 드래곤은 날갯짓·활공·브레스를 따로 만들었습니다. 종마다 기본색 외에 대체 색 두 가지를 고를 수 있고, 고른 색은 재생 화면의 모델에 바로 입혀집니다. 야영지·갈대밭·장터의 RPG 장면 3편과 콘셉트아트 37종, 새 체형을 구상한 리그 연구 10종도 함께 있습니다. 휴머노이드는 뼈 이름만 Mixamo 규칙을 따랐고 동작 데이터는 가져오지 않았습니다. 모델·동작·그림 모두 AI·SI 에이전트로 만들었고, 콘셉트아트와 리그 연구 그림은 GPT 이미지로 그렸습니다.',
     focus: ['Blender 절차 생성 · 리깅 → GLB', '동작 372개 · RPG 장면 3편', '종마다 대체 색 2종'],
     modelCredits: [
-      { purpose: 'Blender 모델링', models: ['GPT·Claude 협업'] },
       { purpose: '이미지', models: ['GPT 이미지'] },
     ],
     demoUrl: 'https://pf-samples.sworksong.workers.dev/3d/blender/motion-atlas/',
@@ -424,7 +423,7 @@ export const agentExperiments: AgentExperiment[] = [
       {
         title: 'Blender 리깅·애니메이션 결과',
         description: '도감에 실린 GLB를 렌더한 장면과 동작 반복 미리보기입니다.',
-        modelCredits: [{ purpose: 'Blender 모델링', models: ['GPT·Claude 협업'] }],
+        modelCredits: [],
         images: [
           {
             src: '/images/agent-experiments/blender-motion-atlas/01-camp.webp',
