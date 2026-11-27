@@ -965,6 +965,17 @@ export const agentExperiments: AgentExperiment[] = [
     extraLinks: [{ url: 'https://pf-samples.sworksong.workers.dev/3d/blender/harness-travelers/together.html', label: '세 캐릭터 함께 보기' }],
     imageGroups: [
       {
+        title: '입력으로 준 설정화',
+        description: '세 하네스에 똑같이 준 설정화 4장입니다. 전신 모양은 A 포즈 그림, 겨드랑이·어깨 천은 T 포즈 그림, 얼굴과 작은 부품은 확대 그림을 따르게 했습니다.',
+        modelCredits: [{ purpose: '이미지', models: ['GPT 이미지'], via: 'Codex' }],
+        images: [
+          { src: '/images/agent-experiments/blender-harness-travelers/concept-1-turnaround.webp', alt: '설정화: 떠돌이 남성 여행자의 A 포즈 정면·측면·뒷면 전신', caption: '전신 (A 포즈 정면·측면·뒷면)' },
+          { src: '/images/agent-experiments/blender-harness-travelers/concept-2-tpose.webp', alt: '설정화: 같은 여행자의 T 포즈 정면·뒷면', caption: 'T 포즈 (정면·뒷면)' },
+          { src: '/images/agent-experiments/blender-harness-travelers/concept-3-details.webp', alt: '설정화: 얼굴, 여밈 고리, 누빔, 벨트와 주머니, 손, 부츠 확대', caption: '세부 (얼굴·여밈·누빔·주머니·손·부츠)' },
+          { src: '/images/agent-experiments/blender-harness-travelers/concept-4-head.webp', alt: '설정화: 머리 네 방향', caption: '머리 네 방향' },
+        ],
+      },
+      {
         title: '세 하네스 한눈에',
         description: '같은 설정화와 같은 의뢰서로 만든 세 여행자를 공통 카메라로 나란히 렌더했습니다.',
         modelCredits: [
