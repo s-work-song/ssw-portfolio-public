@@ -58,6 +58,7 @@ export const portfolioLinkedExperiments = [
       { id: 'blender-space-elevator', label: '궤도 엘리베이터 비교' },
       { id: 'blender-escalator', label: '에스컬레이터' },
       { id: 'blender-rabbits', label: '토끼 모델링 비교' },
+      { id: 'blender-harness-travelers', label: '세 하네스 여행자 비교' },
       { id: 'blender-motion-atlas', label: '모션 아틀라스' },
     ],
   },

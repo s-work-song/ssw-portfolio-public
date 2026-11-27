@@ -955,6 +955,62 @@ export const agentExperiments: AgentExperiment[] = [
     ],
   },
   {
+    id: 'blender-harness-travelers',
+    category: 'Blender 3D 에셋 제작',
+    title: '같은 설정화, 세 하네스가 만든 3D 여행자',
+    description: '같은 설정화 4장과 한 글자도 다르지 않은 의뢰서를 Codex, Claude Code, Antigravity 세 코딩 하네스에 주고, 각자 Blender에서 떠돌이 남성 여행자를 만들게 했습니다. 뼈대(mixamorig 52본, T 포즈), 품질 단계별 삼각형 상한, 비교 카메라와 대표 동작까지 모두 같게 맞췄고, 결과는 각각 약 55분 · 약 4시간 10분 · 약 57분 만에 나왔습니다(고품질 13,840~14,683 삼각형). 세 판 모두 개성이 뚜렷해 하나를 고르지 않고 서로 다른 세 캐릭터로 살렸습니다. 샘플 페이지에서는 화풍과 설정화를 고른 과정, 같은 카메라의 비교 렌더를 보고, 세 캐릭터를 걷기·달리기·대기·한손검 기본 공격 동작으로 나란히 돌려 볼 수 있습니다.',
+    focus: ['하네스 3종 비교', '캐릭터 모델링 · 리깅 → GLB', '같은 조건 실험'],
+    demoUrl: 'https://pf-samples.sworksong.workers.dev/3d/blender/harness-travelers/',
+    demoLabel: '세 여행자 비교 열기',
+    extraLinks: [{ url: 'https://pf-samples.sworksong.workers.dev/3d/blender/harness-travelers/together.html', label: '세 캐릭터 함께 보기' }],
+    imageGroups: [
+      {
+        title: '세 하네스 한눈에',
+        description: '같은 설정화와 같은 의뢰서로 만든 세 여행자를 공통 카메라로 나란히 렌더했습니다.',
+        modelCredits: [
+          { purpose: 'GPT', models: ['GPT-6.2 Astra'], via: 'Codex' },
+          { purpose: 'Claude', models: ['Fable 5.2'], via: 'Claude Code' },
+          { purpose: 'Gemini', models: ['Gemini 4 Neon'], via: 'Antigravity' },
+        ],
+        images: [{
+          src: '/images/agent-experiments/blender-harness-travelers/00-compare.webp',
+          alt: '세 하네스가 같은 설정화로 만든 떠돌이 남성 여행자 셋의 정면 전신. 왼쪽부터 Codex, Claude Code, Antigravity 판',
+          caption: 'Codex · Claude Code · Antigravity',
+        }],
+      },
+      {
+        title: 'Codex',
+        description: '설정화에서 얼굴·손의 배색과 세부를 가져와 입체 메시에 입히고, 누빔·직조·가죽은 절차적 재질로 만들었습니다. 얼굴과 머리는 사진에 가까운 반사실 인상이고, 옷은 황갈색 상의와 세이지빛 케이프의 차분하고 밝은 색조입니다.',
+        modelCredits: [{ purpose: 'GPT', models: ['GPT-6.2 Astra'], via: 'Codex' }],
+        images: [{
+          src: '/images/agent-experiments/blender-harness-travelers/01-codex.webp',
+          alt: 'Codex 판 여행자의 정면 전신과 얼굴 가까이. 반사실 얼굴, 황갈색 누빔 상의와 세이지빛 케이프',
+          caption: 'GPT 6.2 Astra · xhigh',
+        }],
+      },
+      {
+        title: 'Claude Code',
+        description: '생성 이미지 없이 거리장(SDF)으로 형태를 짓고, 색·누빔·천 결은 Blender 절차적 재질을 구워 만들었습니다. 후드의 입체, 마름모 누빔, 앞 단추와 두 주머니까지 설정화의 옷 구성을 촘촘히 따르고, 얼굴은 단순한 조각 같은 인상입니다.',
+        modelCredits: [{ purpose: 'Claude', models: ['Fable 5.2'], via: 'Claude Code' }],
+        images: [{
+          src: '/images/agent-experiments/blender-harness-travelers/02-fable.webp',
+          alt: 'Claude Code 판 여행자의 T 포즈 정면 전신과 얼굴 가까이. 입체 후드와 마름모 누빔 상의',
+          caption: 'Fable 5.2 · xhigh',
+        }],
+      },
+      {
+        title: 'Antigravity',
+        description: '생성 이미지 없이 NumPy로 절차적 알베도·노멀 텍스처를 만들어 입혔습니다. 짙은 적갈색 상의에 누빔 무늬가 또렷하고, 얼굴은 인형처럼 양식화된 인상입니다.',
+        modelCredits: [{ purpose: 'Gemini', models: ['Gemini 4 Neon'], via: 'Antigravity' }],
+        images: [{
+          src: '/images/agent-experiments/blender-harness-travelers/03-antigravity.webp',
+          alt: 'Antigravity 판 여행자의 T 포즈 정면 전신과 얼굴 가까이. 짙은 적갈색 누빔 상의와 양식화된 얼굴',
+          caption: 'Gemini 4 Neon · high',
+        }],
+      },
+    ],
+  },
+  {
     id: 'motion-graphics',
     category: '영상물',
     title: '모션그래픽 · Opus 5.5',
