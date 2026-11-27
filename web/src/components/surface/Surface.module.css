@@ -1,0 +1,176 @@
+/*
+ * 공통 표면(Panel·Card·Inset·Callout)의 모양이다.
+ *
+ * 모서리는 세 가지로 통일한다: 패널 24, 카드 16, 안쪽 상자·안내 상자 12.
+ * 테두리·바탕·그림자는 전역 토큰(--border, --bg-elev, --bg-elev-2, --bg, --shadow)만 쓴다.
+ * 시즌 테마는 아래 "시즌 테마" 절의 규칙과 --decor-accent* 토큰으로만 이 부품에 닿는다.
+ */
+
+/* ---------- Panel ---------- */
+.panel {
+  position: relative;
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  background: var(--bg-elev);
+  box-shadow: var(--shadow);
+}
+
+.pad-none {
+  padding: 0;
+}
+
+.pad-md {
+  padding: clamp(20px, 5vw, 36px);
+}
+
+.pad-lg {
+  padding: clamp(26px, 5vw, 40px) clamp(18px, 4vw, 32px);
+}
+
+.fill {
+  background: var(--surface-fill, linear-gradient(135deg, var(--bg-elev-2), var(--bg)));
+}
+
+/* ---------- Card ---------- */
+.card {
+  position: relative;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+}
+
+.card-elev {
+  background: var(--bg-elev);
+}
+
+.card-muted {
+  background: var(--bg-elev-2);
+}
+
+.card-base {
+  background: var(--bg);
+}
+
+.raised {
+  box-shadow: var(--shadow);
+}
+
+/* ---------- Inset ---------- */
+.inset {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--bg-elev-2);
+}
+
+.dashed {
+  border-style: dashed;
+  background: var(--bg-elev);
+}
+
+/* ---------- Callout ---------- */
+.callout {
+  position: relative;
+  border: 1px solid var(--border);
+  border-inline-start: 3px solid var(--decor-accent);
+  border-radius: 12px;
+}
+
+.callout-elev {
+  background: var(--bg-elev);
+}
+
+.callout-soft {
+  background: var(--decor-accent-soft);
+}
+
+.barOnly {
+  border-top: 0;
+  border-right: 0;
+  border-bottom: 0;
+  border-radius: 0 12px 12px 0;
+}
+
+/* ---------- 시즌 테마 ----------
+ * 크리스마스: 패널과 featured 카드 위 가장자리에 빨강·금·초록 리본 띠를 단다.
+ * 테두리 금빛은 globals.css에서 --border 토큰을 바꿔 반영된다. 움직임은 없다.
+ */
+:global([data-season="christmas"]) .panel:not(:global([data-season="christmas"] [data-season]:not([data-season="christmas"]) *))::before,
+:global([data-season="christmas"]) .featured:not(:global([data-season="christmas"] [data-season]:not([data-season="christmas"]) *))::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  /* 위 테두리처럼 그린다: 상자와 같은 둥근 모서리를 따라 내려가며 양 끝이 가늘어진다. */
+  border-radius: inherit;
+  border-top: 4px solid transparent;
+  background: repeating-linear-gradient(
+    90deg,
+    var(--season-ribbon) 0 18px,
+    var(--season-gold) 18px 22px,
+    var(--season-fir-bright) 22px 40px,
+    var(--season-gold) 40px 44px
+  ) border-box;
+  -webkit-mask: linear-gradient(#000 0 0) padding-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) padding-box exclude, linear-gradient(#000 0 0);
+  pointer-events: none;
+  z-index: 2;
+}
+
+:global([data-season="christmas"]) .featured:not(:global([data-season="christmas"] [data-season]:not([data-season="christmas"]) *))::before {
+  border-top-width: 3px;
+}
+
+/* 안내 상자: 위 띠 대신 왼쪽 막대 자리에 세로 리본 무늬를 그린다. 막대 테두리는 투명하게 두고
+ * 그 자리를 덮는다(테두리 상자 기준이라 위치를 막대 두께만큼 바깥으로 뺀다). */
+:global([data-season="christmas"]) .callout:not(:global([data-season="christmas"] [data-season]:not([data-season="christmas"]) *)) {
+  border-inline-start-color: transparent;
+}
+
+:global([data-season="christmas"]) .callout:not(:global([data-season="christmas"] [data-season]:not([data-season="christmas"]) *))::before {
+  content: "";
+  position: absolute;
+  inset: -1px -1px -1px -3px;
+  border-radius: inherit;
+  border-left: 3px solid transparent;
+  background: repeating-linear-gradient(
+    180deg,
+    var(--season-ribbon) 0 14px,
+    var(--season-gold) 14px 17px,
+    var(--season-fir-bright) 17px 31px,
+    var(--season-gold) 31px 34px
+  ) border-box;
+  -webkit-mask: linear-gradient(#000 0 0) padding-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) padding-box exclude, linear-gradient(#000 0 0);
+  pointer-events: none;
+  z-index: 2;
+}
+
+:global([data-season="christmas"]) .barOnly:not(:global([data-season="christmas"] [data-season]:not([data-season="christmas"]) *))::before {
+  inset: 0 0 0 -3px;
+}
+
+/* 옅은 바탕 안내 상자는 붉은 리본 대신 전나무 초록으로 둔다. 장식 강조 토큰을 상자 안에서만
+ * 초록으로 바꿔 바탕·안쪽 제목이 함께 따라오고, 막대는 초록 두 톤 사이에 가는 금빛만 넣는다. */
+:global([data-season="christmas"]) .callout-soft:not(:global([data-season="christmas"] [data-season]:not([data-season="christmas"]) *)) {
+  --decor-accent: var(--season-fir-bright);
+  --decor-accent-text: color-mix(in srgb, var(--season-fir-bright) 70%, var(--text));
+  --decor-accent-soft: color-mix(in srgb, var(--season-fir-bright) 10%, transparent);
+}
+
+:global([data-season="christmas"]) .callout-soft:not(:global([data-season="christmas"] [data-season]:not([data-season="christmas"]) *))::before {
+  background: repeating-linear-gradient(
+    180deg,
+    var(--season-fir-bright) 0 14px,
+    var(--season-gold) 14px 16px,
+    var(--season-fir) 16px 30px,
+    var(--season-gold) 30px 32px
+  ) border-box;
+}
+
+@media print {
+  .panel::before,
+  .featured::before,
+  .callout::before {
+    display: none;
+  }
+}

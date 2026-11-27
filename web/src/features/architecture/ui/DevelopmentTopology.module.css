@@ -1,0 +1,48 @@
+.figure { margin: 0; min-width: 0; }
+.figure figcaption { margin-bottom: 14px; color: var(--text); font-size: .88rem; font-weight: 600; }
+.legend { display: flex; flex-wrap: wrap; gap: 10px 18px; margin-bottom: 14px; color: var(--text-dim); font-size: .72rem; }
+.legend span { display: inline-flex; align-items: center; gap: 7px; }
+.legend i { width: 20px; border-top: 2px solid; }
+.remote { color: var(--accent); stroke: var(--accent); }
+.lan { color: var(--text-dim); stroke: var(--text-dim); }
+.diagram { display: block; width: 100%; height: auto; overflow: visible; }
+.region rect { fill: var(--bg-elev); stroke: var(--border-strong); stroke-width: 1; }
+.region text { fill: var(--text); font-size: 16px; font-weight: 600; }
+.machineGroup rect { fill: color-mix(in srgb, var(--accent) 3%, var(--bg-elev)); stroke: var(--border); stroke-width: 1; }
+.machineGroup text { fill: var(--text-dim); font-size: 14px; font-weight: 600; }
+.connections path { fill: none; stroke-width: 1.7; stroke-linejoin: miter; vector-effect: non-scaling-stroke; }
+.junction { fill: var(--accent); }
+.pathLabel rect { fill: var(--bg-elev); }
+.pathLabel text { fill: var(--text-dim); font-size: 14px; }
+.machines rect { fill: var(--bg-elev-2); stroke: var(--border-strong); stroke-width: 1.2; }
+.machines text { fill: var(--text); font-size: 15px; font-weight: 600; }
+.mobile { display: none; }
+.description { display: grid; gap: 7px; margin: 16px 0 0; padding-left: 18px; color: var(--text-dim); font-size: .75rem; line-height: 1.8; word-break: keep-all; overflow-wrap: anywhere; }
+.mobileGroup { min-width: 0; padding: 12px; border: 1px solid var(--border-strong); border-radius: 12px; background: var(--bg-elev); }
+.mobileGroup h4 { margin: 0 0 14px; color: var(--text); font-size: .82rem; line-height: 1.6; word-break: keep-all; }
+.deviceList { display: flex; flex-wrap: wrap; gap: 6px; list-style: none; margin: 0 0 20px; padding: 0; }
+.deviceList li { padding: 4px 7px; border-radius: 6px; background: var(--bg-elev-2); color: var(--text-dim); font-size: .7rem; }
+.connectionStack { display: grid; gap: 20px; min-width: 0; }
+.connectionRow { min-width: 0; }
+.connectionRow p { margin: 0 0 8px; color: var(--text-dim); font-size: .75rem; line-height: 1.6; word-break: keep-all; overflow-wrap: anywhere; }
+.pair { display: grid; grid-template-columns: minmax(0, 1fr) 20px minmax(0, 1fr); align-items: stretch; gap: 4px; min-width: 0; }
+.pairLine { align-self: center; width: 100%; height: 0; border-top: 1.5px solid; }
+.machineCard { min-width: 0; min-height: 68px; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 7px 6px; border: 1px solid var(--border-strong); border-radius: 8px; background: var(--bg-elev-2); color: var(--text); font-size: .75rem; line-height: 1.6; text-align: center; word-break: keep-all; overflow-wrap: anywhere; }
+.phoneRemote { min-width: 0; }
+.phoneChannel { position: relative; display: flex; min-height: 56px; justify-content: center; align-items: center; padding: 10px 0; }
+.phoneStem { position: absolute; top: 0; bottom: 0; left: 50%; border-left: 1.5px solid var(--accent); }
+.phoneChannel p { position: relative; margin: 0; padding: 4px 8px; border-radius: 6px; background: var(--bg-elev); color: var(--text-dim); font-size: .75rem; line-height: 1.7; text-align: center; word-break: keep-all; overflow-wrap: anywhere; }
+.phoneTargets { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; min-width: 0; }
+.phoneTarget { position: relative; display: grid; padding-top: 18px; min-width: 0; }
+.phoneTarget::before { content: ''; position: absolute; top: 0; left: 50%; height: 18px; border-left: 1.5px solid var(--accent); }
+.phoneTarget::after { content: ''; position: absolute; top: 0; width: calc(50% + 6px); border-top: 1.5px solid var(--accent); }
+.phoneTarget:first-child::after { left: 50%; }
+.phoneTarget:last-child::after { right: 50%; }
+@media (max-width: 960px) {
+  .desktop { display: none; }
+  .mobile { display: grid; gap: 16px; }
+}
+@media (max-width: 360px) {
+  .mobileGroup { padding: 8px; }
+  .machineCard { padding-inline: 4px; font-size: .72rem; }
+}

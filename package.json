@@ -1,0 +1,17 @@
+{
+  "name": "ssw-portfolio-public",
+  "private": true,
+  "version": "0.0.0",
+  "description": "SW Song 공개 포트폴리오 — GitHub Pages 프런트엔드는 web/",
+  "workspaces": [
+    "web",
+    "services/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev -w web --",
+    "build": "npm run build -w web",
+    "lint": "npm run lint -w web",
+    "test:webmcp": "npm run test:webmcp -w web"
+  }
+}

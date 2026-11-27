@@ -1,0 +1,311 @@
+/*
+ * 머리글 BGM 단추와 패널이다. 단추 크기·모서리는 옆의 설정 단추(.about-settings-link, 32px·9px)에 맞춘다.
+ * 선택·재생 표시는 조작 상태라 포인트색(--accent)을 쓴다. 막대 움직임은 사이트 모션 설정을 따른다.
+ */
+.root {
+  position: relative;
+  flex: 0 0 auto;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: stretch;
+  height: 32px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--bg-elev);
+  overflow: hidden;
+}
+
+.pill[data-playing='true'] {
+  border-color: color-mix(in srgb, var(--accent) 55%, var(--border));
+}
+
+.playButton,
+.moreButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--text-dim);
+  cursor: pointer;
+}
+
+.playButton {
+  width: 32px;
+}
+
+.moreButton {
+  width: 20px;
+  border-left: 1px solid var(--border);
+}
+
+.playButton:hover,
+.moreButton:hover {
+  color: var(--text);
+  background: var(--bg-elev-2);
+}
+
+.playButton[aria-pressed='true'] {
+  color: var(--accent-text);
+}
+
+.playButton:focus-visible,
+.moreButton:focus-visible,
+.controlButton:focus-visible,
+.filter:focus-visible,
+.track:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+/* 재생 중 표시: 세 막대가 오르내린다. */
+.eq {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 14px;
+}
+
+.eq span {
+  width: 3px;
+  height: 100%;
+  border-radius: 1px;
+  background: currentColor;
+  transform-origin: bottom;
+  animation: bgm-eq 1s ease-in-out infinite;
+}
+
+.eq span:nth-child(2) {
+  animation-delay: -0.35s;
+}
+
+.eq span:nth-child(3) {
+  animation-delay: -0.7s;
+}
+
+@keyframes bgm-eq {
+  0%,
+  100% {
+    transform: scaleY(0.35);
+  }
+  50% {
+    transform: scaleY(1);
+  }
+}
+
+:global(:root[data-motion='off']) .eq span {
+  animation: none;
+  transform: scaleY(0.7);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :global(:root[data-motion='system']) .eq span {
+    animation: none;
+    transform: scaleY(0.7);
+  }
+}
+
+/* ---------- 패널 ---------- */
+.panel {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 50;
+  width: min(300px, calc(100vw - 32px));
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--bg-elev);
+  box-shadow: 0 18px 40px -18px rgba(0, 0, 0, 0.35);
+  color: var(--text);
+  text-align: left;
+}
+
+.eyebrow {
+  margin: 0;
+  color: var(--decor-accent-text);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0 8px;
+  margin: 4px 0 0;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.version {
+  color: var(--text-mute);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* 원제(영어 제목): 곡 이름 아래 작은 둘째 줄이다. */
+.original {
+  margin: 1px 0 0;
+  color: var(--text-mute);
+  font-size: 12px;
+}
+
+.state {
+  margin: 2px 0 0;
+  color: var(--text-mute);
+  font-size: 12px;
+}
+
+.controls {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.controlButton {
+  flex: 1;
+  min-height: 34px;
+  border: 1px solid var(--border-strong);
+  border-radius: 9px;
+  background: var(--bg-elev-2);
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.controlButton:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.volume {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 12px;
+  color: var(--text-dim);
+  font-size: 12.5px;
+}
+
+.volume input {
+  flex: 1;
+  accent-color: var(--accent);
+}
+
+.filters {
+  display: flex;
+  gap: 6px;
+  margin-top: 12px;
+}
+
+.filter {
+  flex: 1;
+  min-height: 30px;
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-dim);
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.filter[aria-checked='true'] {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--accent-contrast, #fff);
+}
+
+.tracks {
+  display: grid;
+  gap: 4px;
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.track {
+  display: grid;
+  gap: 1px;
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid transparent;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 13.5px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.track:hover {
+  background: var(--bg-elev-2);
+}
+
+.track[aria-current='true'] {
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--border));
+  background: var(--accent-soft);
+  font-weight: 700;
+}
+
+.trackOriginal {
+  color: var(--text-mute);
+  font-size: 11.5px;
+  font-weight: 400;
+}
+
+.credit {
+  margin: 12px 0 0;
+  color: var(--text-mute);
+  font-size: 11.5px;
+  line-height: 1.55;
+  word-break: keep-all;
+}
+
+/* 휴대폰: 머리글 줄이 좁아 제목을 밀어내므로 머리글에서 빼서, 오른쪽 아래 챗봇 단추(52px·아래 14px)와
+ * 대칭이 되게 왼쪽 아래에 띄운다. 챗봇 대화창(z-index 200)이 열리면 그 아래로 가려진다. 패널은 위로 펼친다. */
+@media (max-width: 560px) {
+  .root {
+    position: fixed;
+    left: 14px;
+    bottom: calc(14px + env(safe-area-inset-bottom));
+    z-index: 190;
+  }
+
+  .pill {
+    height: 52px;
+    border-radius: 26px;
+    border-color: var(--border-strong);
+    box-shadow: 0 10px 28px -12px rgba(0, 0, 0, 0.35);
+  }
+
+  .playButton {
+    width: 52px;
+  }
+
+  .moreButton {
+    width: 34px;
+  }
+
+  .panel {
+    top: auto;
+    bottom: calc(100% + 10px);
+    left: 0;
+    right: auto;
+  }
+}
+
+@media print {
+  .root {
+    display: none;
+  }
+}

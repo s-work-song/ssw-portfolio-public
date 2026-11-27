@@ -1,0 +1,21 @@
+.cluster { stroke: var(--accent) !important; stroke-dasharray: 7 5; }
+.clusterTitle { fill: var(--accent) !important; }
+.serviceText { font-size: 13px !important; }
+.storage { fill: var(--bg-elev-2, var(--bg-elev)); stroke: var(--accent); }
+.storageText { font-size: 15px; }
+.mobile { display: none; }
+@media (max-width: 760px) {
+  .desktop { display: none; }
+  .mobile { display: block; min-width: 0; color: var(--text); font-size: var(--font-size-description); line-height: 1.6; }
+  .access { margin: 0 0 16px; text-align: center; word-break: keep-all; }
+  .pi { padding: 12px; border: 1px solid var(--border); border-radius: 12px; }
+  .pi h5 { margin: 0 0 10px; text-align: right; font: inherit; font-weight: 700; }
+  .clusterCard { padding: 12px; border: 1px dashed var(--accent); border-radius: 10px; }
+  .clusterCard h6 { margin: 0 0 14px; color: var(--accent); font: inherit; font-weight: 700; }
+  .gateway, .mobileStorage { margin: 0; padding: 12px 8px; border: 1px solid var(--accent); border-radius: 8px; text-align: center; }
+  .gateway span, .mobileStorage span { color: var(--text-dim); }
+  .mobileLabel { text-align: center; color: var(--text-dim); }
+  .services { display: grid; gap: 9px; list-style: none; margin: 0 0 16px; padding: 0; }
+  .services li { display: grid; gap: 4px; padding: 11px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg-elev-2, var(--bg-elev)); }
+  .services span { color: var(--text-dim); }
+}

@@ -1,0 +1,113 @@
+/*
+ * 썰매 레이어(SleighLayer)의 자리와 움직임이다.
+ *
+ * 자리: 문서 좌표에 붙인다(position: absolute). 레이어는 body 바로 아래라 기준 상자가 문서 맨 위다.
+ * 썰매가 지나갈 띠(--sleigh-sky-top·--sleigh-sky-height)와 그 안의 높이(--sleigh-top)는 SleighLayer가
+ * 트리·첫 패널 위치로 재서 넣는다. 스크롤하면 본문과 함께 흘러간다. 층은 z-index 55다. 본문 카드(z-index 20 이하)와 머리글 위를 옅게 지나가고, 눈 레이어(60)·
+ * 챗봇·대화상자(200)보다는 아래다(카드 아래로 두면 카드가 많은 화면에서 거의 다 가려진다). 그림이 반투명이라
+ * 글자 위를 지나가도 읽힌다. 화면 밖으로 나간 부분은 이 상자가 잘라 가로 스크롤을 만들지 않고,
+ * 클릭은 그대로 아래(본문)로 간다.
+ *
+ * 움직임: 세 겹이 각자 transform 하나만 움직여 합성 단계에서만 처리된다(레이아웃·다시 그리기 없음).
+ * - .flight: 가로. 화면 한쪽 밖에서 반대쪽 밖까지 일정한 속도로(방향은 data-direction).
+ * - .facing: 왼쪽으로 날 때만 좌우 뒤집기(움직이지 않음).
+ * - .arc: 세로. 올랐다 내려오는 완만한 호와, 나는 방향을 따르는 작은 기울기.
+ * - .bob: 작은 위아래 흔들림.
+ * 비행 길이(--sleigh-flight)·높이(--sleigh-top)·폭(--sleigh-width)은 SleighLayer가 비행마다 넣는다.
+ * 루돌프 다리 그림 넘기기(SeasonDecoration.module.css의 .gallopFrame)만 그 작은 부분을 다시 그린다.
+ */
+.sky {
+  position: absolute;
+  top: var(--sleigh-sky-top, 0px);
+  left: 0;
+  width: 100%;
+  height: var(--sleigh-sky-height, 160px);
+  z-index: 55;
+  overflow: hidden;
+  contain: strict;
+  pointer-events: none;
+  user-select: none;
+}
+
+/* 폭(--sleigh-width)은 SleighLayer가 비행마다 화면 폭 기준(150~340px)에 0.85~1.15배를 곱해 넣는다. */
+.flight {
+  position: absolute;
+  top: var(--sleigh-top, 40px);
+  left: 0;
+  width: var(--sleigh-width, clamp(150px, 24vw, 340px));
+  animation: sleigh-cross var(--sleigh-flight, 16s) linear both;
+}
+
+.flight[data-direction='left'] {
+  animation-name: sleigh-cross-left;
+}
+
+/* 왼쪽으로 날 때 그림을 좌우로 뒤집는다. 안쪽 .arc의 기울기도 함께 뒤집혀 앞코가 들린 채 난다. */
+.flight[data-direction='left'] .facing {
+  transform: scaleX(-1);
+}
+
+.arc {
+  animation: sleigh-arc var(--sleigh-flight, 16s) ease-in-out both;
+}
+
+.bob {
+  animation: sleigh-bob 1.7s ease-in-out infinite alternate;
+}
+
+.art {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+  opacity: var(--season-sleigh-opacity);
+}
+
+/* 썰매 폭만큼 왼쪽 밖에서 시작해, 왼쪽 끝이 화면 오른쪽 밖에 닿으면 끝난다. */
+@keyframes sleigh-cross {
+  from {
+    transform: translate3d(-100%, 0, 0);
+  }
+  to {
+    transform: translate3d(100vw, 0, 0);
+  }
+}
+
+/* 반대 방향: 오른쪽 밖에서 시작해 썰매 전체가 왼쪽 밖으로 나가면 끝난다. */
+@keyframes sleigh-cross-left {
+  from {
+    transform: translate3d(100vw, 0, 0);
+  }
+  to {
+    transform: translate3d(-100%, 0, 0);
+  }
+}
+
+/* 구간마다 ease-in-out이 걸려 가운데에서 가장 높고, 오를 때 앞이 들리고 내려올 때 숙인다. */
+/* 위아래 폭(--sleigh-arc)은 SleighLayer가 넣는다(넓은 화면 16px, 휴대폰은 좁은 빈 칸에 맞춰 6px). */
+@keyframes sleigh-arc {
+  0% {
+    transform: translate3d(0, var(--sleigh-arc, 16px), 0) rotate(-3deg);
+  }
+  50% {
+    transform: translate3d(0, calc(-1 * var(--sleigh-arc, 16px)), 0) rotate(0deg);
+  }
+  100% {
+    transform: translate3d(0, var(--sleigh-arc, 16px), 0) rotate(3deg);
+  }
+}
+
+@keyframes sleigh-bob {
+  from {
+    transform: translate3d(0, -3px, 0);
+  }
+  to {
+    transform: translate3d(0, 3px, 0);
+  }
+}
+
+@media print {
+  .sky {
+    display: none;
+  }
+}

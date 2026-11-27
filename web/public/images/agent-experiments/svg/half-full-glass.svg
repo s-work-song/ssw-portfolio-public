@@ -1,0 +1,208 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1200" viewBox="0 0 1000 1000" fill="none" role="img" aria-labelledby="title description">
+  <title id="title">물이 반쯤 담긴 투명한 유리잔</title>
+  <desc id="description">부드러운 자연광 아래 밝은 회색 탁자에 놓인 투명한 물컵. 물은 잔의 절반 높이까지 차 있고, 유리 가장자리와 수면에는 은은한 반사광이 비친다. 모든 요소를 SVG 도형과 그라디언트로 그렸다.</desc>
+
+  <defs>
+    <radialGradient id="background" cx="0.24" cy="0.18" r="1.04">
+      <stop stop-color="#fafaf7"/>
+      <stop offset="0.5" stop-color="#eeeeea"/>
+      <stop offset="1" stop-color="#d9ddd9"/>
+    </radialGradient>
+    <radialGradient id="daylight" cx="0.12" cy="0.15" r="0.88">
+      <stop stop-color="#fffef7" stop-opacity="0.7"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="glassBody" x1="321" y1="460" x2="679" y2="460" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#748a8c" stop-opacity="0.48"/>
+      <stop offset="0.012" stop-color="#fbffff" stop-opacity="0.9"/>
+      <stop offset="0.028" stop-color="#faffff" stop-opacity="0.53"/>
+      <stop offset="0.053" stop-color="#849a9c" stop-opacity="0.19"/>
+      <stop offset="0.12" stop-color="#d1dedd" stop-opacity="0.08"/>
+      <stop offset="0.26" stop-color="#ffffff" stop-opacity="0.04"/>
+      <stop offset="0.57" stop-color="#faffff" stop-opacity="0.015"/>
+      <stop offset="0.79" stop-color="#6d9297" stop-opacity="0.06"/>
+      <stop offset="0.9" stop-color="#ffffff" stop-opacity="0.2"/>
+      <stop offset="0.957" stop-color="#6c868a" stop-opacity="0.25"/>
+      <stop offset="0.983" stop-color="#f8ffff" stop-opacity="0.83"/>
+      <stop offset="1" stop-color="#70898a" stop-opacity="0.5"/>
+    </linearGradient>
+    <linearGradient id="rim" x1="324" y1="195" x2="672" y2="268" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#5d7577" stop-opacity="0.66"/>
+      <stop offset="0.13" stop-color="#faffff"/>
+      <stop offset="0.35" stop-color="#ffffff" stop-opacity="0.9"/>
+      <stop offset="0.56" stop-color="#78918f" stop-opacity="0.6"/>
+      <stop offset="0.76" stop-color="#eff8f5" stop-opacity="0.95"/>
+      <stop offset="1" stop-color="#566f73" stop-opacity="0.72"/>
+    </linearGradient>
+    <linearGradient id="rimFront" x1="328" y1="246" x2="674" y2="246" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#ffffff"/>
+      <stop offset="0.16" stop-color="#b6c4c1"/>
+      <stop offset="0.4" stop-color="#fbfffd"/>
+      <stop offset="0.67" stop-color="#8ca39f" stop-opacity="0.74"/>
+      <stop offset="0.88" stop-color="#ffffff"/>
+      <stop offset="1" stop-color="#e1eeec"/>
+    </linearGradient>
+    <linearGradient id="waterBody" x1="497" y1="483" x2="503" y2="756" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#c8dcd9" stop-opacity="0.22"/>
+      <stop offset="0.13" stop-color="#dce9e4" stop-opacity="0.3"/>
+      <stop offset="0.53" stop-color="#ccded9" stop-opacity="0.33"/>
+      <stop offset="0.83" stop-color="#bccfca" stop-opacity="0.36"/>
+      <stop offset="1" stop-color="#8ea9a7" stop-opacity="0.49"/>
+    </linearGradient>
+    <linearGradient id="waterEdges" x1="341" y1="619" x2="659" y2="619" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#688987" stop-opacity="0.49"/>
+      <stop offset="0.024" stop-color="#eafffa" stop-opacity="0.62"/>
+      <stop offset="0.06" stop-color="#779b97" stop-opacity="0.32"/>
+      <stop offset="0.16" stop-color="#f4fffb" stop-opacity="0.13"/>
+      <stop offset="0.39" stop-color="#ffffff" stop-opacity="0"/>
+      <stop offset="0.66" stop-color="#ffffff" stop-opacity="0.02"/>
+      <stop offset="0.89" stop-color="#e3f4ee" stop-opacity="0.29"/>
+      <stop offset="0.96" stop-color="#759b96" stop-opacity="0.4"/>
+      <stop offset="0.985" stop-color="#f1fff9" stop-opacity="0.76"/>
+      <stop offset="1" stop-color="#526f70" stop-opacity="0.46"/>
+    </linearGradient>
+    <linearGradient id="waterSurface" x1="500" y1="441" x2="500" y2="526" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#9ab9b5" stop-opacity="0.32"/>
+      <stop offset="0.24" stop-color="#deebe5" stop-opacity="0.3"/>
+      <stop offset="0.7" stop-color="#f5f9f0" stop-opacity="0.39"/>
+      <stop offset="0.95" stop-color="#dcebe4" stop-opacity="0.5"/>
+      <stop offset="1" stop-color="#789a93" stop-opacity="0.46"/>
+    </linearGradient>
+    <linearGradient id="meniscus" x1="344" y1="493" x2="657" y2="493" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#587f79" stop-opacity="0.55"/>
+      <stop offset="0.15" stop-color="#eafff7" stop-opacity="0.75"/>
+      <stop offset="0.4" stop-color="#ffffff" stop-opacity="0.93"/>
+      <stop offset="0.7" stop-color="#e6f6ec" stop-opacity="0.76"/>
+      <stop offset="1" stop-color="#597974" stop-opacity="0.71"/>
+    </linearGradient>
+    <linearGradient id="leftSoftbox" x1="350" y1="430" x2="406" y2="429" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#ffffff" stop-opacity="0"/>
+      <stop offset="0.15" stop-color="#ffffff" stop-opacity="0.75"/>
+      <stop offset="0.55" stop-color="#ffffff" stop-opacity="0.51"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="softboxFade" x1="0" y1="265" x2="0" y2="751" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#ffffff" stop-opacity="0.23"/>
+      <stop offset="0.2" stop-color="#ffffff"/>
+      <stop offset="0.75" stop-color="#ffffff" stop-opacity="0.9"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="base" x1="500" y1="711" x2="500" y2="790" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#b9d0c8" stop-opacity="0.1"/>
+      <stop offset="0.32" stop-color="#d7e5de" stop-opacity="0.22"/>
+      <stop offset="0.49" stop-color="#526e69" stop-opacity="0.4"/>
+      <stop offset="0.6" stop-color="#f6fff9" stop-opacity="0.78"/>
+      <stop offset="0.74" stop-color="#8ca59d" stop-opacity="0.43"/>
+      <stop offset="0.88" stop-color="#f4fff8" stop-opacity="0.87"/>
+      <stop offset="1" stop-color="#667e76" stop-opacity="0.59"/>
+    </linearGradient>
+    <linearGradient id="baseFront" x1="358" y1="758" x2="644" y2="758" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#5d7570" stop-opacity="0.52"/>
+      <stop offset="0.08" stop-color="#ffffff" stop-opacity="0.95"/>
+      <stop offset="0.21" stop-color="#90aaa2" stop-opacity="0.42"/>
+      <stop offset="0.43" stop-color="#ffffff" stop-opacity="0.92"/>
+      <stop offset="0.69" stop-color="#778e85" stop-opacity="0.56"/>
+      <stop offset="0.9" stop-color="#f6fff9"/>
+      <stop offset="1" stop-color="#637b73" stop-opacity="0.69"/>
+    </linearGradient>
+    <radialGradient id="underwaterGlow" cx="0.38" cy="0.53" r="0.58">
+      <stop stop-color="#ffffff" stop-opacity="0.46"/>
+      <stop offset="0.5" stop-color="#f5fff7" stop-opacity="0.14"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="baseLight">
+      <stop stop-color="#fcfff8" stop-opacity="0.87"/>
+      <stop offset="0.6" stop-color="#f5fff5" stop-opacity="0.35"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="castBlur" x="-50%" y="-100%" width="200%" height="300%" color-interpolation-filters="sRGB"><feGaussianBlur stdDeviation="20"/></filter>
+    <filter id="contactBlur" x="-25%" y="-100%" width="150%" height="300%" color-interpolation-filters="sRGB"><feGaussianBlur stdDeviation="5"/></filter>
+    <filter id="bloom" x="-25%" y="-100%" width="150%" height="300%" color-interpolation-filters="sRGB"><feGaussianBlur stdDeviation="3"/></filter>
+    <filter id="soften" x="-50%" y="-25%" width="200%" height="150%" color-interpolation-filters="sRGB"><feGaussianBlur stdDeviation="1.25"/></filter>
+    <filter id="hairline" x="-20%" y="-20%" width="140%" height="140%" color-interpolation-filters="sRGB"><feGaussianBlur stdDeviation="0.35"/></filter>
+    <clipPath id="bodyClip"><path d="M322 232C326 382 342 615 355 731C359 769 419 791 500 791C581 791 641 769 645 731C658 615 674 382 678 232C678 203 598 180 500 180C402 180 322 203 322 232Z"/></clipPath>
+    <clipPath id="waterClip"><path d="M343 483C347 563 357 676 364 722C370 751 427 770 500 770C573 770 630 751 636 722C643 676 653 563 657 483C657 460 587 441 500 441C413 441 343 460 343 483Z"/></clipPath>
+    <mask id="reflectionFade"><rect x="320" y="258" width="360" height="507" fill="url(#softboxFade)"/></mask>
+  </defs>
+
+  <!-- 밝은 탁자와 부드러운 자연광. -->
+  <rect width="1000" height="1000" fill="url(#background)"/>
+  <rect width="1000" height="1000" fill="url(#daylight)"/>
+
+  <!-- 유리잔이 만드는 그림자와 탁자 위의 집광 무늬. -->
+  <ellipse cx="589" cy="806" rx="215" ry="48" transform="rotate(13 589 806)" fill="#63726a" opacity="0.14" filter="url(#castBlur)"/>
+  <ellipse cx="503" cy="786" rx="148" ry="24" fill="#64776d" opacity="0.19" filter="url(#contactBlur)"/>
+  <ellipse cx="508" cy="782" rx="122" ry="14" fill="#566c61" opacity="0.12" filter="url(#contactBlur)"/>
+  <ellipse cx="534" cy="802" rx="122" ry="30" fill="url(#baseLight)"/>
+  <path d="M380 793C418 822 568 838 654 805C669 799 681 793 689 785C648 819 487 821 419 802" stroke="#fffff5" stroke-width="7" stroke-linecap="round" opacity="0.64" filter="url(#bloom)"/>
+  <path d="M425 806C480 824 574 826 630 811" stroke="#fbfff6" stroke-width="2" opacity="0.72" filter="url(#hairline)"/>
+
+  <!-- 유리의 뒷면과 입구 안쪽. -->
+  <path d="M322 232C326 382 342 615 355 731C359 769 419 791 500 791C581 791 641 769 645 731C658 615 674 382 678 232C678 203 598 180 500 180C402 180 322 203 322 232Z" fill="url(#glassBody)"/>
+  <ellipse cx="500" cy="232" rx="173" ry="48" fill="#f2f7ee" fill-opacity="0.06"/>
+  <path d="M331 234C331 208 408 186 500 186C592 186 669 208 669 234" stroke="#6a8280" stroke-opacity="0.3" stroke-width="1.2"/>
+  <path d="M333 234C333 209 409 190 500 190C591 190 667 209 667 234" stroke="#ffffff" stroke-opacity="0.8" stroke-width="1.5"/>
+  <path d="M334 246C339 359 352 575 365 703" stroke="#8da29b" stroke-opacity="0.13" stroke-width="1.3"/>
+  <path d="M666 246C661 359 648 575 635 703" stroke="#76968d" stroke-opacity="0.15" stroke-width="1.3"/>
+
+  <!-- 절반 높이의 맑은 물. -->
+  <path d="M343 483C347 563 357 676 364 722C370 751 427 770 500 770C573 770 630 751 636 722C643 676 653 563 657 483C657 460 587 441 500 441C413 441 343 460 343 483Z" fill="url(#waterBody)"/>
+  <g clip-path="url(#waterClip)">
+    <rect x="341" y="438" width="318" height="335" fill="url(#waterEdges)"/>
+    <ellipse cx="490" cy="654" rx="155" ry="111" fill="url(#underwaterGlow)"/>
+    <path d="M351 512C370 546 367 675 387 729C399 749 445 757 470 760" stroke="#fafff7" stroke-width="8" stroke-opacity="0.25" filter="url(#soften)"/>
+    <path d="M638 508C643 557 627 685 620 720C617 734 611 742 601 749" stroke="#f7fff9" stroke-width="5" stroke-opacity="0.42" filter="url(#soften)"/>
+    <path d="M372 732C410 754 581 765 627 731C597 771 410 779 372 732Z" fill="#6c8c7f" fill-opacity="0.14"/>
+    <path d="M388 738C433 753 556 759 607 742" stroke="#faffed" stroke-width="5" stroke-opacity="0.46" filter="url(#bloom)"/>
+  </g>
+
+  <!-- 수면의 타원과 벽에 살짝 올라붙는 물의 경계. -->
+  <ellipse cx="500" cy="483" rx="157" ry="42" fill="url(#waterSurface)"/>
+  <path d="M343 483C343 460 413 441 500 441C587 441 657 460 657 483" stroke="#708f86" stroke-width="1.6" stroke-opacity="0.46"/>
+  <path d="M346 482C347 461 416 444 500 444C584 444 653 461 654 482" stroke="#ffffff" stroke-width="1" stroke-opacity="0.65"/>
+  <path d="M343 483C343 506 413 525 500 525C587 525 657 506 657 483" stroke="#79978e" stroke-opacity="0.38" stroke-width="3" filter="url(#hairline)"/>
+  <path d="M344 481C344 504 414 522 500 522C586 522 656 504 656 481" stroke="url(#meniscus)" stroke-width="2.1"/>
+  <path d="M369 503C399 516 449 520 497 520" stroke="#ffffff" stroke-width="0.85" stroke-opacity="0.93" stroke-linecap="round"/>
+  <path d="M389 459C421 450 458 447 492 447" stroke="#fffffb" stroke-width="1.5" stroke-opacity="0.46" stroke-linecap="round"/>
+  <path d="M619 501C635 496 644 491 647 486" stroke="#fffffb" stroke-width="1.5" stroke-opacity="0.67" stroke-linecap="round"/>
+
+  <!-- 두꺼운 유리 바닥의 굴절을 겹치는 곡선과 투과광으로 그린다. -->
+  <g clip-path="url(#bodyClip)">
+  <path d="M355 720C360 751 421 772 500 772C579 772 640 751 645 720L643 741C637 772 578 791 500 791C422 791 363 772 357 741Z" fill="url(#base)"/>
+  <ellipse cx="500" cy="732" rx="133" ry="31" fill="#dbe9dc" fill-opacity="0.09"/>
+  <path d="M366 722C373 747 429 763 500 763C571 763 627 747 634 722" stroke="#718b7f" stroke-width="1.5" stroke-opacity="0.4"/>
+  <path d="M371 725C382 748 435 758 500 759C565 758 618 748 629 725" stroke="#fcfff5" stroke-width="2.4" stroke-opacity="0.7"/>
+  <path d="M356 735C362 767 422 787 500 787C578 787 638 767 644 735" stroke="url(#baseFront)" stroke-width="4.8" stroke-linecap="round"/>
+  <path d="M362 746C378 773 431 782 499 783C568 782 622 772 638 746" stroke="#fcfff5" stroke-width="1.5" stroke-opacity="0.88"/>
+  <path d="M381 764C404 777 451 784 491 785" stroke="#ffffff" stroke-width="2.3" stroke-linecap="round" opacity="0.95"/>
+  <path d="M526 785C570 783 607 774 626 763" stroke="#506d5e" stroke-width="1.2" stroke-opacity="0.37"/>
+  <path d="M386 751C418 774 489 774 516 774" stroke="#ffffff" stroke-width="5" stroke-opacity="0.32" filter="url(#bloom)"/>
+  </g>
+
+  <!-- 앞 유리 표면의 길고 부드러운 창문 반사. -->
+  <g clip-path="url(#bodyClip)">
+    <g mask="url(#reflectionFade)">
+      <path d="M350 272C355 268 373 269 385 276C382 389 389 596 402 730L377 740C365 621 353 392 350 272Z" fill="url(#leftSoftbox)"/>
+      <path d="M354 278C359 405 369 622 382 724" stroke="#ffffff" stroke-width="3.8" stroke-linecap="round" stroke-opacity="0.77" filter="url(#soften)"/>
+      <path d="M364 291C367 367 371 415 375 461" stroke="#ffffff" stroke-width="1.1" stroke-linecap="round" stroke-opacity="0.68"/>
+      <path d="M399 293C400 359 403 405 405 433" stroke="#ffffff" stroke-width="8" stroke-opacity="0.17" filter="url(#soften)"/>
+      <path d="M644 276C642 410 630 618 617 735L626 735C641 605 652 396 653 272Z" fill="#ffffff" fill-opacity="0.54" filter="url(#soften)"/>
+      <path d="M654 279C651 387 642 521 638 580" stroke="#ffffff" stroke-width="1.7" stroke-opacity="0.75"/>
+    </g>
+    <path d="M324 251C329 403 343 613 357 730" stroke="#6e837a" stroke-width="1.4" stroke-opacity="0.39"/>
+    <path d="M328 259C332 415 346 619 360 732" stroke="#ffffff" stroke-width="2" stroke-opacity="0.76"/>
+    <path d="M676 249C672 405 657 626 643 735" stroke="#5d7771" stroke-width="1.5" stroke-opacity="0.48"/>
+    <path d="M672 267C666 427 654 619 640 730" stroke="#ffffff" stroke-width="1.7" stroke-opacity="0.87"/>
+    <path d="M362 710C362 739 367 750 381 762" stroke="#ffffff" stroke-width="4" stroke-linecap="round" stroke-opacity="0.76" filter="url(#soften)"/>
+    <path d="M638 715C636 735 631 748 621 755" stroke="#ffffff" stroke-width="3" stroke-linecap="round" stroke-opacity="0.79"/>
+  </g>
+
+  <!-- 얇은 입구 테두리. 뒷 호, 안쪽 호, 앞 호를 따로 쌓는다. -->
+  <ellipse cx="500" cy="232" rx="178" ry="52" stroke="url(#rim)" stroke-width="3.1"/>
+  <ellipse cx="500" cy="231.5" rx="174.5" ry="48.9" stroke="#fbfffa" stroke-opacity="0.68" stroke-width="1.2"/>
+  <path d="M324 234C327 263 404 285 500 285C596 285 673 263 676 234" stroke="#667e74" stroke-width="1.5" stroke-opacity="0.37"/>
+  <path d="M325 232C325 260 403 282 500 282C597 282 675 260 675 232" stroke="url(#rimFront)" stroke-width="2.8"/>
+  <path d="M335 245C351 266 419 280 478 280" stroke="#ffffff" stroke-width="1.6" stroke-linecap="round" stroke-opacity="0.96"/>
+  <path d="M345 207C380 189 440 181 496 182" stroke="#ffffff" stroke-width="2.1" stroke-linecap="round" stroke-opacity="0.9"/>
+  <path d="M567 186C607 190 643 199 660 211" stroke="#ffffff" stroke-width="1.3" stroke-linecap="round" stroke-opacity="0.87"/>
+</svg>

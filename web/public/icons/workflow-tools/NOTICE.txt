@@ -1,0 +1,59 @@
+Workflow tool icons
+
+These logos identify tools; they do not imply endorsement or an active connection.
+All trademarks remain the property of their respective owners.
+
+GitHub, Notion, Jira, Google Colab, Unity, Blender, Git, FFmpeg, Google Cloud and Android SVG paths: Simple Icons.
+Pinned source: https://github.com/simple-icons/simple-icons/tree/4d29a35c954699b389a834aacc97dd6e7e74143c/icons
+Simple Icons project license: CC0-1.0 (individual brand rights still apply).
+License: https://github.com/simple-icons/simple-icons/blob/4d29a35c954699b389a834aacc97dd6e7e74143c/LICENSE.md
+Disclaimer: https://github.com/simple-icons/simple-icons/blob/4d29a35c954699b389a834aacc97dd6e7e74143c/DISCLAIMER.md
+Changes: explicit brand fills; Unity uses black on a white tile. No path geometry changes.
+
+GitHub: https://github.com/logos
+Git logo by Jason Long, CC BY 3.0:
+https://git-scm.com/community/logos
+https://creativecommons.org/licenses/by/3.0/
+FFmpeg: https://ffmpeg.org
+Google Cloud (used to identify the gcloud CLI): https://cloud.google.com
+Android robot (used to identify the adb CLI):
+https://developer.android.com/distribute/marketing-tools/brand-guidelines
+The Android robot is reproduced or modified from work created and shared by Google and used according to terms described in the Creative Commons 3.0 Attribution License.
+https://creativecommons.org/licenses/by/3.0/
+Android is a trademark of Google LLC.
+Podman: https://podman.io
+Podman color symbol: unmodified WebP used by the official Podman website navbar.
+Source: https://github.com/podman-container-tools/podman.io/blob/913ceb777a00360fbbe0f697bc36f54781ca3b1b/static/logos/optimized/podman-3-logo-266w-253h.webp
+Source repository license: Apache-2.0; see LICENSE-podman.txt in this directory.
+License: https://github.com/podman-container-tools/podman.io/blob/913ceb777a00360fbbe0f697bc36f54781ca3b1b/LICENSE
+SHA-256: 595b8942d07e50e0816a7f260b355611e82fc0df3d87d4649a7c1984db762f87
+Blender: https://www.blender.org/about/logo
+Jira: https://atlassian.design/resources/logo-library
+Colab: https://colab.research.google.com
+Notion: https://www.notion.so
+Unity: https://brand.unity.com
+
+OpenPencil master mark: unmodified.
+https://github.com/open-pencil/open-pencil/blob/78355fd3890cc9da9539235ee3b38beb917f2ed6/assets/brand/mark.svg
+
+MIT License
+
+Copyright (c) 2026 Danila Poyarkov and OpenPencil contributors
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.

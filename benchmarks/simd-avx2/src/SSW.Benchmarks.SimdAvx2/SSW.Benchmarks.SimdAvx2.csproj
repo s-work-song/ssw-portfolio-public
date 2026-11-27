@@ -1,0 +1,8 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>SSW.Benchmarks.SimdAvx2</AssemblyName>
+    <RootNamespace>SSW.Benchmarks.SimdAvx2</RootNamespace>
+    <!-- 프리페치 구현만 포인터를 씁니다. 나머지 구현은 unsafe 키워드 없이 작성합니다. -->
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+</Project>

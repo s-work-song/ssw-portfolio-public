@@ -1,0 +1,29 @@
+.carousel { min-width: 0; width: 100%; max-width: 100%; margin-top: 28px; padding-top: 26px; border-top: 1px solid var(--border); }
+.carousel:focus-visible { outline: 2px solid var(--accent); outline-offset: 5px; border-radius: 10px; }
+.header h4 { margin: 0; color: var(--text); font-size: 1.05rem; }
+.header p { margin: 9px 0 0; color: var(--text-dim); font-size: var(--font-size-description); line-height: 1.7; word-break: keep-all; overflow-wrap: anywhere; }
+.projectSelector { display: flex; flex-wrap: wrap; gap: 8px; margin: 20px 0 14px; min-width: 0; }
+.projectButton, .selectedProject { min-height: 42px; max-width: 100%; padding: 10px 13px; border: 1px solid var(--border-strong, var(--border)); border-radius: 10px; background: var(--bg-elev); color: var(--text-dim); font: inherit; font-size: .78rem; line-height: 1.6; font-weight: 600; cursor: pointer; word-break: keep-all; overflow-wrap: anywhere; text-align: left; }
+.selectedProject { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 9%, var(--bg-elev)); color: var(--accent); }
+.projectButton:hover { border-color: var(--accent); }
+.controls { display: flex; align-items: center; justify-content: flex-end; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
+.controls button { min-height: 40px; display: inline-flex; align-items: center; gap: 8px; padding: 8px 12px; border: 1px solid var(--border); border-radius: 9px; background: var(--bg-elev); color: var(--text); font: inherit; font-size: .78rem; font-weight: 600; cursor: pointer; }
+.controls button:disabled { cursor: default; opacity: .45; }
+.controls button:not(:disabled):hover { border-color: var(--accent); color: var(--accent); }
+.projectSelector button:focus-visible, .controls button:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.counter { min-width: 44px; color: var(--text-mute); font-size: .78rem; text-align: center; font-variant-numeric: tabular-nums; }
+.frame { min-width: 0; width: 100%; max-width: 100%; overflow: hidden; padding: clamp(14px, 3vw, 24px); border: 1px solid var(--panel-border); border-radius: 16px; background: var(--panel-bg); touch-action: pan-y pinch-zoom; }
+.swiper { min-width: 0; width: 100%; max-width: 100%; overflow: hidden; touch-action: pan-y pinch-zoom; }
+.swiper :global(.swiper-wrapper) { touch-action: pan-y pinch-zoom; align-items: flex-start; }
+.slide { min-width: 0; max-width: 100%; overflow: hidden; height: auto; touch-action: pan-y pinch-zoom; }
+.content { min-width: 0; width: 100%; max-width: 100%; }
+
+@media (max-width: 480px) {
+  .controls { justify-content: space-between; gap: 6px; }
+  .projectSelector { gap: 7px; }
+  .projectButton, .selectedProject { padding: 9px 11px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :global(:root:not([data-motion="on"])) .swiper :global(.swiper-wrapper) { transition-duration: 0ms !important; }
+}

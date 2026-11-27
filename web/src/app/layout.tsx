@@ -1,0 +1,100 @@
+/**
+ * 포트폴리오의 최상위 조합 루트(Composition Root)다.
+ * 전역 메타데이터와 스타일을 선언하고, next-themes를 감싼 ThemeProvider와
+ * 전역 포트폴리오 채팅을 모든 라우트에 한 번만 연결한다(Provider 패턴).
+ */
+import type { Metadata } from "next";
+import "./globals.css";
+import { ThemeProvider } from "../features/settings/state/ThemeContext";
+import { THEME_BOOT_SCRIPT } from "../features/settings/state/settingsDataset";
+import { ChatProvider } from "../features/chat";
+import { ChatApiPreconnect } from "./ChatApiPreconnect";
+import { PortfolioWebMcp } from "../features/webmcp/PortfolioWebMcp";
+import SeasonController from "../features/seasonal/SeasonController";
+import SnowLayer from "../features/seasonal/SnowLayer";
+import SeasonWeatherLayer from "../features/seasonal/SeasonWeatherLayer";
+import SleighLayer from "../features/seasonal/SleighLayer";
+
+/** 전체 굵기 파일 대신 쓰는 글자 범위만 받는 가변 하위 집합이다. @import와 달리 첫 화면을 막지 않는다. */
+const PRETENDARD_CSS =
+  "https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css";
+/**
+ * 글꼴 조각을 기다리느라 본문이 늦게 그려지거나 조각마다 레이아웃을 다시 계산하지 않도록,
+ * load 뒤에 필요한 조각을 모두 받아 한 번에 바꾼다. 한 번 받은 브라우저는 캐시가 있으니 새 탭에서도 바로 쓴다.
+ * 기록을 탭 단위로 두면 캐시가 있어도 새 탭마다 대체 글꼴에서 다시 바뀌어 깜빡인다.
+ */
+const PRETENDARD_LOADER = `(function(){var r=document.documentElement,k="pretendard-ready";function g(){var l=document.createElement("link");l.rel="stylesheet";l.href=${JSON.stringify(PRETENDARD_CSS)};return l}function s(){try{return localStorage.getItem(k)}catch(e){}}function d(){r.dataset.fonts="ready";try{localStorage.setItem(k,"1")}catch(e){}}if(s()){r.dataset.fonts="ready";document.head.appendChild(g());return}function a(){var l=g();l.onload=function(){document.fonts.load("400 1em 'Pretendard Variable'",document.body.innerText).then(d,d)};document.head.appendChild(l)}document.readyState==="complete"?a():window.addEventListener("load",a,{once:true})})()`;
+
+/**
+ * 링크 미리보기 이미지는 같은 폴더의 opengraph-image.png 파일 규칙으로 붙는다.
+ * 이미지 경로에는 Next가 basePath를 이미 넣으므로 metadataBase는 출처(origin)만 둔다.
+ */
+export const metadata: Metadata = {
+  metadataBase: new URL("https://s-work-song.github.io"),
+  title: {
+    default: "SSW 소개페이지",
+    template: "%s | SSW 소개페이지",
+  },
+  description:
+    "컴퓨팅 스택의 원리를 탐구하고 측정 가능한 개선을 제품으로 연결하는 소프트웨어 엔지니어 송상운의 포트폴리오입니다.",
+  openGraph: {
+    type: "website",
+    siteName: "SSW 소개페이지",
+    locale: "ko_KR",
+  },
+  twitter: {
+    card: "summary_large_image",
+  },
+};
+
+/**
+ * 모든 라우트를 감싸는 최상위 레이아웃이다.
+ *
+ * 테마 Provider와 챗봇 Provider를 한 번만 연결해, 어느 페이지에서 들어와도
+ * 설정과 대화가 이어지게 한다. `suppressHydrationWarning`은 next-themes가
+ * 하이드레이션 전에 html 속성을 손대기 때문에 필요하다.
+ *
+ * <head>의 부트 스크립트는 저장된 설정을 하이드레이션 전에 문서 루트의
+ * CSS 변수와 data 속성으로 바른다. 이게 없으면 정적 HTML이 기본값으로 그려진
+ * 뒤 마운트 후 effect가 저장값으로 바꿔, 새로고침마다 한 번 깜빡인다.
+ * 계약은 `context/settingsDataset`가 쥔다.
+ *
+ * WebMCP 도구 등록은 브라우저가 지원할 때만 지연 로딩한다.
+ * 기록 검색은 사용자가 기록 페이지에서 직접 수행한다.
+ */
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
+  return (
+    <html
+      lang="ko"
+      suppressHydrationWarning
+    >
+      <head>
+        {/* 첫 페인트 전에 저장된 설정을 적용한다. 상세는 context/settingsDataset. */}
+        <script dangerouslySetInnerHTML={{ __html: THEME_BOOT_SCRIPT }} />
+        <link rel="preconnect" href="https://cdn.jsdelivr.net" crossOrigin="anonymous" />
+        <script dangerouslySetInnerHTML={{ __html: PRETENDARD_LOADER }} />
+      </head>
+      <body>
+        <ChatApiPreconnect />
+        {/* 시즌 테마(data-season)를 날짜가 바뀔 때·탭 복귀 때 다시 판정한다. 첫 판정은 부트 스크립트. */}
+        <SeasonController />
+        {/* 눈이 있는 테마에서 설정의 눈 내리기가 켜져 있고 모션이 허용될 때만 그린다. */}
+        <SnowLayer />
+        <SeasonWeatherLayer />
+        {/* 크리스마스 테마에서 모션이 허용될 때만 본문 뒤로 썰매가 이따금 지나간다(z-index -1, 카드 뒤). */}
+        <SleighLayer />
+        <ThemeProvider>
+          <ChatProvider>
+            {/* 도구 등록은 브라우저가 WebMCP를 지원할 때만 지연 로딩한다. */}
+            <PortfolioWebMcp />
+            {children}
+          </ChatProvider>
+        </ThemeProvider>
+      </body>
+    </html>
+  );
+}

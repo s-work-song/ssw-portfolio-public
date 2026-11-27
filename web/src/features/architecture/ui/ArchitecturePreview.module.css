@@ -1,0 +1,6 @@
+.preview { composes: panel from '../../../components/surface/Surface.module.css'; padding: clamp(24px, 5vw, 40px); min-width: 0; scroll-margin-top: 96px; }
+.eyebrow { margin: 0; color: var(--decor-accent); font-size: .75rem; letter-spacing: .14em; font-weight: 700; }
+.preview h3 { margin: 15px 0 14px; font-size: clamp(1.4rem, 3vw, 1.8rem); letter-spacing: -.03em; color: var(--text); }
+.intro { max-width: 780px; margin: 0; color: var(--text-dim); font-size: var(--font-size-body); line-height: 1.8; word-break: keep-all; overflow-wrap: anywhere; }
+.more { display: flex; width: fit-content; align-items: center; gap: 14px; margin: 22px 0 0 auto; padding: 11px 17px; min-height: 44px; border-radius: 10px; background: var(--accent); color: var(--accent-contrast, #fff); font-size: .84rem; font-weight: 700; text-decoration: none; }
+.more:focus-visible { outline: 3px solid var(--accent); outline-offset: 4px; }

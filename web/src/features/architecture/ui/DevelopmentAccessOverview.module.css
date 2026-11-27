@@ -1,0 +1,58 @@
+.figure { min-width: 0; margin: 0; }
+.figure figcaption { color: var(--text); font-size: 1rem; font-weight: 700; }
+.lead { margin: 10px 0 22px; color: var(--text-dim); font-size: .8rem; line-height: 1.8; word-break: keep-all; overflow-wrap: anywhere; }
+.groups { display: grid; gap: 24px; min-width: 0; }
+.accessGroup { display: grid; grid-template-columns: minmax(0, .85fr) minmax(0, 2fr); min-width: 0; align-items: center; }
+.channels { display: grid; gap: 20px; min-width: 0; }
+.pathway { display: grid; grid-template-columns: minmax(110px, .7fr) minmax(0, 1.3fr); min-width: 0; align-items: stretch; }
+.clients { align-self: center; }
+.multi { align-items: stretch; row-gap: 20px; }
+.multi .clients { position: relative; grid-column: 1; grid-row: 1; align-self: stretch; }
+.multi .clients::after { content: ''; position: absolute; top: 50%; left: 100%; width: 25px; border-top: 1.5px solid var(--accent); }
+.multi .channels { display: contents; }
+.multi .pathway { grid-column: 2; padding-left: 24px; }
+.multi .channel::before { content: ''; position: absolute; left: 0; top: -20px; bottom: -20px; border-left: 1.5px solid var(--accent); }
+.multi .pathway:first-child .channel::before { top: 50%; }
+.multi .pathway:last-child .channel::before { bottom: 50%; }
+.groupNote { margin: 2px 0 0; color: var(--text-dim); font-size: .73rem; line-height: 1.8; word-break: keep-all; }
+.clients, .target { min-width: 0; min-height: 118px; display: flex; flex-direction: column; justify-content: center; gap: 8px; padding: 14px; border: 1px solid var(--border-strong); border-radius: 12px; background: var(--bg-elev); }
+.label { color: var(--text-mute); font-size: .68rem; font-weight: 600; }
+.clients ul { display: flex; flex-wrap: wrap; gap: 7px; list-style: none; margin: 0; padding: 0; }
+.clients li { display: flex; min-height: 32px; align-items: center; padding: 6px 9px; border-radius: 6px; background: var(--bg-elev-2); color: var(--text); font-size: .75rem; line-height: 1.5; word-break: keep-all; overflow-wrap: anywhere; }
+.channel { position: relative; min-width: 0; display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: 1fr auto 1fr; gap: 5px; padding: 10px 16px; }
+.inputLine { position: absolute; top: 50%; left: 0; right: 0; border-top: 1.5px solid var(--accent); }
+.gateway { position: relative; z-index: 1; grid-row: 2; justify-self: center; max-width: 100%; padding: 6px 8px; border: 1px solid color-mix(in srgb, var(--accent) 45%, var(--border)); border-radius: 8px; background: var(--bg-elev-2); color: var(--text); font-size: .74rem; line-height: 1.7; text-align: center; word-break: keep-all; overflow-wrap: anywhere; }
+.channelNote { position: relative; z-index: 1; grid-row: 3; justify-self: center; align-self: start; padding: 2px 4px; background: var(--bg-elev); color: var(--text-mute); font-size: .65rem; line-height: 1.7; text-align: center; word-break: keep-all; overflow-wrap: anywhere; }
+.targets { display: grid; gap: 14px; min-width: 0; }
+.route { position: relative; padding-left: 20px; min-width: 0; display: flex; align-items: stretch; }
+.routeLine { position: absolute; top: 50%; left: 0; width: 20px; border-top: 1.5px solid var(--accent); }
+.routeLine::after { position: absolute; top: -4.5px; right: 1px; content: ''; width: 7px; height: 7px; border-top: 1.5px solid var(--accent); border-right: 1.5px solid var(--accent); transform: rotate(45deg); }
+.branch .route::before { content: ''; position: absolute; left: 0; top: -14px; bottom: -14px; border-left: 1.5px solid var(--accent); }
+.branch .route:first-child::before { top: 50%; }
+.branch .route:last-child::before { bottom: 50%; }
+.target { width: 100%; background: color-mix(in srgb, var(--accent) 3%, var(--bg-elev)); }
+.target strong { color: var(--text); font-size: .9rem; line-height: 1.6; word-break: keep-all; overflow-wrap: anywhere; }
+.target p { margin: 0; color: var(--text-dim); font-size: .73rem; line-height: 1.8; word-break: keep-all; overflow-wrap: anywhere; }
+.description { margin: 20px 0 0; color: var(--text-dim); font-size: .75rem; line-height: 1.8; word-break: keep-all; overflow-wrap: anywhere; }
+.history { margin-top: 26px; padding-top: 20px; border-top: 1px solid var(--border); }
+.history h4 { margin: 0 0 14px; color: var(--text-mute); font-size: .82rem; }
+.history .inputLine, .history .routeLine { border-color: var(--text-mute); border-top-style: dashed; }
+.history .routeLine::after { border-color: var(--text-mute); }
+.history .target { background: var(--bg-elev); }
+@media (max-width: 960px) {
+  .accessGroup, .pathway { grid-template-columns: minmax(0, 1fr); }
+  .clients, .target { min-height: 100px; padding: 12px; }
+  .channel { min-height: 60px; padding: 12px; }
+  .inputLine { display: none; }
+  .targets { padding-left: 12px; }
+  .multi { row-gap: 16px; }
+  .multi .clients { grid-column: auto; grid-row: auto; }
+  .multi .channels { display: grid; gap: 16px; }
+  .multi .clients::after, .multi .channel::before { display: none; }
+  .multi .pathway { grid-column: auto; padding: 12px; gap: 8px; border: 1px solid var(--border-strong); border-radius: 12px; background: var(--bg-elev); }
+  .multi .channel { display: flex; flex-direction: column; min-height: 0; align-items: flex-start; padding: 0; }
+  .multi .channelNote { padding: 0; background: none; text-align: left; }
+  .route { padding-left: 16px; }
+  .routeLine { width: 16px; }
+  .target { min-height: 0; }
+}

@@ -1,0 +1,410 @@
+/**
+ * About 개요 카드의 콘텐츠 계약과 이동 경로를 보관하는 불변 데이터 모듈이다.
+ * React와 표현 스타일에 의존하지 않으며, 개요 페이지는 배열 순회만 수행하므로
+ * 섹션 추가가 기존 카드 JSX 수정으로 이어지지 않는다(OCP).
+ */
+
+export interface AboutDestination {
+  title: string;
+  href: string;
+  desc: string;
+  emoji: string;
+  linkText: string;
+}
+
+export interface AboutProject {
+  id: string;
+  title: string;
+  category: string;
+  desc: string;
+  /** 카드 왼쪽 아래 상태 글(없으면 보이지 않는다). */
+  status?: string;
+  statusTone?: 'default' | 'warning';
+  gallery?: AboutProjectGallery;
+  links?: AboutProjectLink[];
+  learningContext?: AboutProjectLearningContext;
+  experiment?: AboutProjectExperiment;
+}
+
+export interface AboutProjectLearningContext {
+  title: string;
+  paragraphs: string[];
+  relatedLog?: { slug: string; label: string };
+}
+
+export interface AboutProjectExperiment {
+  title: string;
+  before: string;
+  after: string;
+  result: string;
+  scope: string;
+  retained: string;
+  observation: string;
+}
+
+export interface AboutProjectGallery {
+  images: AboutProjectImage[];
+  placeholder: string;
+}
+
+export interface AboutProjectImage {
+  src: string;
+  alt: string;
+  caption?: string;
+}
+
+export interface AboutProjectLink {
+  label: string;
+  href: string;
+  /** research는 사이트 안 연구 위치로 같은 탭에서 이동한다. 나머지는 새 탭에서 연다. */
+  kind: 'repository' | 'demo' | 'research';
+}
+
+export interface AboutArchiveProject {
+  id: string;
+  title: string;
+  category: string;
+  desc: string;
+  status: string;
+  tags: string[];
+  wide?: boolean;
+  preview: {
+    eyebrow: string;
+    title: string;
+    hint: string;
+  };
+  gallery?: AboutProjectGallery;
+  videos?: AboutArchiveProjectVideo[];
+  videoSlotCount?: number;
+  logHref?: string;
+  demo?: {
+    src: string;
+    title: string;
+    controls: string;
+  };
+}
+
+export interface AboutArchiveProjectVideo {
+  src: string;
+  poster: string;
+  title: string;
+  caption: string;
+}
+
+export const aboutDestinations: AboutDestination[] = [
+  {
+    title: '이력서 (Resume)',
+    href: '/about-me/resume',
+    desc: '실무 경력과 핵심 기술, 주요 업무에서 맡은 역할을 정리했습니다. 웹·앱 개발과 시스템 운영 경험을 바탕으로 쌓아 온 역량을 확인할 수 있습니다.',
+    emoji: '📄',
+    linkText: '이력서 확인하기 →',
+  },
+  {
+    title: '자기소개서 (Cover Letter)',
+    href: '/about-me/cover-letter',
+    desc: '개발을 대하는 관점과 학습 과정, 경력의 전환점과 앞으로의 방향을 소개합니다.',
+    emoji: '✍️',
+    linkText: '자기소개서 읽기 →',
+  },
+  {
+    title: '연구 경험 (Research)',
+    href: '/about-me/research',
+    desc: '하드웨어 구성과 소프트웨어 최적화, 두 영역을 함께 고려한 SIMD·AVX2 활용 경험을 정리했습니다. 실험 중인 내용도 소개합니다.',
+    emoji: '🔬',
+    linkText: '연구 경험 보러 가기 →',
+  },
+  {
+    title: '기록 (Log)',
+    href: '/about-me/log',
+    desc: '개발과 일상에서 얻은 기술적 배움, 문제 해결 과정의 고민, 프로젝트 회고를 기록합니다.',
+    emoji: '📝',
+    linkText: '로그 게시글 읽기 →',
+  },
+];
+
+export const aboutArchiveProjects: AboutArchiveProject[] = [
+  {
+    id: 'archive-canvas-dodge-game',
+    title: 'Canvas 피하기 게임',
+    category: 'Canvas Game',
+    desc: 'HTML Canvas와 JavaScript로 만든 브라우저 게임입니다.\n\n방향키로 캐릭터를 움직여 장애물을 피하며 생존 시간을 기록합니다. 당시 작성한 단일 HTML 파일을 그대로 실행할 수 있습니다.',
+    status: '단일 HTML 원본 실행',
+    tags: ['HTML', 'Canvas', 'JavaScript'],
+    preview: {
+      eyebrow: 'Playable Archive',
+      title: '방향키로 장애물을 피하세요',
+      hint: '키보드 방향키 · 화면 방향 버튼',
+    },
+    gallery: {
+      images: [
+        {
+          src: '/images/archive/canvas-dodge-game/01-gameplay.webp',
+          alt: '막대 인간 캐릭터가 위에서 떨어지는 장애물을 피하는 Canvas 게임 화면',
+          caption: '방향키로 캐릭터를 움직여 떨어지는 장애물을 피하는 실행 화면',
+        },
+      ],
+      placeholder: 'Canvas 피하기 게임 실행 화면을 추가할 자리입니다.',
+    },
+    logHref: '/about-me/log/canvas-dodge-game-before-game-development/',
+    demo: {
+      src: '/showcases/canvas-dodge-game/index.html?v=1',
+      title: 'Canvas 피하기 게임 실행 화면',
+      controls: '시작을 누른 뒤 키보드 방향키 또는 화면 방향 버튼으로 조작할 수 있습니다.',
+    },
+  },
+  {
+    id: 'archive-wpf-excel-row-mapper',
+    title: '엑셀 행 매핑 WPF 앱',
+    category: 'WPF Desktop App',
+    desc: '반복적인 엑셀 작업의 생산성을 높이기 위해 만든 데스크톱 앱입니다.\n\n정부24에서 조회한 토지대장 정보를 주소·지번 기준으로 원본 엑셀 행에 매핑해 누락 정보를 채우는 WinForms 프로토타입을 만든 뒤, WPF 기반의 MVVM 구조로 전환해 실제 작업에 사용했습니다.',
+    status: '실사용 화면 보관',
+    tags: ['C#', 'WPF', 'MVVM', 'Excel'],
+    preview: {
+      eyebrow: 'Desktop Archive',
+      title: '엑셀 행 데이터 자동 매핑기',
+      hint: 'WPF · MVVM · 업무 도구',
+    },
+    gallery: {
+      images: [
+        {
+          src: '/images/archive/wpf-excel-row-mapper/01-main.webp',
+          alt: '주소 데이터 조회와 파일별 매핑 옵션을 구성하는 엑셀 행 매핑 WPF 앱 화면',
+          caption: '엑셀 작업용 유틸 앱',
+        },
+      ],
+      placeholder: '엑셀 행 매핑 WPF 앱 캡처를 여기에 추가할 예정입니다.',
+    },
+    logHref: '/about-me/log/excel-row-mapping-wpf-app/',
+  },
+  {
+    id: 'archive-android-ar-campfire',
+    title: 'Android AR 캠프파이어 앱',
+    category: 'Android AR',
+    desc: 'VR/AR 콘텐츠 개발 과정(메디치이앤에스) 수강 중 제작한 Android AR 앱입니다.\n\n현실 공간에 가상의 캠프파이어를 배치하고 점화하는 과정을 시연 영상과 이미지로 담았습니다.',
+    status: 'VR/AR 콘텐츠 개발 과정 제작 · 시연 영상·화면 보관',
+    tags: ['Android', 'AR', 'Mobile'],
+    wide: true,
+    preview: {
+      eyebrow: 'Mobile Archive',
+      title: 'AR 캠프파이어 시연',
+      hint: 'Android · Augmented Reality',
+    },
+    videos: [
+      {
+        src: '/media/archive/android-ar-campfire/02-campfire-view.mp4',
+        poster: '/images/archive/android-ar-campfire/03-final-background.webp',
+        title: 'AR 캠프파이어 전체 시연',
+        caption: '전체 시연 영상 보기',
+      },
+    ],
+    gallery: {
+      images: [
+        {
+          src: '/images/archive/android-ar-campfire/01-placement-focus.webp',
+          alt: 'AR 캠프파이어를 설치하기 위해 평면과 위치를 인식하는 포커스 화면',
+          caption: 'AR 평면을 인식하고 설치 위치를 조정하는 포커스 화면',
+        },
+        {
+          src: '/images/archive/android-ar-campfire/02-ignition-balanced.webp',
+          alt: '나뭇가지를 추가하고 점화한 AR 캠프파이어의 근접 화면',
+          caption: '나뭇가지를 추가하고 점화한 캠프파이어 근접 화면',
+        },
+        {
+          src: '/images/archive/android-ar-campfire/03-final-background.webp',
+          alt: '캠프파이어와 주변 나무 및 건물이 함께 보이는 AR 전경 화면',
+          caption: '캠프파이어와 주변 공간·건물을 함께 확인하는 전경',
+        },
+      ],
+      placeholder: 'Android AR 캠프파이어 앱 화면을 추가할 자리입니다.',
+    },
+    videoSlotCount: 4,
+    logHref: '/about-me/log/first-ar-project-using-real-space-and-motion/',
+  },
+];
+
+export const aboutProjects: AboutProject[] = [
+  {
+    id: 'project-common-infrastructure',
+    title: '공용 인프라 프로젝트군',
+    category: 'Shared Infrastructure',
+    desc: '여러 프로젝트에서 반복해서 필요한 인증·채팅·파일·미디어·알림·분석 기능을 공용 구성 요소로 분리했습니다.\n\n게이트웨이·설정·스케줄링·관측 기능도 함께 구성했습니다.',
+    status: '설계 문서 공개',
+    gallery: {
+      images: [
+        {
+          src: '/images/projects/common-infrastructure/ssw-infra-login.webp',
+          alt: '테넌트 ID와 계정 정보를 입력하는 SSW Infra Console 로그인 화면',
+          caption: '테넌트 ID와 계정 정보를 입력하는 통합 콘솔 로그인',
+        },
+        {
+          src: '/images/projects/common-infrastructure/ssw-infra-tenant.webp',
+          alt: '테넌트별 서비스 토큰과 온보딩 상태를 관리하는 SSW Infra Console 화면',
+          caption: '제품 단위로 분리한 테넌트와 서비스 토큰 관리',
+        },
+        {
+          src: '/images/projects/common-infrastructure/ssw-chat-operator.webp',
+          alt: '실시간 상담 대기열과 활성 상담을 처리하는 SSW Infra 채팅 상담원 콘솔 화면',
+          caption: 'WebSocket 응답과 상담 대기열을 통합한 채팅 상담원 콘솔',
+        },
+      ],
+      placeholder: '공용 인프라 프로젝트 화면을 추가할 자리입니다.',
+    },
+    links: [
+      {
+        label: '공개 설계 문서',
+        href: 'https://github.com/s-work-agency/ssw-infra-public',
+        kind: 'repository',
+      },
+    ],
+  },
+  {
+    id: 'project-ecommerce-demo',
+    title: '이커머스 데모',
+    category: 'Commerce Demo',
+    desc: '상품 조회, 장바구니, 주문, 관리자 기능을 구현한 이커머스 데모입니다.\n\n실제 결제 기능은 포함하지 않았으며, 배너와 상품 이미지는 AI·SI 도구로 제작했습니다.',
+    status: '데모·설계 문서 공개',
+    gallery: {
+      images: [
+        {
+          src: '/images/projects/ecommerce-demo/ssw-ecommerce-customer-main.webp',
+          alt: '쇼핑몰 홈과 AI 쇼핑 도우미 채팅 패널이 함께 열린 이커머스 사용자 화면',
+          caption: '상품 탐색과 AI 쇼핑 도우미를 결합한 사용자 홈',
+        },
+        {
+          src: '/images/projects/ecommerce-demo/ssw-ecommerce-dashboard-1.webp',
+          alt: '매출·주문·회원·상품 요약과 최근 매출 추이를 보여주는 이커머스 관리자 대시보드',
+          caption: '매출·주문·재고 상태를 한눈에 확인하는 운영 대시보드',
+        },
+        {
+          src: '/images/projects/ecommerce-demo/ssw-ecommerce-dashboard-2.webp',
+          alt: '품절 상품 재고 수정과 주문 상태 이력을 보여주는 이커머스 관리자 화면',
+          caption: '재고 알림과 주문 상태 이력을 연결한 운영 관리',
+        },
+        {
+          src: '/images/projects/ecommerce-demo/ssw-ecommerce-llm-1.webp',
+          alt: '카탈로그 지표를 선택해 질문하는 자연어 통계 관리자 화면',
+          caption: '카탈로그 지표만 근거로 질문하는 자연어 통계 실험실',
+        },
+        {
+          src: '/images/projects/ecommerce-demo/ssw-ecommerce-llm-2.webp',
+          alt: '재고 부족 지표와 AI·SI 분석 결과 및 제안을 보여주는 자연어 통계 화면',
+          caption: '읽은 데이터와 판단을 구분하는 AI·SI 통계 해석',
+        },
+      ],
+      placeholder: '이커머스 사용자·관리자 화면을 추가할 자리입니다.',
+    },
+    links: [
+      {
+        label: '공개 설계 문서',
+        href: 'https://github.com/s-work-agency/ssw-e-commerce-demo-public',
+        kind: 'repository',
+      },
+      {
+        label: '사용자 데모',
+        href: 'https://demo.ecommerce.sworkagency.com/',
+        kind: 'demo',
+      },
+      {
+        label: '관리자 데모',
+        href: 'https://admin.ecommerce.sworkagency.com/',
+        kind: 'demo',
+      },
+    ],
+  },
+  {
+    id: 'project-agents-hub',
+    title: 'SSW Agents Hub',
+    category: 'Multi-agent Collaboration Hub',
+    desc: '여러 AI·SI 에이전트가 파일 메일로 일을 나누는 .agents-ssw 협업 폴더의 현황을 한 화면에 보여 주는 Windows 데스크톱 앱입니다. 에이전트는 앱 없이 규약과 메일 파일만으로 협업하고, 앱은 그 현황을 읽어서 보여 줍니다.\n\n수신함별 메일과 감시 상태, 백로그 칸반, 메일 타임라인과 활동 달력, 에셋 미리보기를 제공하고, 프로젝트 코드의 테스트와 타입 구조를 다이어그램으로 보여 줍니다.\n\n메일·백로그·에셋·기록 화면은 캡처를 위해 임의로 만든 가상 프로젝트 pocket-notes의 예시 데이터입니다.',
+    status: '실행 화면 공개',
+    gallery: {
+      images: [
+        {
+          src: '/images/projects/agents-hub/01-mail.webp',
+          alt: '다섯 수신함의 감시 상태와 처리 건수, 상태별 메일 목록, Codex 답신 본문이 함께 보이는 SSW Agents Hub 메일 화면',
+          caption: '수신함별 감시 상태와 Codex 답신 본문 · 예시 데이터',
+        },
+        {
+          src: '/images/projects/agents-hub/02-backlog-kanban.webp',
+          alt: '시작 전·진행 중·끝남 세 열의 백로그 카드와 선택한 항목의 배경·후보·완료 기준이 보이는 칸반 화면',
+          caption: '시작 전·진행 중·끝남으로 나눈 백로그 칸반 · 예시 데이터',
+        },
+        {
+          src: '/images/projects/agents-hub/03-timeline.webp',
+          alt: 'claude-desktop, codex, grok-build, opencode, antigravity 다섯 수신함의 메일을 시간축 막대로 그린 타임라인 화면',
+          caption: '다섯 수신함의 메일 흐름 타임라인',
+        },
+        {
+          src: '/images/projects/agents-hub/04-type-diagram.webp',
+          alt: '인터페이스 하나와 이를 구현한 클래스 9개의 상속 다이어그램, 아래에 해당 소스가 보이는 코드 타입 화면',
+          caption: '인터페이스와 구현 9개의 상속 다이어그램',
+        },
+        {
+          src: '/images/projects/agents-hub/05-asset-versions.webp',
+          alt: '등대 그림 에셋의 버전 1·2·3을 나란히 비교하고 이 에셋을 언급한 메일 목록이 아래에 보이는 에셋 화면',
+          caption: '에셋 버전 비교와 언급한 메일 · 예시 데이터',
+        },
+        {
+          src: '/images/projects/agents-hub/06-troubleshooting.webp',
+          alt: '증상·재현 방법·원인·해결·기록 순서로 정리된 트러블슈팅 문서와 해결된 항목 목록이 보이는 기록 화면',
+          caption: '증상·원인·해결을 남긴 트러블슈팅 기록 · 예시 데이터',
+        },
+      ],
+      placeholder: '메일, 백로그, 타임라인, 코드, 에셋, 기록 화면입니다.',
+    },
+    links: [
+      {
+        label: '공개 소개 페이지',
+        href: 'https://about.agents-hub.sworkagency.com/',
+        kind: 'demo',
+      },
+    ],
+  },
+  {
+    id: 'project-asset-library',
+    title: 'SSW Asset Library',
+    category: 'Agent-connected Asset Library',
+    desc: '이미지·3D 모델·음원·문서를 에셋 단위로 묶고 버전과 제작 기록을 함께 관리하는 개인용 웹 라이브러리입니다.\n\n자료 검색과 파일 미리보기, 그룹·참조 맵, 버전 백업과 복원을 제공합니다. MCP를 통해 AI·SI 에이전트의 에셋 검색·등록·다운로드와 제작 기록 관리 작업을 연결했습니다.',
+    status: '내부망에서 개인 용도로 사용 중',
+    gallery: {
+      images: [
+        {
+          src: '/images/projects/asset-library/01-military-models.webp',
+          alt: '군용기·차량 에셋 목록과 자주포 색상 변형을 보여 주는 에셋 상세 패널',
+          caption: '군용기·차량 에셋 목록과 자주포 색상 변형 미리보기',
+        },
+        {
+          src: '/images/projects/asset-library/02-gym-models.webp',
+          alt: '헬스장 프로젝트의 운동 기구 모델 목록과 페이지 번호·직접 이동 입력란이 표시된 화면',
+          caption: '헬스장 운동 기구 에셋 목록과 페이지 이동',
+        },
+        {
+          src: '/images/projects/asset-library/03-office-models-v2.webp',
+          alt: '사무실·도심·아파트·지하철 환경 에셋 목록과 사무실 내부 샘플의 상세 미리보기',
+          caption: '건축·실내 환경 모델 목록과 사무실 상세 미리보기',
+        },
+        {
+          src: '/images/projects/asset-library/04-campsite-models-v2.webp',
+          alt: '캠핑장·지하철·세탁소 등 환경 에셋 목록과 텐트·모닥불이 배치된 캠핑장 상세 미리보기',
+          caption: '환경 에셋 목록과 캠핑장 상세 미리보기',
+        },
+        {
+          src: '/images/projects/asset-library/05-environment-models-v2.webp',
+          alt: '시대별 탐험 환경 모델 목록과 구석기 동굴 야영지 상세 미리보기',
+          caption: '시대별 환경 에셋 목록과 동굴 야영지 상세 미리보기',
+        },
+        {
+          src: '/images/projects/asset-library/04-food-library.webp',
+          alt: '피자·치즈버거·아이스크림 등 음식 에셋 목록과 치즈버거 재료 구성표를 함께 보여 주는 화면',
+          caption: '음식 에셋 목록과 치즈버거 재료 구성표',
+        },
+        {
+          src: '/images/projects/asset-library/07-music-library.webp',
+          alt: '음원 에셋 목록과 선택한 트랙의 커버 이미지 및 오디오 플레이어가 표시된 상세 화면',
+          caption: '음원 에셋 목록과 커버 이미지·오디오 재생 패널',
+        },
+      ],
+      placeholder: '군용기·차량, 헬스장, 환경, 음식과 음원 에셋의 목록·상세 화면입니다.',
+    },
+  },
+];
