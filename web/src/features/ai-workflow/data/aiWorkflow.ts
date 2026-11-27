@@ -169,7 +169,7 @@ export const aiWorkflowLearning = {
 
 /** 세 단계 사례의 코드 링크를 고정한 커밋이다. 코드가 나중에 옮겨져도 링크가 깨지지 않게 한다. */
 const SIMD_CASE_COMMIT_URL =
-  'https://github.com/s-work-song/ssw-portfolio-public/tree/c6751d3154a461ec56c5e75a7fe0bb669a3b1127/benchmarks/simd-avx2';
+  'https://github.com/s-work-song/ssw-portfolio-public/tree/34b1adc364aed6c6cc95b8a7b8effc24ee5ac239/benchmarks/simd-avx2';
 const SIMD_CASE_CODE_URL = `${SIMD_CASE_COMMIT_URL}/src/SSW.Benchmarks.SimdAvx2/Implementations/Simd`;
 
 /**
